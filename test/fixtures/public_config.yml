@@ -1,0 +1,47 @@
+data:
+  date_column: date
+
+target:
+  column: revenue
+  type: revenue
+
+dimensions:
+  panel: [geo]
+
+media:
+  channels: [tv, search]
+  controls: [price_index]
+  adstock:
+    type: geometric
+    l_max: 8
+    priors:
+      alpha:
+        distribution: Beta
+        alpha: 1
+        beta: 3
+        dims: [channel]
+  saturation:
+    type: logistic
+    priors:
+      lam:
+        special_prior: LogNormalPrior
+        kwargs:
+          mu: 1.2
+          sigma: 0.4
+        dims: [channel]
+
+priors:
+  intercept:
+    distribution: Normal
+    mu: 0
+    sigma: 2
+
+fit:
+  draws: 1200
+  tune: 600
+  chains: 2
+  cores: 2
+  target_accept: 0.85
+  random_seed: 7
+  progressbar: false
+  compute_convergence_checks: false

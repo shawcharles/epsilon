@@ -26,6 +26,7 @@ These files now act as the authoritative planning backbone:
 | [Dependencies](DEPENDENCIES.md) | Julia package dependencies and version strategy |
 | [Milestones](MILESTONES.md) | Phase definitions and acceptance criteria |
 | [Risks & Decisions](RISKS-AND-DECISIONS.md) | Technical risks, open questions, and ADRs |
+| [Technical Standards](../TECHNICAL-STANDARDS.md) | Repository engineering standards and quality baseline |
 
 These reference documents inform the roadmap and should stay aligned with it,
 but `PROJECT.md`, `REQUIREMENTS.md`, `ROADMAP.md`, and `STATE.md` are the files
@@ -43,15 +44,15 @@ that drive day-to-day execution.
 We port **bottom-up** — starting with the mathematical primitives (transforms, distributions) and building up to the model specification layer, then the pipeline. Each layer is independently testable against Abacus reference outputs.
 
 ```
-Phase 0: Foundation    → Project scaffold, CI, dependencies
-Phase 1: Primitives    → Adstock, saturation, convolution, scaling
-Phase 2: Priors        → Distribution system, prior specification
-Phase 3: Model Core    → Model builder, Turing @model, config system
-Phase 4: Features      → Seasonality, trend, events, HSGP, TVP, panels
-Phase 5: Inference     → MCMC, VI, predictive sampling, diagnostics
-Phase 6: Post-Model    → Contributions, decomposition, response curves
-Phase 7: Optimization  → Budget optimizer, constraints
-Phase 8: Pipeline      → YAML-driven end-to-end pipeline
-Phase 9: Plotting      → Visualization layer
-Phase 10: Validation   → Numerical parity with Abacus, benchmarks
+Phase 1: Foundation    → Project scaffold, CI, dependencies
+Phase 2: Primitives    → Adstock, saturation, convolution, scaling
+Phase 3: Priors        → Distribution system, prior specification
+Phase 4: Model Core    → Model builder, Turing @model, config system
+Phase 5: Features      → Seasonality, trend, events, HSGP, TVP, panels
+Phase 6: Inference     → MCMC, VI, predictive sampling, diagnostics
+Phase 7: Post-Model    → Contributions, decomposition, response curves
+Phase 8: Optimization  → Budget optimizer, constraints
+Phase 9: Pipeline      → YAML-driven end-to-end pipeline
+Phase 10: Plotting     → Visualization layer
+Phase 11: Validation   → Numerical parity with Abacus, benchmarks
 ```

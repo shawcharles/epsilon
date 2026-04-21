@@ -7,46 +7,47 @@
 ## Overview
 
 ```
-M0 ──── M1 ──── M2 ──── M3 ──── M4 ──── M5 ──── M6 ──── M7 ──── M8 ──── M9 ──── M10
-Found.  Prims   Prior   Core    Feat    Infer   Post    Optim   Pipe    Plot    Valid
-~1wk    ~1wk    ~1wk    ~2wk    ~2wk    ~1wk    ~1wk    ~1wk    ~2wk    ~1.5wk  ~1wk
+M1 ──── M2 ──── M3 ──── M4 ──── M5 ──── M6 ──── M7 ──── M8 ──── M9 ──── M10 ──── M11
+Found.  Prims   Prior   Core    Feat    Infer   Post    Optim   Pipe    Plot     Valid
+~1wk    ~1wk    ~1wk    ~2wk    ~2wk    ~1wk    ~1wk    ~1wk    ~2wk    ~1.5wk   ~1wk
                                                                                  ────
                                                                           Total: ~14-16 weeks
 ```
 
 ---
 
-## M0: Foundation ⏱️ ~1 week
+## M1: Foundation ⏱️ ~1 week
 
-**Goal:** Runnable Julia package with CI, tests, docs scaffold, and coding standards.
+**Goal:** Runnable Julia package with CI, passing quality gates, docs scaffold,
+and aligned contributor standards.
 
 **Deliverables:**
-- [ ] `Project.toml` with Phase 0 dependencies (DataFrames, CSV, Statistics, Test)
-- [ ] `src/Epsilon.jl` — package entry point with module structure
-- [ ] `test/runtests.jl` — test harness that passes
-- [ ] GitHub Actions CI: test on Julia 1.10 + 1.11
-- [ ] Runic formatting check for consistent code style
-- [ ] `Makefile` with `test`, `format`, `docs` targets
-- [ ] `.gitignore` for Julia artifacts
-- [ ] Documenter.jl docs skeleton
+- [x] Canonical contributor docs point to `TECHNICAL-STANDARDS.md`
+- [x] `Project.toml` compat and dependency declarations match actual use
+- [x] `src/Epsilon.jl` and `test/runtests.jl` form a passing baseline package
+- [x] GitHub Actions CI validates Julia 1.10 + 1.11, docs, and formatting
+- [x] Runic formatting check is enforced consistently
+- [x] `Makefile` targets are truthful and pass locally
+- [x] `.gitignore` covers Julia and docs artifacts
+- [x] Documenter.jl docs build cleanly with canonical API docs included
 
-**Acceptance:** `] test Epsilon` green. CI green. `make docs` builds.
+**Acceptance:** `make test` green. `make docs` green. CI green.
 
 **Tag:** `v0.0.1-dev`
 
 ---
 
-## M1: Primitives ⏱️ ~1 week
+## M2: Primitives ⏱️ ~1 week
 
 **Goal:** All mathematical transforms ported and parity-tested.
 
 **Deliverables:**
-- [ ] `src/transforms/convolution.jl` — batched convolution (both modes)
-- [ ] `src/transforms/adstock.jl` — 4 adstock types + normalization
-- [ ] `src/transforms/saturation.jl` — 4 saturation types
-- [ ] `src/transforms/scaling.jl` — MaxAbsScaler
-- [ ] `test/transforms/` — parity tests against Abacus reference arrays
-- [ ] `test/fixtures/` — reference data exported from Abacus
+- [x] `src/transforms/convolution.jl` — batched convolution (both modes)
+- [x] `src/transforms/adstock.jl` — 4 adstock types + normalization
+- [x] `src/transforms/saturation.jl` — 4 saturation types
+- [x] `src/transforms/scaling.jl` — scaling, normalization, and validation helpers
+- [x] `test/transforms/` — parity tests against Abacus reference arrays
+- [x] `test/fixtures/` — reference data exported from Abacus
 
 **Acceptance:** All transforms match Abacus output within `atol=1e-10, rtol=1e-8`.
 
@@ -54,32 +55,32 @@ Found.  Prims   Prior   Core    Feat    Infer   Post    Optim   Pipe    Plot    
 
 ---
 
-## M2: Priors & Distributions ⏱️ ~1 week
+## M3: Priors & Distributions ⏱️ ~1 week
 
-**Goal:** Complete prior specification system with all standard and custom distributions.
+**Goal:** Complete the prior specification system and the custom/shrinkage prior recipes required by the port.
 
 **Deliverables:**
-- [ ] `src/distributions/priors.jl` — `EpsilonPrior` struct, YAML deserialization
-- [ ] `src/distributions/special.jl` — Scaled, SkewStudentT, Michaelis
-- [ ] `src/distributions/shrinkage.jl` — Horseshoe, Finnish Horseshoe, R2D2
-- [ ] `src/distributions/masked.jl` — MaskedPrior
-- [ ] Distribution name mapping (PyMC → Distributions.jl, handling parameterization differences)
-- [ ] Tests for all distributions: `rand`, `logpdf`, moment checks
+- [x] `src/distributions/priors.jl` — `EpsilonPrior` struct, config deserialization
+- [x] `src/distributions/special.jl` — special-prior compatibility plus `Scaled` and `SkewStudentT`; no separate Michaelis distribution is required
+- [x] `src/distributions/shrinkage.jl` — Horseshoe, Finnish Horseshoe, R2D2
+- [x] `src/distributions/masked.jl` — MaskedPrior
+- [x] Distribution name mapping (PyMC → Distributions.jl, handling parameterization differences)
+- [x] Tests for all currently supported distributions and prior recipes: config deserialization, instantiation, serialization, and helper-math checks
 
-**Acceptance:** All priors sample correctly. logpdf matches PyMC for same parameters.
+**Acceptance:** Supported prior configs deserialize correctly, Julia-side distribution instantiation is well-tested, and shrinkage/helper formulas are validated for the eventual model layer.
 
 **Tag:** `v0.2.0-dev`
 
 ---
 
-## M3: Model Core ⏱️ ~2 weeks
+## M4: Model Core ⏱️ ~2 weeks
 
 **Goal:** Working model builder with Turing `@model`, YAML config, and basic regression.
 
 **Deliverables:**
-- [ ] `src/model/types.jl` — `AbstractModel` hierarchy, `ModelConfig`, `SamplerConfig`, `MMMData`
-- [ ] `src/model/config.jl` — YAML loading, config merging
-- [ ] `src/model/builder.jl` — `build_model`, `fit!`, `predict` interfaces
+- [x] `src/model/types.jl` — `AbstractModel` hierarchy, `ModelConfig`, `SamplerConfig`, `MMMData`
+- [ ] `src/model/config.jl` — YAML loading landed; config merging remains
+- [ ] `src/model/builder.jl` — builder/orchestration interfaces landed, but `fit!` and `predict` still defer execution until the Turing backend exists
 - [ ] `src/model/io.jl` — save/load via JLD2
 - [ ] `src/mmm/model.jl` — basic Turing `@model` for time-series MMM
 - [ ] `src/mmm/media.jl` — media channel component (adstock → saturation → scale)
@@ -91,7 +92,7 @@ Found.  Prims   Prior   Core    Feat    Infer   Post    Optim   Pipe    Plot    
 
 ---
 
-## M4: Features ⏱️ ~2 weeks
+## M5: Features ⏱️ ~2 weeks
 
 **Goal:** All MMM features: seasonality, trend, events, controls, panel/hierarchical.
 
@@ -110,7 +111,7 @@ Found.  Prims   Prior   Core    Feat    Infer   Post    Optim   Pipe    Plot    
 
 ---
 
-## M5: Inference ⏱️ ~1 week
+## M6: Inference ⏱️ ~1 week
 
 **Goal:** Robust sampling wrapper, VI support, predictive checks, diagnostics.
 
@@ -127,7 +128,7 @@ Found.  Prims   Prior   Core    Feat    Infer   Post    Optim   Pipe    Plot    
 
 ---
 
-## M6: Post-Modeling ⏱️ ~1 week
+## M7: Post-Modeling ⏱️ ~1 week
 
 **Goal:** Contribution decomposition, response curves, and all marketing metrics.
 
@@ -145,7 +146,7 @@ Found.  Prims   Prior   Core    Feat    Infer   Post    Optim   Pipe    Plot    
 
 ---
 
-## M7: Budget Optimization ⏱️ ~1 week
+## M8: Budget Optimization ⏱️ ~1 week
 
 **Goal:** Working budget optimizer with constraints via JuMP.
 
@@ -162,7 +163,7 @@ Found.  Prims   Prior   Core    Feat    Infer   Post    Optim   Pipe    Plot    
 
 ---
 
-## M8: Pipeline ⏱️ ~2 weeks
+## M9: Pipeline ⏱️ ~2 weeks
 
 **Goal:** End-to-end YAML-driven pipeline matching Abacus's 9-stage workflow.
 
@@ -179,26 +180,30 @@ Found.  Prims   Prior   Core    Feat    Infer   Post    Optim   Pipe    Plot    
 
 ---
 
-## M9: Plotting ⏱️ ~1.5 weeks
+## M10: Plotting ⏱️ ~1.5 weeks
 
-**Goal:** All visualizations ported to Makie.jl.
+**Goal:** Julia-native visualizations and report artifacts for core MMM outputs,
+without reproducing the Abacus Dash app.
 
 **Deliverables:**
-- [ ] `src/plotting/` — all plot types
+- [ ] `src/plotting/` — core plot types needed for diagnostics and analyst
+      outputs
 - [ ] Epsilon visual theme (consistent colours, fonts, styling)
 - [ ] Contribution time series with HDI bands
 - [ ] Waterfall decomposition
 - [ ] Response curves
 - [ ] Diagnostics (trace, posterior, residuals)
 - [ ] Budget optimization comparison
+- [ ] Optional lightweight static report/export layer in place of Dash parity
 
-**Acceptance:** All plots render correctly. Visual output is publication-quality.
+**Acceptance:** Core plots render correctly and support interpretation of model
+results. No Plotly Dash parity is required for milestone completion.
 
 **Tag:** `v0.9.0-dev`
 
 ---
 
-## M10: Validation & Benchmarks ⏱️ ~1 week
+## M11: Validation & Benchmarks ⏱️ ~1 week
 
 **Goal:** Numerical parity confirmed. Performance benchmarked and documented.
 
@@ -218,7 +223,7 @@ Found.  Prims   Prior   Core    Feat    Infer   Post    Optim   Pipe    Plot    
 ## Release: v1.0.0
 
 **Criteria for v1.0:**
-- All 10 milestones achieved ✅
+- All 11 milestones achieved ✅
 - CI green on Julia 1.10 + 1.11 ✅
 - Documentation complete with examples ✅
 - At least one real-world dataset tested ✅

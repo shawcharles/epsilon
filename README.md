@@ -8,7 +8,7 @@ Epsilon.jl is a high-performance framework for Bayesian Marketing Mix Modeling, 
 
 ## Status
 
-🚧 **Pre-alpha / Planning Phase** — Architecture and component mapping in progress.
+🚧 **Pre-alpha / Phase 4** — Transform and prior layers are in place; typed model/config scaffolding is done and builder interfaces are now landing.
 
 ## Why Julia?
 
@@ -33,7 +33,8 @@ and component mapping.
 
 ## Technical Standards
 
-Project standards live in [`TECHNICAL-STANDARDS.md`](TECHNICAL-STANDARDS.md).
+Project standards live in
+[`TECHNICAL-STANDARDS.md`](TECHNICAL-STANDARDS.md).
 The short version:
 
 - follow the official Julia style guide

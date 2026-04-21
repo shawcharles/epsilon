@@ -1,7 +1,7 @@
 # Technical Standards
 
 This document sets the engineering baseline for `Epsilon.jl`. The goal is a
-codebase that feels like a serious Julia package, not a literal Python port.
+codebase that feels like a serious Julia package for scientific computing.
 
 ## Decisions
 

@@ -1,9 +1,14 @@
 /Manifest.toml
 /docs/build/
 /docs/site/
+/docs/Manifest.toml
 /benchmark/results/
 *.jl.cov
 *.jl.*.cov
 *.jl.mem
 .DS_Store
 /LocalPreferences.toml
+
+/.planning/
+
+AGENTS.md

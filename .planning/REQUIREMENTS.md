@@ -8,9 +8,9 @@ sacrificing numerical rigor, reproducibility, or package quality.
 
 ### Foundation
 
-- [ ] **FOUND-01**: Contributor can instantiate the package, run tests, format
+- [x] **FOUND-01**: Contributor can instantiate the package, run tests, format
       code, and build docs on supported Julia versions.
-- [ ] **FOUND-02**: CI enforces the default quality gate for tests,
+- [x] **FOUND-02**: CI enforces the default quality gate for tests,
       formatting, docs, and package health checks.
 
 ### Transforms
@@ -56,8 +56,9 @@ sacrificing numerical rigor, reproducibility, or package quality.
 
 ### Visualization
 
-- [ ] **PLOT-01**: User can render publication-quality plots for contributions,
-      response curves, diagnostics, and optimization outputs.
+- [ ] **PLOT-01**: User can render or export practical non-Dash visual outputs
+      for contributions, response curves, diagnostics, and optimization
+      results.
 
 ### Validation
 
@@ -81,6 +82,7 @@ sacrificing numerical rigor, reproducibility, or package quality.
 | Feature | Reason |
 |---------|--------|
 | Hosted UI or reporting app | Not required to validate the Julia package itself |
+| Plotly Dash parity with Abacus | The Abacus Dash surface is beta; Epsilon v1 only needs simple Julia-native visual/report outputs |
 | AutoML-style model search | Would dilute the parity-first roadmap |
 | Non-Bayesian MMM workflows | Outside the core product definition |
 | Novel modeling features not present in Abacus | Defer until parity is complete and benchmarked |
@@ -89,8 +91,8 @@ sacrificing numerical rigor, reproducibility, or package quality.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUND-01 | Phase 1 | Pending |
-| FOUND-02 | Phase 1 | Pending |
+| FOUND-01 | Phase 1 | Completed |
+| FOUND-02 | Phase 1 | Completed |
 | TRANS-01 | Phase 2 | Pending |
 | PRIOR-01 | Phase 3 | Pending |
 | MODEL-01 | Phase 4 | Pending |

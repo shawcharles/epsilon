@@ -1,15 +1,18 @@
 name = "Epsilon"
 uuid = "33b2dd05-ff3d-4242-aa99-18d797ba20c2"
-authors = ["Epsilon contributors"]
 version = "0.1.0-dev"
+authors = ["Epsilon contributors"]
 
 [deps]
-CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
-CSV = "0.10"
-DataFrames = "1"
+Aqua = "0.8"
+Distributions = "0.25.125"
+Documenter = "1"
+Test = "1"
+YAML = "0.4.16"
 julia = "1.10"
 
 [extras]

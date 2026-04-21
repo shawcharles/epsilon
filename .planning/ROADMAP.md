@@ -8,17 +8,49 @@ establish package quality first, then build mathematically testable primitives,
 then the prior and modeling layers, then inference and post-model workflows,
 and only then finish the pipeline, visualization, and release validation work.
 
+## Repository Review Snapshot
+
+Repository review on 2026-04-21 found that the project is partially through
+Phase 1 already:
+
+- package scaffold, Makefile, docs scaffold, `.gitignore`, and GitHub Actions
+  workflows exist
+- `make test` currently fails in `Aqua.jl` because the package has stale
+  direct dependencies and no `[compat]` bounds for test extras
+- `make docs` currently fails because the exported docstring is not included in
+  a canonical `@docs` or `@autodocs` block
+- source implementation is still stub-level, so the immediate priority is to
+  make the foundation truthful and green before starting numerical port work
+- Abacus parity should target the validated MMM/statistical core, not its beta
+  Plotly Dash surface
+
+Follow-up on 2026-04-21:
+
+- `make test` now passes locally
+- `make docs` now passes locally
+- the canonical standards file is back at the repository root
+- the fixture export/import path is established through
+  `scripts/export_abacus_fixtures.py`
+- the full transform layer is implemented and parity-tested
+- the prior/distribution layer is implemented, including special and shrinkage
+  prior recipes
+- typed model/config/data structs plus YAML-backed config loading are now in
+  place as the first slice of Phase 4
+- the first builder/orchestration shell is now in place through `TimeSeriesMMM`
+  and `build_model`, while `fit!`/`predict` still defer execution until the
+  Turing model path lands
+
 ## Phases
 
 **Phase Numbering:**
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions added later if needed
 
-- [ ] **Phase 1: Foundation** - Establish the package, tooling, quality gate,
+- [x] **Phase 1: Foundation** - Establish the package, tooling, quality gate,
       and repository conventions.
-- [ ] **Phase 2: Primitives** - Port the mathematical transform layer with
+- [x] **Phase 2: Primitives** - Port the mathematical transform layer with
       parity fixtures.
-- [ ] **Phase 3: Priors and Distributions** - Build the prior specification and
+- [x] **Phase 3: Priors and Distributions** - Build the prior specification and
       custom distribution system.
 - [ ] **Phase 4: Model Core** - Implement typed config, model builders, and a
       basic runnable MMM.
@@ -52,11 +84,12 @@ and only then finish the pipeline, visualization, and release validation work.
 **Plans:** 3 plans
 
 Plans:
-- [ ] 01-01: Finalize package scaffold, module layout, dependencies, and
-      repository standards.
-- [ ] 01-02: Add CI, formatting, docs, and quality-gate automation.
-- [ ] 01-03: Establish initial fixtures, test organization, and contributor
-      workflow ergonomics.
+- [x] 01-01: Finalize the canonical contributor surface: standards path,
+      contributor references, and repository-facing documentation.
+- [x] 01-02: Make the default quality gate pass locally and in CI (`make test`,
+      `make docs`, and Runic format checks).
+- [x] 01-03: Establish the layer-oriented module/test skeleton and a concrete
+      fixture acquisition path for Abacus parity work.
 
 ### Phase 2: Primitives
 **Goal:** Port the mathematical transform layer and lock down parity at the lowest reusable layer.
@@ -70,10 +103,10 @@ Plans:
 **Plans:** 4 plans
 
 Plans:
-- [ ] 02-01: Implement convolution primitives and fixture-based tests.
-- [ ] 02-02: Implement adstock variants with normalization behavior and tests.
-- [ ] 02-03: Implement saturation variants and parity tests.
-- [ ] 02-04: Implement scaling, validation helpers, and transform integration
+- [x] 02-01: Implement convolution primitives and fixture-based tests.
+- [x] 02-02: Implement adstock variants with normalization behavior and tests.
+- [x] 02-03: Implement saturation variants and parity tests.
+- [x] 02-04: Implement scaling, validation helpers, and transform integration
       coverage.
 
 ### Phase 3: Priors and Distributions
@@ -89,9 +122,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 03-01: Implement prior schema, registry, and config deserialization.
-- [ ] 03-02: Implement special distributions and their numerical tests.
-- [ ] 03-03: Implement shrinkage and masked priors with compatibility coverage.
+- [x] 03-01: Implement prior schema, registry, and config deserialization.
+- [x] 03-02: Implement special distributions and their numerical tests.
+- [x] 03-03: Implement shrinkage and masked priors with compatibility coverage.
 
 ### Phase 4: Model Core
 **Goal:** Build the typed core abstractions and a basic runnable MMM path.
@@ -105,7 +138,7 @@ Plans:
 **Plans:** 4 plans
 
 Plans:
-- [ ] 04-01: Implement model types, config loading, and validation.
+- [x] 04-01: Implement model types, config loading, and validation.
 - [ ] 04-02: Implement builder interfaces and model orchestration entry points.
 - [ ] 04-03: Implement the base MMM `@model` and media-channel path.
 - [ ] 04-04: Implement serialization and integration tests for the basic model
@@ -196,19 +229,22 @@ Plans:
 - [ ] 09-04: Implement the CLI entry point and end-to-end integration coverage.
 
 ### Phase 10: Plotting
-**Goal:** Provide a coherent visualization layer for model diagnostics and MMM outputs.
+**Goal:** Provide a pragmatic Julia-native visualization/reporting layer for model diagnostics and MMM outputs without targeting Dash parity.
 **Depends on:** Phase 9
 **Requirements:** [PLOT-01]
 **Success Criteria** (what must be TRUE):
   1. Users can render the core MMM visual outputs from fitted results.
-  2. Plots are consistent in theme, labeling, and output quality.
-  3. Diagnostic visuals support debugging and interpretation of model behavior.
+  2. Plots and exported report artifacts are consistent in theme, labeling, and
+     output quality.
+  3. Diagnostic visuals support debugging and interpretation of model behavior
+     without requiring a replicated interactive dashboard surface.
 **Plans:** 3 plans
 
 Plans:
 - [ ] 10-01: Implement plot theme and diagnostic plotting foundation.
 - [ ] 10-02: Implement contribution, decomposition, and response-curve plots.
-- [ ] 10-03: Implement optimization and report-ready visual outputs.
+- [ ] 10-03: Implement optimization and report-ready visual outputs, keeping the
+      UI surface intentionally simpler than Abacus Dash.
 
 ### Phase 11: Validation and Benchmarks
 **Goal:** Prove that the port is correct, performant, and ready for release.
@@ -233,10 +269,10 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 11
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/3 | Not started | - |
-| 2. Primitives | 0/4 | Not started | - |
-| 3. Priors and Distributions | 0/3 | Not started | - |
-| 4. Model Core | 0/4 | Not started | - |
+| 1. Foundation | 3/3 | Completed | quality gate, standards path, fixture export path |
+| 2. Primitives | 4/4 | Completed | convolution, adstock, saturation, scaling |
+| 3. Priors and Distributions | 3/3 | Completed | prior schema, distribution mapping, config deserialization, special-prior compatibility, custom distributions, shrinkage recipes |
+| 4. Model Core | 1/4 | In progress | typed model/config/data structs, YAML-backed config loading, validation, builder/orchestration shell |
 | 5. MMM Features | 0/4 | Not started | - |
 | 6. Inference | 0/3 | Not started | - |
 | 7. Post-Modeling | 0/3 | Not started | - |

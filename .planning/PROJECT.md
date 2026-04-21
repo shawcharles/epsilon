@@ -16,7 +16,9 @@ numerical rigor, reproducibility, or package quality.
 
 ### Validated
 
-(None yet - pre-alpha planning and scaffold stage)
+- [x] Foundation quality gate passes locally (`make test`, `make docs`)
+- [x] `batched_convolution` is implemented and parity-tested against Abacus
+- [x] `geometric_adstock` is implemented and parity-tested against Abacus
 
 ### Active
 
@@ -35,6 +37,9 @@ numerical rigor, reproducibility, or package quality.
 
 - Web dashboards or a hosted product surface - the initial release is a Julia
   package and CLI, not a SaaS application.
+- Plotly Dash feature parity with Abacus - the Abacus statistical core is the
+  parity target, while its Dash layer is beta and can be omitted or reduced to
+  simpler plots and report artifacts in Epsilon v1.
 - Feature expansion beyond Abacus parity - v1.0 should finish the port before
   inventing new MMM methodology.
 - Non-Bayesian MMM variants - they dilute the core parity target and testing
@@ -44,11 +49,10 @@ numerical rigor, reproducibility, or package quality.
 
 ## Context
 
-The repository already has the package skeleton, docs scaffold, technical
-standards, and several planning documents covering architecture, dependencies,
-component mapping, milestones, and risks. Implementation is still effectively
-at the stub stage, so the near-term challenge is not refactoring code; it is
-turning the existing design work into an execution-ready roadmap.
+The repository has the package skeleton, docs scaffold, technical standards,
+and planning documents in place, and now has the first transform primitives
+landed with parity fixtures. The near-term challenge is to continue building
+the mathematical layer methodically rather than broadening scope too early.
 
 The port strategy is bottom-up: first the mathematical primitives, then the
 prior system, then the model core, then higher-level features and the pipeline.
@@ -63,6 +67,9 @@ possible at each layer before more complex abstractions are introduced.
   Abacus should not require inventing a new external configuration model.
 - **Numerical correctness**: Abacus parity is a release gate - testability beats
   elegance when they conflict.
+- **Parity scope**: Abacus parity means validated statistical methodology,
+  transforms, priors, models, inference, and downstream analyst outputs; it
+  does not require reproducing the beta Dash UI.
 - **Engineering quality**: Docs, tests, compat bounds, and CI must evolve with
   code - the package cannot grow as an unverified research prototype.
 - **Architecture**: Autodiff-safe, composable building blocks are required -
@@ -75,6 +82,7 @@ possible at each layer before more complex abstractions are introduced.
 | Prefer Julia-native design over Python transliteration | Multiple dispatch and composition are a better long-term fit than copying Abacus class hierarchies | Good |
 | Build bottom-up from transforms to pipeline | Lower layers unblock parity testing and reduce downstream ambiguity | Good |
 | Keep YAML as the external configuration format | It preserves migration ergonomics and maps to the current planning docs | Good |
+| Exclude Plotly Dash parity from v1 | Abacus's validated value is in the MMM/statistical core; the Dash layer is beta and not a release gate for Epsilon | Good |
 | Start with a simple MMM `@model`, then refactor toward composable components | It reduces early implementation risk while preserving the desired architecture direction | Pending |
 | Treat parity, docs, and tests as first-class deliverables in each phase | The project is scientific software, so correctness and reproducibility are product features | Good |
 

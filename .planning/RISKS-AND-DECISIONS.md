@@ -115,9 +115,13 @@
 
 **Risk:** Makie.jl and Matplotlib have different APIs and default aesthetics. Plots may not look identical.
 
-**Impact:** Visual differences only — no statistical impact. Users may need to adjust to new aesthetics.
+**Impact:** Visual differences only — no statistical impact. Since Epsilon does
+not target Plotly Dash parity for v1, the practical risk is limited to
+producing clear static outputs rather than replicating the Abacus app surface.
 
-**Mitigation:** Define Epsilon theme early. Prioritize information content over visual parity with Abacus.
+**Mitigation:** Define Epsilon theme early. Prioritize information content over
+visual parity, and treat simple static or file-based report outputs as
+sufficient for v1.
 
 ---
 
@@ -135,7 +139,7 @@
 
 | # | Question | Status | Decision |
 |---|----------|--------|----------|
-| Q1 | Should we use `Plots.jl` (simpler) or `Makie.jl` (more powerful) for plotting? | 🟡 Open | Leaning Makie for long-term, Plots.jl for prototyping |
+| Q1 | Should we use `Plots.jl` (simpler) or `Makie.jl` (more powerful) for non-Dash plotting? | 🟡 Open | Leaning Makie for long-term, Plots.jl for prototyping |
 | Q2 | Should we support both `ForwardDiff` and `ReverseDiff` as autodiff backends? | 🟡 Open | Default to ReverseDiff (better for >20 params); ForwardDiff as fallback |
 | Q3 | Should `generated_quantities` be called inside sampling or post-hoc? | 🟡 Open | Depends on R2 investigation |
 | Q4 | Should we use `JuMP.jl` or `Optim.jl` for budget optimization? | 🟡 Open | JuMP for constrained; Optim for unconstrained. May need both. |
@@ -205,3 +209,16 @@
 **Context:** Needed a project management approach.  
 **Decision:** GSD (Getting Stuff Done) — milestone-driven, clear acceptance criteria, documentation-first.  
 **Consequences:** Higher upfront planning investment. Better long-term velocity and quality.
+
+---
+
+### ADR-007: Abacus Parity Scope Excludes Dash
+
+**Status:** ✅ Accepted  
+**Date:** 2026-04-21  
+**Context:** Abacus's library and statistical methodology are production-grade,
+but its Plotly Dash component is still beta.  
+**Decision:** Epsilon v1 targets parity for the validated MMM/statistical core
+and may omit or simplify the Dash/UI layer.  
+**Consequences:** Plotting remains in scope, but only as practical Julia-native
+diagnostic and analyst outputs rather than an interactive dashboard clone.
