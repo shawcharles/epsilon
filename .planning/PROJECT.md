@@ -23,7 +23,7 @@ numerical rigor, reproducibility, or package quality.
 ### Active
 
 - [ ] Contributors can develop Epsilon as a normal Julia package with reliable
-      tests, docs, formatting, and CI.
+      tests, docs, and formatting.
 - [ ] Users can run the same core MMM transforms and priors as Abacus and get
       parity-tested outputs.
 - [ ] Users can define, fit, and inspect MMMs through a Julia-first API and a
@@ -70,7 +70,7 @@ possible at each layer before more complex abstractions are introduced.
 - **Parity scope**: Abacus parity means validated statistical methodology,
   transforms, priors, models, inference, and downstream analyst outputs; it
   does not require reproducing the beta Dash UI.
-- **Engineering quality**: Docs, tests, compat bounds, and CI must evolve with
+- **Engineering quality**: Docs, tests, compat bounds, and local quality checks must evolve with
   code - the package cannot grow as an unverified research prototype.
 - **Architecture**: Autodiff-safe, composable building blocks are required -
   inference and transform code must work with Julia AD backends.

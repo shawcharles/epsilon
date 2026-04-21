@@ -85,7 +85,7 @@
 
 **Mitigation:**
 1. Pin compat bounds tightly in `Project.toml`.
-2. Run CI against Turing `main` branch weekly to catch breaking changes early.
+2. Review compatibility with new Turing releases before widening bounds or upgrading dependencies.
 3. Stay engaged with Turing.jl community (Discourse, GitHub issues).
 
 **Owner:** TBD  

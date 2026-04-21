@@ -24,6 +24,6 @@ make docs
 ## Pull Request Expectations
 
 - Formatting passes with Runic.
-- Tests pass on supported Julia versions.
+- Local tests and docs pass before review.
 - Public APIs are documented.
 - Any deviation from Abacus behavior is explicit and justified.

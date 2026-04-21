@@ -43,7 +43,7 @@ numerical or package-quality regressions.
 | Phase | Summary | Rationale |
 |-------|---------|-----------|
 | Bootstrap | Convert existing milestone and architecture docs into a real GSD roadmap | The repo had planning content but no executable planning backbone |
-| 1 | Do foundation work before numerical porting | CI, docs, tests, and package structure should stabilize before deeper model work |
+| 1 | Do foundation work before numerical porting | Docs, tests, and package structure should stabilize before deeper model work |
 | Bootstrap | Keep the port strategy bottom-up | Lower layers enable parity tests and reduce ambiguity for higher layers |
 | 1 | Treat passing local quality gates as the real Phase 1 exit criterion | The repo already had scaffold files, but `make test` and `make docs` had to become true before Phase 2 work |
 | 2 | Use generated Julia fixtures from local Abacus runs instead of Python during Julia tests | Keeps parity tests deterministic and keeps Python out of the Julia test runtime |

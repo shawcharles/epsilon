@@ -44,7 +44,7 @@ that drive day-to-day execution.
 We port **bottom-up** — starting with the mathematical primitives (transforms, distributions) and building up to the model specification layer, then the pipeline. Each layer is independently testable against Abacus reference outputs.
 
 ```
-Phase 1: Foundation    → Project scaffold, CI, dependencies
+Phase 1: Foundation    → Project scaffold, local quality gate, dependencies
 Phase 2: Primitives    → Adstock, saturation, convolution, scaling
 Phase 3: Priors        → Distribution system, prior specification
 Phase 4: Model Core    → Model builder, Turing @model, config system

@@ -10,8 +10,8 @@ sacrificing numerical rigor, reproducibility, or package quality.
 
 - [x] **FOUND-01**: Contributor can instantiate the package, run tests, format
       code, and build docs on supported Julia versions.
-- [x] **FOUND-02**: CI enforces the default quality gate for tests,
-      formatting, docs, and package health checks.
+- [x] **FOUND-02**: The default local quality gate covers tests, formatting,
+      docs, and package health checks.
 
 ### Transforms
 

@@ -13,8 +13,7 @@ and only then finish the pipeline, visualization, and release validation work.
 Repository review on 2026-04-21 found that the project is partially through
 Phase 1 already:
 
-- package scaffold, Makefile, docs scaffold, `.gitignore`, and GitHub Actions
-  workflows exist
+- package scaffold, Makefile, docs scaffold, and `.gitignore` exist
 - `make test` currently fails in `Aqua.jl` because the package has stale
   direct dependencies and no `[compat]` bounds for test extras
 - `make docs` currently fails because the exported docstring is not included in
@@ -77,8 +76,7 @@ Follow-up on 2026-04-21:
 **Success Criteria** (what must be TRUE):
   1. Contributors can run tests, formatting, and docs locally with a standard
      project workflow.
-  2. CI validates the package on supported Julia versions and enforces the
-     baseline quality gate.
+  2. The local package workflow enforces the baseline quality gate.
   3. The repository structure matches the agreed technical standards and is
      ready for layer-by-layer implementation.
 **Plans:** 3 plans
@@ -86,7 +84,7 @@ Follow-up on 2026-04-21:
 Plans:
 - [x] 01-01: Finalize the canonical contributor surface: standards path,
       contributor references, and repository-facing documentation.
-- [x] 01-02: Make the default quality gate pass locally and in CI (`make test`,
+- [x] 01-02: Make the default quality gate pass locally (`make test`,
       `make docs`, and Runic format checks).
 - [x] 01-03: Establish the layer-oriented module/test skeleton and a concrete
       fixture acquisition path for Abacus parity work.

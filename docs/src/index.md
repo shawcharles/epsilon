@@ -11,7 +11,6 @@ Epsilon is in Phase 4:
 - package entry point
 - test harness
 - docs scaffold
-- CI workflow skeleton
 - repository standards
 - transform primitives completed
 - prior and distribution layer completed

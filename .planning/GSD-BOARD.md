@@ -12,7 +12,6 @@
 
 - [x] Initialize Julia package structure (`Project.toml`, `src/Epsilon.jl`, `test/`)
 - [x] Add starter dependencies to `Project.toml` (test extras and current foundation requirements)
-- [x] Set up GitHub Actions CI (test matrix + docs + format workflows)
 - [x] Set up code formatting with `Runic.jl`
 - [x] Set up Documenter.jl for docs
 - [x] Create `Makefile` with common commands

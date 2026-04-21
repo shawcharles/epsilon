@@ -18,20 +18,19 @@ Found.  Prims   Prior   Core    Feat    Infer   Post    Optim   Pipe    Plot    
 
 ## M1: Foundation ⏱️ ~1 week
 
-**Goal:** Runnable Julia package with CI, passing quality gates, docs scaffold,
+**Goal:** Runnable Julia package with passing local quality gates, docs scaffold,
 and aligned contributor standards.
 
 **Deliverables:**
 - [x] Canonical contributor docs point to `TECHNICAL-STANDARDS.md`
 - [x] `Project.toml` compat and dependency declarations match actual use
 - [x] `src/Epsilon.jl` and `test/runtests.jl` form a passing baseline package
-- [x] GitHub Actions CI validates Julia 1.10 + 1.11, docs, and formatting
 - [x] Runic formatting check is enforced consistently
 - [x] `Makefile` targets are truthful and pass locally
 - [x] `.gitignore` covers Julia and docs artifacts
 - [x] Documenter.jl docs build cleanly with canonical API docs included
 
-**Acceptance:** `make test` green. `make docs` green. CI green.
+**Acceptance:** `make test` green. `make docs` green. Local quality gate green.
 
 **Tag:** `v0.0.1-dev`
 
@@ -224,7 +223,6 @@ results. No Plotly Dash parity is required for milestone completion.
 
 **Criteria for v1.0:**
 - All 11 milestones achieved ✅
-- CI green on Julia 1.10 + 1.11 ✅
 - Documentation complete with examples ✅
 - At least one real-world dataset tested ✅
 - No known regressions vs Abacus ✅

@@ -26,7 +26,7 @@ Rationale:
 
 - It is the formatter recommended by the current SciML Style Guide.
 - Zero-configuration formatting reduces repository-level style drift.
-- CI can fail formatting deterministically instead of debating whitespace in PRs.
+- Local formatting checks avoid debating whitespace in reviews.
 
 ### 3. Naming and API Conventions
 
@@ -85,9 +85,9 @@ Once the test suite grows, group files by package layer:
 - Architecture decisions belong in `.planning/`, not scattered across PR threads.
 - Any public behavior change must update docs in the same change.
 
-### 8. CI Standard
+### 8. Quality Gate Standard
 
-Required CI checks:
+Required local quality-gate checks:
 
 - tests on Julia `1.10` and `1.11`
 - formatting check
