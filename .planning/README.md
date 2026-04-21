@@ -4,6 +4,18 @@
 
 This project follows a **GSD (Getting Stuff Done)** workflow — structured, milestone-driven, with clear deliverables at each phase.
 
+### Primary Control Docs
+
+These files now act as the authoritative planning backbone:
+
+| Document | Purpose |
+|----------|---------|
+| [PROJECT.md](PROJECT.md) | Product definition, active requirements, constraints, and key decisions |
+| [REQUIREMENTS.md](REQUIREMENTS.md) | Checkable v1 requirements and phase traceability |
+| [ROADMAP.md](ROADMAP.md) | Execution-ordered development phases and seeded plan breakdown |
+| [STATE.md](STATE.md) | Current phase, blockers, and session continuity |
+| [config.json](config.json) | GSD workflow configuration |
+
 ### Planning Documents
 
 | Document | Purpose |
@@ -14,6 +26,10 @@ This project follows a **GSD (Getting Stuff Done)** workflow — structured, mil
 | [Dependencies](DEPENDENCIES.md) | Julia package dependencies and version strategy |
 | [Milestones](MILESTONES.md) | Phase definitions and acceptance criteria |
 | [Risks & Decisions](RISKS-AND-DECISIONS.md) | Technical risks, open questions, and ADRs |
+
+These reference documents inform the roadmap and should stay aligned with it,
+but `PROJECT.md`, `REQUIREMENTS.md`, `ROADMAP.md`, and `STATE.md` are the files
+that drive day-to-day execution.
 
 ### How We Work
 

@@ -1,0 +1,21 @@
+name = "Epsilon"
+uuid = "33b2dd05-ff3d-4242-aa99-18d797ba20c2"
+authors = ["Epsilon contributors"]
+version = "0.1.0-dev"
+
+[deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+
+[compat]
+CSV = "0.10"
+DataFrames = "1"
+julia = "1.10"
+
+[extras]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test", "Aqua", "Documenter"]

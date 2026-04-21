@@ -1,4 +1,4 @@
-# ε Epsilon MMM
+# Epsilon MMM
 
 **Bayesian Marketing Mix Modeling in Julia**
 
@@ -28,7 +28,18 @@ Epsilon.jl is a high-performance framework for Bayesian Marketing Mix Modeling, 
 
 ## Project Planning
 
-See [`docs/planning/`](docs/planning/) for the full GSD board, architecture plan, and component mapping.
+See [`.planning/`](.planning/README.md) for the full GSD board, architecture plan,
+and component mapping.
+
+## Technical Standards
+
+Project standards live in [`TECHNICAL-STANDARDS.md`](TECHNICAL-STANDARDS.md).
+The short version:
+
+- follow the official Julia style guide
+- use the SciML Style Guide as the package-level default
+- enforce formatting with `Runic.jl`
+- keep docs, tests, and compat bounds in lockstep with code changes
 
 ## License
 

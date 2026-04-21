@@ -73,9 +73,10 @@ These are required for the main `Epsilon.jl` package:
 | **[Test](https://docs.julialang.org/en/v1/stdlib/Test/)** | Unit testing (stdlib) | Phase 0 |
 | **[BenchmarkTools.jl](https://github.com/JuliaCI/BenchmarkTools.jl)** | Micro-benchmarks | Phase 10 |
 | **[PkgBenchmark.jl](https://github.com/JuliaCI/PkgBenchmark.jl)** | CI benchmark tracking | Phase 10 |
-| **[JuliaFormatter.jl](https://github.com/domluna/JuliaFormatter.jl)** | Code formatting | Phase 0 |
+| **[Runic.jl](https://github.com/fredrikekre/Runic.jl)** | Code formatting | Phase 0 |
 | **[Documenter.jl](https://github.com/JuliaDocs/Documenter.jl)** | Documentation generator | Phase 0 |
 | **[Aqua.jl](https://github.com/JuliaTesting/Aqua.jl)** | Package quality checks | Phase 0 |
+| **[JET.jl](https://github.com/aviatesk/JET.jl)** | Static analysis | Phase 1 |
 
 ## Optional / Stretch
 

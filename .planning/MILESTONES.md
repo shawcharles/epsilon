@@ -25,7 +25,7 @@ Found.  Prims   Prior   Core    Feat    Infer   Post    Optim   Pipe    Plot    
 - [ ] `src/Epsilon.jl` — package entry point with module structure
 - [ ] `test/runtests.jl` — test harness that passes
 - [ ] GitHub Actions CI: test on Julia 1.10 + 1.11
-- [ ] `.JuliaFormatter.toml` for consistent code style
+- [ ] Runic formatting check for consistent code style
 - [ ] `Makefile` with `test`, `format`, `docs` targets
 - [ ] `.gitignore` for Julia artifacts
 - [ ] Documenter.jl docs skeleton
