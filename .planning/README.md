@@ -25,6 +25,7 @@ These files now act as the authoritative planning backbone:
 | [Component Mapping](COMPONENT-MAPPING.md) | PyMC/PyTensor → Turing.jl equivalents (the Rosetta Stone) |
 | [Dependencies](DEPENDENCIES.md) | Julia package dependencies and version strategy |
 | [Milestones](MILESTONES.md) | Phase definitions and acceptance criteria |
+| [`phases/`](phases/) | Phase-specific execution docs; Phases 4, 5, 6, 7, 8, 9, 10, 11, and 12 now have real `PLAN.md` files, with Phase 12 reopening parity remediation on the bounded comparable time-series row |
 | [Risks & Decisions](RISKS-AND-DECISIONS.md) | Technical risks, open questions, and ADRs |
 | [Technical Standards](../TECHNICAL-STANDARDS.md) | Repository engineering standards and quality baseline |
 
@@ -36,8 +37,10 @@ that drive day-to-day execution.
 
 1. **Plan** → Define the epic, break into tasks, estimate effort
 2. **Build** → Implement in focused sprints, one module at a time
-3. **Verify** → Test against Abacus outputs (numerical parity checks)
-4. **Ship** → Tag a milestone release, document what changed
+3. **Verify** → Test against Abacus outputs where comparison is real, and run
+   explicit contract-regression checks for bounded Epsilon-only surfaces
+4. **Ship** → Tag a milestone release only after the current parity contract is
+   actually satisfied and documented truthfully
 
 ### Porting Strategy
 
@@ -48,11 +51,12 @@ Phase 1: Foundation    → Project scaffold, local quality gate, dependencies
 Phase 2: Primitives    → Adstock, saturation, convolution, scaling
 Phase 3: Priors        → Distribution system, prior specification
 Phase 4: Model Core    → Model builder, Turing @model, config system
-Phase 5: Features      → Seasonality, trend, events, HSGP, TVP, panels
-Phase 6: Inference     → MCMC, VI, predictive sampling, diagnostics
-Phase 7: Post-Model    → Contributions, decomposition, response curves
+Phase 5: Features      → Seasonality, trend, events, controls, panels
+Phase 6: Inference     → MCMC hardening, canonical `InferenceResults`, explicit VI API, diagnostics
+Phase 7: Post-Model    → Contributions, decomposition, response curves, summary tables
 Phase 8: Optimization  → Budget optimizer, constraints
 Phase 9: Pipeline      → YAML-driven end-to-end pipeline
 Phase 10: Plotting     → Visualization layer
-Phase 11: Validation   → Numerical parity with Abacus, benchmarks
+Phase 11: Validation   → Final parity harness, benchmarks, v1 readiness
+Phase 12: Remediation  → Repair model-space parity before release preparation
 ```

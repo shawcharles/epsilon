@@ -1,0 +1,50 @@
+data:
+  date_column: date
+  dataset_path: dataset.csv
+
+target:
+  column: revenue
+  type: revenue
+
+media:
+  channels: [tv, search]
+  adstock:
+    type: geometric
+    l_max: 8
+  saturation:
+    type: logistic
+
+seasonality:
+  type: fourier
+  n_order: 2
+
+trend:
+  type: changepoint
+  n_changepoints: 3
+
+events:
+  windows:
+    - name: promo
+      start_date: "2024-03-01"
+      end_date: "2024-04-01"
+
+holidays:
+  mode: auto
+  path: holidays.csv
+  countries: UK
+  priors:
+    beta:
+      distribution: Normal
+      mu: 0
+      sigma: 1
+      dims: [holiday]
+
+fit:
+  draws: 20
+  tune: 20
+  chains: 1
+  cores: 1
+  target_accept: 0.8
+  random_seed: 105
+  progressbar: false
+  compute_convergence_checks: false

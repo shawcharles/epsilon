@@ -9,7 +9,17 @@
 .DS_Store
 /LocalPreferences.toml
 
-/.planning/
+/.planning/*
+!/.planning/*.md
+!/.planning/config.json
+!/.planning/prompts/
+!/.planning/prompts/*.md
+!/.planning/reviews/
+!/.planning/reviews/*.md
+!/.planning/phases/
+!/.planning/phases/**/
+!/.planning/phases/**/PLAN.md
+!/.planning/phases/**/.gitkeep
 
 AGENTS.md
 

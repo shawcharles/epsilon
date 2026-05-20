@@ -13,6 +13,10 @@ end
     FinnishHorseshoePrior(; scale=1.0, slab_scale=2.5, slab_df=4.0, dims=nothing, centered=true)
 
 Regularized horseshoe prior recipe with finite slab control.
+`scale`, `slab_scale`, and `slab_df` are stored on the typed prior so the later
+model layer can build the full regularized horseshoe hierarchy. The
+deterministic helper functions in this file use only `scale` and `slab_scale`;
+`slab_df` remains model-layer metadata.
 """
 struct FinnishHorseshoePrior <: AbstractSpecialPrior
     parameters::Dict{Symbol, Any}
@@ -24,6 +28,10 @@ end
     R2D2Prior(; mean_R2=0.5, concentration=1.0, scale=1.0, dims=nothing, centered=true)
 
 R2D2 shrinkage prior recipe using variance allocation weights.
+`mean_R2`, `concentration`, and `scale` are stored on the typed prior so the
+later model layer can build the full R2D2 hierarchy. The deterministic helper
+functions in this file consume `scale` once `phi` and `tau2` are already given;
+`mean_R2` and `concentration` remain model-layer metadata.
 """
 struct R2D2Prior <: AbstractSpecialPrior
     parameters::Dict{Symbol, Any}
@@ -99,6 +107,10 @@ end
     regularized_local_scales(prior, local_scales, global_scale)
 
 Compute regularized local scales for the Finnish horseshoe.
+
+This deterministic helper uses `prior.parameters[:slab_scale]`. `slab_df`
+belongs to the stochastic slab prior in the later model layer and is not part
+of this closed-form local-scale update.
 """
 function regularized_local_scales(
     prior::FinnishHorseshoePrior,
@@ -115,6 +127,10 @@ end
     finnish_horseshoe_coefficients(prior, z, local_scales, global_scale)
 
 Apply the regularized horseshoe coefficient construction.
+
+This helper uses the prior's `scale` and `slab_scale` terms after the required
+latent draws have already been supplied. It does not sample or otherwise
+consume `slab_df`.
 """
 function finnish_horseshoe_coefficients(
     prior::FinnishHorseshoePrior,
@@ -132,6 +148,11 @@ end
 
 Convert simplex-like variance allocations and a global variance term into
 coefficient variances.
+
+This deterministic helper uses `prior.parameters[:scale]` once `phi` and
+`tau2` are already given. `mean_R2` and `concentration` parameterize the
+upstream stochastic prior over those quantities and are therefore model-layer
+metadata rather than inputs to this variance calculation.
 """
 function r2d2_variance_weights(
     prior::R2D2Prior,
@@ -142,6 +163,7 @@ function r2d2_variance_weights(
     all(phi_values .>= 0) || throw(ArgumentError("R2D2 variance weights require nonnegative phi values"))
     total = sum(phi_values)
     total > 0 || throw(ArgumentError("R2D2 variance weights require phi to sum to a positive value"))
+    Float64(tau2) > 0 || throw(ArgumentError("R2D2 variance weights require tau2 to be positive"))
     normalized_phi = phi_values ./ total
     return Float64(prior.parameters[:scale])^2 .* normalized_phi .* Float64(tau2)
 end
@@ -150,6 +172,10 @@ end
     r2d2_coefficients(prior, z, phi, tau2)
 
 Apply the R2D2 coefficient construction to latent standard-normal draws.
+
+This helper converts supplied `phi` and `tau2` values into coefficient draws; it
+does not sample or otherwise consume the prior's `mean_R2` or `concentration`
+hyperparameters directly.
 """
 function r2d2_coefficients(
     prior::R2D2Prior,

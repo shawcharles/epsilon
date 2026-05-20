@@ -1,0 +1,28 @@
+data:
+  date_column: date
+  dataset_path: dataset.csv
+
+target:
+  column: revenue
+  type: revenue
+
+dimensions:
+  panel: [geo]
+
+media:
+  channels: [tv, search]
+  adstock:
+    type: geometric
+    l_max: 8
+  saturation:
+    type: logistic
+
+fit:
+  draws: 20
+  tune: 20
+  chains: 1
+  cores: 1
+  target_accept: 0.8
+  random_seed: 17
+  progressbar: false
+  compute_convergence_checks: false

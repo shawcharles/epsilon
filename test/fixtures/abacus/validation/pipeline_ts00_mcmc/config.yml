@@ -1,0 +1,33 @@
+data:
+  date_column: date
+  dataset_path: dataset.csv
+
+target:
+  column: revenue
+  type: revenue
+
+media:
+  channels: [tv, search]
+  adstock:
+    type: geometric
+    l_max: 8
+  saturation:
+    type: logistic
+
+fit:
+  draws: 20
+  tune: 20
+  chains: 1
+  cores: 1
+  target_accept: 0.8
+  random_seed: 7
+  progressbar: false
+  compute_convergence_checks: false
+
+validation:
+  enabled: true
+  holdout_rows: 2
+
+optimization:
+  enabled: true
+  total_budget: 26.5

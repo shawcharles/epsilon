@@ -1,0 +1,48 @@
+data:
+  date_column: date
+  dataset_path: data/input.csv
+
+target:
+  column: revenue
+  type: revenue
+
+media:
+  channels: [tv, search]
+  adstock:
+    type: geometric
+    l_max: 8
+  saturation:
+    type: logistic
+
+fit:
+  draws: 120
+  tune: 60
+  chains: 2
+  cores: 2
+  target_accept: 0.85
+  random_seed: 7
+  progressbar: false
+  compute_convergence_checks: false
+
+validation:
+  enabled: true
+  holdout_rows: 4
+
+prior_sensitivity:
+  enabled: true
+  scenario_policy: manual
+  reference: reference
+  scenarios:
+    reference:
+      description: Current approved prior specification.
+    tighter_intercept:
+      description: Lower intercept amplitude on the scaled target space.
+      reason: Checks whether baseline attribution depends on weak intercept regularization.
+      overrides:
+        priors.intercept:
+          distribution: Normal
+          mu: 0.0
+          sigma: 0.5
+
+optimization:
+  enabled: false

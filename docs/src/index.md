@@ -6,7 +6,8 @@ package can grow in layers without fighting the toolchain.
 
 ## Current Status
 
-Epsilon is in Phase 4:
+Epsilon has landed Phases 1-12. Phase 12 has now closed the methodology
+remediation pass on the bounded reference time-series story:
 
 - package entry point
 - test harness
@@ -14,8 +15,297 @@ Epsilon is in Phase 4:
 - repository standards
 - transform primitives completed
 - prior and distribution layer completed
+- model-core layer completed
 - typed model/config scaffolding completed
-- builder and orchestration interfaces in progress
+- bounded `TimeSeriesMMM` and `PanelMMM` feature surface frozen at Phase 5 closeout
+- Phase 6 `06-01` landed: the current MCMC fit path now records explicit
+  execution-policy metadata and replaces stale successful fit state with an
+  explicit error state when `fit!` fails
+- Phase 6 `06-02` landed: canonical grouped `InferenceResults` artifacts now
+  preserve posterior draws, optional prior draws, predictive draws, sampler
+  statistics, observed data, and coordinate metadata without redefining the
+  flatter `ModelResults` convenience surface
+- Phase 6 is now closed: `fit!` is the canonical MCMC path,
+  `InferenceResults` is the canonical grouped artifact surface, and
+  `approximate_fit!(model, VariationalConfig(...))` is the bounded explicit VI
+  path on `TimeSeriesMMM`
+- Phase 7 is now closed: grouped time-series `InferenceResults` can now
+  produce `contribution_results`, `decomposition_results`,
+  `response_curve_results`, `metric_results`, and `summary_table` on both
+  supported MCMC and supported VI rows through deterministic replay of the
+  frozen Phase 5 additive model contract; response curves use total-spend
+  grids in original units and preserve the observed temporal spend shape for
+  the selected channel
+- Phase 8 is now closed for time-series optimization, and Phase 14 adds a
+  bounded panel extension: `optimize_budget(results; ...)` is the canonical
+  fixed-budget optimization entry point on supported grouped `InferenceResults`,
+  backed by posterior-mean response surfaces, `JuMP.jl + Ipopt.jl`, typed
+  `BudgetOptimizationResult` / `PanelBudgetOptimizationResult` outputs,
+  `budget_impact_table(result)`, and `budget_audit_table(result)`. Panel
+  optimization allocates channel totals and preserves historical within-channel
+  panel-cell spend shares; free channel-by-panel allocation remains deferred.
+- Phase 9 is now closed: `run_pipeline(PipelineRunConfig(...))` and
+  `pipeline_main(args = ARGS)` are the canonical bounded pipeline entry
+  points, and the repo now ships a thin `bin/epsilon` wrapper for the same
+  `epsilon run config.yml` path. The closed time-series pipeline surface is
+  MCMC-only, runs the fixed Stage `00`-`70` sequence, preserves blocked
+  holdout validation as a side branch off the full-sample fit path, writes
+  stage-local `png` plots beside the corresponding stage artifacts, and keeps
+  YAML-driven VI explicitly unsupported. The pipeline also supports Abacus-style
+  optional Stage `05` prior-sensitivity planning: it writes resolved scenario
+  configs plus human and LLM-safe manifests, but does not refit every scenario
+  automatically. Panel pipeline orchestration is currently bounded to metadata,
+  optional prior-sensitivity planning, fit, assessment, decomposition,
+  diagnostics, curves, and explicitly enabled historical-share optimization:
+  `PanelMMM` configs can emit Stage `00` metadata/manifest
+  artifacts, Stage `20` fit artifacts, Stage `30` assessment artifacts, Stage
+  `40` decomposition artifacts, Stage `50` diagnostics artifacts, and Stage
+  `60` response-curve artifacts plus Stage `70` optimization artifacts for
+  channel-level historical-share panel allocation, while unsupported panel
+  stages are skipped until their artifact semantics are fixture-backed. Stage
+  `35` panel holdout validation is explicitly deferred for v1 rather than
+  added for parity alone; time-series blocked holdout validation remains
+  supported.
+- Phase 10 is now closed: the bounded `CairoMakie` plotting layer returns
+  Makie `Figure` objects through explicit functions such as `trace_plot`,
+  `contribution_plot`, `response_curve_plot`, and
+  `budget_optimization_plot`, plus an optional `write_plot_bundle(run)` helper
+  for successful pipeline runs. The pipeline itself now writes stage-local
+  plots during Stage `10`-`70` execution, while `write_plot_bundle(run)`
+  remains the separate curated bundle export. The plotting support matrix remains
+  intentionally narrower than Dash parity: it is time-series-first for
+  post-model visuals, supports channel-level budget optimization plots for
+  time-series and bounded panel optimization results, keeps VI trace plots
+  unsupported, and bounds the report bundle to deterministic `png` export over
+  successful pipeline runs
+- Phase 10 `10-01` is now landed: `epsilon_theme()` plus the bounded
+  diagnostic plotting surface now ship on top of grouped `InferenceResults`.
+  `trace_plot(results)` is the MCMC-only posterior trace view; VI-backed
+  grouped artifacts are rejected honestly there. `posterior_density_plot`,
+  `prior_posterior_plot`, `observed_fitted_plot`, and
+  `residual_diagnostics_plot` now return Makie `Figure` objects and save
+  through direct `png`, `svg`, or `pdf` exports. Time-series observed/fitted
+  and residual plots consume the frozen grouped posterior-predictive surface;
+  panel diagnostic plotting remains explicitly unsupported in the current
+  bounded Phase 10 slice
+- Phase 10 `10-02` is now landed: post-model plotting now renders directly from
+  `ContributionResults`, `DecompositionResults`, and `ResponseCurveResults`
+  through `contribution_plot`, `contribution_area_plot`, `decomposition_plot`,
+  and `response_curve_plot`. The current bounded row remains time-series first,
+  and those figures work on both supported MCMC and supported VI post-model
+  artifacts where the underlying typed Phase 7 surface exists. Panel
+  post-model plotting remains explicitly unsupported
+- Phase 10 `10-03` is now landed and closes Phase 10: optimization plotting
+  now renders directly from `BudgetOptimizationResult` through
+  `budget_optimization_plot`, and `write_plot_bundle(run)` now exports the
+  bounded deterministic `png` bundle over successful Phase 9 pipeline runs.
+  The pipeline itself writes stage-local plots during Stage `10`-`70`
+  execution; the bundle helper is the separate curated export over those same
+  saved artifacts. It keeps optimization plots optional when the optimization
+  stage is skipped and uses the fixed parameter-selection policy for
+  diagnostic figures and per-parameter prior-versus-posterior files
+- Phase 11 landed the release-gate infrastructure: compact final validation
+  fixtures, a maintainer-facing release harness, a frozen benchmark runner,
+  and published reference-machine results for the bounded v1 workload matrix.
+- Phase 12 is now closed: the final validation harness has been rerun on the
+  repaired methodology, the guaranteed Abacus-reference row remains
+  `VAL-TS-00-MCMC`, and the holiday-bearing automatic-holiday row is now
+  documented honestly as an Epsilon-native/reference row unless a separate
+  compatibility mode is added.
+- Phase 13 remediation is now closed for the accepted contract fixes: fitted
+  time-series trend and automatic-holiday date-basis state is carried in model
+  specs and reused for prediction/replay, unfitted prior prediction resolves
+  scale and date-derived feature state from `model.data`, media/channel arrays
+  must be finite and nonnegative, `hill_function` rejects negative inputs with
+  `ArgumentError`, and pipeline YAML rejects unsupported top-level keys.
+- Abacus remains a major reference library and comparison baseline, but
+  Epsilon now explicitly prioritizes the most methodologically coherent bounded
+  Julia design over literal upstream fidelity when those goals conflict.
+- current backend coverage: geometric, delayed, binomial, or Weibull adstock with centered logistic, tanh, Michaelis-Menten, or hill saturation, plus Fourier seasonality, bounded `linear` and `changepoint` trend paths, manual `events.columns` and generated `events.windows` event matrices, and a bounded `controls.transform = "standardize"` path on `TimeSeriesMMM`; plus a bounded `PanelMMM` path that can represent one or more declared panel dimensions through a deterministic flat panel-cell axis, shared media coefficients, hierarchical panel intercept offsets, contribution/decomposition replay, panel-cell response/metric surfaces with explicit `delta_grid` historical scaling, pipeline Stage `00` metadata artifacts, Stage `20` fit artifacts, Stage `30` assessment artifacts, Stage `40` decomposition artifacts, Stage `50` diagnostics artifacts, Stage `60` response-curve artifacts, and explicitly enabled Stage `70` historical-share optimization. The public config value `media.saturation.type = "logistic"` maps to Epsilon's centered logistic curve for compatibility. Panel seasonality, trend, events, richer controls, and free panel allocation are not yet exposed on that panel path; Stage `35` panel holdout validation is deliberately deferred for v1.
+- the time-series pipeline now validates Abacus-compatible Stage `00` through
+  Stage `70` artifact keys against an exported local Abacus `timeseries`
+  manifest contract; backend-specific Abacus NetCDF/PyMC artifacts are mapped
+  to Epsilon's typed Julia-native serialized artifacts rather than treated as
+  byte-for-byte file-format parity. Optional Stage `05` prior-sensitivity
+  planning is supported as a scenario-config and manifest stage, not as an
+  automatic multi-fit comparison loop.
+- the `geo_panel` and `geo_brand_panel` pipelines now validate Stage `00`
+  metadata/manifest keys, Stage `20` fit artifact keys, Stage `30` assessment
+  artifact keys, Stage `40` decomposition artifact keys, Stage `50`
+  diagnostics artifact keys, and Stage `60` response-curve artifact keys
+  against exported local Abacus manifest contracts, and both also validate
+  Stage `70` historical-share optimization artifacts (including the
+  multidimensional `geo`/`brand` coordinate columns in the
+  `channel_panel_allocation` table for `geo_brand_panel`) against exported
+  local Abacus panel manifest contracts, with unsupported panel stages
+  explicitly skipped
+- the bounded non-UI scenario planner surface now provides typed current,
+  manual-allocation, and fixed-budget optimized scenario specs plus
+  `scenario_plan(result)` tables over solved budget optimization results; it
+  mirrors Abacus's reusable business-planning store semantics without Dash UI,
+  background jobs, automatic scenario refits, or free panel allocation
+- HSGP is deferred from the supported surface
+
+## Release Gate
+
+The canonical release-gate summary lives in [Release Gate](release.md). It
+defines the Phase 11 infrastructure and the now-closed Phase 12 reconciliation:
+
+- the supported v1 surface
+- explicit unsupported rows
+- the Phase 11 validation split between Abacus-reference rows and Epsilon-only
+  contract-validation
+- the `v1.0.0-rc1` readiness checklist
+
+Benchmark methodology and published reference-machine results live in
+[Benchmarks](benchmarks.md).
+
+## Demo Data And Runner
+
+The repo also ships a bounded demo/comparison surface under
+`examples/demo/`:
+
+- copied Abacus reference datasets for `timeseries`, `geo_panel`, and
+  `geo_brand_panel`
+- one shared copied `holidays.csv` file for cross-framework comparisons
+- an Epsilon-native runnable time-series config over the same reference data
+- `julia --project=. examples/demo/run_demo.jl run timeseries`
+
+This does not reopen the support matrix. The runner is time-series-only, while
+the panel bundles are included as reference data/configs for comparison work.
+Successful demo runs write stage-local plots directly into the run directory.
+The copied Abacus time-series demo remains a useful reference baseline. The
+runnable Epsilon demo now uses the coherent native automatic holiday path, so
+it should be treated as a bounded Epsilon reference workflow rather than as a
+proof of end-to-end Abacus parity on the holiday-bearing row.
+
+## Phase 7 Post-Model Matrix
+
+### Supported rows
+
+| ID | Model | Backend | Contributions / Decomposition | Response / Metrics | `summary_table` | Notes |
+|---|---|---|---|---|---|---|
+| `POST-TS-MCMC` | `TimeSeriesMMM` | Turing / NUTS | Supported | Supported | Supported | Consumes canonical grouped `InferenceResults` through deterministic replay |
+| `POST-TS-VI` | `TimeSeriesMMM` | AdvancedVI mean-field Gaussian ADVI | Supported | Supported | Supported | Bounded to the explicit VI row frozen in Phase 6 |
+| `POST-P-MCMC` | `PanelMMM` | Turing / NUTS | Supported | Supported with explicit `delta_grid` | Supported | Bounded panel replay covered by `geo_panel` and `geo_brand_panel` validation gates; panels use a fixed flat `panel_cell` axis plus declared coordinate columns in contribution, curve, and metric summaries |
+
+### Post-Model Axis Contracts
+
+Post-model artifacts are draw-level arrays with fixed axis orders. Summary
+tables validate these contracts before materializing tidy tables:
+
+| Result type | Time-series axes | Panel axes | Panel grid / metadata contract |
+|---|---|---|---|
+| `ContributionResults.values` | `(draw, observation, component)` | `(draw, time, panel, component)` | Panel summaries include `panel_cell` plus declared coordinate columns |
+| `DecompositionResults.totals`, `shares` | `(draw, component)` | `(draw, component)` | Panel contributions are aggregated over time and panel cells before decomposition |
+| `ResponseCurveResults.values` | `(draw, spend_point)` | `(draw, panel, spend_point)` | Panel `spend_grid` is `(panel, spend_point)` and `spend_share_grid` is the shared `delta_grid` |
+| `SaturationCurveResults.values` | `(draw, spend_point)` | `(draw, panel, spend_point)` | Same panel grid contract as response curves |
+| `AdstockCurveResults.values` | `(draw, spend_point)` | `(draw, panel, spend_point)` | Same panel grid contract as response curves |
+| `MetricResults.values` | `(draw, spend_point, metric)` | `(draw, panel, spend_point, metric)` | Panel metrics inherit the response-curve `(panel, spend_point)` spend grid |
+
+For panel curves, `delta_grid` values are historical spend multipliers. They
+are not absolute spend values and they do not authorize arbitrary free
+channel-by-panel allocation.
+
+### Explicitly unsupported in Phase 7
+
+| ID | Combination | Status | Reason |
+|---|---|---|---|
+| `POST-U2` | Flat `ModelResults` as the canonical post-model input | Unsupported | Phase 7 consumes grouped `InferenceResults` directly |
+| `POST-U3` | Post-model outputs without grouped posterior/spec/observed-data state | Unsupported | Deterministic replay requires the frozen grouped artifact contract |
+
+## Phase 8 Optimization Matrix
+
+### Supported rows
+
+| ID | Model | Backend | Entry Point | Comparison / Audit Outputs | Notes |
+|---|---|---|---|---|---|
+| `OPT-TS-MCMC` | `TimeSeriesMMM` | Turing / NUTS | `optimize_budget(results; ...)` | Supported | Fixed-budget equality plus absolute and reference-relative bounds on grouped MCMC `InferenceResults` |
+| `OPT-TS-VI` | `TimeSeriesMMM` | AdvancedVI mean-field Gaussian ADVI | `optimize_budget(results; ...)` | Supported | Same bounded optimization contract on grouped VI `InferenceResults` |
+| `OPT-P-MCMC` | `PanelMMM` | Turing / NUTS | `optimize_budget(results; panel_allocation_mode = :historical_shares, ...)` | Supported | Optimizes channel totals, reuses panel response curves through shared channel deltas, and preserves historical within-channel panel-cell spend shares |
+
+### Explicitly unsupported in Phase 8
+
+| ID | Combination | Status | Reason |
+|---|---|---|---|
+| `OPT-U2` | Objectives other than `:total_response` | Unsupported | Phase 8 freezes one posterior-mean total-response objective |
+| `OPT-U3` | Constraint families beyond total-budget equality, absolute bounds, and reference-relative guardrails | Unsupported | Pairwise ratios, pacing, and multi-objective trade-offs are deferred |
+| `OPT-U4` | Free channel-by-panel allocation or panel-total bounds | Unsupported | Panel response curves are valid for shared within-channel historical deltas; arbitrary panel allocation needs a separate validity contract |
+
+## Supported Phase 5 Matrix
+
+### Supported bundles
+
+| ID | Model | Seasonality | Trend | Events | Controls | Status | Notes |
+|---|---|---|---|---|---|---|---|
+| `TS-00` | `TimeSeriesMMM` | `none` | `none` | `none` | `none` | Supported | Base time-series media path |
+| `TS-01` | `TimeSeriesMMM` | `fourier` | `none` | `none` | `none` | Supported | Requires `seasonality.n_order` |
+| `TS-02` | `TimeSeriesMMM` | `fourier` | `linear` | `none` | `none` | Supported | `trend.priors.beta` optional |
+| `TS-03` | `TimeSeriesMMM` | `fourier` | `linear` | `events.columns` | `none` | Supported | Manual event matrix via `MMMData.events` |
+| `TS-04` | `TimeSeriesMMM` | `fourier` | `changepoint` | `events.windows` | `none` | Supported | Requires `trend.n_changepoints` |
+| `TS-05` | `TimeSeriesMMM` | `fourier` | `none` | `none` | `controls.transform = "standardize"` | Supported | Requires `media.controls` |
+| `P-00` | `PanelMMM` | `none` | `none` | `none` | `none` | Supported | Flat panel-cell axis, shared media betas, hierarchical panel intercept offsets |
+
+### Explicitly unsupported in Phase 5
+
+| ID | Model | Combination | Status | Reason |
+|---|---|---|---|---|
+| `TS-U1` | `TimeSeriesMMM` | `seasonality.type = "hsgp"` | Unsupported | HSGP is deferred from the Phase 5 surface |
+| `P-U1` | `PanelMMM` | any panel seasonality | Unsupported | Fourier/HSGP seasonality is not yet exposed on the panel path |
+| `P-U2` | `PanelMMM` | any panel trend | Unsupported | Linear/changepoint trend is not yet exposed on the panel path |
+| `P-U3` | `PanelMMM` | any panel events | Unsupported | `events.columns` / `events.windows` are not yet exposed on the panel path |
+| `P-U4` | `PanelMMM` | any panel richer controls | Unsupported | `controls.transform` is not yet exposed on the panel path |
+
+Current key-level contract:
+
+- `seasonality.type = "fourier"` requires `seasonality.n_order`
+- `trend.type = "linear"` or `trend.type = "changepoint"`; changepoints require `trend.n_changepoints`
+- `events` supports either `events.columns` or `events.windows`
+- `controls.transform = "standardize"` is layered on top of `media.controls`
+- `PanelMMM` accepts one or more `dimensions.panel` entries by using a deterministic flat panel-cell axis; prediction expects the fitted `panel_names` in the same order
+
+### Panel Coordinate Mapping
+
+`PanelMMM` stores model tensors on one flat panel-cell axis. The analyst-facing
+flat axis is always named `panel_cell`; declared panel dimensions such as `geo`
+or `brand` are coordinate columns attached to that axis. For multidimensional
+panels, Epsilon also keeps the legacy internal `panel` coordinate in metadata
+for compatibility with existing tensor names.
+
+Use `panel_axis(metadata_or_result)` or `panel_axes(metadata_or_result)` to
+inspect the ordered `PanelAxis` contract, and `panel_coordinates` to recover the
+one-based flat index, flat panel label, and named coordinates for each panel
+cell. The ordering is the declared panel-dimension order, with earlier
+dimensions varying more slowly. For example, `("geo", "brand")` with geos
+`UK, FR` and brands `Alpha, Beta` maps to `UK|Alpha`, `UK|Beta`, `FR|Alpha`,
+`FR|Beta`.
+
+!!! warning "Panel Observation Counts"
+    `nobs(::PanelMMMData)` currently returns flattened panel-cell observations,
+    `ntime(data) * npanels(data)`, to preserve existing model-spec and pipeline
+    artifact contracts. Use `ntime(data)`, `npanels(data)`, and
+    `npanel_observations(data)` when code needs explicit panel axis semantics.
+
+## Phase 6 Inference Matrix
+
+### Supported rows
+
+| ID | Model | Backend | Entry Point | `predict` | `prior_predict` | `model_results` | `inference_results` | Diagnostics | Notes |
+|---|---|---|---|---|---|---|---|---|---|
+| `INF-TS-MCMC` | `TimeSeriesMMM` | Turing / NUTS | `fit!` | Supported | Supported | Supported | Supported | Supported | Canonical MCMC path; YAML `fit` remains mapped here |
+| `INF-P-MCMC` | `PanelMMM` | Turing / NUTS | `fit!` | Supported | Supported | Supported | Supported | Supported | Bounded panel slice only; seasonality/trend/events/richer controls still excluded |
+| `INF-TS-VI` | `TimeSeriesMMM` | AdvancedVI mean-field Gaussian ADVI | `approximate_fit!` | Supported | Supported* | Unsupported | Supported | Unsupported | `InferenceResults` is the canonical artifact for VI-backed fits |
+
+\* Direct `prior_predict(model)` remains a backend-agnostic helper and uses `SamplerConfig.draws` and `SamplerConfig.chains`. VI-backed grouped prior draws and prior predictive groups inside `InferenceResults` use `VariationalConfig.draws` and are materialized as a single chain to match the VI posterior artifact.
+
+### Explicitly unsupported in Phase 6
+
+| ID | Combination | Status | Reason |
+|---|---|---|---|
+| `INF-U1` | `PanelMMM` + `approximate_fit!` | Unsupported | Panel VI is not implemented in the bounded Phase 6 surface |
+| `INF-U2` | YAML-driven VI or mixed-backend `fit!` semantics | Unsupported | YAML `fit` and `SamplerConfig` remain MCMC-only |
+| `INF-U3` | VI-backed `model_results`, `model_diagnostics`, `sampler_diagnostics`, `convergence_report`, `convergence_warnings` | Unsupported | These remain MCMC/Turing-only surfaces |
+| `INF-U4` | NetCDF / ArviZ-native grouped export | Unsupported | Deferred from Phase 6; `InferenceResults` is the canonical grouped artifact |
 
 ## Working Principles
 
@@ -32,10 +322,103 @@ Project planning documents live under `.planning/` in the repository root.
 
 Repository standards are defined in `TECHNICAL-STANDARDS.md`.
 
+## Internal Optimization Contract
+
+Phase 8 keeps the solver-agnostic optimization contract explicit underneath the
+public `optimize_budget(results; ...)` surface.
+
+```@docs
+Epsilon.BudgetChannelConstraint
+Epsilon.BudgetConstraintAudit
+Epsilon.BudgetChannelSurface
+Epsilon.BudgetOptimizationProblem
+Epsilon._build_budget_optimization_problem
+Epsilon._evaluate_budget_objective
+```
+
+## Pipeline Contract
+
+Phase 9 is now closed. The bounded pipeline contract is frozen through the
+fixed Stage `00`-`70` surface, with stage-local plot artifacts emitted into
+the corresponding run directories. Phase 14 now also exports the Abacus
+`timeseries` pipeline manifest contract as a Julia fixture and checks the
+supported Stage `00` through Stage `70` artifact keys against Abacus names,
+with Julia-native artifact formats retained where Abacus uses
+PyMC/NetCDF-specific files.
+
+```@docs
+Epsilon.PipelineRunConfig
+Epsilon.PipelineStageRecord
+Epsilon.PipelineRunResult
+Epsilon.PipelineValidationResult
+Epsilon.pipeline_main
+Epsilon.run_pipeline
+```
+
+## Plotting Foundation
+
+Phase 10 has landed the bounded diagnostic plotting foundation on grouped
+`InferenceResults`.
+
+```@docs
+Epsilon.epsilon_theme
+Epsilon.trace_plot
+Epsilon.posterior_density_plot
+Epsilon.prior_posterior_plot
+Epsilon.observed_fitted_plot
+Epsilon.residual_diagnostics_plot
+```
+
+## Post-Model Plotting
+
+Phase 10 now also includes the first bounded plotting layer over the closed
+Phase 7 post-model result surfaces.
+
+```@docs
+Epsilon.contribution_plot
+Epsilon.contribution_area_plot
+Epsilon.decomposition_plot
+Epsilon.response_curve_plot
+Epsilon.saturation_curve_plot
+Epsilon.adstock_curve_plot
+```
+
+## Optimization And Bundle Plotting
+
+Phase 10 is now closed with optimization plotting plus deterministic static
+bundle export over successful pipeline runs.
+
+```@docs
+Epsilon.budget_optimization_plot
+Epsilon.write_plot_bundle
+```
+
+## Scenario Planner
+
+Phase 14 now includes the first bounded non-UI scenario-planner surface over
+existing optimization outputs.
+
+```@docs
+Epsilon.ScenarioDataArraySpec
+Epsilon.AbstractScenarioSpec
+Epsilon.CurrentScenarioSpec
+Epsilon.ManualAllocationScenarioSpec
+Epsilon.FixedBudgetOptimizedScenarioSpec
+Epsilon.ScenarioPlanResult
+Epsilon.scenario_plan
+```
+
 ## API
 
 ```@docs
 Epsilon.ConvMode
+Epsilon.After
+Epsilon.Before
+Epsilon.Overlap
+Epsilon.ConvergenceIssue
+Epsilon.ConvergenceReport
+Epsilon.ConvergenceWarning
+Epsilon.ConvergenceWarnings
 Epsilon.EpsilonPrior
 Epsilon.LaplacePrior
 Epsilon.LogNormalPrior
@@ -45,26 +428,54 @@ Epsilon.AbstractModel
 Epsilon.AbstractRegressionModel
 Epsilon.AbstractMMMModel
 Epsilon.MMMData
+Epsilon.PanelMMMData
+Epsilon.InferenceSampleStats
+Epsilon.InferenceResults
+Epsilon.ModelArtifactMetadata
+Epsilon.ModelCoordinateMetadata
+Epsilon.PanelAxis
+Epsilon.PanelCoordinate
+Epsilon.ModelDiagnostics
 Epsilon.MMMModelSpec
 Epsilon.ModelConfig
 Epsilon.ModelFitState
+Epsilon.ModelResults
+Epsilon.ParameterDiagnostics
+Epsilon.SamplerDiagnostics
+Epsilon.SamplerWarning
+Epsilon.SamplerWarnings
 Epsilon.SamplerConfig
+Epsilon.VariationalConfig
+Epsilon.PanelMMM
 Epsilon.TimeSeriesMMM
 Epsilon.WeibullType
 Epsilon.active_count
 Epsilon.batched_convolution
 Epsilon.binomial_adstock
 Epsilon.build_model
+Epsilon.convergence_report
+Epsilon.convergence_warnings
+Epsilon._compute_scales
 Epsilon.deserialize_model_config
 Epsilon.deserialize_prior
 Epsilon.delayed_adstock
 Epsilon.geometric_adstock
 Epsilon.epsilon_version
+Epsilon.fourier_features
 Epsilon.expand_masked_values
+Epsilon.inference_results
+Epsilon.load_inference_results
 Epsilon.load_model_config
+Epsilon.load_model
 Epsilon.load_public_config
+Epsilon.load_results
 Epsilon.load_sampler_config
+Epsilon.centered_logistic_saturation
 Epsilon.hill_function
+Epsilon.has_convergence_issues
+Epsilon.has_convergence_warnings
+Epsilon.has_numerical_errors
+Epsilon.has_sampler_warnings
 Epsilon.instantiate_distribution
 Epsilon.logistic_saturation
 Epsilon.MaxAbsScaler
@@ -78,29 +489,65 @@ Epsilon.horseshoe_coefficients
 Epsilon.max_abs_scale_target_data
 Epsilon.max_abs_scale_channel_data
 Epsilon.model_config_from_dict
+Epsilon.model_diagnostics
+Epsilon.model_results
+Epsilon.predict
+Epsilon.ContributionResults
+Epsilon.DecompositionResults
+Epsilon.ResponseCurveResults
+Epsilon.SaturationCurveResults
+Epsilon.AdstockCurveResults
+Epsilon.MetricResults
+Epsilon.BudgetOptimizationResult
+Epsilon.PanelBudgetOptimizationResult
+Epsilon.budget_audit_table
+Epsilon.budget_impact_table
+Epsilon.panel_budget_allocation_table
+Epsilon.panel_axis
+Epsilon.panel_axes
+Epsilon.panel_coordinate
+Epsilon.panel_coordinates
+Epsilon.contribution_results
+Epsilon.decomposition_results
+Epsilon.response_curve_results
+Epsilon.saturation_curve_results
+Epsilon.adstock_curve_results
+Epsilon.metric_results
+Epsilon.optimize_budget
+Epsilon.summary_table
+Epsilon.sampler_diagnostics
+Epsilon.sampler_warnings
 Epsilon.normalize_channel_columns
 Epsilon.nobs
+Epsilon.ntime
+Epsilon.npanels
+Epsilon.npanel_observations
+Epsilon.prior_predict
 Epsilon.r2d2_coefficients
 Epsilon.r2d2_variance_weights
 Epsilon.R2D2Prior
 Epsilon.regularized_local_scales
 Epsilon.Scaled
 Epsilon.sampler_config_from_dict
+Epsilon.save_inference_results
+Epsilon.save_model
+Epsilon.save_results
 Epsilon.SkewStudentT
 Epsilon.StandardScaler
 Epsilon.StandardizeControls
 Epsilon.standardize_control_data
 Epsilon.tanh_saturation
+Epsilon.approximate_fit!
 Epsilon.validate_column_indices
 Epsilon.validate_channel_values
 Epsilon.validate_model_config
 Epsilon.validate_mmm_data
+Epsilon.validate_panel_mmm_data
 Epsilon.validate_sampler_config
 Epsilon.validate_target_data
 Epsilon.weibull_adstock
 Epsilon.fit!
 Epsilon.fit_transform!
 Epsilon.inverse_transform
-Epsilon.predict
 Epsilon.transform
 ```

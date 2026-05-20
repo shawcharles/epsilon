@@ -1,0 +1,2 @@
+model_kind,nobs,nchannels,ncontrols,target_column,target_type,observation_dim
+time_series_mmm,104,6,0,revenue,revenue,observation

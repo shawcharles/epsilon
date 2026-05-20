@@ -1,0 +1,9 @@
+{
+  "case_id": "VAL-TS-00-MCMC",
+  "date_type": "Date",
+  "has_controls": false,
+  "has_events": false,
+  "has_panel": false,
+  "nchannels": 2,
+  "nobs": 12
+}

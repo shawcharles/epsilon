@@ -167,11 +167,15 @@ function instantiate_distribution(prior::EpsilonPrior)
     if distribution == "Scaled"
         base = _required_parameter(params, distribution, :base)
         scale = _required_parameter(params, distribution, :scale)
+        _is_nested_distribution_parameter(scale) &&
+            throw(ArgumentError("Scaled scale cannot be a nested prior parameter"))
         base_distribution = _resolve_distribution_parameter(base)
         base_distribution isa ContinuousUnivariateDistribution ||
             throw(ArgumentError("Scaled base must be a continuous univariate distribution"))
         return Scaled(base_distribution, scale)
     elseif distribution == "SkewStudentT"
+        _has_nested_distribution_parameters(params) &&
+            throw(ArgumentError("cannot instantiate SkewStudentT with nested prior parameters"))
         nu = _required_parameter(params, distribution, :nu)
         mu = _optional_parameter(params, 0.0, :mu)
         sigma = _optional_parameter(params, 1.0, :sigma)
@@ -179,7 +183,7 @@ function instantiate_distribution(prior::EpsilonPrior)
         return SkewStudentT(nu, mu, sigma, alpha)
     end
 
-    any(value -> value isa EpsilonPrior, values(prior.parameters)) &&
+    _has_nested_distribution_parameters(prior.parameters) &&
         throw(ArgumentError("cannot instantiate $(prior.distribution) with nested prior parameters"))
 
     if distribution == "Normal"
@@ -227,7 +231,7 @@ function instantiate_distribution(prior::EpsilonPrior)
         nu = _required_parameter(params, distribution, :nu)
         mu = _optional_parameter(params, 0.0, :mu)
         sigma = _optional_parameter(params, 1.0, :sigma)
-        return LocationScale(mu, sigma, TDist(nu))
+        return mu + sigma * TDist(nu)
     elseif distribution == "TruncatedNormal"
         mu = _optional_parameter(params, 0.0, :mu)
         sigma = _required_parameter(params, distribution, :sigma)
@@ -395,8 +399,18 @@ function _serialize_prior_value(value)
 end
 
 function _resolve_distribution_parameter(value)
-    if value isa EpsilonPrior
+    if value isa EpsilonPrior || value isa AbstractSpecialPrior
         return instantiate_distribution(value)
     end
+    value isa MaskedPrior &&
+        throw(ArgumentError("cannot instantiate distributions with MaskedPrior parameters"))
     return value
+end
+
+function _has_nested_distribution_parameters(parameters::AbstractDict)
+    return any(_is_nested_distribution_parameter, values(parameters))
+end
+
+function _is_nested_distribution_parameter(value)
+    return value isa EpsilonPrior || value isa AbstractSpecialPrior || value isa MaskedPrior
 end

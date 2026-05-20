@@ -1,4 +1,5 @@
 include("convolution.jl")
 include("adstock.jl")
 include("saturation.jl")
+include("autodiff.jl")
 include("scaling.jl")

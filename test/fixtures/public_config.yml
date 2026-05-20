@@ -30,6 +30,15 @@ media:
           sigma: 0.4
         dims: [channel]
 
+controls:
+  transform: standardize
+  priors:
+    beta:
+      distribution: Normal
+      mu: 0
+      sigma: 0.75
+      dims: [control]
+
 priors:
   intercept:
     distribution: Normal

@@ -1,0 +1,10 @@
+{
+  "backend": "mcmc",
+  "case_id": "VAL-TS-04-MCMC",
+  "chains": 1,
+  "draws": 20,
+  "model_type": "TimeSeriesMMM",
+  "random_seed": 105,
+  "support_row": "TS-04",
+  "tune": 20
+}

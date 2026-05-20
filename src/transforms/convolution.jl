@@ -5,6 +5,10 @@ Boundary handling modes for [`batched_convolution`](@ref).
 """
 @enum ConvMode After Before Overlap
 
+@doc "Trailing carryover mode for [`batched_convolution`](@ref)." After
+@doc "Leading carryover mode for [`batched_convolution`](@ref)." Before
+@doc "Centered overlap mode for [`batched_convolution`](@ref)." Overlap
+
 """
     batched_convolution(x, w, axis=1, mode=After)
 

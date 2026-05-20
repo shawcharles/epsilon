@@ -1,0 +1,17 @@
+{
+  "channel_current_spend": {
+    "search": 17.3,
+    "tv": 36.0
+  },
+  "channel_optimized_spend": {
+    "search": 53.299996570400495,
+    "tv": 3.4295995019155972e-06
+  },
+  "channel_spend_delta": {
+    "search": 35.9999965704005,
+    "tv": -35.9999965704005
+  },
+  "current_total_response": 4.74173216576038,
+  "objective_value": 6.314212301198076,
+  "optimized_total_response": 6.314212301198076
+}

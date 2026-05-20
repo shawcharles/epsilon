@@ -64,7 +64,7 @@
 |---|---|
 | `Scaled(dist, scale)` | Custom struct wrapping `dist`, override `rand` and `logpdf` |
 | `SkewStudentT(nu, mu, sigma, alpha)` | Implement as custom `Distribution` subtype |
-| `Michaelis(Km, S)` | Implement as custom `Distribution` subtype |
+| Michaelis-Menten | Already covered by the saturation layer; no separate custom distribution is planned |
 | `MaskedPrior(dist, mask)` | Julia function that applies prior to masked indices |
 | `Horseshoe` | Available in Turing ecosystem or implement manually |
 | `FinnishHorseshoe` | Implement using `Horseshoe` + slab regularization |
@@ -240,12 +240,12 @@ end
 
 | Abacus (scipy) | Epsilon (Julia) | Notes |
 |---|---|---|
-| `scipy.optimize.minimize(method='SLSQP')` | `Optim.optimize(f, x0, IPNewton())` or `JuMP` | SLSQP → Interior Point or SQP |
-| Equality constraint: `sum(x) == budget` | `JuMP: @constraint(m, sum(x) == budget)` | JuMP has first-class constraint support |
-| Bounds: `lower <= x[i] <= upper` | `JuMP: @variable(m, lo <= x[i] <= hi)` | |
-| Ratio constraints | `JuMP: @constraint(m, x[i]/x[j] >= r)` | |
+| `scipy.optimize.minimize(method='SLSQP')` | `JuMP.jl + Ipopt.jl` | Closed Phase 8 solver contract for the supported path |
+| Equality constraint: `sum(x) == budget` | `JuMP: @constraint(m, sum(x) == budget)` | Total-budget equality is part of the bounded Phase 8 contract |
+| Bounds: `lower <= x[i] <= upper` | `JuMP: @variable(m, lo <= x[i] <= hi)` | Absolute and reference-relative bounds are normalized before model construction |
+| Ratio constraints | Deferred / out of scope | Not part of the closed Phase 8 public surface |
 
-**Recommendation:** Use `JuMP.jl` + `Ipopt` solver for the budget optimizer. JuMP is Julia's premier optimization framework and handles constrained nonlinear optimization natively.
+**Recommendation:** Use `JuMP.jl` + `Ipopt.jl` only for the supported Phase 8 budget optimizer. `Optim.jl` may still be useful for exploratory experiments, but it is not part of the bounded public contract.
 
 ---
 
@@ -274,7 +274,28 @@ end
 | `sns.heatmap(data)` | `heatmap!(ax, data)` | |
 | `plt.savefig("plot.png")` | `save("plot.png", fig)` | |
 
-**Alternative:** `Plots.jl` with `GR` backend for faster prototyping (simpler API, less control).
+**Phase 10 decision:** `CairoMakie.jl` is the canonical static backend.
+`AlgebraOfGraphics.jl` may help internally, but `Plots.jl` is outside the
+bounded public plotting contract.
+
+---
+
+## 12. Pipeline Mapping
+
+| Abacus | Epsilon | Notes |
+|---|---|---|
+| `PipelineRunConfig` | `PipelineRunConfig` | Same role, but bounded Phase 9 runtime keys stay time-series-first and MCMC-only |
+| `run_pipeline(...)` | `run_pipeline(...)` | Canonical disk-backed runner entry point |
+| `PipelineRunResult` | `PipelineRunResult` | Run-directory + manifest ownership |
+| blocked holdout validation outputs | `PipelineValidationResult` | Stage-owned side-branch artifact; does not replace the main fit path |
+| `run_manifest.json` | `run_manifest.json` | Same machine-readable run index concept |
+| combined model dataset CSV | combined model dataset CSV | Closed Phase 9 path with fixed date parsing, sort order, duplicate-date rejection, and YAML-declared column mapping |
+| NetCDF-heavy stage artifacts | Julia-native `.jls` artifacts + CSV / JSON sidecars | Closed Phase 9 contract; NetCDF remains out of scope |
+| panel-first pipeline workflow | time-series-first pipeline workflow | Panel runner support is deferred beyond bounded Phase 9 |
+
+**Recommendation:** Keep the first Epsilon runner thin and contract-driven.
+Do not reopen panel, YAML-driven VI, or report-bundle semantics inside the
+initial Phase 9 pipeline.
 
 ---
 

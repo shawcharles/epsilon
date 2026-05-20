@@ -1,0 +1,56 @@
+[conv_3d_overlap]
+time = 96
+channels = 4
+panels = 3
+lags = 9
+axis = 1
+mode = "overlap"
+x_base = 0.5
+x_time_step = 0.015
+x_channel_step = 0.08
+x_panel_step = 0.04
+w_base = 1.0
+w_decay = 0.35
+w_channel_step = 0.06
+w_panel_step = 0.03
+
+[geometric_adstock_matrix]
+rows = 104
+cols = 6
+l_max = 12
+normalize = true
+axis = 1
+mode = "after"
+x_base = 0.7
+x_row_step = 0.02
+x_col_step = 0.05
+alpha = [0.2, 0.35, 0.5, 0.65, 0.8, 0.9]
+
+[weibull_pdf_matrix]
+rows = 104
+cols = 6
+l_max = 12
+normalize = true
+axis = 1
+mode = "after"
+type = "pdf"
+x_base = 0.6
+x_row_step = 0.018
+x_col_step = 0.04
+lam = [1.5, 1.8, 2.1, 2.4, 2.7, 3.0]
+k = [0.9, 1.1, 1.3, 1.5, 1.7, 1.9]
+
+[hill_vector]
+length = 4096
+x_base = 0.25
+x_step = 0.01
+slope = 1.6
+kappa = 1.8
+
+[standardize_controls_matrix]
+rows = 240
+cols = 8
+x_base = 10.0
+x_row_step = 0.15
+x_col_step = 0.85
+x_interaction_step = 0.02

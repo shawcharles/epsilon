@@ -1,0 +1,204 @@
+using Epsilon
+using Serialization
+using Test
+
+function sample_results_model(; adstock_type = "geometric", saturation_type = "logistic")
+    config = ModelConfig(
+        date_column = "date",
+        target_column = "revenue",
+        target_type = "revenue",
+        channel_columns = ["tv", "search"],
+        control_columns = ["price_index"],
+        dims = ("geo",),
+        adstock = Dict("type" => adstock_type, "l_max" => 8),
+        saturation = Dict("type" => saturation_type),
+        priors = Dict("intercept" => EpsilonPrior("Normal"; mu = 0.0, sigma = 1.0)),
+    )
+    sampler = SamplerConfig(;
+        draws = 20,
+        tune = 20,
+        chains = 1,
+        cores = 1,
+        target_accept = 0.8,
+        random_seed = 7,
+        progressbar = false,
+        compute_convergence_checks = false,
+    )
+    data = MMMData(
+        dates = 1:6,
+        target = [5.0, 6.5, 7.5, 9.0, 10.0, 11.5],
+        channels = [1.0 0.5; 2.0 1.0; 2.5 1.5; 3.0 2.0; 3.5 2.5; 4.0 3.0],
+        channel_names = ["tv", "search"],
+        controls = [0.2; 0.4; 0.3; 0.6; 0.5; 0.8][:, :],
+        control_names = ["price_index"],
+    )
+    model = TimeSeriesMMM(config, sampler, data)
+    fit!(model)
+    return model
+end
+
+@testset "model_results" begin
+    model = sample_results_model(; adstock_type = "weibull_pdf", saturation_type = "hill")
+    results = model_results(model)
+
+    @test results isa ModelResults
+    @test results.metadata isa ModelArtifactMetadata
+    @test results.metadata.model_type == "TimeSeriesMMM"
+    @test results.metadata.backend == :turing
+    @test results.spec == model.fit_state.artifact.spec
+    @test size(results.chain, 1) == model.sampler_config.draws
+    @test size(results.posterior_predictive, 1) == model.sampler_config.draws
+    @test Symbol("target[1]") in results.posterior_predictive.name_map.parameters
+    @test results.prior_predictive === nothing
+end
+
+@testset "model_results without predictive" begin
+    model = sample_results_model()
+    results = model_results(model; include_posterior_predictive = false)
+
+    @test results.posterior_predictive === nothing
+    @test results.prior_predictive === nothing
+    @test size(results.chain, 1) == model.sampler_config.draws
+end
+
+@testset "model_results with prior predictive" begin
+    model = sample_results_model()
+    results = model_results(model; include_posterior_predictive = false, include_prior_predictive = true)
+
+    @test results.posterior_predictive === nothing
+    @test size(results.prior_predictive, 1) == model.sampler_config.draws
+    @test Symbol("target[1]") in results.prior_predictive.name_map.parameters
+end
+
+@testset "model_results uses a spec matching new_data" begin
+    model = sample_results_model()
+    new_data = MMMData(
+        dates = 1:4,
+        target = [4.0, 5.0, 6.0, 7.0],
+        channels = [1.0 0.5; 2.0 1.0; 3.0 1.5; 4.0 2.0],
+        channel_names = ["tv", "search"],
+        controls = [0.2; 0.4; 0.6; 0.8][:, :],
+        control_names = ["price_index"],
+    )
+
+    results = model_results(model; new_data, include_prior_predictive = true)
+
+    @test results.spec.nobs == 4
+    @test results.spec.coordinate_metadata.coordinates["observation"] == string.(1:4)
+    @test Symbol("target[4]") in results.posterior_predictive.name_map.parameters
+    @test Symbol("target[4]") in results.prior_predictive.name_map.parameters
+end
+
+@testset "model_results uses the fitted artifact spec after config drift" begin
+    model = sample_results_model()
+    fitted_spec = model.fit_state.artifact.spec
+
+    model.config.adstock["type"] = "unsupported"
+    model.config.saturation["type"] = "unsupported"
+
+    results = model_results(model)
+
+    @test results.spec.adstock == fitted_spec.adstock
+    @test results.spec.saturation == fitted_spec.saturation
+    @test size(results.posterior_predictive, 1) == model.sampler_config.draws
+end
+
+@testset "model_results ignores seasonality trend events and controls drift" begin
+    model = sample_time_series_model(;
+        seasonality = Dict("type" => "fourier", "n_order" => 2),
+        trend = Dict("type" => "linear"),
+        events = Dict("columns" => ["promo", "holiday"]),
+        controls_config = Dict("transform" => "standardize"),
+        event_values = [1.0 0.0; 0.0 1.0; 0.0 0.0; 1.0 0.0; 0.0 0.0; 0.0 1.0],
+        dates = Date(2024, 1, 1):Day(7):Date(2024, 2, 5),
+    )
+    fit!(model)
+    fitted_spec = model.fit_state.artifact.spec
+
+    model.config.seasonality["type"] = "unsupported"
+    model.config.trend["type"] = "unsupported"
+    empty!(model.config.events)
+    model.config.events["columns"] = ["bad_event"]
+    model.config.controls["transform"] = "unsupported"
+
+    results = model_results(model)
+
+    @test results.spec.seasonality == fitted_spec.seasonality
+    @test results.spec.trend == fitted_spec.trend
+    @test results.spec.events == fitted_spec.events
+    @test results.spec.controls == fitted_spec.controls
+    @test size(results.posterior_predictive, 1) == model.sampler_config.draws
+end
+
+@testset "save_results/load_results" begin
+    model = sample_results_model(; adstock_type = "delayed", saturation_type = "michaelis_menten")
+    results = model_results(model; include_prior_predictive = true)
+    path = tempname()
+
+    saved_path = save_results(path, results)
+    @test saved_path == path
+
+    payload = open(deserialize, path)
+    @test payload.metadata isa ModelArtifactMetadata
+    @test payload.spec isa MMMModelSpec
+
+    loaded = load_results(path)
+    @test loaded isa ModelResults
+    @test loaded == results
+    @test size(loaded.posterior_predictive, 1) == model.sampler_config.draws
+    @test size(loaded.prior_predictive, 1) == model.sampler_config.draws
+end
+
+@testset "panel model_results" begin
+    model = sample_panel_model()
+    fit!(model)
+    results = model_results(model; include_prior_predictive = true)
+
+    @test results isa ModelResults
+    @test results.metadata.model_type == "PanelMMM"
+    @test results.spec.model_kind == :panel_mmm
+    @test results.spec.coordinate_metadata.coordinates["geo"] == ["north", "south"]
+    @test size(results.chain, 1) == model.sampler_config.draws
+    @test size(results.posterior_predictive, 1) == model.sampler_config.draws
+    @test size(results.prior_predictive, 1) == model.sampler_config.draws
+    @test Symbol("target[1, 1]") in results.posterior_predictive.name_map.parameters
+    @test Symbol("target[1, 1]") in results.prior_predictive.name_map.parameters
+end
+
+@testset "panel model_results uses the fitted artifact spec after config drift" begin
+    model = sample_panel_model()
+    fit!(model)
+    fitted_spec = model.fit_state.artifact.spec
+
+    model.config.adstock["type"] = "unsupported"
+    model.config.saturation["type"] = "unsupported"
+
+    results = model_results(model)
+
+    @test results.spec.adstock == fitted_spec.adstock
+    @test results.spec.saturation == fitted_spec.saturation
+    @test size(results.posterior_predictive, 1) == model.sampler_config.draws
+end
+
+@testset "load_results rejects incompatible artifact versions" begin
+    model = sample_results_model()
+    results = model_results(model)
+    path = tempname()
+    save_results(path, results)
+    payload = open(deserialize, path)
+    metadata = payload.metadata
+
+    bad_metadata = ModelArtifactMetadata(
+        metadata.schema_version,
+        v"0.0.0",
+        metadata.julia_version,
+        metadata.created_at_utc,
+        metadata.model_type,
+        metadata.backend,
+        metadata.fit_status,
+    )
+    open(path, "w") do io
+        serialize(io, (; payload..., metadata = bad_metadata))
+    end
+    @test_throws ArgumentError load_results(path)
+end

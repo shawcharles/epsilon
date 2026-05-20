@@ -82,12 +82,19 @@ function delayed_adstock(
 end
 
 """
-    weibull_adstock(x, lam=1, k=1, l_max=12; axis=1, mode=After, type=PDF, normalize=false)
+    weibull_adstock(x, lam=1, k=1, l_max=12; axis=1, mode=After, type=:pdf, normalize=false)
 
 Apply Weibull adstock along `axis`.
 
 `lam` and `k` may be scalars or batch-shaped arrays that broadcast against the
 non-convolved dimensions of `x`.
+
+`type` accepts `:pdf`, `:cdf`, `"pdf"`, `"cdf"`, `Epsilon.PDF`, or
+`Epsilon.CDF`.
+
+For `type=:cdf`, Epsilon preserves the current Abacus convention of prepending a
+leading self-retention term before cumulative multiplication, so the effective
+kernel has `l_max + 1` entries.
 """
 function weibull_adstock(
     x::AbstractArray,
@@ -157,18 +164,17 @@ end
 
 function _binomial_adstock_weights(alpha::Real, l_max::Integer, x_type::Type)
     out_type = promote_type(float(x_type), typeof(float(alpha)))
-    exponents = fill(out_type(inv(alpha) - 1), l_max)
-    base = out_type.(1 .- collect(0:(l_max - 1)) ./ (l_max + 1))
-    return base .^ exponents
+    exponent = inv(convert(out_type, alpha)) - one(out_type)
+    base = one(out_type) .- out_type.(collect(0:(l_max - 1))) ./ out_type(l_max + 1)
+    return base .^ exponent
 end
 
 function _binomial_adstock_weights(alpha::AbstractArray, l_max::Integer, x_type::Type)
     out_type = promote_type(float(x_type), float(eltype(alpha)))
-    alpha_array = out_type.(alpha)
-    exponent_shape = ntuple(_ -> 1, ndims(alpha_array))
-    exponents = reshape((inv.(alpha_array) .- 1), size(alpha_array)..., 1)
+    exponent_shape = ntuple(_ -> 1, ndims(alpha))
+    exponents = reshape((inv.(out_type.(alpha)) .- one(out_type)), size(alpha)..., 1)
     base = reshape(
-        out_type.(1 .- collect(0:(l_max - 1)) ./ (l_max + 1)),
+        one(out_type) .- out_type.(collect(0:(l_max - 1))) ./ out_type(l_max + 1),
         exponent_shape...,
         l_max,
     )
@@ -176,17 +182,14 @@ function _binomial_adstock_weights(alpha::AbstractArray, l_max::Integer, x_type:
 end
 
 function _geometric_adstock_weights(alpha::Real, l_max::Integer, x_type::Type)
-    out_type = promote_type(float(x_type), typeof(float(alpha)))
     exponents = zero(Int):(l_max - 1)
-    return out_type.(alpha) .^ exponents
+    return alpha .^ exponents
 end
 
 function _geometric_adstock_weights(alpha::AbstractArray, l_max::Integer, x_type::Type)
-    out_type = promote_type(float(x_type), float(eltype(alpha)))
-    alpha_array = out_type.(alpha)
-    exponent_shape = ntuple(_ -> 1, ndims(alpha_array))
-    exponents = reshape(out_type.(collect(0:(l_max - 1))), exponent_shape..., l_max)
-    alpha_reshaped = reshape(alpha_array, size(alpha_array)..., 1)
+    exponent_shape = ntuple(_ -> 1, ndims(alpha))
+    exponents = reshape(collect(0:(l_max - 1)), exponent_shape..., l_max)
+    alpha_reshaped = reshape(alpha, size(alpha)..., 1)
     return alpha_reshaped .^ exponents
 end
 
@@ -196,9 +199,8 @@ function _delayed_adstock_weights(
     l_max::Integer,
     x_type::Type,
 )
-    out_type = promote_type(float(x_type), typeof(float(alpha)), typeof(float(theta)))
-    exponents = out_type.((collect(0:(l_max - 1)) .- theta) .^ 2)
-    return out_type(alpha) .^ exponents
+    exponents = (collect(0:(l_max - 1)) .- theta) .^ 2
+    return alpha .^ exponents
 end
 
 function _delayed_adstock_weights(
@@ -208,10 +210,9 @@ function _delayed_adstock_weights(
     x_type::Type,
 )
     batch_shape = _broadcast_batch_shape(size(alpha), size(theta))
-    out_type = promote_type(float(x_type), float(eltype(alpha)), float(eltype(theta)))
-    alpha_array = broadcast((a, _t) -> convert(out_type, a), alpha, theta)
-    theta_array = broadcast((_a, t) -> convert(out_type, t), alpha, theta)
-    indices = reshape(out_type.(collect(0:(l_max - 1))), ntuple(_ -> 1, length(batch_shape))..., l_max)
+    alpha_array = broadcast((a, _t) -> a, alpha, theta)
+    theta_array = broadcast((_a, t) -> t, alpha, theta)
+    indices = reshape(collect(0:(l_max - 1)), ntuple(_ -> 1, length(batch_shape))..., l_max)
     alpha_reshaped = reshape(alpha_array, batch_shape..., 1)
     theta_reshaped = reshape(theta_array, batch_shape..., 1)
     return alpha_reshaped .^ ((indices .- theta_reshaped) .^ 2)
@@ -223,8 +224,7 @@ function _delayed_adstock_weights(
     l_max::Integer,
     x_type::Type,
 )
-    out_type = promote_type(float(x_type), typeof(float(alpha)), float(eltype(theta)))
-    alpha_array = fill(convert(out_type, alpha), size(theta))
+    alpha_array = fill(alpha, size(theta))
     return _delayed_adstock_weights(alpha_array, theta, l_max, x_type)
 end
 
@@ -234,8 +234,7 @@ function _delayed_adstock_weights(
     l_max::Integer,
     x_type::Type,
 )
-    out_type = promote_type(float(x_type), float(eltype(alpha)), typeof(float(theta)))
-    theta_array = fill(convert(out_type, theta), size(alpha))
+    theta_array = fill(theta, size(alpha))
     return _delayed_adstock_weights(alpha, theta_array, l_max, x_type)
 end
 
@@ -298,7 +297,11 @@ function _weibull_weights_from_arrays(type::WeibullType, t, lam, k)
         weights = (k ./ lam) .* (scaled_t .^ (k .- 1)) .* exp.(-(scaled_t .^ k))
         min_weights = minimum(weights; dims = ndims(weights))
         max_weights = maximum(weights; dims = ndims(weights))
-        return (weights .- min_weights) ./ (max_weights .- min_weights)
+        denominator = max_weights .- min_weights
+        zero_denominator = denominator .== zero(eltype(denominator))
+        safe_denominator = ifelse.(zero_denominator, one(eltype(denominator)), denominator)
+        normalized = (weights .- min_weights) ./ safe_denominator
+        return ifelse.(zero_denominator, one(eltype(weights)), normalized)
     else
         survival = exp.(-((t ./ lam) .^ k))
         prefix_shape = size(survival)[1:(end - 1)]
@@ -308,5 +311,11 @@ function _weibull_weights_from_arrays(type::WeibullType, t, lam, k)
 end
 
 function _normalize_last_axis(weights::AbstractArray)
-    return weights ./ sum(weights; dims = ndims(weights))
+    denominator = sum(weights; dims = ndims(weights))
+    zero_denominator = denominator .== zero(eltype(denominator))
+    one_denominator = one.(denominator)
+    safe_denominator = denominator .+ zero_denominator .* one_denominator
+    keep_mask = one_denominator .- zero_denominator .* one_denominator
+    normalized = weights ./ safe_denominator
+    return normalized .* keep_mask
 end

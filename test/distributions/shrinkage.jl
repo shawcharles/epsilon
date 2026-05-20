@@ -42,5 +42,6 @@ end
     @test_throws ArgumentError R2D2Prior(; mean_R2 = 1.2)
     @test_throws ArgumentError r2d2_variance_weights(prior, [-1.0, 1.0], 2.0)
     @test_throws ArgumentError r2d2_variance_weights(prior, [0.0, 0.0], 2.0)
+    @test_throws ArgumentError r2d2_variance_weights(prior, [1.0, 3.0], -2.0)
     @test_throws ArgumentError instantiate_distribution(prior)
 end

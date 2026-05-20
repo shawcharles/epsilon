@@ -29,6 +29,11 @@ using Test
         @test_throws ArgumentError binomial_adstock([1.0, 2.0], [0.1, 0.0], 3)
         @test_throws ArgumentError binomial_adstock([1.0, 2.0], 0.5, 0)
     end
+
+    @testset "eltype preservation" begin
+        actual = binomial_adstock(Float32[1, 2, 3], Float32(0.5), 3)
+        @test eltype(actual) == Float32
+    end
 end
 
 @testset "geometric_adstock" begin
@@ -78,6 +83,12 @@ end
         @test_throws ArgumentError delayed_adstock([1.0, 2.0], [0.1, 1.2], [0, 1], 3)
         @test_throws ArgumentError delayed_adstock([1.0, 2.0], 0.5, 1, 0)
     end
+
+    @testset "zero-sum normalized kernels stay finite" begin
+        actual = delayed_adstock([1.0, 2.0, 3.0], 0.0, 10, 3; normalize = true)
+        @test all(isfinite, actual)
+        @test actual == zeros(3)
+    end
 end
 
 @testset "weibull_adstock" begin
@@ -104,6 +115,8 @@ end
             weibull_adstock(x, 1.0, 1.0, 3; type = Epsilon.PDF)
         @test weibull_adstock(x, 1.0, 1.0, 3; type = :cdf) ==
             weibull_adstock(x, 1.0, 1.0, 3; type = Epsilon.CDF)
+        @test weibull_adstock(x, 1.0, 1.0, 3; type = :pdf) ==
+            weibull_adstock(x, 1.0, 1.0, 3; type = Epsilon.PDF)
         @test_throws ArgumentError weibull_adstock(x, 1.0, 1.0, 3; type = "PMF")
     end
 
@@ -113,5 +126,18 @@ end
         @test_throws ArgumentError weibull_adstock([1.0, 2.0], [0.5, -1.0], [1.0, 1.0], 3)
         @test_throws ArgumentError weibull_adstock([1.0, 2.0], [1.0, 1.0], [0.5, -1.0], 3)
         @test_throws ArgumentError weibull_adstock([1.0, 2.0], 1.0, 1.0, 0)
+    end
+
+    @testset "single-lag normalized PDF stays finite" begin
+        x = [2.0, 4.0, 6.0]
+        actual = weibull_adstock(x, 1.0, 1.0, 1; type = Epsilon.PDF, normalize = true)
+        @test all(isfinite, actual)
+        @test actual == x
+    end
+
+    @testset "cdf contract preserves leading self-retention term" begin
+        actual = weibull_adstock([1.0, 0.0, 0.0, 0.0], 1.0, 1.0, 1; type = Epsilon.CDF)
+        @test actual[1] == 1.0
+        @test actual[2] > 0.0
     end
 end

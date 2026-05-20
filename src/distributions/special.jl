@@ -1,3 +1,6 @@
+import Statistics: mean, var
+import Random
+
 abstract type AbstractSpecialPrior end
 
 """
@@ -34,6 +37,9 @@ struct SkewStudentT{T <: Real} <: ContinuousUnivariateDistribution
         return new{T}(nu, mu, sigma, alpha)
     end
 end
+
+SkewStudentT(nu::Real, mu::Real, sigma::Real, alpha::Real) =
+    SkewStudentT(promote(nu, mu, sigma, alpha)...)
 
 SkewStudentT(; nu, mu = 0.0, sigma = 1.0, alpha = 0.0) = SkewStudentT(float(nu), float(mu), float(sigma), float(alpha))
 
@@ -81,6 +87,10 @@ end
 
 function LogNormalPrior(; dims = nothing, centered::Bool = true, kwargs...)
     parameters = Dict{Symbol, Any}(Symbol(key) => value for (key, value) in kwargs)
+    (haskey(parameters, :mu) && haskey(parameters, :mean)) &&
+        throw(ArgumentError("LogNormalPrior cannot specify both mu and mean"))
+    (haskey(parameters, :sigma) && haskey(parameters, :std)) &&
+        throw(ArgumentError("LogNormalPrior cannot specify both sigma and std"))
     if haskey(parameters, :mu) && !haskey(parameters, :mean)
         parameters[:mean] = pop!(parameters, :mu)
     end
@@ -222,10 +232,18 @@ function _is_scalar_like(value)
     return value isa Real
 end
 
-Distributions.minimum(::Scaled) = -Inf
-Distributions.maximum(::Scaled) = Inf
+Distributions.minimum(d::Scaled) = d.scale * minimum(d.base)
+Distributions.maximum(d::Scaled) = d.scale * maximum(d.base)
 Distributions.insupport(d::Scaled, x::Real) = insupport(d.base, x / d.scale)
 Distributions.rand(d::Scaled) = d.scale * rand(d.base)
+Distributions.rand(rng::Random.AbstractRNG, d::Scaled) = d.scale * rand(rng, d.base)
+Distributions.rand(d::Scaled, dims::Dims) = d.scale .* rand(d.base, dims)
+Distributions.rand(d::Scaled, dim1::Int, moredims::Int...) =
+    d.scale .* rand(d.base, dim1, moredims...)
+Distributions.rand(rng::Random.AbstractRNG, d::Scaled, dims::Dims) =
+    d.scale .* rand(rng, d.base, dims)
+Distributions.rand(rng::Random.AbstractRNG, d::Scaled, dim1::Int, moredims::Int...) =
+    d.scale .* rand(rng, d.base, dim1, moredims...)
 Distributions.pdf(d::Scaled, x::Real) = pdf(d.base, x / d.scale) / d.scale
 Distributions.logpdf(d::Scaled, x::Real) = logpdf(d.base, x / d.scale) - log(d.scale)
 mean(d::Scaled) = d.scale * mean(d.base)
@@ -242,10 +260,39 @@ function Distributions.pdf(d::SkewStudentT, x::Real)
     return 2 / d.sigma * pdf(tdist, z) * cdf(TDist(d.nu + 1), arg)
 end
 
-Distributions.logpdf(d::SkewStudentT, x::Real) = log(pdf(d, x))
+function Distributions.logpdf(d::SkewStudentT, x::Real)
+    z = (x - d.mu) / d.sigma
+    tdist = TDist(d.nu)
+    arg = d.alpha * z * sqrt((d.nu + 1) / (d.nu + z^2))
+    return log(2) - log(d.sigma) + logpdf(tdist, z) + logcdf(TDist(d.nu + 1), arg)
+end
 
 function Distributions.rand(d::SkewStudentT)
     z = rand(SkewNormal(0.0, 1.0, d.alpha))
     v = rand(Chisq(d.nu)) / d.nu
     return d.mu + d.sigma * z / sqrt(v)
+end
+
+function Distributions.rand(rng::Random.AbstractRNG, d::SkewStudentT)
+    z = rand(rng, SkewNormal(0.0, 1.0, d.alpha))
+    v = rand(rng, Chisq(d.nu)) / d.nu
+    return d.mu + d.sigma * z / sqrt(v)
+end
+
+Distributions.rand(d::SkewStudentT, dim1::Int, moredims::Int...) =
+    rand(Random.default_rng(), d, dim1, moredims...)
+
+Distributions.rand(d::SkewStudentT, dims::Dims) = rand(Random.default_rng(), d, dims)
+
+function Distributions.rand(rng::Random.AbstractRNG, d::SkewStudentT, dims::Dims)
+    return [rand(rng, d) for _ in CartesianIndices(dims)]
+end
+
+function Distributions.rand(
+    rng::Random.AbstractRNG,
+    d::SkewStudentT,
+    dim1::Int,
+    moredims::Int...,
+)
+    return rand(rng, d, (dim1, moredims...))
 end

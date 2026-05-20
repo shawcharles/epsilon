@@ -7,7 +7,7 @@ using Test
         data = [1.0, -2.0, 4.0]
         scaled = fit_transform!(scaler, data)
         @test scaled ≈ [0.25, -0.5, 1.0] atol = 1e-12 rtol = 1e-12
-        @test inverse_transform(scaler, scaled) ≈ data atol = 1e-12 rtol = 1e-12
+        @test Epsilon.inverse_transform(scaler, scaled) ≈ data atol = 1e-12 rtol = 1e-12
     end
 
     @testset "matrix scaling" begin
@@ -15,11 +15,30 @@ using Test
         data = [1.0 2.0 0.0; 4.0 -1.0 0.0]
         scaled = fit_transform!(scaler, data)
         @test scaled ≈ [0.25 1.0 0.0; 1.0 -0.5 0.0] atol = 1e-12 rtol = 1e-12
-        @test inverse_transform(scaler, scaled) ≈ data atol = 1e-12 rtol = 1e-12
+        @test Epsilon.inverse_transform(scaler, scaled) ≈ data atol = 1e-12 rtol = 1e-12
     end
 
     @testset "fitted requirement" begin
-        @test_throws ArgumentError transform(MaxAbsScaler(), [1.0, 2.0])
+        @test_throws ArgumentError Epsilon.transform(MaxAbsScaler(), [1.0, 2.0])
+    end
+
+    @testset "shape validation" begin
+        vector_scaler = MaxAbsScaler()
+        fit!(vector_scaler, [1.0, 2.0, 3.0])
+        @test_throws ArgumentError Epsilon.transform(vector_scaler, [1.0 2.0; 3.0 4.0])
+        @test_throws ArgumentError Epsilon.inverse_transform(
+            vector_scaler,
+            [1.0 2.0; 3.0 4.0],
+        )
+
+        matrix_scaler = MaxAbsScaler()
+        fit!(matrix_scaler, [1.0 2.0; 3.0 4.0])
+        @test_throws ArgumentError Epsilon.transform(matrix_scaler, [1.0, 2.0])
+        @test_throws ArgumentError Epsilon.transform(
+            matrix_scaler,
+            [1.0 2.0 3.0; 4.0 5.0 6.0],
+        )
+        @test_throws ArgumentError Epsilon.inverse_transform(matrix_scaler, [1.0, 2.0])
     end
 end
 
@@ -30,7 +49,26 @@ end
         scaled = fit_transform!(scaler, data)
         @test isapprox(sum(scaled) / length(scaled), 0.0; atol = 1e-12)
         @test isapprox(sqrt(sum(scaled .^ 2) / length(scaled)), 1.0; atol = 1e-12)
-        @test inverse_transform(scaler, scaled) ≈ data atol = 1e-12 rtol = 1e-12
+        @test Epsilon.inverse_transform(scaler, scaled) ≈ data atol = 1e-12 rtol = 1e-12
+    end
+
+    @testset "shape validation" begin
+        vector_scaler = StandardScaler()
+        fit!(vector_scaler, [1.0, 2.0, 3.0, 4.0])
+        @test_throws ArgumentError Epsilon.transform(vector_scaler, [1.0 2.0; 3.0 4.0])
+        @test_throws ArgumentError Epsilon.inverse_transform(
+            vector_scaler,
+            [1.0 2.0; 3.0 4.0],
+        )
+
+        matrix_scaler = StandardScaler()
+        fit!(matrix_scaler, [1.0 2.0; 3.0 4.0])
+        @test_throws ArgumentError Epsilon.transform(matrix_scaler, [1.0, 2.0])
+        @test_throws ArgumentError Epsilon.transform(
+            matrix_scaler,
+            [1.0 2.0 3.0; 4.0 5.0 6.0],
+        )
+        @test_throws ArgumentError Epsilon.inverse_transform(matrix_scaler, [1.0, 2.0])
     end
 end
 
@@ -74,6 +112,10 @@ end
     @test_throws ArgumentError validate_column_indices(3, Int[], "channel_columns")
     @test_throws ArgumentError validate_column_indices(3, [1, 1], "channel_columns")
     @test_throws ArgumentError validate_column_indices(3, [1, 4], "channel_columns")
+    @test_throws ArgumentError validate_column_indices(3, [1.5], "channel_columns")
+    @test_throws ArgumentError MaxAbsScaleChannels([1.5])
+    @test_throws ArgumentError StandardizeControls([1.5])
+    @test_throws ArgumentError validate_channel_values([1.0 2.0; 3.0 4.0], [3])
 
     @test_logs (:warn, "channel_columns contain negative values") validate_channel_values(
         [-1.0 2.0; 3.0 4.0],

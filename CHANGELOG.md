@@ -1,0 +1,143 @@
+# Changelog
+
+All notable project changes are recorded here. Epsilon is still on the
+`0.1.0-dev` line, so entries are grouped under `Unreleased`.
+
+## Unreleased
+
+### Added
+
+- Added `centered_logistic_saturation(x, lam)` as the explicit public name for
+  Epsilon's zero-baselined logistic-family saturation curve,
+  `tanh(lam * x / 2)`.
+- Added `PanelAxis`, `panel_axis`, `panel_axes`, `PanelCoordinate`,
+  `panel_coordinates`, and `panel_coordinate` helpers for recovering ordered
+  named `PanelMMM` coordinates from Epsilon's deterministic flat `panel_cell`
+  axis.
+- Added `ntime`, `npanels`, and `npanel_observations` helpers so panel code can
+  distinguish shared time rows, flat panel cells, and flattened panel-cell
+  observations explicitly.
+- Added fixture-backed Abacus pipeline artifact-key parity for the bounded
+  `timeseries` Stage `00` through Stage `70` surface.
+- Added Abacus-compatible pipeline artifact keys for Stage `35` holdout
+  validation, Stage `40` decomposition, Stage `50` diagnostics, Stage `60`
+  response curves, and enabled Stage `70` optimization.
+- Added Julia-native serialized artifact equivalents for Abacus PyMC/NetCDF
+  outputs where the stage semantics match but file-format identity would be
+  misleading.
+- Added stricter pipeline tests that assert exported Abacus manifest
+  artifact-key sets are present in Epsilon stage manifests and that all mapped
+  artifacts exist.
+- Added Phase 14 handoff state for resuming with `geo_panel` pipeline Stage
+  `00` metadata/manifest parity.
+- Added fixture-backed `geo_panel` pipeline Stage `00` metadata/manifest
+  parity and Stage `20` fit artifact-key parity, including panel-aware
+  dataset/model metadata, Julia-native fit artifacts, posterior summaries,
+  trace plots, and explicit skipped unsupported panel pipeline stages.
+- Added fixture-backed `geo_brand_panel` pipeline Stage `00` metadata/manifest
+  parity and Stage `20` fit artifact-key parity for multidimensional panel
+  configs, including flattened panel-cell metadata, coordinate round trips, and
+  Julia-native fit artifacts under Abacus-compatible manifest keys.
+- Added fixture-backed `geo_panel` and `geo_brand_panel` pipeline Stage `30`
+  assessment artifact-key parity, including panel-aware observed/fitted,
+  residual, posterior predictive summary, and assessment plot artifacts.
+- Added fixture-backed `geo_panel` and `geo_brand_panel` pipeline Stage `40`
+  decomposition artifact-key parity, including Julia-native contribution and
+  decomposition result artifacts, panel-aware contribution/decomposition
+  summaries, Abacus-compatible baseline/channel/mean contribution CSVs, and
+  decomposition/media contribution plots.
+- Added fixture-backed `geo_panel` and `geo_brand_panel` pipeline Stage `50`
+  diagnostics artifact-key parity, including panel-aware design reports,
+  chain/MCMC diagnostics, predictive diagnostics, residual diagnostics, VIF
+  reports, and residual ACF plots.
+- Added fixture-backed `geo_panel` and `geo_brand_panel` pipeline Stage `60`
+  response-curve artifact-key parity, including panel-cell historical-scaling
+  response, saturation, adstock, and metric artifacts under Abacus-compatible
+  curve keys.
+- Added bounded `PanelMMM` Stage `70` optimization support for channel-level
+  budget allocation with fixed historical within-channel panel-cell shares,
+  including `PanelBudgetOptimizationResult`, panel allocation/audit artifacts,
+  explicit errors for deferred free channel-by-panel constraints, and
+  fixture-backed `geo_panel` pipeline artifact-key coverage.
+- Extended fixture-backed `geo_brand_panel` pipeline Stage `70` historical-share
+  optimization coverage, asserting that the existing bounded
+  `panel_allocation_mode = :historical_shares` policy preserves flattened
+  multidimensional panel-cell axes and `geo`/`brand` coordinate metadata in the
+  emitted `channel_panel_allocation.csv` and `channel_delta_audit.csv`
+  artifacts.
+- Added bounded Abacus-compatible Stage `05` prior-sensitivity planning to the
+  pipeline. The stage parses runner-only `prior_sensitivity` YAML, writes
+  resolved manual or `conservative_mmm` scenario configs, emits human and
+  LLM-safe manifests, and validates narrow prior/selected model-structure
+  override paths without fitting every scenario automatically.
+- Added the first bounded non-UI scenario-planner surface: typed current,
+  manual-allocation, and fixed-budget optimized scenario specs plus
+  `scenario_plan(result)` comparison tables over solved time-series and panel
+  budget optimization results. The surface mirrors Abacus's reusable business
+  planning store shape without Dash UI, background jobs, automatic scenario
+  refits, or free channel-by-panel allocation.
+
+### Changed
+
+- Fixed Phase 13 remediation issues: fitted time-series trend and automatic
+  holiday date-basis state is now serialized in model specs and reused for
+  prediction/replay, unfitted time-series prior prediction resolves scale and
+  date-derived feature state from the model's training data, media/channel
+  inputs are rejected when negative, `hill_function` now raises a clear
+  `ArgumentError` for negative `x`, and pipeline YAML now rejects unknown
+  top-level keys instead of silently ignoring typoed run blocks.
+- Routed the existing `media.saturation.type = "logistic"` model path through
+  `centered_logistic_saturation` while keeping `logistic_saturation` as a
+  documented legacy compatibility alias. This preserves fitted-model numerical
+  behavior while avoiding a misleading primary API name.
+- Clarified that `nobs(::PanelMMMData)` remains the compatibility flattened
+  panel-cell observation count for existing model-spec and pipeline artifact
+  contracts; use `ntime` and `npanels` for separate panel axes.
+- Updated panel contribution, curve, metric, and budget-allocation summaries to
+  carry an explicit `panel_cell` column plus declared panel-coordinate columns;
+  the legacy multidimensional `panel` column is retained as a compatibility
+  alias.
+- Locked post-model result axis contracts for contribution, decomposition,
+  response, saturation, adstock, and metric artifacts. `summary_table` and
+  `metric_results(::ResponseCurveResults)` now validate expected draw, panel,
+  spend-point, component, and metric axes before deriving tidy tables or
+  downstream metrics.
+- Consolidated the shared response, saturation, and adstock curve construction
+  path so time-series and panel curve entrypoints use one internal
+  `InferenceResults`-to-result builder while preserving the existing replay
+  math and public API.
+- Updated Phase 14 documentation and planning state to treat `timeseries`
+  pipeline Stage `00` through Stage `70` artifact-key parity as covered.
+- Clarified that panel pipeline parity is currently bounded to Stage `00`
+  metadata, Stage `20` fit, Stage `30` assessment, and Stage `40`
+  decomposition, Stage `50` diagnostics, and Stage `60` response-curve
+  semantics on both `geo_panel` and `geo_brand_panel` before broader panel
+  pipeline orchestration.
+- Updated the bounded pipeline contract so `PanelMMM` configs can run the
+  metadata, fit, assessment, decomposition, diagnostics, and curve stages
+  truthfully and can run optimization only when an Epsilon-supported
+  `optimization.total_budget` contract is explicitly provided; Abacus panel
+  relative-budget blocks are not parsed as time-series pipeline options.
+- Documented Stage `35` panel holdout validation as deferred for v1: Epsilon
+  keeps time-series blocked holdout validation, but does not add panel holdout
+  semantics without a concrete methodological requirement.
+- Closed Plan `14-05` with a parity audit: `timeseries` Stage `00` through
+  Stage `70` is covered; `geo_panel` and `geo_brand_panel` cover accepted panel
+  pipeline stages through explicitly enabled Stage `70` historical-share
+  optimization; panel Stage `35` validation, AI advisor, and Dash remain
+  outside the closed surface as documented.
+
+### Notes
+
+- Saved the 2026-05-20 handoff after Phase 13 remediation closeout: planning
+  state now points future work at release-prep choices after the completed
+  Phase 14 evidence spine.
+- AI advisor and Plotly Dash/dashboard parity remain deferred.
+- Panel Stage `35` validation remains deferred; adding it for parity alone is
+  intentionally avoided.
+- Scenario planner execution remains bounded to optimizer-derived comparison
+  tables; richer scenario simulation, automatic refits, and UI workflows are
+  still outside the current surface.
+- Repo-wide `make format-check` still reports pre-existing Runic drift outside
+  the Phase 13 remediation slice; targeted Runic checks on the touched Julia
+  files passed.

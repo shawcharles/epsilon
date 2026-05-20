@@ -75,200 +75,361 @@ to start transform work without foundation churn.
 - [x] Port current Abacus special priors used in config compatibility (`LogNormalPrior`, `LaplacePrior`)
 - [x] Port custom distributions: `Scaled`, `SkewStudentT`
 - [x] Decide that no separate Michaelis prior/distribution type is required beyond the already-ported Michaelis-Menten saturation path
-- [x] Implement `SpecialPriorRegistry` pattern in Julia (type dispatch)
+- [x] Implement the Julia-side special-prior compatibility layer in `special.jl`
 - [x] Port `Horseshoe` prior
 - [x] Port `Finnish Horseshoe` prior
 - [x] Port `R2D2` prior (shrinkage)
 
 **Acceptance:** Supported prior configs deserialize and instantiate correctly,
 and the helper math needed by the future model layer is validated. Dims-to-plate
-mapping remains a Phase 4 concern.
+mapping now rolls forward as a Phase 5 concern.
 
 ---
 
-## Phase 4: Model Core 🟡
+## Phase 4: Model Core 🟢
 
 > The heart of the port — model builder, Turing @model macro, config system.
 
 ### 3a. Configuration System
 - [x] Port `ModelConfig` (YAML-driven model specification)
-- [ ] Implement config merging (defaults + user overrides)
+- [x] Implement deterministic config merging (base defaults + YAML config + explicit overrides)
 - [x] Port sampler config (chains, draws, target_accept, etc.)
 - [x] YAML loading via `YAML.jl`
 
-### 3b. Abstract Model Types
+### 3b. Typed Model Types & Orchestration
 - [x] Design Julia abstract type hierarchy:
   ```
-  AbstractModelBuilder
+  AbstractModel
     └── AbstractRegressionModel
           └── AbstractMMMModel
-                └── PanelMMM
+                └── TimeSeriesMMM
   ```
 - [x] Implement builder/orchestration shell types for the base time-series MMM path
 - [x] Implement `build_model` interface → returns a backend-agnostic MMM specification pending the later Turing `@model` layer
-- [ ] Implement `fit` interface → runs MCMC sampling
-- [ ] Implement `predict` interface → posterior predictive
+- [x] Implement `fit` interface → runs MCMC sampling for the minimal time-series MMM path
+- [x] Implement `predict` interface → posterior predictive for the minimal time-series MMM path
+- [x] Add typed coordinate metadata for the current time-series tensors
 
 ### 3c. Turing Model Specification
-- [ ] Translate `pm.Model()` context manager → Turing `@model` macro
-- [ ] Map `pm.MutableData` → function arguments in `@model`
-- [ ] Map `pm.Deterministic` → tracking via `Turing.@addlogprob!` or returned values
-- [ ] Map `pm.sample()` → `Turing.sample(model, NUTS(), MCMCThreads(), N, chains)`
-- [ ] Handle coordinate/dimension system (PyMC dims → Turing plate indexing)
+- [x] Translate the first base MMM path into a Turing `@model`
+- [x] Map the initial data path to `@model` function arguments
+- [x] Map posterior predictive generation to Turing's `predict` workflow
+- [x] Run the first Turing-backed sample path in tests
+- [x] Support the current minimal media runtime path:
+  - [x] adstock: geometric, delayed, binomial, Weibull PDF/CDF
+  - [x] saturation: logistic, tanh, Michaelis-Menten, hill
+- [ ] Extend coordinate/dimension support beyond the current time-series metadata surface (defer broader plate work to Phase 5)
 
-### 3d. IO & Serialization
-- [ ] Implement model save/load (JLSO.jl or JLD2.jl)
-- [ ] Port InferenceData concept → MCMCChains.Chains + metadata dict
-- [ ] Implement results export (CSV, NetCDF)
+### 3d. Lifecycle, Results & Diagnostics
+- [x] Implement model save/load for typed model artifacts and fitted chains
+- [x] Implement typed results object and results save/load
+- [x] Implement prior predictive path
+- [x] Implement typed parameter diagnostics
+- [x] Implement typed convergence report and warnings
+- [x] Implement typed sampler diagnostics and warnings
+- [x] Implement multi-chain execution mode selection (`single`, `serial`, `threads`)
+- [x] Decide that richer grouped export moves to Phase 6 rather than expanding Phase 4
 
-**Acceptance:** Can specify, sample, and save a basic regression model via YAML config.
+### 3e. Phase 4 Closeout
+- [x] Create the first executable per-phase plan doc at `.planning/phases/04-model-core/PLAN.md`
+- [x] Reconcile final Phase 4 exit criteria with the implemented model-core surface
+- [x] Freeze the minimal supported Phase 4 contract before widening Phase 5/6 scope
 
----
-
-## Phase 5: Features 🔴
-
-> Port all MMM-specific modeling features.
-
-### 4a. Seasonality
-- [ ] Port Fourier seasonality (sin/cos pairs for yearly/weekly)
-- [ ] Port HSGP (Hilbert Space Gaussian Process) seasonality
-  - [ ] Evaluate: use `AbstractGPs.jl` + custom HSGP, or port manually
-  - [ ] Implement spectral density computation
-  - [ ] Implement basis function construction
-
-### 4b. Trend
-- [ ] Port linear trend component (intercept + slope · time_index)
-- [ ] Port time-varying parameters (TVP) — random walk / GP-based
-
-### 4c. Events & Holidays
-- [ ] Port event/holiday effect modeling
-- [ ] Port holiday feature matrix generation from CSV
-
-### 4d. Panel Data
-- [ ] Port `PanelMMM` — multi-geo / multi-brand hierarchical model
-- [ ] Implement hierarchical priors (group-level + geo-level offsets)
-- [ ] Handle panel indexing and data layout
-
-### 4e. Controls & Additive Effects
-- [ ] Port control variable handling (linear regression on controls)
-- [ ] Port additive effect component
-
-**Acceptance:** Can build and sample a full-featured MMM with seasonality + trend + events + media channels.
+**Acceptance:**
+- Incremental checkpoint: can load YAML config, validate typed MMM data, and build a backend-agnostic model spec.
+- Current capability: can run a minimal Turing-backed MMM, produce prior and posterior predictive output, persist typed model/results artifacts, and inspect typed diagnostics and warnings.
+- Phase exit: current capabilities are documented honestly, and remaining feature/inference growth is handed off cleanly to Phases 5 and 6.
 
 ---
 
-## Phase 6: Inference 🔴
+## Phase 5: Features 🟢
 
-> Sampling, variational inference, predictive checks, diagnostics.
+> Broaden the current minimal MMM into a practical feature surface without
+> reopening Phase 4 model-core scope.
 
-### 5a. MCMC Sampling
-- [ ] NUTS sampling via `Turing.sample(NUTS(), ...)`
-- [ ] Multi-chain parallel sampling (`MCMCThreads()` or `MCMCDistributed()`)
-- [ ] Sampler configuration from YAML (draws, chains, target_accept, init)
+### 5a. Seasonality Baseline + HSGP Decision Gate
+- [x] Add deterministic time-index / seasonal feature builders
+- [x] Port Fourier seasonality baseline
+- [x] Integrate Fourier seasonality into the current `TimeSeriesMMM` path
+- [x] Resolve the HSGP strategy early in the phase
+- [x] Record an ADR choosing the accepted bounded defer path
+- [x] Freeze the supported `seasonality` config keys before 5b starts
 
-### 5b. Variational Inference
-- [ ] ADVI via `AdvancedVI.jl`
-- [ ] Port `approximate_fit()` workflow
+### 5b. Trend, Events & Controls
+- [x] Port linear trend component
+- [x] Decide and bound the first supported time-varying trend path
+- [x] Port the first bounded event-effect modeling path
+- [x] Port holiday/event feature matrix generation
+- [x] Broaden control-variable handling beyond the current minimal path
+- [x] Document the supported keys for `trend`, `events`, and richer `controls`
 
-### 5c. Predictive Sampling
-- [ ] Prior predictive: `predict(model, prior_chain)`
-- [ ] Posterior predictive: `predict(model, posterior_chain)`
+### 5c. Panel & Hierarchical Structure
+- [x] Port the first supported `PanelMMM` / hierarchical MMM path
+- [x] Expand coordinate metadata and dims/plates beyond the current time-series surface
+- [x] Implement hierarchical priors / group-level offsets
+- [x] Handle panel indexing and data layout with synthetic panel tests
+- [x] Keep `TimeSeriesMMM` as the single-series path during Phase 5
 
-### 5d. Diagnostics
-- [ ] R-hat, ESS, MCSE via `MCMCDiagnosticTools.jl`
-- [ ] Divergence detection
-- [ ] Port convergence warning system
+### 5d. Integration & Closeout
+- [x] Land the accepted HSGP path or document the bounded defer outcome from 5a
+- [x] Add feature-combination integration coverage for the supported Phase 5 surface
+- [x] Reconcile docs and planning with the actual supported feature contract
+- [x] Freeze the supported feature matrix, including unsupported combinations, before Phase 6 inference hardening
 
-**Acceptance:** MCMC produces well-mixed chains; diagnostics flag issues correctly.
-
----
-
-## Phase 7: Post-Modeling 🔴
-
-> Contribution decomposition, response curves, attribution.
-
-- [ ] Port channel contribution extraction
-- [ ] Port `compute_mean_contributions_over_time` (wide DataFrame)
-- [ ] Port contribution share computation (percentage attribution)
-- [ ] Port response curve computation (counterfactual spend → response)
-- [ ] Port ROAS/mROAS/CPA/mCPA metrics
-- [ ] Port waterfall decomposition
-- [ ] Port inverse-scaling (contributions back to original target scale)
-
-**Acceptance:** Decomposition and metrics match Abacus outputs for identical model fits.
-
----
-
-## Phase 8: Budget Optimization 🔴
-
-> Port the budget optimizer and constraint system.
-
-- [ ] Port budget optimization objective function
-- [ ] Map `scipy.optimize.minimize(method='SLSQP')` → `Optim.jl` or `JuMP.jl`
-- [ ] Port constraint types: budget equality, per-channel bounds, ratio constraints
-- [ ] Port `BudgetOptimizer` orchestrator
-- [ ] Port multi-objective optimization (ROAS vs CPA trade-offs)
-- [ ] Port `allocated_response` computation
-
-**Acceptance:** Optimizer finds same optimal allocations as Abacus (within tolerance).
+**Acceptance:** Can build and sample the supported Phase 5 MMM feature surface
+truthfully, with:
+- [x] explicit supported config keys
+- [x] one documented feature-combination matrix
+- [x] HSGP explicitly resolved
+- [x] one supported small `PanelMMM` path
+- [x] feature-combination coverage in place before Phase 6 begins
 
 ---
 
-## Phase 9: Pipeline 🔴
+## Phase 6: Inference 🟢
 
-> YAML-driven end-to-end pipeline (9 stages).
+> MCMC hardening, grouped inference export, bounded variational inference, closeout.
 
-- [ ] Port pipeline config loading (YAML.jl)
-- [ ] Port `PipelineContext` and `PipelineManifest`
-- [ ] Port Stage 00: Metadata
-- [ ] Port Stage 10: Preflight (prior predictive)
-- [ ] Port Stage 20: Fit (MCMC sampling)
-- [ ] Port Stage 30: Assessment (in-sample fit quality)
-- [ ] Port Stage 35: Validation (blocked holdout)
-- [ ] Port Stage 40: Decomposition
-- [ ] Port Stage 50: Optimization
-- [ ] Port Stage 60: Report (summary artifacts)
-- [ ] Port CLI interface (`epsilon run config.yaml`)
+### 6a. MCMC Sampling
+- [x] Harden the current `fit!`-backed NUTS workflow without inventing a second MCMC surface
+- [x] Make warning versus failure behavior explicit, test-covered, and owned under `src/inference/`
+- [x] Keep YAML `fit` config and `SamplerConfig` truthful across supported execution modes
 
-**Acceptance:** `epsilon run` produces a complete results directory matching Abacus pipeline output.
+### 6b. Grouped Results Export
+- [x] Land the richer grouped inference export deferred from Phase 4 as the canonical `InferenceResults` surface
+- [x] Group posterior/prior draws, predictive draws, sample stats, observed data, coordinates, and metadata under that one typed surface
+- [x] Keep NetCDF / ArviZ-native interchange explicitly deferred from Phase 6
 
----
+### 6c. Variational Inference
+- [x] ADVI via `AdvancedVI.jl`
+- [x] Add the explicit bounded VI entry point `approximate_fit!` plus `VariationalConfig` instead of hiding VI behind `fit!`
+- [x] Keep the Phase 6 VI contract Julia-only and honest if it is time-series only
 
-## Phase 10: Plotting 🔴
+### 6d. Inference Closeout
+- [x] Freeze the supported inference matrix across model type, backend, predictive path, and grouped export availability
+- [x] Add one test-covered row per supported inference combination
+- [x] Hand off post-model consumers cleanly to Phase 7 on top of `InferenceResults`
 
-> Visualization layer using Makie.jl.
-
-- [ ] Port channel contribution time series plot (with HDI bands)
-- [ ] Port waterfall decomposition plot
-- [ ] Port response curves plot
-- [ ] Port trace/posterior plots
-- [ ] Port prior vs posterior comparison
-- [ ] Port observed vs fitted time series
-- [ ] Port residual diagnostics (histogram, Q-Q, residuals vs fitted)
-- [ ] Port budget optimization comparison plots
-- [ ] Port stacked area contribution breakdown
-
-**Acceptance:** All plots render correctly and are publication-quality.
+**Acceptance:** Supported inference workflows are documented honestly,
+`InferenceResults` exists as the canonical grouped artifact surface, bounded VI
+support is explicit through `approximate_fit!`, and diagnostics/failure
+behavior are test-covered.
 
 ---
 
-## Phase 11: Validation & Benchmarks 🔴
+## Phase 7: Post-Modeling 🟢
 
-> Ensure numerical parity with Abacus; benchmark performance gains.
+> Contribution decomposition, response curves, business metrics, summary tables.
 
-- [ ] Create reference test suite: run Abacus on test datasets, export all intermediates
-- [ ] Numerical parity tests for transforms (adstock, saturation) — max |Δ| < 1e-10
-- [ ] Numerical parity for model log-probability evaluation
-- [ ] Statistical parity for posterior samples (same posterior means ± sampling noise)
-- [ ] Performance benchmarks: Abacus vs Epsilon on identical model/data
-  - [ ] Model build time
-  - [ ] MCMC sampling time (wall clock, ESS/sec)
-  - [ ] Budget optimization time
-  - [ ] End-to-end pipeline time
-- [ ] Memory usage comparison
-- [ ] Document benchmark results
+### 7a. Contributions And Decomposition
+- [x] Create the `src/postmodel/` ownership layer and typed post-model output surfaces
+- [x] Freeze deterministic replay from `InferenceResults.posterior` + observed data + spec instead of inventing a second artifact contract
+- [x] Support additive time-series contributions in observed target units from canonical `InferenceResults`
+- [x] Add contribution-share computation and waterfall decomposition on top of the same additive baseline
 
-**Acceptance:** Epsilon is numerically correct AND measurably faster than Abacus.
+### 7b. Response Curves And Business Metrics
+- [x] Add counterfactual response-curve computation for supported time-series media channels
+- [x] Add ROAS, mROAS, CPA, and mCPA derived from the same response surface
+- [x] Keep panel post-model outputs explicitly unsupported in the bounded Phase 7 surface
+
+### 7c. Parity And Summary Tables
+- [x] Add Abacus parity coverage for supported post-model outputs
+- [x] Add DataFrame summary-table projections for typed post-model results
+- [x] Hand off Phase 8 to the frozen Phase 7 response/metric surface rather than raw posterior reinvention
+
+**Acceptance:** Supported time-series decomposition, response, and metric outputs
+match Abacus on agreed fixtures for the same posterior draws while consuming
+canonical `InferenceResults` instead of a parallel posterior/result format.
+
+---
+
+## Phase 8: Budget Optimization 🟢
+
+> Fixed-budget time-series-first optimizer on top of the frozen Phase 7 response / metric surface.
+
+- [x] Freeze the bounded optimization contract: fixed budget, posterior-mean response objective, and time-series-only support matrix
+- [x] Use `JuMP.jl + Ipopt.jl` as the canonical constrained solver path
+- [x] Support total-budget equality, per-channel absolute bounds, and reference-relative lower/upper spend guardrails
+- [x] Add typed optimization result surfaces and optimizer orchestration
+- [x] Add Abacus parity coverage plus comparison/audit outputs for the supported optimization surface
+
+**Acceptance:** Supported time-series optimization outputs match Abacus on the
+frozen Phase 8 fixture matrix within the defined Phase 8 tolerances while
+consuming the frozen Phase 7 response/metric surface. Panel and pipeline
+semantics remain explicitly out of scope for the closed Phase 8 surface.
+
+---
+
+## Phase 9: Pipeline 🟢
+
+> Bounded YAML-driven runner over the frozen model, inference, post-model, and
+> optimization contracts.
+
+- [x] Freeze the Phase 9 support matrix as time-series-first and MCMC-only
+- [x] Port `PipelineRunConfig`, `PipelineRunResult`, `PipelineStageRecord`, `PipelineValidationResult`, `PipelineContext`, and `run_manifest.json`
+- [x] Freeze the combined CSV ingestion contract:
+  - [x] required column mapping from YAML to `MMMData`
+  - [x] uniform `Date` / `DateTime` parsing
+  - [x] chronological sort before model construction
+  - [x] duplicate-date rejection
+- [x] Port runner-only YAML parsing for:
+  - [x] `data.dataset_path`
+  - [x] optional `validation`
+  - [x] optional `optimization`
+- [x] Freeze the manifest and sidecar schemas:
+  - [x] `run_manifest.json`
+  - [x] `dataset_metadata.json`
+  - [x] `model_metadata.json`
+  - [x] `posterior_summary.csv`
+  - [x] `predictive_summary.csv`
+  - [x] `warnings_summary.json`
+- [x] Port Stage `00_run_metadata`
+- [x] Port Stage `10_pre_diagnostics`
+- [x] Port Stage `20_model_fit`
+- [x] Port Stage `30_model_assessment`
+- [x] Port Stage `35_holdout_validation` as a side branch that does not mutate Stage `20_model_fit`
+- [x] Port Stage `40_decomposition`
+- [x] Port Stage `50_diagnostics`
+- [x] Port Stage `60_response_curves`
+- [x] Port Stage `70_optimisation`
+- [x] Port CLI interface (`epsilon run config.yaml`) through the same runner path and bounded runtime override set
+- [x] Add end-to-end integration coverage for:
+  - [x] successful full run without optimization
+  - [x] successful full run with optimization
+  - [x] skipped optional stages
+  - [x] manifest failure semantics
+  - [x] explicit panel / YAML-driven VI failure
+
+**Acceptance:** `epsilon run` produces a structured results directory and
+truthful manifest for the supported time-series MCMC workflow. CSV ingestion,
+manifest/result schemas, and core sidecars are fixed and documented. Validation
+and optimization skip honestly when absent or disabled, and validation does
+not overwrite the full-sample fit branch. Panel and YAML-driven VI remain
+explicitly unsupported in the closed Phase 9 surface.
+
+---
+
+## Phase 10: Plotting 🟢
+
+> Static CairoMakie-based visualization layer over the closed inference,
+> post-model, optimization, and pipeline artifact surfaces.
+
+### 10a. Theme And Diagnostic Foundation
+- [x] Land `src/plotting/theme.jl`
+- [x] Land `src/plotting/diagnostics.jl`
+- [x] Export `epsilon_theme`
+- [x] Export `trace_plot`
+- [x] Export `posterior_density_plot`
+- [x] Export `prior_posterior_plot`
+- [x] Export `observed_fitted_plot`
+- [x] Export `residual_diagnostics_plot`
+- [x] Add `test/plotting/diagnostics.jl`
+
+### 10b. Post-Model Plots
+- [x] Land `src/plotting/postmodel.jl`
+- [x] Export `contribution_plot`
+- [x] Export `contribution_area_plot`
+- [x] Export `decomposition_plot`
+- [x] Export `response_curve_plot`
+- [x] Add `test/plotting/postmodel.jl`
+
+### 10c. Optimization And Bundle Export
+- [x] Land `src/plotting/optimization.jl`
+- [x] Land `src/plotting/bundle.jl`
+- [x] Export `budget_optimization_plot`
+- [x] Export `write_plot_bundle`
+- [x] Add `test/plotting/optimization.jl`
+- [x] Add `test/plotting/bundle.jl`
+
+**Acceptance:** The bounded Phase 10 plotting surface returns Makie `Figure`
+objects, exports truthful static files, consumes the closed typed artifact
+surfaces from Phases 6-9, remains explicitly smaller than the Abacus Dash
+surface, keeps panel post-model/optimization plots and VI trace plots
+unsupported, and treats `write_plot_bundle` as a post-hoc deterministic `png`
+export helper over successful pipeline runs rather than a second pipeline
+path.
+
+---
+
+## Phase 11: Validation & Benchmarks ✅
+
+> Final release gate across parity, benchmarks, and v1.0 readiness.
+
+### 11a. Final Parity Harness
+- [x] Freeze the release-gate matrix:
+  - [x] Abacus-comparable parity rows
+  - [x] bounded Epsilon-only contract-validation rows
+- [x] Add `scripts/export_abacus_validation_fixtures.py`
+- [x] Add compact final fixtures under `test/fixtures/abacus/validation/`
+- [x] Add `test/validation/` release-gate harness
+- [x] Reconcile retained transform, post-model, and optimization parity fixtures into the final validation story
+
+### 11b. Benchmarks
+- [x] Add `benchmark/` runner and suite ownership
+- [x] Measure transform micro-benchmarks
+- [x] Measure representative fit / grouped-results / optimization / pipeline workflows
+- [x] Publish environment and machine metadata with results
+- [x] Document benchmark results honestly
+
+### 11c. Release Readiness
+- [x] Reconcile README and docs to the truthful release surface
+- [x] Publish validation / benchmark methodology pages
+- [x] Add v1.0.0-rc1 readiness checklist
+- [x] Record known supported and unsupported rows explicitly
+
+**Acceptance:** The supported Abacus-comparable v1 surface passes the final
+parity harness, bounded Epsilon-only supported rows pass explicit
+contract-regression checks, benchmark results are published honestly, and the
+v1.0.0-rc1 readiness checklist is complete.
+
+---
+
+## Phase 12: Parity Remediation 🟢
+
+> Repair the bounded time-series methodology gap revealed by the targeted audit
+> before any release branch or tag resumes.
+
+- [x] Implement Abacus-matching channel/target scaling on the comparable
+      time-series fit path
+- [x] Carry explicit scale state through specs, grouped artifacts, and runtime
+- [x] Rebuild original-scale predictive/contribution outputs on top of the
+      corrected scaled model space
+- [x] Add the missing Stage 60 curve families: saturation-only, forward-pass,
+      and adstock
+- [x] Realign Stage 70 optimization semantics with the corrected
+      model-space/curve contract
+- [x] Reconcile the runnable demo with Abacus holiday/component methodology
+- [x] Re-run validation and reconcile release-facing docs only after the
+      repaired parity evidence exists
+
+**Acceptance:** The guaranteed Abacus-reference row is again a truthful
+Abacus-reference surface rather than a release claim resting on different
+model-space semantics, and the holiday-bearing row is documented honestly as a
+bounded Epsilon-native/reference row.
+
+---
+
+## Phase 13: Prediction-State and Contract Remediation 🔴
+
+> Repair concrete external code-review findings before release branch or tag
+> work resumes.
+
+- [ ] Freeze fitted feature-state contract for trend and holiday replay
+- [ ] Persist and reuse fitted trend normalization/basis state in prediction,
+      grouped results, deterministic replay, validation, and save/load paths
+- [ ] Persist and reuse fitted holiday calendar-period exposure state for
+      holdout prediction and replay
+- [ ] Enforce one nonnegative media-domain contract across direct APIs,
+      transforms, prediction, and pipeline validation
+- [ ] Reject unknown top-level pipeline YAML keys that could silently bypass
+      intended behavior
+- [ ] Re-run focused regressions plus `make test`, `make docs`, and
+      `make format-check`
+
+**Acceptance:** Trend and holiday prediction/replay use fitted state rather
+than `new_data`-local state, invalid negative media and unsupported pipeline
+keys fail deterministically, docs and artifacts reflect the repaired contract,
+and release prep is either unblocked or a new blocker is recorded explicitly.
 
 ---
 

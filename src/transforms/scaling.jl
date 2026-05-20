@@ -6,9 +6,11 @@ Scale each feature by its maximum absolute value.
 mutable struct MaxAbsScaler
     scale::Vector{Float64}
     fitted::Bool
+    fitted_ndims::Int
+    fitted_nfeatures::Int
 end
 
-MaxAbsScaler() = MaxAbsScaler(Float64[], false)
+MaxAbsScaler() = MaxAbsScaler(Float64[], false, 0, 0)
 
 """
     StandardScaler()
@@ -19,9 +21,11 @@ mutable struct StandardScaler
     mean::Vector{Float64}
     scale::Vector{Float64}
     fitted::Bool
+    fitted_ndims::Int
+    fitted_nfeatures::Int
 end
 
-StandardScaler() = StandardScaler(Float64[], Float64[], false)
+StandardScaler() = StandardScaler(Float64[], Float64[], false, 0, 0)
 
 """
     MaxAbsScaleTarget()
@@ -44,7 +48,10 @@ mutable struct MaxAbsScaleChannels
     channel_transformer::MaxAbsScaler
 end
 
-MaxAbsScaleChannels(channel_columns) = MaxAbsScaleChannels(collect(channel_columns), MaxAbsScaler())
+MaxAbsScaleChannels(channel_columns) = MaxAbsScaleChannels(
+    _normalize_column_indices(channel_columns, "channel_columns"),
+    MaxAbsScaler(),
+)
 
 """
     StandardizeControls(control_columns)
@@ -56,19 +63,19 @@ mutable struct StandardizeControls
     control_transformer::StandardScaler
 end
 
-StandardizeControls(control_columns) = StandardizeControls(collect(control_columns), StandardScaler())
+StandardizeControls(control_columns) = StandardizeControls(
+    _normalize_column_indices(control_columns, "control_columns"),
+    StandardScaler(),
+)
 
-"""
-    fit!(scaler, data)
-
-Fit a scaler to vector or matrix data.
-"""
 function fit!(scaler::MaxAbsScaler, data::AbstractVector)
     values = abs.(Float64.(data))
     _validate_nonempty(values, "data")
     scale = maximum(values)
     scaler.scale = [scale == 0 ? 1.0 : scale]
     scaler.fitted = true
+    scaler.fitted_ndims = 1
+    scaler.fitted_nfeatures = 1
     return scaler
 end
 
@@ -77,6 +84,8 @@ function fit!(scaler::MaxAbsScaler, data::AbstractMatrix)
     scale = vec(maximum(abs.(Float64.(data)); dims = 1))
     scaler.scale = map(value -> value == 0 ? 1.0 : value, scale)
     scaler.fitted = true
+    scaler.fitted_ndims = 2
+    scaler.fitted_nfeatures = size(data, 2)
     return scaler
 end
 
@@ -88,6 +97,8 @@ function fit!(scaler::StandardScaler, data::AbstractVector)
     sigma = sqrt(sum((values .- mu) .^ 2) / length(values))
     scaler.scale = [sigma == 0 ? 1.0 : sigma]
     scaler.fitted = true
+    scaler.fitted_ndims = 1
+    scaler.fitted_nfeatures = 1
     return scaler
 end
 
@@ -99,6 +110,8 @@ function fit!(scaler::StandardScaler, data::AbstractMatrix)
     sigma = vec(sqrt.(sum(centered .^ 2; dims = 1) ./ size(values, 1)))
     scaler.scale = map(value -> value == 0 ? 1.0 : value, sigma)
     scaler.fitted = true
+    scaler.fitted_ndims = 2
+    scaler.fitted_nfeatures = size(data, 2)
     return scaler
 end
 
@@ -109,21 +122,25 @@ Apply a fitted scaler to vector or matrix data.
 """
 function transform(scaler::MaxAbsScaler, data::AbstractVector)
     _require_fitted(scaler)
+    _validate_scaler_shape(scaler, data)
     return Float64.(data) ./ scaler.scale[1]
 end
 
 function transform(scaler::MaxAbsScaler, data::AbstractMatrix)
     _require_fitted(scaler)
+    _validate_scaler_shape(scaler, data)
     return Float64.(data) ./ reshape(scaler.scale, 1, :)
 end
 
 function transform(scaler::StandardScaler, data::AbstractVector)
     _require_fitted(scaler)
+    _validate_scaler_shape(scaler, data)
     return (Float64.(data) .- scaler.mean[1]) ./ scaler.scale[1]
 end
 
 function transform(scaler::StandardScaler, data::AbstractMatrix)
     _require_fitted(scaler)
+    _validate_scaler_shape(scaler, data)
     return (Float64.(data) .- reshape(scaler.mean, 1, :)) ./ reshape(scaler.scale, 1, :)
 end
 
@@ -134,21 +151,25 @@ Undo a fitted scaling transform.
 """
 function inverse_transform(scaler::MaxAbsScaler, data::AbstractVector)
     _require_fitted(scaler)
+    _validate_scaler_shape(scaler, data)
     return Float64.(data) .* scaler.scale[1]
 end
 
 function inverse_transform(scaler::MaxAbsScaler, data::AbstractMatrix)
     _require_fitted(scaler)
+    _validate_scaler_shape(scaler, data)
     return Float64.(data) .* reshape(scaler.scale, 1, :)
 end
 
 function inverse_transform(scaler::StandardScaler, data::AbstractVector)
     _require_fitted(scaler)
+    _validate_scaler_shape(scaler, data)
     return Float64.(data) .* scaler.scale[1] .+ scaler.mean[1]
 end
 
 function inverse_transform(scaler::StandardScaler, data::AbstractMatrix)
     _require_fitted(scaler)
+    _validate_scaler_shape(scaler, data)
     return Float64.(data) .* reshape(scaler.scale, 1, :) .+ reshape(scaler.mean, 1, :)
 end
 
@@ -226,7 +247,7 @@ end
 Validate a column-selection vector for matrix data.
 """
 function validate_column_indices(ncols::Integer, columns, name::AbstractString)
-    column_list = collect(columns)
+    column_list = _normalize_column_indices(columns, name)
     isempty(column_list) && throw(ArgumentError("$name must not be empty"))
     length(unique(column_list)) == length(column_list) ||
         throw(ArgumentError("$name contains duplicates"))
@@ -241,6 +262,7 @@ end
 Warn when selected channel columns contain negative values.
 """
 function validate_channel_values(data::AbstractMatrix, channel_columns)
+    validate_column_indices(size(data, 2), channel_columns, "channel_columns")
     if any(data[:, channel_columns] .< 0)
         @warn "channel_columns contain negative values"
     end
@@ -252,7 +274,40 @@ function _require_fitted(scaler)
     return nothing
 end
 
+function _validate_scaler_shape(scaler, data::AbstractVector)
+    scaler.fitted_ndims == 1 ||
+        throw(
+            ArgumentError(
+                "scaler was fitted on matrix data and cannot be applied to vector data",
+            ),
+        )
+    return nothing
+end
+
+function _validate_scaler_shape(scaler, data::AbstractMatrix)
+    scaler.fitted_ndims == 2 ||
+        throw(
+            ArgumentError(
+                "scaler was fitted on vector data and cannot be applied to matrix data",
+            ),
+        )
+    size(data, 2) == scaler.fitted_nfeatures ||
+        throw(
+            ArgumentError(
+                "matrix data must have $(scaler.fitted_nfeatures) feature columns to match the fitted scaler",
+            ),
+        )
+    return nothing
+end
+
 function _validate_nonempty(data, name::AbstractString)
     length(data) > 0 || throw(ArgumentError("$name must have at least one element"))
     return nothing
+end
+
+function _normalize_column_indices(columns, name::AbstractString)
+    column_list = collect(columns)
+    all(column -> column isa Integer, column_list) ||
+        throw(ArgumentError("$name must contain only integer indices"))
+    return Int.(column_list)
 end

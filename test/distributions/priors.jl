@@ -104,6 +104,12 @@ end
     @test mean(normal) == 2.0
     @test std(normal) == 3.0
 
+    halfnormal = instantiate_distribution(EpsilonPrior("HalfNormal"; sigma = 2.0))
+    @test halfnormal isa Truncated
+
+    beta_dist = instantiate_distribution(EpsilonPrior("Beta"; alpha = 2.0, beta = 5.0))
+    @test beta_dist isa Beta
+
     gamma_prior = EpsilonPrior("Gamma"; alpha = 3.0, beta = 2.0)
     gamma_dist = instantiate_distribution(gamma_prior)
     @test gamma_dist isa Gamma
@@ -112,6 +118,25 @@ end
     exponential = instantiate_distribution(EpsilonPrior("Exponential"; lam = 4.0))
     @test exponential isa Exponential
     @test isapprox(mean(exponential), 0.25; atol = 1e-12)
+
+    uniform = instantiate_distribution(EpsilonPrior("Uniform"; lower = -1.0, upper = 3.0))
+    @test uniform isa Uniform
+
+    cauchy = instantiate_distribution(EpsilonPrior("Cauchy"; mu = 0.0, beta = 2.0))
+    @test cauchy isa Cauchy
+
+    halfcauchy = instantiate_distribution(EpsilonPrior("HalfCauchy"; beta = 3.0))
+    @test halfcauchy isa Truncated
+
+    student_t = instantiate_distribution(EpsilonPrior("StudentT"; nu = 7.0, mu = 1.0, sigma = 2.0))
+    @test isapprox(mean(student_t), 1.0; atol = 1e-12)
+    @test isapprox(std(student_t), 2.0 * std(TDist(7.0)); atol = 1e-12)
+
+    lognormal = instantiate_distribution(EpsilonPrior("LogNormal"; mu = 0.5, sigma = 0.25))
+    @test lognormal isa LogNormal
+
+    weibull = instantiate_distribution(EpsilonPrior("Weibull"; alpha = 2.0, beta = 4.0))
+    @test weibull isa Weibull
 
     truncated = instantiate_distribution(
         EpsilonPrior("TruncatedNormal"; mu = 1.0, sigma = 2.0, lower = 0.0, upper = 5.0),

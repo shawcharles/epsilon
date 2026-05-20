@@ -82,6 +82,14 @@ function instantiate_distribution(prior::MaskedPrior)
 end
 
 function _is_masked_prior_mapping(value::AbstractDict)
-    return (_has_key(value, :class) && _lookup(value, :class) == "MaskedPrior") ||
-           (_has_key(value, :prior) && _has_key(value, :mask))
+    if _has_key(value, :class)
+        return _lookup(value, :class) == "MaskedPrior"
+    end
+
+    return !_has_key(value, :distribution) &&
+           !_has_key(value, :dist) &&
+           !_has_key(value, :special_prior) &&
+           _has_key(value, :prior) &&
+           _has_key(value, :mask) &&
+           (_has_key(value, :mask_dims) || _has_key(value, :active_dim))
 end
