@@ -65,7 +65,7 @@ Each target should pass these gates before it is counted as ported:
 | Multi-dimensional panel MMM | `abacus/mmm/panel.py`, `abacus/mmm/models/panel_types.py` | `src/mmm/panel.jl`, `src/model/types.jl`, `src/postmodel/replay.jl` | scaffolded | `geo_brand_panel` config/data, flattened panel ordering, model-spec metadata, runtime artifact schema, deterministic contribution/decomposition replay, and panel-cell response/metric summaries are covered by validation fixtures; Stage `70` historical-share optimization is implemented for `PanelMMM` and fixture-backed for both `geo_panel` and `geo_brand_panel`. |
 | Hierarchical pooling through priors | `abacus/mmm/panel.py`, `abacus/prior.py` | `src/mmm/panel.jl`, `src/distributions/priors.jl` | scaffolded | Ensure pooling is encoded through priors, not implicit panel defaults. |
 | Mundlak / correlated random effects | Abacus panel/model code and docs | none | missing | Port only after panel-indexed baseline is stable. |
-| Calibration and lift tests | `abacus/mmm/lift_test.py`, `abacus/mmm/calibration/*.py`, `abacus/mmm/builders/calibration.py` | none | missing | Add likelihood-term fixtures and schema before model integration. |
+| Calibration and lift tests | `abacus/mmm/lift_test.py`, `abacus/mmm/calibration/*.py`, `abacus/mmm/builders/calibration.py` | `src/mmm/calibration.jl` | scaffolded | Fixture-backed schema, alignment, monotonicity, scaling, and likelihood-term math (`CalibrationStepConfig`, `exact_row_indices`, `assert_monotonic_lift`, `scale_channel_lift_measurements`, `scale_target_for_lift_measurements`, `scale_lift_measurements`, `lift_test_likelihood_terms`, `cost_per_target_penalties`) are implemented and fixture-tested. Wiring a calibration likelihood term into `TimeSeriesMMM`/`PanelMMM` sampling is the remaining sub-slice; panel calibration model integration stays out of scope until that lands. |
 | Fitting and sampler config | `abacus/modeling/base.py`, `abacus/pytensor/sampling.py` | `src/inference/mcmc.jl`, `src/model/config.jl` | scaffolded | Compare sampler config parsing and saved fit metadata; numerical posterior equality is not required. |
 | Posterior predictive | `abacus/mmm/base.py`, `abacus/mmm/models/panel_predict.py` | `src/model/results.jl`, `src/inference/results.jl` | scaffolded | Make prediction replay consume saved state for train, holdout, and new data. |
 | Diagnostics | `abacus/mmm/diagnostics/*.py` | `src/model/diagnostics.jl`, `src/inference/diagnostics.jl`, `src/plotting/diagnostics.jl` | scaffolded | Port design, MCMC, and predictive summary schemas before plot polish. |
@@ -245,6 +245,30 @@ As of 2026-05-10:
     policies resolve to scenario `config.resolved.yaml` files, and the stage
     writes `scenario_manifest.yaml` plus `llm_safe_scenario_manifest.yaml`
     without fitting every scenario automatically.
+18. `src/mmm/calibration.jl` and `test/model/calibration.jl` cover a bounded,
+    fixture-backed calibration/lift-test schema slice: `CalibrationStepConfig`
+    mirrors the Abacus public YAML `calibration` step schema (including the
+    `params.dist` YAML restriction); `exact_row_indices` and
+    `assert_monotonic_lift` mirror Abacus
+    `abacus.mmm.calibration.alignment.exact_row_indices`/`assert_monotonic`;
+    `scale_channel_lift_measurements`, `scale_target_for_lift_measurements`,
+    and `scale_lift_measurements` mirror
+    `abacus.mmm.calibration.scaling`'s pivot/transform/unpivot rescaling
+    behavior; and `lift_test_likelihood_terms`/`cost_per_target_penalties`
+    reproduce the pure-math ingredients of Abacus
+    `abacus.mmm.calibration.graph.add_saturation_observations` (a true Gamma
+    observation likelihood, using the confirmed PyMC `mu`/`sigma` ->
+    `shape`/`scale` reparameterization) and
+    `add_cost_per_target_potentials` (a soft Gaussian penalty). Fixtures are
+    exported from `scripts/export_abacus_fixtures.py` into
+    `test/fixtures/abacus/calibration_*.jl`,
+    `test/fixtures/abacus/lift_test_likelihood_cases.jl`, and
+    `test/fixtures/abacus/cost_per_target_cases.jl`, including real
+    PyMC-derived `Gamma` log-density values. PyMC/PyTensor-graph-specific
+    indexing (`VariableIndexer`, dimension-based model-variable gathering) and
+    wiring a calibration likelihood term into `TimeSeriesMMM`/`PanelMMM`
+    sampling are an explicit follow-on sub-slice, not yet started; panel
+    calibration model integration is out of scope until that sub-slice lands.
 
 ## Plan 14-05 Parity Audit
 

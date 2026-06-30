@@ -93,6 +93,23 @@ export ntime
 export ParameterDiagnostics
 export approximate_fit!
 export run_pipeline
+export CalibrationStepConfig
+export validate_calibration_step_config
+export UnalignedValuesError
+export NonMonotonicError
+export exact_row_indices
+export validate_lift_test_columns
+export assert_monotonic_lift
+export scale_channel_lift_measurements
+export scale_target_for_lift_measurements
+export scale_lift_measurements
+export gamma_shape_scale
+export lift_test_gamma_distribution
+export lift_test_estimated_lift
+export lift_test_likelihood_terms
+export cost_per_target_penalties
+export cost_per_target_total_penalty
+
 export SamplerDiagnostics
 export SamplerWarning
 export SamplerWarnings
@@ -176,8 +193,10 @@ include("mmm/trend.jl")
 include("mmm/events.jl")
 include("mmm/holidays.jl")
 include("mmm/controls.jl")
+include("mmm/calibration.jl")
 include("model/builder.jl")
 include("model/io.jl")
+
 include("model/results.jl")
 include("model/diagnostics.jl")
 include("inference/mcmc.jl")

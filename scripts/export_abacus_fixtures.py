@@ -569,6 +569,173 @@ def _build_hill_function_cases():
     ]
 
 
+def _build_calibration_alignment_cases():
+    return [
+        {
+            "name": "matches_model_coords",
+            "coords": {
+                "channel": [1, 2, 3],
+                "geo": ["A", "B", "C"],
+            },
+            "df": {
+                "channel": [1, 2],
+                "geo": ["A", "C"],
+            },
+        },
+        {
+            "name": "single_dim_channel_only",
+            "coords": {"channel": [1, 2, 3]},
+            "df": {"channel": [3, 1]},
+        },
+    ]
+
+
+def _build_calibration_unaligned_cases():
+    return [
+        {
+            "name": "reports_unaligned_rows",
+            "coords": {
+                "channel": [1, 2, 3],
+                "geo": ["A", "B", "C"],
+            },
+            "df": {
+                "channel": [1000, 2],
+                "geo": ["A", "Z"],
+            },
+        },
+    ]
+
+
+def _build_calibration_monotonic_cases():
+    return [
+        {
+            "name": "monotonic_increasing",
+            "delta_x": [1.0, 2.0, 3.0],
+            "delta_y": [0.5, 1.0, 1.5],
+            "expect_error": False,
+        },
+        {
+            "name": "monotonic_zero_delta_x",
+            "delta_x": [0.0, 2.0],
+            "delta_y": [0.0, 1.0],
+            "expect_error": False,
+        },
+        {
+            "name": "non_monotonic_conflicting_sign",
+            "delta_x": [1.0, 2.0, 3.0],
+            "delta_y": [1.0, -2.0, 3.0],
+            "expect_error": True,
+        },
+    ]
+
+
+def _build_calibration_channel_scaling_cases():
+    return [
+        {
+            "name": "sparse_channel_rows",
+            "channel_columns": ["organic", "paid", "social"],
+            "scale": [1.0, 2.0, 3.0],
+            "df": {
+                "channel": ["organic", "organic", "social"],
+                "x": [1.0, 2.0, 3.0],
+                "delta_x": [1.0, 1.0, 1.0],
+            },
+        },
+    ]
+
+
+def _build_calibration_target_scaling_cases():
+    return [
+        {
+            "name": "rescale_series",
+            "target": [0.0, 3.0, 6.0, 9.0],
+            "scale": 3.0,
+        },
+    ]
+
+
+def _build_calibration_combined_scaling_cases():
+    return [
+        {
+            "name": "combines_channel_target_and_sigma_scaling",
+            "channel_columns": [0, 1, 2],
+            "df": {
+                "channel": [0, 1],
+                "x": [100.0, 50.0],
+                "delta_x": [50.0, 25.0],
+                "delta_y": [10.0, 20.0],
+                "sigma": [2.0, 4.0],
+            },
+            "channel_transform_scale": 2.0,
+            "target_transform_scale": 2.0,
+        },
+    ]
+
+
+def _build_lift_likelihood_cases():
+    return [
+        {
+            "name": "logistic_saturation_two_rows",
+            "lam": 0.5,
+            "x": [1.0, 2.0],
+            "delta_x": [0.5, 1.0],
+            "delta_y": [0.05, 0.08],
+            "sigma": [0.01, 0.02],
+        },
+        {
+            "name": "logistic_saturation_negative_delta",
+            "lam": 1.2,
+            "x": [3.0, 0.5],
+            "delta_x": [-1.0, 2.0],
+            "delta_y": [-0.02, 0.15],
+            "sigma": [0.005, 0.03],
+        },
+    ]
+
+
+def _build_cost_per_target_cases():
+    return [
+        {
+            "name": "two_channel_two_row",
+            "gathered_cpt": [0.5, 1.2],
+            "targets": [0.45, 1.5],
+            "sigma": [0.1, 0.2],
+        },
+        {
+            "name": "single_row_exact_match",
+            "gathered_cpt": [0.8],
+            "targets": [0.8],
+            "sigma": [0.05],
+        },
+    ]
+
+
+def _julia_int_vector_literal(values) -> str:
+    body = ", ".join(str(int(value)) for value in values)
+    return f"[{body}]"
+
+
+def _julia_value_vector_literal(values) -> str:
+    values = list(values)
+    if all(isinstance(value, bool) for value in values):
+        body = ", ".join("true" if value else "false" for value in values)
+        return f"Bool[{body}]"
+    if all(isinstance(value, (int, np.integer)) and not isinstance(value, bool) for value in values):
+        return _julia_int_vector_literal(values)
+    if all(isinstance(value, str) for value in values):
+        return _julia_string_vector_literal(values)
+    if all(isinstance(value, (int, float, np.integer, np.floating)) for value in values):
+        return _julia_array_literal(np.asarray(values, dtype=float))
+    raise TypeError(f"Unsupported value vector types: {values!r}")
+
+
+def _julia_namedtuple_literal(mapping: dict) -> str:
+    fields = ", ".join(
+        f"{key} = {_julia_value_vector_literal(value)}" for key, value in mapping.items()
+    )
+    return f"(; {fields})"
+
+
 def _julia_float_literal(value: float) -> str:
     numeric = float(value)
     if np.isnan(numeric):
@@ -1647,8 +1814,216 @@ def _hill_function_rows():
     return rows
 
 
+def _calibration_alignment_rows():
+    rows: list[str] = []
+    for case in _build_calibration_alignment_cases():
+        coords = {key: np.array(value) for key, value in case["coords"].items()}
+        model = pm.Model(coords=coords)
+        df = pd.DataFrame(case["df"])
+        indices = exact_row_indices(df, model)
+        indices_literal = "Dict{String, Vector{Int}}(" + ", ".join(
+            f'{_julia_string_literal(key)} => {_julia_int_vector_literal((np.asarray(value) + 1).tolist())}'
+            for key, value in indices.items()
+        ) + ")"
+        rows.extend(
+            [
+                "    (",
+                f'        name = "{case["name"]}",',
+                f"        coords = {_julia_namedtuple_literal(case['coords'])},",
+                f"        df = {_julia_namedtuple_literal(case['df'])},",
+                f"        expected_indices_1based = {indices_literal},",
+                "    ),",
+            ]
+        )
+    return rows
+
+
+def _calibration_unaligned_rows():
+    rows: list[str] = []
+    for case in _build_calibration_unaligned_cases():
+        coords = {key: np.array(value) for key, value in case["coords"].items()}
+        model = pm.Model(coords=coords)
+        df = pd.DataFrame(case["df"])
+        try:
+            exact_row_indices(df, model)
+            unaligned = {}
+        except UnalignedValuesError as err:
+            unaligned = err.unaligned_values
+        unaligned_literal = "Dict{String, Vector{Int}}(" + ", ".join(
+            f'{_julia_string_literal(key)} => {_julia_int_vector_literal((np.asarray(value) + 1).tolist())}'
+            for key, value in unaligned.items()
+        ) + ")"
+        rows.extend(
+            [
+                "    (",
+                f'        name = "{case["name"]}",',
+                f"        coords = {_julia_namedtuple_literal(case['coords'])},",
+                f"        df = {_julia_namedtuple_literal(case['df'])},",
+                f"        expected_unaligned_1based = {unaligned_literal},",
+                "    ),",
+            ]
+        )
+    return rows
+
+
+def _calibration_monotonic_rows():
+    rows: list[str] = []
+    for case in _build_calibration_monotonic_cases():
+        rows.extend(
+            [
+                "    (",
+                f'        name = "{case["name"]}",',
+                f"        delta_x = {_julia_array_literal(np.asarray(case['delta_x'], dtype=float))},",
+                f"        delta_y = {_julia_array_literal(np.asarray(case['delta_y'], dtype=float))},",
+                f"        expect_error = {'true' if case['expect_error'] else 'false'},",
+                "    ),",
+            ]
+        )
+    return rows
+
+
+def _calibration_channel_scaling_rows():
+    rows: list[str] = []
+    for case in _build_calibration_channel_scaling_cases():
+        df = pd.DataFrame(case["df"])
+        scale = np.asarray(case["scale"], dtype=float)
+        channel_columns = case["channel_columns"]
+        scale_lookup = dict(zip(channel_columns, scale))
+
+        def transform(matrix: np.ndarray) -> np.ndarray:
+            return matrix * scale
+
+        result = scale_channel_lift_measurements(
+            df_lift_test=df,
+            channel_col="channel",
+            channel_columns=channel_columns,
+            transform=transform,
+        )
+        rows.extend(
+            [
+                "    (",
+                f'        name = "{case["name"]}",',
+                f"        channel_columns = {_julia_string_vector_literal(channel_columns)},",
+                f"        scale = {_julia_array_literal(scale)},",
+                f"        df = {_julia_namedtuple_literal(case['df'])},",
+                f"        expected = {_julia_namedtuple_literal({'channel': result['channel'].tolist(), 'x': result['x'].tolist(), 'delta_x': result['delta_x'].tolist()})},",
+                "    ),",
+            ]
+        )
+    return rows
+
+
+def _calibration_target_scaling_rows():
+    rows: list[str] = []
+    for case in _build_calibration_target_scaling_cases():
+        target = pd.Series(case["target"], dtype=float)
+        scale = float(case["scale"])
+        result = scale_target_for_lift_measurements(
+            target=target,
+            transform=lambda matrix: matrix / scale,
+        )
+        rows.extend(
+            [
+                "    (",
+                f'        name = "{case["name"]}",',
+                f"        target = {_julia_array_literal(np.asarray(case['target'], dtype=float))},",
+                f"        scale = {_julia_float_literal(scale)},",
+                f"        expected = {_julia_array_literal(np.asarray(result.to_numpy(), dtype=float))},",
+                "    ),",
+            ]
+        )
+    return rows
+
+
+def _calibration_combined_scaling_rows():
+    rows: list[str] = []
+    for case in _build_calibration_combined_scaling_cases():
+        df = pd.DataFrame(case["df"])
+        channel_scale = float(case["channel_transform_scale"])
+        target_scale = float(case["target_transform_scale"])
+        result = scale_lift_measurements(
+            df_lift_test=df,
+            channel_col="channel",
+            channel_columns=case["channel_columns"],
+            channel_transform=lambda matrix: matrix * channel_scale,
+            target_transform=lambda matrix: matrix / target_scale,
+        )
+        rows.extend(
+            [
+                "    (",
+                f'        name = "{case["name"]}",',
+                f"        channel_columns = {_julia_int_vector_literal(case['channel_columns'])},",
+                f"        df = {_julia_namedtuple_literal(case['df'])},",
+                f"        channel_transform_scale = {_julia_float_literal(channel_scale)},",
+                f"        target_transform_scale = {_julia_float_literal(target_scale)},",
+                f"        expected = {_julia_namedtuple_literal({'channel': result['channel'].tolist(), 'x': result['x'].tolist(), 'delta_x': result['delta_x'].tolist(), 'delta_y': result['delta_y'].tolist(), 'sigma': result['sigma'].tolist()})},",
+                "    ),",
+            ]
+        )
+    return rows
+
+
+def _lift_likelihood_rows():
+    rows: list[str] = []
+    for case in _build_lift_likelihood_cases():
+        x = np.asarray(case["x"], dtype=float)
+        delta_x = np.asarray(case["delta_x"], dtype=float)
+        delta_y = np.asarray(case["delta_y"], dtype=float)
+        sigma = np.asarray(case["sigma"], dtype=float)
+        lam = float(case["lam"])
+        x_after = x + delta_x
+        model_estimated_lift = (
+            logistic_saturation(x_after, lam=lam).eval()
+            - logistic_saturation(x, lam=lam).eval()
+        )
+        mu = np.abs(model_estimated_lift)
+        observed = np.abs(delta_y)
+        logp = pm.logp(pm.Gamma.dist(mu=mu, sigma=sigma), observed).eval()
+        rows.extend(
+            [
+                "    (",
+                f'        name = "{case["name"]}",',
+                f"        lam = {_julia_float_literal(lam)},",
+                f"        x = {_julia_array_literal(x)},",
+                f"        delta_x = {_julia_array_literal(delta_x)},",
+                f"        delta_y = {_julia_array_literal(delta_y)},",
+                f"        sigma = {_julia_array_literal(sigma)},",
+                f"        expected_mu = {_julia_array_literal(np.asarray(mu, dtype=float))},",
+                f"        expected_observed = {_julia_array_literal(np.asarray(observed, dtype=float))},",
+                f"        expected_logp = {_julia_array_literal(np.asarray(logp, dtype=float))},",
+                "    ),",
+            ]
+        )
+    return rows
+
+
+def _cost_per_target_rows():
+    rows: list[str] = []
+    for case in _build_cost_per_target_cases():
+        gathered_cpt = np.asarray(case["gathered_cpt"], dtype=float)
+        targets = np.asarray(case["targets"], dtype=float)
+        sigma = np.asarray(case["sigma"], dtype=float)
+        deviation = np.abs(gathered_cpt - targets)
+        penalties = -(deviation**2) / (2.0 * (sigma**2))
+        total_penalty = float(np.sum(penalties))
+        rows.extend(
+            [
+                "    (",
+                f'        name = "{case["name"]}",',
+                f"        gathered_cpt = {_julia_array_literal(gathered_cpt)},",
+                f"        targets = {_julia_array_literal(targets)},",
+                f"        sigma = {_julia_array_literal(sigma)},",
+                f"        expected_penalties = {_julia_array_literal(np.asarray(penalties, dtype=float))},",
+                f"        expected_total_penalty = {_julia_float_literal(total_penalty)},",
+                "    ),",
+            ]
+        )
+    return rows
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
+
     parser.add_argument(
         "--abacus-root",
         default="/home/user/Documents/GITHUB/tandpds/abacus",
@@ -1719,6 +2094,46 @@ def main() -> None:
         default="test/fixtures/abacus",
         help="Destination root for copied Abacus demo config/data files.",
     )
+    parser.add_argument(
+        "--calibration-alignment-output",
+        default="test/fixtures/abacus/calibration_alignment_cases.jl",
+        help="Destination Julia calibration alignment fixture file.",
+    )
+    parser.add_argument(
+        "--calibration-unaligned-output",
+        default="test/fixtures/abacus/calibration_unaligned_cases.jl",
+        help="Destination Julia calibration unaligned-rows fixture file.",
+    )
+    parser.add_argument(
+        "--calibration-monotonic-output",
+        default="test/fixtures/abacus/calibration_monotonic_cases.jl",
+        help="Destination Julia calibration monotonicity fixture file.",
+    )
+    parser.add_argument(
+        "--calibration-channel-scaling-output",
+        default="test/fixtures/abacus/calibration_channel_scaling_cases.jl",
+        help="Destination Julia calibration channel-scaling fixture file.",
+    )
+    parser.add_argument(
+        "--calibration-target-scaling-output",
+        default="test/fixtures/abacus/calibration_target_scaling_cases.jl",
+        help="Destination Julia calibration target-scaling fixture file.",
+    )
+    parser.add_argument(
+        "--calibration-combined-scaling-output",
+        default="test/fixtures/abacus/calibration_combined_scaling_cases.jl",
+        help="Destination Julia calibration combined-scaling fixture file.",
+    )
+    parser.add_argument(
+        "--lift-likelihood-output",
+        default="test/fixtures/abacus/lift_test_likelihood_cases.jl",
+        help="Destination Julia lift-test likelihood fixture file.",
+    )
+    parser.add_argument(
+        "--cost-per-target-output",
+        default="test/fixtures/abacus/cost_per_target_cases.jl",
+        help="Destination Julia cost-per-target penalty fixture file.",
+    )
     args = parser.parse_args()
     abacus_root = Path(args.abacus_root).resolve()
 
@@ -1735,6 +2150,13 @@ def main() -> None:
     global hill_function
     global tanh_saturation
     global weibull_adstock
+    global pm
+    global pd
+    global exact_row_indices
+    global UnalignedValuesError
+    global scale_channel_lift_measurements
+    global scale_target_for_lift_measurements
+    global scale_lift_measurements
     from abacus.mmm.transforms.convolution import ConvMode, batched_convolution
     from abacus.mmm.transforms.adstock import (
         WeibullType,
@@ -1749,7 +2171,16 @@ def main() -> None:
         michaelis_menten,
         tanh_saturation,
     )
+    import pymc as pm
+    import pandas as pd
+    from abacus.mmm.calibration.alignment import exact_row_indices, UnalignedValuesError
+    from abacus.mmm.calibration.scaling import (
+        scale_channel_lift_measurements,
+        scale_target_for_lift_measurements,
+        scale_lift_measurements,
+    )
     abacus_revision = _describe_abacus_revision(abacus_root)
+
 
     _write_fixture_file(
         "ABACUS_BATCHED_CONVOLUTION_CASES",
@@ -1835,9 +2266,67 @@ def main() -> None:
         abacus_root=abacus_root,
         abacus_revision=abacus_revision,
     )
+    _write_fixture_file(
+        "ABACUS_CALIBRATION_ALIGNMENT_CASES",
+        _calibration_alignment_rows(),
+        Path(args.calibration_alignment_output),
+        abacus_root=abacus_root,
+        abacus_revision=abacus_revision,
+    )
+    _write_fixture_file(
+        "ABACUS_CALIBRATION_UNALIGNED_CASES",
+        _calibration_unaligned_rows(),
+        Path(args.calibration_unaligned_output),
+        abacus_root=abacus_root,
+        abacus_revision=abacus_revision,
+    )
+    _write_fixture_file(
+        "ABACUS_CALIBRATION_MONOTONIC_CASES",
+        _calibration_monotonic_rows(),
+        Path(args.calibration_monotonic_output),
+        abacus_root=abacus_root,
+        abacus_revision=abacus_revision,
+    )
+    _write_fixture_file(
+        "ABACUS_CALIBRATION_CHANNEL_SCALING_CASES",
+        _calibration_channel_scaling_rows(),
+        Path(args.calibration_channel_scaling_output),
+        abacus_root=abacus_root,
+        abacus_revision=abacus_revision,
+    )
+    _write_fixture_file(
+        "ABACUS_CALIBRATION_TARGET_SCALING_CASES",
+        _calibration_target_scaling_rows(),
+        Path(args.calibration_target_scaling_output),
+        abacus_root=abacus_root,
+        abacus_revision=abacus_revision,
+    )
+    _write_fixture_file(
+        "ABACUS_CALIBRATION_COMBINED_SCALING_CASES",
+        _calibration_combined_scaling_rows(),
+        Path(args.calibration_combined_scaling_output),
+        abacus_root=abacus_root,
+        abacus_revision=abacus_revision,
+    )
+    _write_fixture_file(
+        "ABACUS_LIFT_TEST_LIKELIHOOD_CASES",
+        _lift_likelihood_rows(),
+        Path(args.lift_likelihood_output),
+        abacus_root=abacus_root,
+        abacus_revision=abacus_revision,
+    )
+    _write_fixture_file(
+        "ABACUS_COST_PER_TARGET_CASES",
+        _cost_per_target_rows(),
+        Path(args.cost_per_target_output),
+        abacus_root=abacus_root,
+        abacus_revision=abacus_revision,
+    )
+
     _copy_demo_files(abacus_root, Path(args.demo_fixture_root), "timeseries")
     _copy_demo_files(abacus_root, Path(args.demo_fixture_root), "geo_panel")
     _copy_demo_files(abacus_root, Path(args.demo_fixture_root), "geo_brand_panel")
+
 
 
 if __name__ == "__main__":
