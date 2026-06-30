@@ -37,11 +37,22 @@ demo-style paths. Beyond AI advisor and Dash/dashboard parity, Abacus
 statistical and methodological functionality should be treated as in scope for
 the Julia port.
 
-Current high-confidence parity is concentrated in the lowest layers:
-convolution, scaling, and selected adstock/transform behavior. Model building,
-panel semantics, posterior replay, diagnostics, post-model artifacts,
-optimization, and pipeline outputs should be treated as scaffolded until they
-pass ledger-backed Abacus fixture or demo acceptance tests.
+Current high-confidence parity is strongest in the lowest layers: convolution,
+scaling, and selected adstock/transform behavior remain `ported` against
+Abacus fixtures. Phase 14 has additionally closed ledger-backed fixture and
+demo-replay parity for the `timeseries`, `geo_panel`, and `geo_brand_panel`
+acceptance targets: config/data ingestion, model-spec metadata, deterministic
+posterior replay, contribution/decomposition outputs, response/saturation/
+adstock curves, marketing metrics, and pipeline Stage `00` through Stage `70`
+artifact-key parity (where each stage is enabled) all pass the fixture/demo
+gates recorded in
+[`ABACUS-PARITY-LEDGER.md`](.planning/ABACUS-PARITY-LEDGER.md). This is not
+full Abacus product parity: HSGP/time-varying parameters, Mundlak/correlated
+random effects, calibration/lift tests, panel holdout validation, and free
+channel-by-panel optimization remain `missing` or `deferred` and are not
+implied by the above. Any surface not listed in the ledger as `ported` or
+covered by a closed Phase 14 gate should still be treated as `scaffolded`
+until it has its own fixture or demo acceptance test.
 
 Historical phase notes below describe implemented Epsilon surfaces and past
 methodology work. They are not, by themselves, Abacus parity claims.
