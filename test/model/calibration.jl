@@ -232,3 +232,140 @@ end
         )
     end
 end
+
+@testset "LiftTestCalibrationPayload construction and validation" begin
+    channel_columns = ["organic", "paid"]
+    scale = [2.0, 5.0]
+    channel_transform = matrix -> matrix .* reshape(scale, 1, :)
+    target_scale = 10.0
+    target_transform = matrix -> matrix ./ target_scale
+
+    payload = build_lift_test_calibration_payload(
+        channel = ["paid", "organic"],
+        x = [1.0, 2.0],
+        delta_x = [0.5, 1.0],
+        delta_y = [1.0, 2.0],
+        sigma = [0.1, 0.2],
+        channel_columns = channel_columns,
+        channel_transform = channel_transform,
+        target_transform = target_transform,
+    )
+
+    @test payload isa LiftTestCalibrationPayload
+    @test payload.channel_index == [2, 1]
+    @test payload.x ≈ [1.0 * scale[2], 2.0 * scale[1]]
+    @test payload.delta_x ≈ [0.5 * scale[2], 1.0 * scale[1]]
+    @test payload.delta_y ≈ [1.0 / target_scale, 2.0 / target_scale]
+    @test payload.sigma ≈ [0.1 / target_scale, 0.2 / target_scale]
+    @test validate_lift_test_calibration_payload(payload) === nothing
+    @test payload == LiftTestCalibrationPayload(
+        payload.channel_index,
+        payload.x,
+        payload.delta_x,
+        payload.delta_y,
+        payload.sigma,
+    )
+
+    # Non-monotonic delta_x/delta_y rows must be rejected before scaling.
+    @test_throws NonMonotonicError build_lift_test_calibration_payload(
+        channel = ["organic"],
+        x = [1.0],
+        delta_x = [1.0],
+        delta_y = [-1.0],
+        sigma = [0.1],
+        channel_columns = channel_columns,
+        channel_transform = channel_transform,
+        target_transform = target_transform,
+    )
+
+    # Unknown channel labels must be rejected.
+    @test_throws ArgumentError build_lift_test_calibration_payload(
+        channel = ["unknown"],
+        x = [1.0],
+        delta_x = [1.0],
+        delta_y = [1.0],
+        sigma = [0.1],
+        channel_columns = channel_columns,
+        channel_transform = channel_transform,
+        target_transform = target_transform,
+    )
+
+    # Non-positive scaled sigma must be rejected.
+    @test_throws ArgumentError build_lift_test_calibration_payload(
+        channel = ["organic"],
+        x = [1.0],
+        delta_x = [1.0],
+        delta_y = [1.0],
+        sigma = [0.0],
+        channel_columns = channel_columns,
+        channel_transform = channel_transform,
+        target_transform = target_transform,
+    )
+
+    # Direct struct validation: mismatched lengths, non-positive channel_index,
+    # and non-finite/non-positive fields must all be rejected.
+    @test_throws ArgumentError validate_lift_test_calibration_payload(
+        LiftTestCalibrationPayload([1, 2], [1.0], [1.0, 1.0], [1.0, 1.0], [0.1, 0.1]),
+    )
+    @test_throws ArgumentError validate_lift_test_calibration_payload(
+        LiftTestCalibrationPayload([0], [1.0], [1.0], [1.0], [0.1]),
+    )
+    @test_throws ArgumentError validate_lift_test_calibration_payload(
+        LiftTestCalibrationPayload([1], [Inf], [1.0], [1.0], [0.1]),
+    )
+    @test_throws ArgumentError validate_lift_test_calibration_payload(
+        LiftTestCalibrationPayload([1], [1.0], [1.0], [1.0], [-0.1]),
+    )
+    @test_throws ArgumentError validate_lift_test_calibration_payload(
+        LiftTestCalibrationPayload(Int[], Float64[], Float64[], Float64[], Float64[]),
+    )
+end
+
+@testset "CostPerTargetCalibrationPayload construction and validation" begin
+    target_scale = 4.0
+    transform = matrix -> matrix ./ target_scale
+
+    payload = build_cost_per_target_calibration_payload(
+        gathered_cpt = [1.0, 2.0],
+        targets = [1.5, 1.8],
+        sigma = [0.2, 0.4],
+        transform = transform,
+    )
+
+    @test payload isa CostPerTargetCalibrationPayload
+    @test payload.gathered_cpt ≈ [1.0, 2.0] ./ target_scale
+    @test payload.targets ≈ [1.5, 1.8] ./ target_scale
+    @test payload.sigma ≈ [0.2, 0.4] ./ target_scale
+    @test validate_cost_per_target_calibration_payload(payload) === nothing
+    @test payload == CostPerTargetCalibrationPayload(
+        payload.gathered_cpt,
+        payload.targets,
+        payload.sigma,
+    )
+
+    @test_throws ArgumentError build_cost_per_target_calibration_payload(
+        gathered_cpt = [1.0, 2.0],
+        targets = [1.5],
+        sigma = [0.2, 0.4],
+        transform = transform,
+    )
+    @test_throws ArgumentError build_cost_per_target_calibration_payload(
+        gathered_cpt = [1.0],
+        targets = [1.5],
+        sigma = [0.0],
+        transform = transform,
+    )
+
+    @test_throws ArgumentError validate_cost_per_target_calibration_payload(
+        CostPerTargetCalibrationPayload([1.0, 2.0], [1.0], [0.1, 0.1]),
+    )
+    @test_throws ArgumentError validate_cost_per_target_calibration_payload(
+        CostPerTargetCalibrationPayload([Inf], [1.0], [0.1]),
+    )
+    @test_throws ArgumentError validate_cost_per_target_calibration_payload(
+        CostPerTargetCalibrationPayload([1.0], [1.0], [-0.1]),
+    )
+    @test_throws ArgumentError validate_cost_per_target_calibration_payload(
+        CostPerTargetCalibrationPayload(Float64[], Float64[], Float64[]),
+    )
+end

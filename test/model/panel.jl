@@ -74,6 +74,32 @@ end
     @test seasonal isa PanelMMM
 end
 
+@testset "PanelMMM rejects calibration keyword arguments" begin
+    model = sample_panel_model()
+    lift_test_data = LiftTestCalibrationRows(
+        channel = ["tv"],
+        x = [1.0],
+        delta_x = [0.5],
+        delta_y = [0.3],
+        sigma = [0.1],
+    )
+    calibration_steps = [CalibrationStepConfig(method = "add_lift_test_measurements")]
+
+    @test_throws MethodError PanelMMM(
+        model.config,
+        model.sampler_config,
+        model.data;
+        calibration_steps = calibration_steps,
+        lift_test_data = lift_test_data,
+    )
+    @test_throws MethodError PanelMMM(
+        model.config,
+        model.sampler_config,
+        model.data;
+        lift_test_data = lift_test_data,
+    )
+end
+
 @testset "build_model for PanelMMM" begin
     model = sample_panel_model()
     spec = build_model(model)

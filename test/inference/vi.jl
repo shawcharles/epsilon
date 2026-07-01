@@ -227,3 +227,38 @@ end
     @test isnothing(model.fit_state.artifact)
     @test occursin("approximate_fit! failed before producing a valid variational artifact", model.fit_state.message)
 end
+
+@testset "approximate_fit! rejects calibrated TimeSeriesMMM honestly" begin
+    base_model = sample_time_series_model()
+    lift_test_data = LiftTestCalibrationRows(
+        channel = ["tv"],
+        x = [1.0],
+        delta_x = [0.5],
+        delta_y = [0.3],
+        sigma = [0.1],
+    )
+    model = TimeSeriesMMM(
+        base_model.config,
+        base_model.sampler_config,
+        base_model.data;
+        calibration_steps = [CalibrationStepConfig(method = "add_lift_test_measurements")],
+        lift_test_data = lift_test_data,
+    )
+
+    err = try
+        approximate_fit!(
+            model,
+            VariationalConfig(; max_iters = 5, draws = 5, random_seed = 53, progressbar = false),
+        )
+        nothing
+    catch caught
+        caught
+    end
+
+    @test err isa ArgumentError
+    @test occursin("approximate_fit! does not support calibrated TimeSeriesMMM models", sprint(showerror, err))
+    @test model.fit_state.status == :error
+    @test model.fit_state.backend == :variational
+    @test isnothing(model.fit_state.artifact)
+    @test occursin("approximate_fit! failed before producing a valid variational artifact", model.fit_state.message)
+end

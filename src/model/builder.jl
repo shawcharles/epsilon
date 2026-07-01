@@ -392,12 +392,22 @@ mutable struct TimeSeriesMMM <: AbstractMMMModel
     data::MMMData
     built_model::Union{Nothing, MMMModelSpec}
     fit_state::Union{Nothing, ModelFitState}
+    calibration::Union{Nothing, TimeSeriesCalibrationInput}
 end
 
-function TimeSeriesMMM(config::ModelConfig, sampler_config::SamplerConfig, data::MMMData)
+function TimeSeriesMMM(
+        config::ModelConfig,
+        sampler_config::SamplerConfig,
+        data::MMMData;
+        calibration_steps::Vector{CalibrationStepConfig} = CalibrationStepConfig[],
+        lift_test_data::Union{Nothing, LiftTestCalibrationRows} = nothing,
+        cost_per_target_data::Union{Nothing, CostPerTargetCalibrationRows} = nothing,
+    )
     _validate_model_data_alignment(config, data)
-    return TimeSeriesMMM(config, sampler_config, data, nothing, nothing)
+    calibration = _build_calibration_input(calibration_steps, lift_test_data, cost_per_target_data)
+    return TimeSeriesMMM(config, sampler_config, data, nothing, nothing, calibration)
 end
+
 
 """
     PanelMMM(config, sampler_config, data)

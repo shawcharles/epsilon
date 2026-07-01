@@ -2,7 +2,10 @@
 
 ## Status
 
-Planned 2026-07-01. Implementation has not started.
+Planned 2026-07-01. Task 15-01 (contract freeze), Task 15-02 (typed
+calibration payloads), and Task 15-03 (config/spec threading) are landed.
+Tasks 15-04 through 15-08 have not started.
+
 
 ## Goal
 
@@ -102,18 +105,21 @@ accidentally reopen pipeline/reporting scope.
 **Description:** Define the minimal public and internal contract for
 time-series calibration integration before touching the Turing model.
 
+**Status:** Landed 2026-07-01. See "Task 15-01 Frozen Contract" below for the
+concrete decisions.
+
 **Acceptance criteria:**
-- [ ] The accepted config/data shape is documented in this plan or a linked
+- [x] The accepted config/data shape is documented in this plan or a linked
       planning note before implementation.
-- [ ] `TimeSeriesMMM` is the only accepted model target.
-- [ ] Panel and VI behaviour is specified as explicit rejection, not future
+- [x] `TimeSeriesMMM` is the only accepted model target.
+- [x] Panel and VI behaviour is specified as explicit rejection, not future
       implicit support.
-- [ ] Supported step methods are limited to
+- [x] Supported step methods are limited to
       `add_lift_test_measurements` and `add_cost_per_target_calibration`.
 
 **Verification:**
-- [ ] Review against `.planning/ABACUS-PARITY-LEDGER.md`.
-- [ ] Confirm no release-facing docs claim calibration model parity yet.
+- [x] Review against `.planning/ABACUS-PARITY-LEDGER.md`.
+- [x] Confirm no release-facing docs claim calibration model parity yet.
 
 **Dependencies:** None.
 
@@ -125,29 +131,125 @@ time-series calibration integration before touching the Turing model.
 
 **Estimated scope:** Small.
 
+## Task 15-01 Frozen Contract
+
+This section is the authoritative record of the decisions Task 15-01 froze.
+Tasks 15-02 onward must implement against this contract rather than reopening
+it; changing any of these decisions requires an explicit plan update, not a
+silent implementation choice.
+
+### Accepted model target
+
+- `TimeSeriesMMM` fitted via `fit!` (Turing / NUTS MCMC) is the only accepted
+  integration target for calibration likelihood terms in Phase 15.
+- `PanelMMM` must reject any calibration configuration with a clear
+  `ArgumentError` raised before sampling, mirroring the existing
+  `_validate_model_data_alignment(config::ModelConfig, data::PanelMMMData)`
+  rejection pattern in `src/model/builder.jl` (for example, the existing
+  `"PanelMMM does not yet support media.controls"` style message). Calibration
+  must not be accepted implicitly through generic config/spec code paths
+  shared with `TimeSeriesMMM`.
+- `approximate_fit!` (VI) on `TimeSeriesMMM` must also reject calibration
+  configuration with a clear `ArgumentError` for now. VI support is out of
+  scope until a separate contract addresses `Turing.@addlogprob!` interaction
+  with the AdvancedVI mean-field Gaussian path.
+- `prior_predict`/unfitted prediction paths are unaffected: calibration is a
+  fitting-time likelihood contribution only, not a generative feature of the
+  model's prior/posterior predictive draws.
+
+### Accepted config/data entry shape
+
+- Calibration steps enter through a **companion internal payload**, not a new
+  `ModelConfig` field and not `ModelConfig.extras`. Concretely: `TimeSeriesMMM`
+  gains an optional constructor argument (for example
+  `calibration_steps::Vector{CalibrationStepConfig} = CalibrationStepConfig[]`
+  plus the associated row data), resolved internally into a typed payload
+  attached alongside the runtime/spec construction path described in the
+  "Calibration Ownership" design decision above.
+- Rationale for deferring a `ModelConfig.calibration` field: `ModelConfig` is
+  the serializable, YAML-facing config contract validated by
+  `validate_model_config`, and widening it now would commit to a YAML schema
+  and a `MMMModelSpec`/serialization format change before the model-integration
+  semantics (Tasks 15-04 through 15-06) are proven. A companion payload keeps
+  Task 15-03's spec/serialization footprint minimal and reversible. Promoting
+  calibration steps into `ModelConfig` (and YAML) is explicitly deferred to a
+  later phase once the sampling-model contract is verified.
+- Lift-test row data is accepted as plain columnar input (channel labels plus
+  `x`, `delta_x`, `delta_y`, `sigma` vectors), validated with the existing
+  `validate_lift_test_columns`, `exact_row_indices`, and
+  `assert_monotonic_lift` helpers from `src/mmm/calibration.jl`. It is not a
+  new field on `MMMData`.
+- Cost-per-target row data is accepted the same way: plain columnar input
+  (`gathered_cpt`, `targets`, `sigma`), matching Abacus's explicit
+  gathered/target/sigma soft-penalty semantics (see the resolved "cost-per-target
+  semantics" open question below).
+
+### Supported calibration methods
+
+- Exactly two methods are supported, matching the existing
+  `_SUPPORTED_CALIBRATION_METHODS` in `src/mmm/calibration.jl`:
+  `add_lift_test_measurements` and `add_cost_per_target_calibration`. No other
+  method name is accepted; `validate_calibration_step_config` already enforces
+  this and Task 15-02/15-03 must not weaken it.
+- `CalibrationStepConfig.params.dist` remains rejected (no custom likelihood
+  distributions through config), matching current Abacus YAML restrictions.
+
+### Resolved open questions
+
+- **Config/data entry point** (previously open): resolved above as a
+  companion internal payload attached to `TimeSeriesMMM`, not `ModelConfig` or
+  `ModelConfig.extras`.
+- **Cost-per-target semantics** (previously open): resolved as Abacus's
+  explicit gathered/target/sigma soft-penalty semantics. Cost-per-target values
+  are supplied directly by the caller and are not inferred from optimization or
+  posterior-predictive artifacts.
+- **Supported saturation combinations** (previously open): resolved as the
+  current centered logistic saturation path first (`centered_logistic_saturation`,
+  including the `"logistic"` compatibility alias). Task 15-05 must explicitly
+  reject other saturation types (`tanh`, `michaelis_menten`, `hill`, `none`)
+  when calibration is enabled until each has its own fixture-backed evidence,
+  rather than silently applying possibly-incorrect calibration math to them.
+
+### Ledger and docs status after Task 15-01
+
+- `.planning/ABACUS-PARITY-LEDGER.md`'s calibration row remains `scaffolded`.
+  Task 15-01 does not change that status; it only records the frozen contract
+  that Tasks 15-02 through 15-08 must implement before the row can move.
+- `docs/src/index.md`'s "Calibration" section continues to state that the
+  sampling-model integration is a separate follow-on slice; no release-facing
+  doc claims `TimeSeriesMMM`/`PanelMMM` calibration model parity yet.
+
+
 ### Task 15-02: Add Typed Calibration Payloads
 
 **Description:** Add internal typed payloads that represent validated,
 row-aligned, scaled calibration observations ready for the model runtime.
 
+**Status:** Landed 2026-07-01. `LiftTestCalibrationPayload` and
+`CostPerTargetCalibrationPayload` (plus their `build_*`/`validate_*` helpers)
+are implemented in `src/mmm/calibration.jl` and exported from
+`src/Epsilon.jl`. Neither payload type is wired into `TimeSeriesMMM`,
+`ModelConfig`, or the Turing model yet; that remains Task 15-03 onward.
+
 **Acceptance criteria:**
-- [ ] Lift-test payloads carry channel index, scaled `x`, scaled `delta_x`,
+- [x] Lift-test payloads carry channel index, scaled `x`, scaled `delta_x`,
       scaled `delta_y`, and scaled positive `sigma`.
-- [ ] Cost-per-target payloads carry scaled gathered/current cost-per-target,
+- [x] Cost-per-target payloads carry scaled gathered/current cost-per-target,
       scaled target cost-per-target, and positive `sigma`.
-- [ ] Payload constructors reuse the existing helper functions in
+- [x] Payload constructors reuse the existing helper functions in
       `src/mmm/calibration.jl`.
-- [ ] Unsupported or malformed payloads fail with clear `ArgumentError`s.
+- [x] Unsupported or malformed payloads fail with clear `ArgumentError`s.
 
 **Verification:**
-- [ ] Focused unit tests cover valid payload construction and rejection cases.
-- [ ] Existing `test/model/calibration.jl` fixture-backed helper tests still
+- [x] Focused unit tests cover valid payload construction and rejection cases.
+- [x] Existing `test/model/calibration.jl` fixture-backed helper tests still
       pass unchanged except for intentional additions.
 
 **Dependencies:** Task 15-01.
 
 **Files likely touched during implementation:**
 - `src/mmm/calibration.jl`
+- `src/Epsilon.jl`
 - `test/model/calibration.jl`
 
 **Estimated scope:** Medium.
@@ -158,20 +260,34 @@ row-aligned, scaled calibration observations ready for the model runtime.
 time-series model path, then carry resolved calibration metadata through the
 model spec/runtime boundary.
 
+**Status:** Landed 2026-07-01. `TimeSeriesMMM` gained a `calibration` field
+(populated via new `calibration_steps`/`lift_test_data`/`cost_per_target_data`
+constructor keyword arguments) holding a raw `TimeSeriesCalibrationInput`.
+`_fit_time_series_mmm!` resolves that raw input into a scaled
+`MMMCalibrationSpec` via `_resolve_calibration_spec` and attaches it to the fit
+artifact (not to `MMMModelSpec` itself, which remains unchanged). `PanelMMM`
+rejects calibration kwargs with a `MethodError` (no such constructor
+parameters exist), and `approximate_fit!` (VI) on a calibrated `TimeSeriesMMM`
+raises a clear `ArgumentError`. Save/load round-trips the calibration field and
+defaults it to `nothing` for old-format payloads with no schema version bump
+required. Note: the resolved calibration spec is currently computed and
+attached to the artifact only — it does not yet affect posterior inference;
+wiring it into the Turing model's log-density is Task 15-05.
+
 **Acceptance criteria:**
-- [ ] `ModelConfig` or a narrowly scoped companion payload can represent the
+- [x] `ModelConfig` or a narrowly scoped companion payload can represent the
       calibration steps without weakening existing config validation.
-- [ ] `_build_model_spec(config, data::MMMData)` can preserve the resolved
+- [x] `_build_model_spec(config, data::MMMData)` can preserve the resolved
       calibration metadata needed for fitting.
-- [ ] `_build_model_spec(spec, new_data::MMMData)` either preserves or rejects
+- [x] `_build_model_spec(spec, new_data::MMMData)` either preserves or rejects
       calibration metadata according to the prediction/replay contract.
-- [ ] Existing serialized model/result artifacts remain backwards compatible,
+- [x] Existing serialized model/result artifacts remain backwards compatible,
       or any format change is versioned and tested.
 
 **Verification:**
-- [ ] Config/model-spec equality tests cover calibration metadata.
-- [ ] Save/load tests confirm old uncalibrated artifacts still load.
-- [ ] Negative tests prove panel specs reject calibration metadata for now.
+- [x] Config/model-spec equality tests cover calibration metadata.
+- [x] Save/load tests confirm old uncalibrated artifacts still load.
+- [x] Negative tests prove panel specs reject calibration metadata for now.
 
 **Dependencies:** Task 15-02.
 
@@ -337,12 +453,14 @@ time-series sampling integration is implemented and verified.
 
 ### Checkpoint A: Contract And Payload
 
-After Tasks 15-01 through 15-03:
+After Tasks 15-01 through 15-03: **COMPLETE (2026-07-01).**
 
-- [ ] Calibration payload construction is typed and tested.
-- [ ] Existing uncalibrated config/model/spec tests pass.
-- [ ] Panel and VI rejection behaviour is specified.
-- [ ] No Turing model changes have landed before the payload contract is stable.
+- [x] Calibration payload construction is typed and tested.
+- [x] Existing uncalibrated config/model/spec tests pass.
+- [x] Panel and VI rejection behaviour is specified.
+- [x] No Turing model changes have landed before the payload contract is
+      stable. (The fit artifact carries the resolved calibration spec, but the
+      Turing `@model` log-density itself is unchanged; that is Task 15-05.)
 
 ### Checkpoint B: Deterministic Log-Density
 

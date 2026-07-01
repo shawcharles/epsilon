@@ -462,3 +462,415 @@ function cost_per_target_total_penalty(
     )
     return sum(cost_per_target_penalties(gathered_cpt, targets, sigma))
 end
+
+"""
+    LiftTestCalibrationPayload(channel_index, x, delta_x, delta_y, sigma)
+
+Typed, row-aligned, already-scaled lift-test calibration observations ready
+for the model runtime. `channel_index` is the 1-based index into the model's
+channel axis for each row; `x`, `delta_x`, `delta_y`, and `sigma` are all in
+scaled model space (the same space as the fitted media and target
+likelihood). `sigma` must be strictly positive.
+
+Use [`build_lift_test_calibration_payload`](@ref) to construct one of these
+from plain columnar lift-test input plus fitted channel/target scalers; this
+struct's own positional constructor performs no scaling or alignment and
+should generally not be called directly outside tests.
+"""
+struct LiftTestCalibrationPayload
+    channel_index::Vector{Int}
+    x::Vector{Float64}
+    delta_x::Vector{Float64}
+    delta_y::Vector{Float64}
+    sigma::Vector{Float64}
+end
+
+function Base.:(==)(lhs::LiftTestCalibrationPayload, rhs::LiftTestCalibrationPayload)
+    return lhs.channel_index == rhs.channel_index &&
+        lhs.x == rhs.x &&
+        lhs.delta_x == rhs.delta_x &&
+        lhs.delta_y == rhs.delta_y &&
+        lhs.sigma == rhs.sigma
+end
+
+"""
+    validate_lift_test_calibration_payload(payload)
+
+Validate one [`LiftTestCalibrationPayload`](@ref): all fields must have
+matching, nonzero length; `channel_index` must be strictly positive (1-based);
+`x`, `delta_x`, and `delta_y` must be finite; and `sigma` must be strictly
+positive and finite.
+"""
+function validate_lift_test_calibration_payload(payload::LiftTestCalibrationPayload)
+    n = length(payload.channel_index)
+    n > 0 || throw(ArgumentError("lift-test calibration payload must contain at least one row"))
+    length(payload.x) == n ||
+        throw(ArgumentError("lift-test calibration payload x length must match channel_index length"))
+    length(payload.delta_x) == n ||
+        throw(ArgumentError("lift-test calibration payload delta_x length must match channel_index length"))
+    length(payload.delta_y) == n ||
+        throw(ArgumentError("lift-test calibration payload delta_y length must match channel_index length"))
+    length(payload.sigma) == n ||
+        throw(ArgumentError("lift-test calibration payload sigma length must match channel_index length"))
+    all(>(0), payload.channel_index) ||
+        throw(ArgumentError("lift-test calibration payload channel_index must contain only positive (1-based) indices"))
+    all(isfinite, payload.x) ||
+        throw(ArgumentError("lift-test calibration payload x must contain only finite values"))
+    all(isfinite, payload.delta_x) ||
+        throw(ArgumentError("lift-test calibration payload delta_x must contain only finite values"))
+    all(isfinite, payload.delta_y) ||
+        throw(ArgumentError("lift-test calibration payload delta_y must contain only finite values"))
+    all(value -> isfinite(value) && value > 0.0, payload.sigma) ||
+        throw(ArgumentError("lift-test calibration payload sigma must contain only positive finite values"))
+    return nothing
+end
+
+"""
+    build_lift_test_calibration_payload(; channel, x, delta_x, delta_y, sigma, channel_columns, channel_transform, target_transform)
+
+Build a validated [`LiftTestCalibrationPayload`](@ref) from plain columnar
+lift-test input. Reuses [`assert_monotonic_lift`](@ref) and
+[`scale_lift_measurements`](@ref) for monotonicity checking and scaling, then
+resolves each row's channel label into a 1-based index into `channel_columns`.
+"""
+function build_lift_test_calibration_payload(;
+        channel::AbstractVector,
+        x::AbstractVector{<:Real},
+        delta_x::AbstractVector{<:Real},
+        delta_y::AbstractVector{<:Real},
+        sigma::AbstractVector{<:Real},
+        channel_columns::AbstractVector,
+        channel_transform::Function,
+        target_transform::Function,
+    )
+    assert_monotonic_lift(delta_x, delta_y)
+    scaled = scale_lift_measurements(
+        channel,
+        x,
+        delta_x,
+        delta_y,
+        sigma,
+        channel_columns,
+        channel_transform,
+        target_transform,
+    )
+    column_index = Dict(value => index for (index, value) in enumerate(channel_columns))
+    channel_index = Int[column_index[value] for value in scaled.channel]
+
+    payload = LiftTestCalibrationPayload(
+        channel_index,
+        scaled.x,
+        scaled.delta_x,
+        scaled.delta_y,
+        scaled.sigma,
+    )
+    validate_lift_test_calibration_payload(payload)
+    return payload
+end
+
+"""
+    CostPerTargetCalibrationPayload(gathered_cpt, targets, sigma)
+
+Typed, already-scaled cost-per-target calibration observations ready for the
+model runtime, matching Abacus's explicit gathered/target/sigma soft-penalty
+semantics: `gathered_cpt` is the observed (gathered) cost-per-target value,
+`targets` is the target cost-per-target value, and `sigma` is the strictly
+positive soft-penalty scale, all in scaled model space.
+
+Use [`build_cost_per_target_calibration_payload`](@ref) to construct one of
+these from plain columnar input plus a fitted target scaler; this struct's own
+positional constructor performs no scaling and should generally not be called
+directly outside tests.
+"""
+struct CostPerTargetCalibrationPayload
+    gathered_cpt::Vector{Float64}
+    targets::Vector{Float64}
+    sigma::Vector{Float64}
+end
+
+function Base.:(==)(lhs::CostPerTargetCalibrationPayload, rhs::CostPerTargetCalibrationPayload)
+    return lhs.gathered_cpt == rhs.gathered_cpt &&
+        lhs.targets == rhs.targets &&
+        lhs.sigma == rhs.sigma
+end
+
+"""
+    validate_cost_per_target_calibration_payload(payload)
+
+Validate one [`CostPerTargetCalibrationPayload`](@ref): all fields must have
+matching, nonzero length; `gathered_cpt` and `targets` must be finite; and
+`sigma` must be strictly positive and finite.
+"""
+function validate_cost_per_target_calibration_payload(payload::CostPerTargetCalibrationPayload)
+    n = length(payload.gathered_cpt)
+    n > 0 || throw(ArgumentError("cost-per-target calibration payload must contain at least one row"))
+    length(payload.targets) == n ||
+        throw(ArgumentError("cost-per-target calibration payload targets length must match gathered_cpt length"))
+    length(payload.sigma) == n ||
+        throw(ArgumentError("cost-per-target calibration payload sigma length must match gathered_cpt length"))
+    all(isfinite, payload.gathered_cpt) ||
+        throw(ArgumentError("cost-per-target calibration payload gathered_cpt must contain only finite values"))
+    all(isfinite, payload.targets) ||
+        throw(ArgumentError("cost-per-target calibration payload targets must contain only finite values"))
+    all(value -> isfinite(value) && value > 0.0, payload.sigma) ||
+        throw(ArgumentError("cost-per-target calibration payload sigma must contain only positive finite values"))
+    return nothing
+end
+
+"""
+    build_cost_per_target_calibration_payload(; gathered_cpt, targets, sigma, transform)
+
+Build a validated [`CostPerTargetCalibrationPayload`](@ref) from plain
+columnar cost-per-target input, rescaling each of `gathered_cpt`, `targets`,
+and `sigma` through `transform` via
+[`scale_target_for_lift_measurements`](@ref).
+"""
+function build_cost_per_target_calibration_payload(;
+        gathered_cpt::AbstractVector{<:Real},
+        targets::AbstractVector{<:Real},
+        sigma::AbstractVector{<:Real},
+        transform::Function,
+    )
+    _matching_lengths("gathered_cpt" => gathered_cpt, "targets" => targets, "sigma" => sigma)
+    gathered_scaled = scale_target_for_lift_measurements(gathered_cpt, transform)
+    targets_scaled = scale_target_for_lift_measurements(targets, transform)
+    sigma_scaled = scale_target_for_lift_measurements(sigma, transform)
+
+    payload = CostPerTargetCalibrationPayload(gathered_scaled, targets_scaled, sigma_scaled)
+    validate_cost_per_target_calibration_payload(payload)
+    return payload
+end
+
+"""
+    LiftTestCalibrationRows(channel, x, delta_x, delta_y, sigma)
+
+Plain, unscaled columnar lift-test row data supplied by a caller, in the
+model's original (unscaled) units. This is the raw companion input accepted by
+`TimeSeriesMMM`'s calibration constructor arguments; it is resolved into a
+scaled [`LiftTestCalibrationPayload`](@ref) internally once the fitted
+channel/target scales are known.
+
+Use the keyword constructor to build one of these from plain vectors; it
+validates matching lengths, finite `x`/`delta_x`/`delta_y`, positive `sigma`,
+and lift-test monotonicity via [`assert_monotonic_lift`](@ref) eagerly, so
+malformed calibration data fails at `TimeSeriesMMM` construction time rather
+than at fit time.
+"""
+struct LiftTestCalibrationRows
+    channel::Vector{String}
+    x::Vector{Float64}
+    delta_x::Vector{Float64}
+    delta_y::Vector{Float64}
+    sigma::Vector{Float64}
+end
+
+function Base.:(==)(lhs::LiftTestCalibrationRows, rhs::LiftTestCalibrationRows)
+    return lhs.channel == rhs.channel &&
+        lhs.x == rhs.x &&
+        lhs.delta_x == rhs.delta_x &&
+        lhs.delta_y == rhs.delta_y &&
+        lhs.sigma == rhs.sigma
+end
+
+function LiftTestCalibrationRows(;
+        channel::AbstractVector,
+        x::AbstractVector{<:Real},
+        delta_x::AbstractVector{<:Real},
+        delta_y::AbstractVector{<:Real},
+        sigma::AbstractVector{<:Real},
+    )
+    _matching_lengths(
+        "channel" => channel,
+        "x" => x,
+        "delta_x" => delta_x,
+        "delta_y" => delta_y,
+        "sigma" => sigma,
+    )
+    assert_monotonic_lift(delta_x, delta_y)
+    channel_values = String[String(value) for value in channel]
+    x_values = _finite_float_vector(x, "x")
+    delta_x_values = _finite_float_vector(delta_x, "delta_x")
+    delta_y_values = _finite_float_vector(delta_y, "delta_y")
+    sigma_values = _positive_float_vector(sigma, "sigma")
+    return LiftTestCalibrationRows(channel_values, x_values, delta_x_values, delta_y_values, sigma_values)
+end
+
+"""
+    CostPerTargetCalibrationRows(gathered_cpt, targets, sigma)
+
+Plain, unscaled columnar cost-per-target row data supplied by a caller, in the
+model's original (unscaled) units. This is the raw companion input accepted by
+`TimeSeriesMMM`'s calibration constructor arguments; it is resolved into a
+scaled [`CostPerTargetCalibrationPayload`](@ref) internally once the fitted
+target scale is known.
+
+Use the keyword constructor to build one of these from plain vectors; it
+validates matching lengths, finite `gathered_cpt`/`targets`, and positive
+`sigma` eagerly.
+"""
+struct CostPerTargetCalibrationRows
+    gathered_cpt::Vector{Float64}
+    targets::Vector{Float64}
+    sigma::Vector{Float64}
+end
+
+function Base.:(==)(lhs::CostPerTargetCalibrationRows, rhs::CostPerTargetCalibrationRows)
+    return lhs.gathered_cpt == rhs.gathered_cpt &&
+        lhs.targets == rhs.targets &&
+        lhs.sigma == rhs.sigma
+end
+
+function CostPerTargetCalibrationRows(;
+        gathered_cpt::AbstractVector{<:Real},
+        targets::AbstractVector{<:Real},
+        sigma::AbstractVector{<:Real},
+    )
+    _matching_lengths("gathered_cpt" => gathered_cpt, "targets" => targets, "sigma" => sigma)
+    gathered_values = _finite_float_vector(gathered_cpt, "gathered_cpt")
+    target_values = _finite_float_vector(targets, "targets")
+    sigma_values = _positive_float_vector(sigma, "sigma")
+    return CostPerTargetCalibrationRows(gathered_values, target_values, sigma_values)
+end
+
+"""
+    TimeSeriesCalibrationInput(steps, lift_test, cost_per_target)
+
+Companion internal payload attached to a `TimeSeriesMMM`, bundling the raw
+(unscaled) calibration steps and row data supplied at construction time. Build
+one of these indirectly through `TimeSeriesMMM`'s `calibration_steps`,
+`lift_test_data`, and `cost_per_target_data` constructor arguments rather than
+calling this constructor directly.
+"""
+struct TimeSeriesCalibrationInput
+    steps::Vector{CalibrationStepConfig}
+    lift_test::Union{Nothing, LiftTestCalibrationRows}
+    cost_per_target::Union{Nothing, CostPerTargetCalibrationRows}
+end
+
+function Base.:(==)(lhs::TimeSeriesCalibrationInput, rhs::TimeSeriesCalibrationInput)
+    return lhs.steps == rhs.steps &&
+        lhs.lift_test == rhs.lift_test &&
+        lhs.cost_per_target == rhs.cost_per_target
+end
+
+"""
+    MMMCalibrationSpec(steps, lift_test, cost_per_target)
+
+Resolved calibration metadata attached to a time-series `MMMModelSpec`:
+the configured calibration steps plus already-scaled
+[`LiftTestCalibrationPayload`](@ref) and/or
+[`CostPerTargetCalibrationPayload`](@ref) observations, ready for the model
+runtime. `PanelMMM` specs must never carry a non-`nothing` value here.
+"""
+struct MMMCalibrationSpec
+    steps::Vector{CalibrationStepConfig}
+    lift_test::Union{Nothing, LiftTestCalibrationPayload}
+    cost_per_target::Union{Nothing, CostPerTargetCalibrationPayload}
+end
+
+function Base.:(==)(lhs::MMMCalibrationSpec, rhs::MMMCalibrationSpec)
+    return lhs.steps == rhs.steps &&
+        lhs.lift_test == rhs.lift_test &&
+        lhs.cost_per_target == rhs.cost_per_target
+end
+
+"""
+    _validate_calibration_steps_and_rows(steps, lift_test, cost_per_target)
+
+Require that configured calibration `steps` and supplied row data agree:
+`add_lift_test_measurements` requires `lift_test` row data and vice versa;
+`add_cost_per_target_calibration` requires `cost_per_target` row data and vice
+versa. Also rejects repeated steps for the same method.
+"""
+function _validate_calibration_steps_and_rows(
+        steps::Vector{CalibrationStepConfig},
+        lift_test::Union{Nothing, LiftTestCalibrationRows},
+        cost_per_target::Union{Nothing, CostPerTargetCalibrationRows},
+    )
+    methods = [step.method for step in steps]
+    length(unique(methods)) == length(methods) ||
+        throw(ArgumentError("calibration steps must not repeat the same method"))
+
+    has_lift_step = "add_lift_test_measurements" in methods
+    has_cpt_step = "add_cost_per_target_calibration" in methods
+
+    has_lift_step == !isnothing(lift_test) ||
+        throw(
+        ArgumentError(
+            "an `add_lift_test_measurements` calibration step requires `lift_test_data`, and `lift_test_data` requires an `add_lift_test_measurements` step",
+        ),
+    )
+    has_cpt_step == !isnothing(cost_per_target) ||
+        throw(
+        ArgumentError(
+            "an `add_cost_per_target_calibration` calibration step requires `cost_per_target_data`, and `cost_per_target_data` requires an `add_cost_per_target_calibration` step",
+        ),
+    )
+    return nothing
+end
+
+"""
+    _build_calibration_input(steps, lift_test, cost_per_target)
+
+Build a validated [`TimeSeriesCalibrationInput`](@ref) from raw constructor
+arguments, or return `nothing` when no calibration is configured.
+"""
+function _build_calibration_input(
+        steps::Vector{CalibrationStepConfig},
+        lift_test::Union{Nothing, LiftTestCalibrationRows},
+        cost_per_target::Union{Nothing, CostPerTargetCalibrationRows},
+    )
+    isempty(steps) && isnothing(lift_test) && isnothing(cost_per_target) && return nothing
+    _validate_calibration_steps_and_rows(steps, lift_test, cost_per_target)
+    return TimeSeriesCalibrationInput(steps, lift_test, cost_per_target)
+end
+
+"""
+    _resolve_calibration_spec(config, calibration_input, channel_scale, target_scale)
+
+Resolve a [`TimeSeriesCalibrationInput`](@ref) (or `nothing`) into a
+[`MMMCalibrationSpec`](@ref) (or `nothing`) by scaling its row data through
+the model's fitted `channel_scale`/`target_scale`, mirroring the scaling
+applied to media channels and the target in the time-series Turing model.
+"""
+_resolve_calibration_spec(::ModelConfig, ::Nothing, ::AbstractVector{<:Real}, ::Real) = nothing
+
+function _resolve_calibration_spec(
+        config::ModelConfig,
+        calibration_input::TimeSeriesCalibrationInput,
+        channel_scale::AbstractVector{<:Real},
+        target_scale::Real,
+    )
+    channel_scale_values = Float64.(collect(channel_scale))
+    target_scale_value = Float64(target_scale)
+    channel_transform = matrix -> matrix ./ reshape(channel_scale_values, 1, :)
+    target_transform = matrix -> matrix ./ target_scale_value
+
+    lift_test_payload = if isnothing(calibration_input.lift_test)
+        nothing
+    else
+        build_lift_test_calibration_payload(
+            channel = calibration_input.lift_test.channel,
+            x = calibration_input.lift_test.x,
+            delta_x = calibration_input.lift_test.delta_x,
+            delta_y = calibration_input.lift_test.delta_y,
+            sigma = calibration_input.lift_test.sigma,
+            channel_columns = config.channel_columns,
+            channel_transform = channel_transform,
+            target_transform = target_transform,
+        )
+    end
+
+    cost_per_target_payload = if isnothing(calibration_input.cost_per_target)
+        nothing
+    else
+        build_cost_per_target_calibration_payload(
+            gathered_cpt = calibration_input.cost_per_target.gathered_cpt,
+            targets = calibration_input.cost_per_target.targets,
+            sigma = calibration_input.cost_per_target.sigma,
+            transform = target_transform,
+        )
+    end
+
+    return MMMCalibrationSpec(calibration_input.steps, lift_test_payload, cost_per_target_payload)
+end

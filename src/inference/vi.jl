@@ -6,6 +6,13 @@ function approximate_fit!(
     model::TimeSeriesMMM,
     config::VariationalConfig = VariationalConfig(),
 )
+    if !isnothing(model.calibration)
+        err = ArgumentError(
+            "approximate_fit! does not support calibrated TimeSeriesMMM models; calibration likelihood terms are only supported through fit! (Turing NUTS)",
+        )
+        _mark_failed_variational_fit!(model, err)
+        throw(err)
+    end
     return _approximate_fit_time_series_mmm!(model, config)
 end
 

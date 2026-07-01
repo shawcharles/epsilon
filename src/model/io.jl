@@ -69,10 +69,12 @@ function _model_io_payload(model::TimeSeriesMMM)
         data = model.data,
         built_model = model.built_model,
         fit_state = _serializable_fit_state(model.fit_state),
+        calibration = model.calibration,
     )
 end
 
 function _model_io_payload(model::PanelMMM)
+
     return (
         schema_version = _MODEL_IO_SCHEMA_VERSION,
         metadata = _artifact_metadata(
@@ -142,8 +144,12 @@ function _model_from_payload(payload)
     end
     model.built_model = get(payload, :built_model, nothing)
     model.fit_state = _restore_fit_state(get(payload, :fit_state, nothing))
+    if model isa TimeSeriesMMM
+        model.calibration = get(payload, :calibration, nothing)
+    end
     return model
 end
+
 
 function _restore_fit_state(state_payload::Nothing)
     return nothing

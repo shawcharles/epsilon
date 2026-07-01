@@ -65,7 +65,7 @@ Each target should pass these gates before it is counted as ported:
 | Multi-dimensional panel MMM | `abacus/mmm/panel.py`, `abacus/mmm/models/panel_types.py` | `src/mmm/panel.jl`, `src/model/types.jl`, `src/postmodel/replay.jl` | scaffolded | `geo_brand_panel` config/data, flattened panel ordering, model-spec metadata, runtime artifact schema, deterministic contribution/decomposition replay, and panel-cell response/metric summaries are covered by validation fixtures; Stage `70` historical-share optimization is implemented for `PanelMMM` and fixture-backed for both `geo_panel` and `geo_brand_panel`. |
 | Hierarchical pooling through priors | `abacus/mmm/panel.py`, `abacus/prior.py` | `src/mmm/panel.jl`, `src/distributions/priors.jl` | scaffolded | Ensure pooling is encoded through priors, not implicit panel defaults. |
 | Mundlak / correlated random effects | Abacus panel/model code and docs | none | missing | Port only after panel-indexed baseline is stable. |
-| Calibration and lift tests | `abacus/mmm/lift_test.py`, `abacus/mmm/calibration/*.py`, `abacus/mmm/builders/calibration.py` | `src/mmm/calibration.jl` | scaffolded | Fixture-backed schema, alignment, monotonicity, scaling, and likelihood-term math (`CalibrationStepConfig`, `exact_row_indices`, `assert_monotonic_lift`, `scale_channel_lift_measurements`, `scale_target_for_lift_measurements`, `scale_lift_measurements`, `lift_test_likelihood_terms`, `cost_per_target_penalties`) are implemented and fixture-tested. Phase 15 now plans the remaining `TimeSeriesMMM` MCMC calibration likelihood integration at `.planning/phases/15-calibration-likelihood-integration/PLAN.md`; panel calibration model integration stays out of scope until a separate contract exists. |
+| Calibration and lift tests | `abacus/mmm/lift_test.py`, `abacus/mmm/calibration/*.py`, `abacus/mmm/builders/calibration.py` | `src/mmm/calibration.jl` | scaffolded | Fixture-backed schema, alignment, monotonicity, scaling, and likelihood-term math (`CalibrationStepConfig`, `exact_row_indices`, `assert_monotonic_lift`, `scale_channel_lift_measurements`, `scale_target_for_lift_measurements`, `scale_lift_measurements`, `lift_test_likelihood_terms`, `cost_per_target_penalties`) are implemented and fixture-tested. Task 15-01 has frozen the `TimeSeriesMMM`-only integration contract (companion internal payload, not a `ModelConfig` field; explicit `PanelMMM`/VI rejection; centered-logistic-only saturation support first) at `.planning/phases/15-calibration-likelihood-integration/PLAN.md`. Tasks 15-02 and 15-03 have landed typed calibration payloads and threaded a raw `TimeSeriesCalibrationInput`/resolved `MMMCalibrationSpec` through `TimeSeriesMMM` construction, fitting, VI rejection, and serialization; the resolved spec is attached to the fit artifact but does not yet affect the Turing model's log-density (Task 15-05). Panel calibration model integration stays out of scope until a separate contract exists. |
 | Fitting and sampler config | `abacus/modeling/base.py`, `abacus/pytensor/sampling.py` | `src/inference/mcmc.jl`, `src/model/config.jl` | scaffolded | Compare sampler config parsing and saved fit metadata; numerical posterior equality is not required. |
 | Posterior predictive | `abacus/mmm/base.py`, `abacus/mmm/models/panel_predict.py` | `src/model/results.jl`, `src/inference/results.jl` | scaffolded | Make prediction replay consume saved state for train, holdout, and new data. |
 | Diagnostics | `abacus/mmm/diagnostics/*.py` | `src/model/diagnostics.jl`, `src/inference/diagnostics.jl`, `src/plotting/diagnostics.jl` | scaffolded | Port design, MCMC, and predictive summary schemas before plot polish. |
@@ -267,8 +267,51 @@ As of 2026-05-10:
     PyMC-derived `Gamma` log-density values. PyMC/PyTensor-graph-specific
     indexing (`VariableIndexer`, dimension-based model-variable gathering) and
     wiring a calibration likelihood term into `TimeSeriesMMM`/`PanelMMM`
-    sampling are an explicit follow-on sub-slice, not yet started; panel
-    calibration model integration is out of scope until that sub-slice lands.
+    sampling are an explicit follow-on sub-slice; panel calibration model
+    integration is out of scope until that sub-slice lands.
+19. Phase 15 Task 15-01 has frozen the time-series calibration model
+    integration contract at
+    `.planning/phases/15-calibration-likelihood-integration/PLAN.md`
+    ("Task 15-01 Frozen Contract"): `TimeSeriesMMM` fit via `fit!` is the only
+    accepted integration target; `PanelMMM` and `approximate_fit!` (VI) must
+    reject calibration configuration with a clear `ArgumentError`; calibration
+    steps and row data enter through a companion internal payload rather than
+    a new `ModelConfig` field or `ModelConfig.extras`; only
+    `add_lift_test_measurements` and `add_cost_per_target_calibration` remain
+    supported; and the first integration slice supports centered logistic
+    saturation only, with other saturation types rejected when calibration is
+    enabled until they have their own fixture-backed evidence.
+20. Phase 15 Task 15-02 has landed typed calibration payloads
+    (`LiftTestCalibrationPayload`, `CostPerTargetCalibrationPayload`) in
+    `src/mmm/calibration.jl`, reusing the existing `assert_monotonic_lift`,
+    `scale_lift_measurements`, and `scale_target_for_lift_measurements`
+    helpers rather than duplicating alignment/scaling logic. Both payload
+    types validate row-aligned, scaled, positive-`sigma` observations and are
+    exported from `src/Epsilon.jl`, with fixture-independent unit tests in
+    `test/model/calibration.jl` covering valid construction and malformed
+    rejection. Neither payload type is wired into `TimeSeriesMMM`,
+    `ModelConfig`, or the Turing sampling model yet; that remains Task 15-03
+    onward.
+21. Phase 15 Task 15-03 has landed config/spec threading for calibration.
+    `TimeSeriesMMM` gained a `calibration` field, populated via new
+    `calibration_steps`/`lift_test_data`/`cost_per_target_data` constructor
+    keyword arguments, holding a raw (unscaled) `TimeSeriesCalibrationInput`.
+    `_fit_time_series_mmm!` resolves that raw input into a scaled
+    `MMMCalibrationSpec` via `_resolve_calibration_spec` and attaches it to
+    the successful fit artifact; `MMMModelSpec` itself is deliberately
+    unchanged. `PanelMMM` rejects calibration keyword arguments with a
+    `MethodError` (no such constructor parameters exist on `PanelMMM`), and
+    `approximate_fit!` (VI) on a calibrated `TimeSeriesMMM` raises a clear
+    `ArgumentError` before sampling. `save_model`/`load_model` round-trip the
+    calibration field and default it to `nothing` for old-format payloads
+    with no schema version bump required. New tests cover calibrated
+    construction, a real Turing NUTS `fit!` smoke test that asserts the
+    resolved calibration spec on the artifact, `PanelMMM` rejection,
+    save/load round-trip and backward compatibility, and VI rejection; the
+    full 3909-test suite passes with these additions and no regressions. The
+    resolved calibration spec still has zero effect on posterior inference
+    until Task 15-05 wires it into the Turing model's log-density via
+    `Turing.@addlogprob!`.
 
 ## Plan 14-05 Parity Audit
 

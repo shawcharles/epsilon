@@ -198,6 +198,13 @@ function _fit_time_series_mmm!(model::TimeSeriesMMM)
         message = _mcmc_fit_message("TimeSeriesMMM", execution_plan)
         !isempty(diagnostics_bundle.message) && (message *= " " * diagnostics_bundle.message)
 
+        calibration = _resolve_calibration_spec(
+            model.config,
+            model.calibration,
+            spec.channel_scale,
+            spec.target_scale,
+        )
+
         artifact = (;
             spec,
             runtime,
@@ -210,6 +217,7 @@ function _fit_time_series_mmm!(model::TimeSeriesMMM)
             convergence_report = diagnostics_bundle.convergence_report,
             convergence_warnings = diagnostics_bundle.convergence_warnings,
             metadata,
+            calibration,
         )
         return _successful_turing_fit!(model, artifact, message)
     catch err

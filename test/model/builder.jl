@@ -116,7 +116,66 @@ end
     @test_throws ArgumentError TimeSeriesMMM(model.config, model.sampler_config, bad_data)
 end
 
+@testset "TimeSeriesMMM calibration construction" begin
+    model = sample_time_series_model()
+    @test model.calibration === nothing
+
+    lift_test_data = LiftTestCalibrationRows(
+        channel = ["tv"],
+        x = [1.0],
+        delta_x = [0.5],
+        delta_y = [0.3],
+        sigma = [0.1],
+    )
+    calibration_steps = [CalibrationStepConfig(method = "add_lift_test_measurements")]
+
+    calibrated_model = TimeSeriesMMM(
+        model.config,
+        model.sampler_config,
+        model.data;
+        calibration_steps = calibration_steps,
+        lift_test_data = lift_test_data,
+    )
+    @test calibrated_model.calibration isa TimeSeriesCalibrationInput
+    @test calibrated_model.calibration.steps == calibration_steps
+    @test calibrated_model.calibration.lift_test == lift_test_data
+    @test calibrated_model.calibration.cost_per_target === nothing
+
+    cost_per_target_data = CostPerTargetCalibrationRows(
+        gathered_cpt = [2.0],
+        targets = [1.5],
+        sigma = [0.2],
+    )
+    combined_model = TimeSeriesMMM(
+        model.config,
+        model.sampler_config,
+        model.data;
+        calibration_steps = [
+            CalibrationStepConfig(method = "add_lift_test_measurements"),
+            CalibrationStepConfig(method = "add_cost_per_target_calibration"),
+        ],
+        lift_test_data = lift_test_data,
+        cost_per_target_data = cost_per_target_data,
+    )
+    @test combined_model.calibration.lift_test == lift_test_data
+    @test combined_model.calibration.cost_per_target == cost_per_target_data
+
+    @test_throws ArgumentError TimeSeriesMMM(
+        model.config,
+        model.sampler_config,
+        model.data;
+        calibration_steps = calibration_steps,
+    )
+    @test_throws ArgumentError TimeSeriesMMM(
+        model.config,
+        model.sampler_config,
+        model.data;
+        lift_test_data = lift_test_data,
+    )
+end
+
 @testset "fit! with tanh saturation" begin
+
     model = sample_time_series_model(; saturation_type = "tanh")
     state = fit!(model)
 
@@ -843,6 +902,45 @@ end
 
     @test state.artifact.runtime.control_beta_prior isa Normal
     @test params(state.artifact.runtime.control_beta_prior) == (5.0, 6.0)
+end
+
+@testset "fit! attaches resolved calibration spec to the artifact" begin
+    model = sample_time_series_model()
+    state = fit!(model)
+    @test state.artifact.calibration === nothing
+
+    lift_test_data = LiftTestCalibrationRows(
+        channel = ["tv"],
+        x = [1.0],
+        delta_x = [0.5],
+        delta_y = [0.3],
+        sigma = [0.1],
+    )
+    calibrated_model = TimeSeriesMMM(
+        model.config,
+        model.sampler_config,
+        model.data;
+        calibration_steps = [CalibrationStepConfig(method = "add_lift_test_measurements")],
+        lift_test_data = lift_test_data,
+    )
+    calibrated_state = fit!(calibrated_model)
+
+    @test calibrated_state isa ModelFitState
+    @test calibrated_state.status == :fit
+    @test calibrated_state.artifact.calibration isa MMMCalibrationSpec
+
+    expected = Epsilon._resolve_calibration_spec(
+        calibrated_model.config,
+        calibrated_model.calibration,
+        calibrated_state.artifact.spec.channel_scale,
+        calibrated_state.artifact.spec.target_scale,
+    )
+    @test calibrated_state.artifact.calibration == expected
+    @test calibrated_state.artifact.calibration.lift_test isa LiftTestCalibrationPayload
+    @test calibrated_state.artifact.calibration.cost_per_target === nothing
+
+    predictive = Epsilon.predict(calibrated_model)
+    @test size(predictive, 1) == calibrated_model.sampler_config.draws
 end
 
 @testset "fit! rebuilds spec from current model state" begin
