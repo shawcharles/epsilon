@@ -9,21 +9,23 @@ Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
 **Current focus:** Phase 13 remediation and Phase 14 Abacus parity recovery are
-closed for the bounded v1 evidence spine. Next work should be an explicit
-release-prep choice: clean benchmark snapshot, bounded non-UI scenario-planner
-expansion, or a separately specified prior-sensitivity execution contract.
+closed for the bounded v1 evidence spine. The next substantive capability plan
+is now Phase 15 calibration likelihood integration: wire the scaffolded
+calibration/lift-test helper layer into `TimeSeriesMMM` MCMC sampling only,
+with panel and VI calibration kept out of scope until separate contracts exist.
 
 ## Current Position
 
-**Current Phase:** 14
-**Current Phase Name:** Abacus Parity Recovery
-**Total Phases:** 14
-**Current Plan:** 5
-**Total Plans in Phase:** 5
-**Status:** State saved for pause on 2026-05-20. Phase 13
-contract/remediation issues are fixed and revalidated; Plan 14-05 remains
-closed with parity audit recorded. Release preparation remains paused pending
-final release-prep decisions. The project has reset its
+**Current Phase:** 15
+**Current Phase Name:** Calibration Likelihood Integration
+**Total Phases:** 15
+**Current Plan:** planning
+**Total Plans in Phase:** 8 tasks
+**Status:** Phase 15 has a robust implementation plan at
+`.planning/phases/15-calibration-likelihood-integration/PLAN.md`; implementation
+has not started. Phase 13 contract/remediation issues are fixed and
+revalidated; Plan 14-05 remains closed with parity audit recorded. Release
+preparation remains paused pending final release-prep decisions. The project has reset its
 planning contract around `.planning/ABACUS-PARITY-LEDGER.md`: existing modules
 are treated as `ported`, `native`, `scaffolded`, `missing`, or `deferred`
 instead of being assumed Abacus-equivalent from phase completion alone. Plan
@@ -59,6 +61,10 @@ bounded scenario-config and manifest stage; it does not automatically refit
 every scenario. The non-UI scenario planner surface is now started with typed
 current/manual/fixed-budget scenario specs and `scenario_plan(result)`
 comparison tables over solved optimization results.
+Calibration/lift-test parity has also started as a scaffolded capability:
+schema, alignment, monotonicity, scaling, Gamma likelihood-term math, and
+cost-per-target soft-penalty helpers are fixture-backed, while Phase 15 plans
+the remaining `TimeSeriesMMM` MCMC likelihood integration.
 **Last Activity:** 2026-05-20
 **Last Activity Description:** Saved handoff after closing Phase 13
 remediation: fitted
@@ -166,6 +172,9 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 - Expand the scenario planner only behind concrete non-UI planning contracts,
   such as manual-allocation response evaluation or saved scenario-store
   artifacts. Automatic scenario refits remain outside the current surface.
+- Implement Phase 15 calibration likelihood integration for `TimeSeriesMMM`
+  MCMC only, following
+  `.planning/phases/15-calibration-likelihood-integration/PLAN.md`.
 - Keep Stage `35` panel holdout validation deferred unless a concrete
   methodological requirement and fixture-backed contract are added.
 - Do not force free channel-by-panel allocation, panel-total bounds, fairness
