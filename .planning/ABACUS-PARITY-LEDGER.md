@@ -312,6 +312,32 @@ As of 2026-05-10:
     resolved calibration spec still has zero effect on posterior inference
     until Task 15-05 wires it into the Turing model's log-density via
     `Turing.@addlogprob!`.
+22. Phase 15 Task 15-04 has landed pure, Turing-independent, AD-compatible
+    lift-test log-density helpers in `src/mmm/calibration.jl`:
+    `lift_test_estimated_lift_ad`, `lift_test_log_density`, and
+    `lift_test_payload_log_density`. These operate on already-scaled
+    model-space `x`/`delta_x`/`delta_y`/`sigma` values and a caller-supplied
+    `saturation_fn`/per-channel sampled parameter vector, reuse the existing
+    `lift_test_gamma_distribution` Gamma reparameterization, and preserve the
+    saturation-only lift-test calibration contract (no adstock).
+    `lift_test_estimated_lift_ad` deliberately avoids the `Float64`-forcing
+    behavior of the pre-existing `lift_test_estimated_lift`, so
+    `ForwardDiff.Dual`/`ReverseDiff.TrackedReal` values survive through
+    `saturation_fn`. `lift_test_payload_log_density` validates
+    `LiftTestCalibrationPayload.channel_index` against the supplied
+    per-channel parameter vector and raises a clear `ArgumentError` on
+    out-of-bounds channel index instead of an opaque `BoundsError`.
+    Cost-per-target's helper acceptance criterion was already satisfied by
+    the pre-existing `cost_per_target_penalties`/`cost_per_target_total_penalty`
+    helpers from Task 15-02, unchanged in this task. New deterministic tests
+    in `test/model/calibration.jl` compare helper outputs against the
+    existing `ABACUS_LIFT_TEST_LIKELIHOOD_CASES` fixture, cover zero
+    estimated lift, non-positive sigma, non-finite inputs, and channel-index
+    mismatch, and add a `ForwardDiff`/`ReverseDiff` gradient-agreement smoke
+    test. None of these helpers are called from `_time_series_mmm_model` or
+    any other Turing model code; calibration still has zero effect on
+    posterior inference until Task 15-05 wires a contribution into the
+    Turing model via `Turing.@addlogprob!`.
 
 ## Plan 14-05 Parity Audit
 

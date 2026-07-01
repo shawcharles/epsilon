@@ -107,6 +107,9 @@ export gamma_shape_scale
 export lift_test_gamma_distribution
 export lift_test_estimated_lift
 export lift_test_likelihood_terms
+export lift_test_estimated_lift_ad
+export lift_test_log_density
+export lift_test_payload_log_density
 export cost_per_target_penalties
 export cost_per_target_total_penalty
 export LiftTestCalibrationPayload

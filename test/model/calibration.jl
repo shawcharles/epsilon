@@ -1,5 +1,7 @@
 using Distributions
 using Epsilon
+using ForwardDiff
+using ReverseDiff
 using Test
 
 include(joinpath(@__DIR__, "..", "fixtures", "abacus", "calibration_alignment_cases.jl"))
@@ -211,6 +213,127 @@ end
         Float64[1.0],
         Float64[0.0],
     )
+end
+
+@testset "lift_test_log_density" begin
+    for case in ABACUS_LIFT_TEST_LIKELIHOOD_CASES
+        saturation_fn = x -> centered_logistic_saturation(x, case.lam)
+        total = lift_test_log_density(saturation_fn, case.x, case.delta_x, case.delta_y, case.sigma)
+        @test total ≈ sum(case.expected_logp) atol = 1.0e-6
+    end
+
+    # Zero estimated lift (saturation_fn(x + delta_x) == saturation_fn(x)) must be
+    # rejected rather than producing a degenerate Gamma mean.
+    @test_throws ArgumentError lift_test_log_density(
+        x -> x,
+        Float64[1.0],
+        Float64[0.0],
+        Float64[0.05],
+        Float64[0.01],
+    )
+
+    # Non-positive sigma must be rejected.
+    @test_throws ArgumentError lift_test_log_density(
+        x -> x,
+        Float64[1.0],
+        Float64[0.5],
+        Float64[0.05],
+        Float64[0.0],
+    )
+    @test_throws ArgumentError lift_test_log_density(
+        x -> x,
+        Float64[1.0],
+        Float64[0.5],
+        Float64[0.05],
+        Float64[-1.0],
+    )
+
+    # Non-finite inputs must be rejected.
+    @test_throws ArgumentError lift_test_log_density(
+        x -> x,
+        Float64[NaN],
+        Float64[0.5],
+        Float64[0.05],
+        Float64[0.01],
+    )
+    @test_throws ArgumentError lift_test_log_density(
+        x -> x,
+        Float64[1.0],
+        Float64[Inf],
+        Float64[0.05],
+        Float64[0.01],
+    )
+    @test_throws ArgumentError lift_test_log_density(
+        x -> x,
+        Float64[1.0],
+        Float64[0.5],
+        Float64[NaN],
+        Float64[0.01],
+    )
+end
+
+@testset "lift_test_payload_log_density" begin
+    saturation_fn = (x_row, param_row) -> centered_logistic_saturation(x_row, param_row)
+
+    for case in ABACUS_LIFT_TEST_LIKELIHOOD_CASES
+        payload = LiftTestCalibrationPayload(
+            fill(1, length(case.x)),
+            case.x,
+            case.delta_x,
+            case.delta_y,
+            case.sigma,
+        )
+        total = lift_test_payload_log_density(saturation_fn, payload, [case.lam])
+        @test total ≈ sum(case.expected_logp) atol = 1.0e-6
+    end
+
+    # A two-channel payload must select each row's own channel parameter.
+    two_channel_payload = LiftTestCalibrationPayload(
+        [2, 1],
+        Float64[1.0, 3.0],
+        Float64[0.5, -1.0],
+        Float64[0.05, -0.02],
+        Float64[0.01, 0.005],
+    )
+    channel_param = [1.2, 0.5]
+    total = lift_test_payload_log_density(saturation_fn, two_channel_payload, channel_param)
+    expected = lift_test_log_density(
+        x -> centered_logistic_saturation.(x, channel_param[two_channel_payload.channel_index]),
+        two_channel_payload.x,
+        two_channel_payload.delta_x,
+        two_channel_payload.delta_y,
+        two_channel_payload.sigma,
+    )
+    @test total ≈ expected
+
+    # Channel-index mismatch: channel_index refers to a channel beyond
+    # channel_param's length and must fail closed with a clear ArgumentError
+    # rather than a raw BoundsError.
+    mismatched_payload = LiftTestCalibrationPayload([1, 2], Float64[1.0, 1.0], Float64[0.5, 0.5], Float64[0.05, 0.05], Float64[0.01, 0.01])
+    @test_throws ArgumentError lift_test_payload_log_density(saturation_fn, mismatched_payload, [1.0])
+end
+
+@testset "lift_test_log_density autodiff smoke test" begin
+    x = Float64[1.0, 2.0, 3.0]
+    delta_x = Float64[0.5, 1.0, -0.5]
+    delta_y = Float64[0.05, 0.08, -0.03]
+    sigma = Float64[0.01, 0.02, 0.01]
+
+    objective(theta) = lift_test_log_density(
+        z -> centered_logistic_saturation(z, theta[1]),
+        x,
+        delta_x,
+        delta_y,
+        sigma,
+    )
+    params = [0.8]
+
+    forward = ForwardDiff.gradient(objective, params)
+    reverse = ReverseDiff.gradient(objective, params)
+
+    @test all(isfinite, forward)
+    @test all(isfinite, reverse)
+    @test forward ≈ reverse atol = 1.0e-8 rtol = 1.0e-8
 end
 
 @testset "cost_per_target penalties" begin

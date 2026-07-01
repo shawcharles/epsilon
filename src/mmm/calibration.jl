@@ -430,6 +430,92 @@ function lift_test_likelihood_terms(
 end
 
 """
+    lift_test_estimated_lift_ad(saturation_fn, x, delta_x)
+
+AD-compatible variant of [`lift_test_estimated_lift`](@ref) for use on the
+Turing sampling path, where `saturation_fn` may close over sampled saturation
+parameters and therefore return AD numeric types (for example
+`ForwardDiff.Dual` or `ReverseDiff.TrackedReal`) rather than plain `Float64`.
+Computes `saturation_fn(x + delta_x) .- saturation_fn(x)` without forcing
+`Float64` conversion of `saturation_fn`'s output, unlike
+[`lift_test_estimated_lift`](@ref) (whose `Float64.(collect(...))`-based
+result validation would otherwise truncate AD dual/tracked numbers and break
+gradients).
+
+`x` and `delta_x` are the fixed (non-parameter), already-scaled calibration
+data and are still eagerly validated as finite `Float64` vectors; only
+`saturation_fn`'s *output* is left untouched so that AD types survive.
+"""
+function lift_test_estimated_lift_ad(
+        saturation_fn::Function,
+        x::AbstractVector{<:Real},
+        delta_x::AbstractVector{<:Real},
+    )
+    n = _matching_lengths("x" => x, "delta_x" => delta_x)
+    x_values = _finite_float_vector(x, "x")
+    delta_x_values = _finite_float_vector(delta_x, "delta_x")
+    x_after = x_values .+ delta_x_values
+
+    before = saturation_fn(x_values)
+    after = saturation_fn(x_after)
+    before isa AbstractVector && length(before) == n ||
+        throw(ArgumentError("saturation_fn(x) must return a vector of length $(n)"))
+    after isa AbstractVector && length(after) == n ||
+        throw(ArgumentError("saturation_fn(x + delta_x) must return a vector of length $(n)"))
+    all(isfinite, before) ||
+        throw(ArgumentError("saturation_fn(x) must return only finite values"))
+    all(isfinite, after) ||
+        throw(ArgumentError("saturation_fn(x + delta_x) must return only finite values"))
+
+    return after .- before
+end
+
+"""
+    lift_test_log_density(saturation_fn, x, delta_x, delta_y, sigma)
+
+AD-compatible lift-test log-density contribution for one batch of lift-test
+rows, computed entirely from already-scaled model-space values: the total
+Gamma log-density `sum(logpdf(Gamma(mu, sigma), |delta_y|))`, where
+`mu = |saturation_fn(x + delta_x) - saturation_fn(x)|`.
+
+This mirrors the (summed) `logp` produced by
+[`lift_test_likelihood_terms`](@ref), but unlike that function it does not
+force `saturation_fn`'s output to `Float64`, so it is safe to call with a
+`saturation_fn` that closes over sampled Turing parameters. That makes it
+suitable for `Turing.@addlogprob!` integration on the model's saturation
+parameter sampling path (Task 15-05). This function itself has no dependency
+on Turing. `saturation_fn` must be a pure saturation closure with no adstock
+applied, preserving the calibration contract that adstock is never inserted
+into lift-test calibration.
+
+Throws `ArgumentError` for mismatched lengths, non-finite `x`/`delta_x`/
+`delta_y`, non-positive `sigma`, or a non-positive/non-finite estimated lift
+magnitude (which would make the observation's Gamma mean degenerate, for
+example when the estimated lift is exactly zero).
+"""
+function lift_test_log_density(
+        saturation_fn::Function,
+        x::AbstractVector{<:Real},
+        delta_x::AbstractVector{<:Real},
+        delta_y::AbstractVector{<:Real},
+        sigma::AbstractVector{<:Real},
+    )
+    _matching_lengths("x" => x, "delta_x" => delta_x, "delta_y" => delta_y, "sigma" => sigma)
+    observed = abs.(_finite_float_vector(delta_y, "delta_y"))
+    sigma_values = _positive_float_vector(sigma, "sigma")
+
+    lift = lift_test_estimated_lift_ad(saturation_fn, x, delta_x)
+    mu = abs.(lift)
+    all(value -> isfinite(value) && value > 0, mu) ||
+        throw(ArgumentError("estimated lift magnitude must contain only positive finite values"))
+
+    return sum(
+        Distributions.logpdf(lift_test_gamma_distribution(mu[index], sigma_values[index]), observed[index])
+            for index in eachindex(mu)
+    )
+end
+
+"""
     cost_per_target_penalties(gathered_cpt, targets, sigma)
 
 Compute the Abacus cost-per-target Gaussian soft-penalty term elementwise,
@@ -566,6 +652,47 @@ function build_lift_test_calibration_payload(;
     )
     validate_lift_test_calibration_payload(payload)
     return payload
+end
+
+"""
+    lift_test_payload_log_density(saturation_fn, payload, channel_param)
+
+Multi-channel, [`LiftTestCalibrationPayload`](@ref)-aware entry point for
+[`lift_test_log_density`](@ref): selects each row's saturation parameter from
+a full per-channel sampled parameter vector `channel_param` (indexed the same
+way as the model's channel axis, so that
+`channel_param[payload.channel_index[i]]` is the parameter for row `i`), then
+delegates to `lift_test_log_density`.
+
+`saturation_fn` must accept `(x_row, param_row)` — both row-aligned vectors —
+and return a row-aligned vector, for example
+`(x_row, lam_row) -> centered_logistic_saturation.(x_row, lam_row)`.
+
+This is the intended calibration entry point for Task 15-05's
+`Turing.@addlogprob!` wiring, where `channel_param` is a sampled Turing
+parameter vector (for example the model's `lam`) and may carry AD dual/tracked
+numeric types; this function itself has no dependency on Turing.
+
+Throws `ArgumentError` if any `payload.channel_index` value is out of bounds
+for `channel_param`, so a channel-index/parameter-vector length mismatch fails
+closed rather than throwing an opaque `BoundsError` deep inside AD.
+"""
+function lift_test_payload_log_density(
+        saturation_fn::Function,
+        payload::LiftTestCalibrationPayload,
+        channel_param::AbstractVector,
+    )
+    nparams = length(channel_param)
+    all(index -> 1 <= index <= nparams, payload.channel_index) ||
+        throw(
+        ArgumentError(
+            "lift-test calibration payload channel_index is out of bounds for a channel parameter vector of length $(nparams)",
+        ),
+    )
+
+    param_rows = channel_param[payload.channel_index]
+    saturation_fn_of_x = x_row -> saturation_fn(x_row, param_rows)
+    return lift_test_log_density(saturation_fn_of_x, payload.x, payload.delta_x, payload.delta_y, payload.sigma)
 end
 
 """

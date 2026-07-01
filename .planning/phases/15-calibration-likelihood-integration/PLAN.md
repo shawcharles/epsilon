@@ -3,8 +3,9 @@
 ## Status
 
 Planned 2026-07-01. Task 15-01 (contract freeze), Task 15-02 (typed
-calibration payloads), and Task 15-03 (config/spec threading) are landed.
-Tasks 15-04 through 15-08 have not started.
+calibration payloads), Task 15-03 (config/spec threading), and Task 15-04
+(pure model-space calibration log-density helpers) are landed. Tasks 15-05
+through 15-08 have not started.
 
 
 ## Goal
@@ -260,19 +261,24 @@ are implemented in `src/mmm/calibration.jl` and exported from
 time-series model path, then carry resolved calibration metadata through the
 model spec/runtime boundary.
 
-**Status:** Landed 2026-07-01. `TimeSeriesMMM` gained a `calibration` field
-(populated via new `calibration_steps`/`lift_test_data`/`cost_per_target_data`
-constructor keyword arguments) holding a raw `TimeSeriesCalibrationInput`.
-`_fit_time_series_mmm!` resolves that raw input into a scaled
-`MMMCalibrationSpec` via `_resolve_calibration_spec` and attaches it to the fit
-artifact (not to `MMMModelSpec` itself, which remains unchanged). `PanelMMM`
-rejects calibration kwargs with a `MethodError` (no such constructor
-parameters exist), and `approximate_fit!` (VI) on a calibrated `TimeSeriesMMM`
-raises a clear `ArgumentError`. Save/load round-trips the calibration field and
+**Status:** Landed 2026-07-01. Task 15-03 threads calibration through
+`TimeSeriesMMM`'s config/spec/runtime construction and fitting boundaries, and
+rejects calibration where unsupported (`PanelMMM`, VI) — it does not add any
+calibration likelihood term to the Turing model itself. Concretely:
+`TimeSeriesMMM` gained a `calibration` field (populated via new
+`calibration_steps`/`lift_test_data`/`cost_per_target_data` constructor keyword
+arguments) holding a raw `TimeSeriesCalibrationInput`. `_fit_time_series_mmm!`
+resolves that raw input into a scaled `MMMCalibrationSpec` via
+`_resolve_calibration_spec` and attaches it to the fit artifact (not to
+`MMMModelSpec` itself, which remains unchanged). `PanelMMM` rejects
+calibration kwargs with a `MethodError` (no such constructor parameters
+exist), and `approximate_fit!` (VI) on a calibrated `TimeSeriesMMM` raises a
+clear `ArgumentError`. Save/load round-trips the calibration field and
 defaults it to `nothing` for old-format payloads with no schema version bump
-required. Note: the resolved calibration spec is currently computed and
-attached to the artifact only — it does not yet affect posterior inference;
-wiring it into the Turing model's log-density is Task 15-05.
+required. The resolved calibration spec is attached to the artifact for
+traceability only; it has zero effect on posterior inference until Task 15-05
+wires a calibration log-density contribution into the Turing model via
+`Turing.@addlogprob!`.
 
 **Acceptance criteria:**
 - [x] `ModelConfig` or a narrowly scoped companion payload can represent the
@@ -307,19 +313,50 @@ wiring it into the Turing model's log-density is Task 15-05.
 contributions from already scaled channel values and sampled saturation
 parameters, without invoking Turing.
 
+**Status:** Landed 2026-07-01. Task 15-04 adds `lift_test_estimated_lift_ad`,
+`lift_test_log_density`, and `lift_test_payload_log_density` to
+`src/mmm/calibration.jl` as pure, Turing-independent, AD-compatible lift-test
+log-density helpers operating on already-scaled model-space values and a
+caller-supplied `saturation_fn`/per-channel sampled parameter vector.
+`lift_test_estimated_lift_ad` avoids the `Float64`-forcing behavior of the
+existing `lift_test_estimated_lift` so that `ForwardDiff.Dual`/
+`ReverseDiff.TrackedReal` values survive through `saturation_fn`.
+`lift_test_log_density` returns a scalar total log-density (summed Gamma
+log-density across rows, reusing `lift_test_gamma_distribution`) and rejects
+zero/negative/non-finite estimated lift, non-positive sigma, and non-finite
+inputs via explicit `throw`s before the AD-differentiated summation, without
+mutating any inputs. `lift_test_payload_log_density` is the multi-channel,
+`LiftTestCalibrationPayload`-aware entry point: it validates
+`payload.channel_index` against the supplied per-channel parameter vector and
+raises a clear `ArgumentError` on out-of-bounds channel index rather than an
+opaque `BoundsError`, then delegates to `lift_test_log_density`. No adstock is
+applied in any of these helpers, preserving the saturation-only lift-test
+calibration contract. Cost-per-target's acceptance criterion was already
+satisfied by the pre-existing `cost_per_target_penalties`/
+`cost_per_target_total_penalty` helpers from Task 15-02, unchanged in this
+task. These new functions are not called from `_time_series_mmm_model` or any
+other Turing model code; they have zero effect on posterior inference until
+Task 15-05 wires them in via `Turing.@addlogprob!`. New deterministic tests in
+`test/model/calibration.jl` compare helper outputs to the existing
+`ABACUS_LIFT_TEST_LIKELIHOOD_CASES` fixture (matching the fixture-backed
+PyMC Gamma log-density semantics), cover zero estimated lift, non-positive
+sigma, non-finite `x`/`delta_x`/`delta_y`, and channel-index mismatch, and add
+a `ForwardDiff`/`ReverseDiff` gradient-agreement smoke test following the
+pattern in `test/transforms/autodiff.jl`.
+
 **Acceptance criteria:**
-- [ ] Lift-test log-density helpers accept the channel-specific scaled values
+- [x] Lift-test log-density helpers accept the channel-specific scaled values
       needed for `x` and `x + delta_x`.
-- [ ] Cost-per-target helpers return scalar penalties matching the existing
+- [x] Cost-per-target helpers return scalar penalties matching the existing
       pure helper semantics.
-- [ ] Helpers are generic enough for AD-compatible number types where they sit
+- [x] Helpers are generic enough for AD-compatible number types where they sit
       on the Turing path.
-- [ ] Domain checks remain outside hot AD loops where possible and do not
+- [x] Domain checks remain outside hot AD loops where possible and do not
       mutate model inputs.
 
 **Verification:**
-- [ ] Deterministic tests compare helper outputs to existing Abacus fixtures.
-- [ ] Tests cover zero estimated lift, non-finite inputs, and incompatible
+- [x] Deterministic tests compare helper outputs to existing Abacus fixtures.
+- [x] Tests cover zero estimated lift, non-finite inputs, and incompatible
       channel indices.
 
 **Dependencies:** Task 15-02.
