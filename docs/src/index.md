@@ -408,6 +408,31 @@ Epsilon.ScenarioPlanResult
 Epsilon.scenario_plan
 ```
 
+## Calibration
+
+The calibration/lift-test surface currently covers fixture-backed schema and
+pure helper semantics. Wiring those terms into the sampling model is a
+separate follow-on slice.
+
+```@docs
+Epsilon.CalibrationStepConfig
+Epsilon.validate_calibration_step_config
+Epsilon.UnalignedValuesError
+Epsilon.NonMonotonicError
+Epsilon.exact_row_indices
+Epsilon.validate_lift_test_columns
+Epsilon.assert_monotonic_lift
+Epsilon.scale_channel_lift_measurements
+Epsilon.scale_target_for_lift_measurements
+Epsilon.scale_lift_measurements
+Epsilon.gamma_shape_scale
+Epsilon.lift_test_gamma_distribution
+Epsilon.lift_test_estimated_lift
+Epsilon.lift_test_likelihood_terms
+Epsilon.cost_per_target_penalties
+Epsilon.cost_per_target_total_penalty
+```
+
 ## API
 
 ```@docs

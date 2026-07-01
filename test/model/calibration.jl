@@ -53,6 +53,10 @@ end
         Dict{String, AbstractVector}("channel" => [1, 2]),
         Dict{String, AbstractVector}("region" => ["A"]),
     )
+    @test_throws ArgumentError exact_row_indices(
+        Dict{String, AbstractVector}("channel" => [1, 2]),
+        Dict{String, AbstractVector}("channel" => [1, 2], "geo" => ["A"]),
+    )
 end
 
 @testset "exact_row_indices unaligned" begin
@@ -80,6 +84,7 @@ end
     end
 
     @test_throws ArgumentError assert_monotonic_lift([1.0, 2.0], [1.0])
+    @test_throws ArgumentError assert_monotonic_lift([1.0, Inf], [1.0, 2.0])
 end
 
 @testset "scale_channel_lift_measurements" begin
@@ -104,6 +109,27 @@ end
         String["organic", "paid"],
         matrix -> matrix,
     )
+    @test_throws ArgumentError scale_channel_lift_measurements(
+        String["organic"],
+        Float64[1.0],
+        Float64[1.0],
+        String["organic", "organic"],
+        matrix -> matrix,
+    )
+    @test_throws ArgumentError scale_channel_lift_measurements(
+        String["organic"],
+        Float64[1.0],
+        Float64[1.0],
+        String["organic"],
+        matrix -> matrix[:, 1],
+    )
+    @test_throws ArgumentError scale_channel_lift_measurements(
+        String["organic"],
+        Float64[Inf],
+        Float64[1.0],
+        String["organic"],
+        matrix -> matrix,
+    )
 end
 
 @testset "scale_target_for_lift_measurements" begin
@@ -111,6 +137,9 @@ end
         result = scale_target_for_lift_measurements(case.target, matrix -> matrix ./ case.scale)
         @test result ≈ case.expected
     end
+
+    @test_throws ArgumentError scale_target_for_lift_measurements(Float64[1.0, 2.0], matrix -> matrix[1:1, :])
+    @test_throws ArgumentError scale_target_for_lift_measurements(Float64[1.0, NaN], matrix -> matrix)
 end
 
 @testset "scale_lift_measurements" begin
@@ -131,6 +160,17 @@ end
         @test result.delta_y ≈ case.expected.delta_y
         @test result.sigma ≈ case.expected.sigma
     end
+
+    @test_throws ArgumentError scale_lift_measurements(
+        String["organic"],
+        Float64[1.0],
+        Float64[1.0],
+        Float64[1.0],
+        Float64[-0.1],
+        String["organic"],
+        matrix -> matrix,
+        matrix -> matrix,
+    )
 end
 
 @testset "gamma_shape_scale and lift_test_gamma_distribution" begin
@@ -144,6 +184,7 @@ end
 
     @test_throws ArgumentError gamma_shape_scale(-1.0, 0.5)
     @test_throws ArgumentError gamma_shape_scale(1.0, -0.5)
+    @test_throws ArgumentError gamma_shape_scale(1.0, Inf)
 end
 
 @testset "lift_test_likelihood_terms" begin
@@ -154,6 +195,22 @@ end
         @test terms.observed ≈ case.expected_observed
         @test terms.logp ≈ case.expected_logp atol = 1.0e-6
     end
+
+    @test_throws ArgumentError lift_test_estimated_lift(x -> x[1:1], Float64[1.0, 2.0], Float64[0.5, 0.5])
+    @test_throws ArgumentError lift_test_likelihood_terms(
+        x -> x,
+        Float64[1.0],
+        Float64[0.0],
+        Float64[0.0],
+        Float64[1.0],
+    )
+    @test_throws ArgumentError lift_test_likelihood_terms(
+        x -> x,
+        Float64[1.0],
+        Float64[1.0],
+        Float64[1.0],
+        Float64[0.0],
+    )
 end
 
 @testset "cost_per_target penalties" begin
@@ -167,6 +224,11 @@ end
             case.gathered_cpt,
             case.targets,
             vcat(case.sigma, 1.0),
+        )
+        @test_throws ArgumentError cost_per_target_penalties(
+            case.gathered_cpt,
+            case.targets,
+            fill(0.0, length(case.sigma)),
         )
     end
 end
