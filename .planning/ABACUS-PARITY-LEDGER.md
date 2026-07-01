@@ -65,7 +65,8 @@ Each target should pass these gates before it is counted as ported:
 | Multi-dimensional panel MMM | `abacus/mmm/panel.py`, `abacus/mmm/models/panel_types.py` | `src/mmm/panel.jl`, `src/model/types.jl`, `src/postmodel/replay.jl` | scaffolded | `geo_brand_panel` config/data, flattened panel ordering, model-spec metadata, runtime artifact schema, deterministic contribution/decomposition replay, and panel-cell response/metric summaries are covered by validation fixtures; Stage `70` historical-share optimization is implemented for `PanelMMM` and fixture-backed for both `geo_panel` and `geo_brand_panel`. |
 | Hierarchical pooling through priors | `abacus/mmm/panel.py`, `abacus/prior.py` | `src/mmm/panel.jl`, `src/distributions/priors.jl` | scaffolded | Ensure pooling is encoded through priors, not implicit panel defaults. |
 | Mundlak / correlated random effects | Abacus panel/model code and docs | none | missing | Port only after panel-indexed baseline is stable. |
-| Calibration and lift tests | `abacus/mmm/lift_test.py`, `abacus/mmm/calibration/*.py`, `abacus/mmm/builders/calibration.py` | `src/mmm/calibration.jl` | scaffolded | Fixture-backed schema, alignment, monotonicity, scaling, and likelihood-term math (`CalibrationStepConfig`, `exact_row_indices`, `assert_monotonic_lift`, `scale_channel_lift_measurements`, `scale_target_for_lift_measurements`, `scale_lift_measurements`, `lift_test_likelihood_terms`, `cost_per_target_penalties`) are implemented and fixture-tested. Task 15-01 has frozen the `TimeSeriesMMM`-only integration contract (companion internal payload, not a `ModelConfig` field; explicit `PanelMMM`/VI rejection; centered-logistic-only saturation support first) at `.planning/phases/15-calibration-likelihood-integration/PLAN.md`. Tasks 15-02 and 15-03 have landed typed calibration payloads and threaded a raw `TimeSeriesCalibrationInput`/resolved `MMMCalibrationSpec` through `TimeSeriesMMM` construction, fitting, VI rejection, and serialization; the resolved spec is attached to the fit artifact but does not yet affect the Turing model's log-density (Task 15-05). Panel calibration model integration stays out of scope until a separate contract exists. |
+| Calibration and lift tests | `abacus/mmm/lift_test.py`, `abacus/mmm/calibration/*.py`, `abacus/mmm/builders/calibration.py` | `src/mmm/calibration.jl` | scaffolded | Fixture-backed schema, alignment, monotonicity, scaling, and likelihood-term math (`CalibrationStepConfig`, `exact_row_indices`, `assert_monotonic_lift`, `scale_channel_lift_measurements`, `scale_target_for_lift_measurements`, `scale_lift_measurements`, `lift_test_likelihood_terms`, `cost_per_target_penalties`) are implemented and fixture-tested. Task 15-01 has frozen the `TimeSeriesMMM`-only integration contract (companion internal payload, not a `ModelConfig` field; explicit `PanelMMM`/VI rejection; centered-logistic-only saturation support first) at `.planning/phases/15-calibration-likelihood-integration/PLAN.md`. Tasks 15-02 and 15-03 have landed typed calibration payloads and threaded a raw `TimeSeriesCalibrationInput`/resolved `MMMCalibrationSpec` through `TimeSeriesMMM` construction, fitting, VI rejection, and serialization. Task 15-05 has wired the lift-test log-density term into `_time_series_mmm_model` via `Turing.@addlogprob!` for centered-logistic saturation only; cost-per-target soft penalties are not yet wired into the Turing model (Task 15-06). Panel calibration model integration stays out of scope until a separate contract exists. |
+
 | Fitting and sampler config | `abacus/modeling/base.py`, `abacus/pytensor/sampling.py` | `src/inference/mcmc.jl`, `src/model/config.jl` | scaffolded | Compare sampler config parsing and saved fit metadata; numerical posterior equality is not required. |
 | Posterior predictive | `abacus/mmm/base.py`, `abacus/mmm/models/panel_predict.py` | `src/model/results.jl`, `src/inference/results.jl` | scaffolded | Make prediction replay consume saved state for train, holdout, and new data. |
 | Diagnostics | `abacus/mmm/diagnostics/*.py` | `src/model/diagnostics.jl`, `src/inference/diagnostics.jl`, `src/plotting/diagnostics.jl` | scaffolded | Port design, MCMC, and predictive summary schemas before plot polish. |
@@ -338,6 +339,40 @@ As of 2026-05-10:
     any other Turing model code; calibration still has zero effect on
     posterior inference until Task 15-05 wires a contribution into the
     Turing model via `Turing.@addlogprob!`.
+23. Phase 15 Task 15-05 has landed lift-test likelihood integration into
+    `_time_series_mmm_model` in `src/mmm/model.jl`. The model now accepts an
+    optional `lift_test_payload` keyword; when present, it rejects any
+    non-`logistic` `runtime.saturation_type` with a clear `ArgumentError`
+    (matching the Task 15-01 frozen contract), then calls the Task 15-04
+    pure helper `lift_test_payload_log_density` with
+    `centered_logistic_saturation` and the same sampled `lam` vector used by
+    the media saturation path, and adds the result via
+    `Turing.@addlogprob!`. The helper call is wrapped in a `try`/`catch`
+    that converts a domain-rejection `ArgumentError` (raised when NUTS's
+    `AutoForwardDiff` gradient probes legitimately visit degenerate
+    parameter points during warmup/leapfrog) into a `-Inf` log-density
+    contribution rather than aborting sampling. `_fit_time_series_mmm!`
+    passes the Task 15-03 resolved `calibration.lift_test` straight through;
+    uncalibrated models pass `nothing` and take the exact same code path as
+    before this task, preserving byte-for-byte uncalibrated behaviour. An
+    earlier draft that added an `isfinite(...) && return` short-circuit
+    after `Turing.@addlogprob!` was found to break Turing/DynamicPPL's
+    invariant that every model evaluation must execute the same set of `~`
+    statements (it caused a `FieldError` when the early-return path skipped
+    `beta_controls ~ ...`); the landed implementation always executes every
+    subsequent `~` statement regardless of whether the lift-test term is
+    finite. New tests in `test/model/builder.jl` add a deterministic
+    log-density comparison (via `Turing.DynamicPPL.condition`/`evaluate!!`/
+    `getlogjoint`) proving calibrated and uncalibrated model logjoint differ
+    by exactly the fixture-backed `lift_test_payload_log_density(...)` term,
+    a negative test proving `tanh`-saturation calibration raises
+    `ArgumentError` on `fit!`, and a tiny end-to-end MCMC smoke test that
+    fits a calibrated `TimeSeriesMMM`. The full test suite passes with these
+    additions and no regressions. `PanelMMM` calibration, VI calibration,
+    pipeline integration, and cost-per-target `Turing.@addlogprob!` wiring
+    remain untouched and out of scope; Task 15-06 covers cost-per-target
+    integration next.
+
 
 ## Plan 14-05 Parity Audit
 

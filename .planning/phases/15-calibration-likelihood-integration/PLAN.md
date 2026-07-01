@@ -3,9 +3,11 @@
 ## Status
 
 Planned 2026-07-01. Task 15-01 (contract freeze), Task 15-02 (typed
-calibration payloads), Task 15-03 (config/spec threading), and Task 15-04
-(pure model-space calibration log-density helpers) are landed. Tasks 15-05
-through 15-08 have not started.
+calibration payloads), Task 15-03 (config/spec threading), Task 15-04
+(pure model-space calibration log-density helpers), and Task 15-05
+(lift-test likelihood wired into `_time_series_mmm_model`) are landed. Tasks
+15-06 through 15-08 have not started.
+
 
 
 ## Goal
@@ -373,23 +375,99 @@ pattern in `test/transforms/autodiff.jl`.
 Turing model after saturation parameters are sampled and before the target
 likelihood loop completes.
 
+**Status:** Landed 2026-07-01. `_time_series_mmm_model` accepts an optional
+`lift_test_payload` keyword. When present, it rejects any non-`logistic`
+`runtime.saturation_type` with a clear `ArgumentError` (matching the frozen
+Task 15-01 contract), then calls the Task 15-04 pure helper
+`lift_test_payload_log_density` with `centered_logistic_saturation` and the
+same sampled `lam` vector used by the media saturation path, and adds the
+result via `Turing.@addlogprob!`. The helper call is wrapped in a
+`try`/`catch` that converts a domain-rejection `ArgumentError` (for example,
+"estimated lift magnitude must contain only positive finite values") into a
+`-Inf` log-density contribution instead of propagating the exception,
+because NUTS's `AutoForwardDiff` gradient probes legitimately visit
+degenerate parameter points during warmup/leapfrog steps, and an uncaught
+`ArgumentError` there aborts sampling rather than simply making that point
+low-probability. `_fit_time_series_mmm!` passes
+`calibration.lift_test` (from the Task 15-03 resolved `MMMCalibrationSpec`)
+straight through as `lift_test_payload`; uncalibrated models pass `nothing`
+and take the exact same code path as before this task (the `if
+!isnothing(lift_test_payload)` block is skipped entirely, so byte-for-byte
+uncalibrated behaviour is preserved).
+
+A significant implementation lesson from this task: an earlier draft added
+`isfinite(lift_test_logdensity) && return` immediately after
+`Turing.@addlogprob!`, intending to short-circuit the rest of model
+construction once an invalid calibration point was flagged. This broke
+Turing/DynamicPPL's invariant that every evaluation of a `@model` function
+must execute the same set of `~` tilde-statements: on the early-return path,
+statements such as `beta_controls ~ Turing.filldist(...)` were skipped, while
+on the normal path they were not, producing a
+`FieldError: type NamedTuple has no field 'beta_controls'` deep inside
+DynamicPPL's `VarNamedTuple` machinery whenever NUTS's AD step compared the
+two variable sets. The fix was to remove the early return entirely: the model
+always adds the (possibly `-Inf`) lift-test log-density term via
+`Turing.@addlogprob!` and then unconditionally continues executing every
+subsequent `~` statement, regardless of whether the lift-test term was
+finite. Any future domain-rejection logic added to this model (for example,
+Task 15-06's cost-per-target penalties) must follow the same pattern: convert
+domain violations into `-Inf`/penalized log-density contributions, never into
+early returns that skip declared random variables.
+
+New tests in `test/model/builder.jl` add a deterministic log-density
+comparison (using `Turing.DynamicPPL.condition`/`evaluate!!`/`getlogjoint` at
+fixed parameter values) proving the calibrated and uncalibrated model logjoint
+differ by exactly `lift_test_payload_log_density(...)`, a negative test
+proving a `tanh`-saturation calibrated model raises `ArgumentError` on
+`fit!`, and a tiny end-to-end MCMC smoke test that fits a calibrated
+`TimeSeriesMMM`. The full existing 3900+ test suite (including
+`test/model/runtests.jl`, `Aqua.test_all`, and doctests) passes with these
+additions and no regressions. Panel calibration, VI, pipeline integration,
+and cost-per-target `Turing.@addlogprob!` wiring remain untouched and out of
+scope for this task.
+
+A second implementation lesson from this task concerns test-file namespace
+hygiene rather than model semantics. `test/model/builder.jl`'s new
+deterministic log-density test needs `Turing.DynamicPPL.condition`,
+`evaluate!!`, `VarInfo`, and `getlogjoint`. An early draft added `using Turing`
+to the top of that file to get the `Turing` name in scope. Because
+`test/runtests.jl` `include`s every test file inside one shared top-level
+`@testset` block in `Main` (not separate module scopes), a `using` statement
+in any one included file leaks its exported bindings into every other
+included file evaluated afterward in the same `Pkg.test()` run. Turing exports
+its own `predict` binding, which collided with `Epsilon`'s exported `predict`
+(brought in via `using Epsilon` at the top of `test/runtests.jl`) and made the
+unqualified `predict(model)` call at `test/validation/parity.jl:668` raise
+`UndefVarError: predict not defined in Main` due to export ambiguity — a
+regression only visible in the full `Pkg.test()` run, not when running
+`test/model/builder.jl` in isolation. The fix was to change `using Turing` to
+`import Turing` in `test/model/builder.jl`: every `Turing.X` reference in that
+file was already fully qualified (`Turing.DynamicPPL.condition(...)`, etc.),
+so `import Turing` supplies the module name without re-exporting any of
+Turing's own exported bindings into the shared `Main` namespace. The general
+rule for this codebase's test files: prefer `import ModuleName` over
+`using ModuleName` unless a test file actually needs unqualified access to
+that module's exports, because every test file shares one `Main` namespace
+for the duration of `Pkg.test()`.
+
+
 **Acceptance criteria:**
-- [ ] Uncalibrated runtime payloads produce byte-for-byte equivalent model
+- [x] Uncalibrated runtime payloads produce byte-for-byte equivalent model
       construction behaviour at the public API level.
-- [ ] Calibrated runtime payloads add a scalar log-probability contribution via
+- [x] Calibrated runtime payloads add a scalar log-probability contribution via
       `Turing.@addlogprob!`.
-- [ ] The lift-test path uses the same sampled saturation parameters as the
+- [x] The lift-test path uses the same sampled saturation parameters as the
       media contribution path.
-- [ ] Unsupported saturation combinations are either implemented correctly or
+- [x] Unsupported saturation combinations are either implemented correctly or
       rejected before sampling.
-- [ ] Adstock is not applied to lift-test rows unless a later fixture-backed
+- [x] Adstock is not applied to lift-test rows unless a later fixture-backed
       design explicitly changes the calibration contract.
 
 **Verification:**
-- [ ] A deterministic log-density test proves calibrated and uncalibrated
+- [x] A deterministic log-density test proves calibrated and uncalibrated
       models differ exactly by the expected fixture-backed calibration term.
-- [ ] A tiny MCMC smoke test fits a calibrated `TimeSeriesMMM`.
-- [ ] Existing uncalibrated model tests still pass.
+- [x] A tiny MCMC smoke test fits a calibrated `TimeSeriesMMM`.
+- [x] Existing uncalibrated model tests still pass.
 
 **Dependencies:** Tasks 15-03 and 15-04.
 
@@ -400,6 +478,7 @@ likelihood loop completes.
 - `test/model/builder.jl`
 
 **Estimated scope:** Medium.
+
 
 ### Task 15-06: Integrate Cost-Per-Target Soft Penalties
 
@@ -501,13 +580,20 @@ After Tasks 15-01 through 15-03: **COMPLETE (2026-07-01).**
 
 ### Checkpoint B: Deterministic Log-Density
 
-After Tasks 15-04 through 15-06:
+After Tasks 15-04 through 15-06. **Lift-test slice satisfied by Task 15-05
+(2026-07-01); cost-per-target slice from Task 15-06 has not started, so this
+checkpoint is not yet fully closed.**
 
-- [ ] Pure helper log-density tests pass.
-- [ ] Turing model log-density differs from the uncalibrated model by the
-      expected calibration term.
-- [ ] Tiny calibrated MCMC smoke tests pass.
-- [ ] Existing uncalibrated `test/model/runtests.jl` remains green.
+- [x] Pure helper log-density tests pass. (Lift-test helpers, Task 15-04;
+      cost-per-target helper tests still pending Task 15-06.)
+- [x] Turing model log-density differs from the uncalibrated model by the
+      expected calibration term. (Lift-test term only, verified in
+      `test/model/builder.jl`; cost-per-target term pending Task 15-06.)
+- [x] Tiny calibrated MCMC smoke tests pass. (Lift-test-only smoke test lands
+      in Task 15-05; a combined lift-test-plus-cost-per-target smoke test is
+      Task 15-06's verification item.)
+- [x] Existing uncalibrated `test/model/runtests.jl` remains green.
+
 
 ### Checkpoint C: Evidence And Docs
 

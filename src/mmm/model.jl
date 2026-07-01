@@ -23,7 +23,10 @@ const _DEFAULT_TREND_DELTA_PRIOR = EpsilonPrior("Laplace"; mu = 0.0, b = 0.25)
 const _DEFAULT_EVENT_BETA_PRIOR = EpsilonPrior("Normal"; mu = 0.0, sigma = 1.0)
 const _DEFAULT_HOLIDAY_BETA_PRIOR = EpsilonPrior("Normal"; mu = 0.0, sigma = 1.0)
 
-@model function _time_series_mmm_model(target, channels, controls, events, holidays, runtime)
+@model function _time_series_mmm_model(
+        target, channels, controls, events, holidays, runtime;
+        lift_test_payload = nothing,
+    )
     intercept ~ runtime.intercept_prior
     sigma ~ runtime.sigma_prior
     beta_media = fill(one(eltype(channels)), runtime.nchannels)
@@ -65,6 +68,27 @@ const _DEFAULT_HOLIDAY_BETA_PRIOR = EpsilonPrior("Normal"; mu = 0.0, sigma = 1.0
     elseif runtime.saturation_type === :none
         transformed_media = _apply_saturation(transformed_media, runtime)
     end
+
+    if !isnothing(lift_test_payload)
+        runtime.saturation_type === :logistic ||
+            throw(
+            ArgumentError(
+                "lift-test calibration is only supported for `logistic` saturation in the current model path",
+            ),
+        )
+        lift_test_logdensity = try
+            lift_test_payload_log_density(
+                (x_row, lam_row) -> centered_logistic_saturation.(x_row, lam_row),
+                lift_test_payload,
+                lam,
+            )
+        catch err
+            err isa ArgumentError || rethrow()
+            -Inf
+        end
+        Turing.@addlogprob! lift_test_logdensity
+    end
+
 
     media_effect = _media_effect(transformed_media, beta_media)
     control_effect = zero.(media_effect)
@@ -176,13 +200,23 @@ function _fit_time_series_mmm!(model::TimeSeriesMMM)
         holidays = _holiday_design_matrix(model.config.holidays, model.data)
         scaled_channels = _scale_channels(model.data.channels, spec.channel_scale)
         scaled_target = model.data.target ./ spec.target_scale
+
+        calibration = _resolve_calibration_spec(
+            model.config,
+            model.calibration,
+            spec.channel_scale,
+            spec.target_scale,
+        )
+        lift_test_payload = isnothing(calibration) ? nothing : calibration.lift_test
+
         turing_model = _time_series_mmm_model(
             scaled_target,
             scaled_channels,
             controls,
             events,
             holidays,
-            runtime,
+            runtime;
+            lift_test_payload,
         )
         sampler = Turing.NUTS(model.sampler_config.tune, model.sampler_config.target_accept)
         execution_plan = _mcmc_execution_plan(model.sampler_config)
@@ -197,13 +231,6 @@ function _fit_time_series_mmm!(model::TimeSeriesMMM)
         )
         message = _mcmc_fit_message("TimeSeriesMMM", execution_plan)
         !isempty(diagnostics_bundle.message) && (message *= " " * diagnostics_bundle.message)
-
-        calibration = _resolve_calibration_spec(
-            model.config,
-            model.calibration,
-            spec.channel_scale,
-            spec.target_scale,
-        )
 
         artifact = (;
             spec,

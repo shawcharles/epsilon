@@ -2,6 +2,7 @@ using Dates
 using Epsilon
 using Distributions
 using Test
+import Turing
 
 function sample_time_series_model(;
         adstock_type = "geometric",
@@ -941,6 +942,121 @@ end
 
     predictive = Epsilon.predict(calibrated_model)
     @test size(predictive, 1) == calibrated_model.sampler_config.draws
+end
+
+@testset "lift-test calibration adds the expected log-density term to _time_series_mmm_model" begin
+    model = sample_time_series_model()
+    spec = build_model(model)
+    runtime, controls = Epsilon._turing_runtime(model.config, model.data)
+    events = Epsilon._event_design_matrix(model.config.events, model.data)
+    holidays = Epsilon._holiday_design_matrix(model.config.holidays, model.data)
+    scaled_channels = Epsilon._scale_channels(model.data.channels, spec.channel_scale)
+    scaled_target = model.data.target ./ spec.target_scale
+
+    lift_test_data = LiftTestCalibrationRows(
+        channel = ["tv"],
+        x = [1.0],
+        delta_x = [0.5],
+        delta_y = [0.3],
+        sigma = [0.1],
+    )
+    calibration_input = Epsilon._build_calibration_input(
+        [CalibrationStepConfig(method = "add_lift_test_measurements")],
+        lift_test_data,
+        nothing,
+    )
+    calibration = Epsilon._resolve_calibration_spec(
+        model.config,
+        calibration_input,
+        spec.channel_scale,
+        spec.target_scale,
+    )
+    lift_test_payload = calibration.lift_test
+    @test lift_test_payload isa LiftTestCalibrationPayload
+
+    uncalibrated_model = Epsilon._time_series_mmm_model(
+        scaled_target, scaled_channels, controls, events, holidays, runtime,
+    )
+    calibrated_model = Epsilon._time_series_mmm_model(
+        scaled_target, scaled_channels, controls, events, holidays, runtime;
+        lift_test_payload = lift_test_payload,
+    )
+
+    fixed_params = (;
+        intercept = 0.1,
+        sigma = 0.5,
+        beta_media = [0.3, 0.4],
+        alpha = [0.2, 0.25],
+        lam = [0.6, 0.7],
+        beta_controls = [0.05],
+    )
+
+    uncalibrated_conditioned = Turing.DynamicPPL.condition(uncalibrated_model, fixed_params)
+    calibrated_conditioned = Turing.DynamicPPL.condition(calibrated_model, fixed_params)
+
+    _, uncalibrated_vi = Turing.DynamicPPL.evaluate!!(
+        uncalibrated_conditioned, Turing.DynamicPPL.VarInfo(uncalibrated_conditioned),
+    )
+    _, calibrated_vi = Turing.DynamicPPL.evaluate!!(
+        calibrated_conditioned, Turing.DynamicPPL.VarInfo(calibrated_conditioned),
+    )
+
+    uncalibrated_logjoint = Turing.DynamicPPL.getlogjoint(uncalibrated_vi)
+    calibrated_logjoint = Turing.DynamicPPL.getlogjoint(calibrated_vi)
+
+    expected_term = lift_test_payload_log_density(
+        (x_row, lam_row) -> centered_logistic_saturation.(x_row, lam_row),
+        lift_test_payload,
+        fixed_params.lam,
+    )
+
+    @test calibrated_logjoint - uncalibrated_logjoint ≈ expected_term
+    @test expected_term != 0.0
+end
+
+@testset "lift-test calibration rejects non-logistic saturation" begin
+    model = sample_time_series_model(; saturation_type = "tanh")
+    lift_test_data = LiftTestCalibrationRows(
+        channel = ["tv"],
+        x = [1.0],
+        delta_x = [0.5],
+        delta_y = [0.3],
+        sigma = [0.1],
+    )
+    calibrated_model = TimeSeriesMMM(
+        model.config,
+        model.sampler_config,
+        model.data;
+        calibration_steps = [CalibrationStepConfig(method = "add_lift_test_measurements")],
+        lift_test_data = lift_test_data,
+    )
+
+    @test_throws ArgumentError fit!(calibrated_model)
+end
+
+@testset "fit! with logistic saturation and lift-test calibration is a tiny MCMC smoke test" begin
+    model = sample_time_series_model()
+    lift_test_data = LiftTestCalibrationRows(
+        channel = ["tv"],
+        x = [1.0],
+        delta_x = [0.5],
+        delta_y = [0.3],
+        sigma = [0.1],
+    )
+    calibrated_model = TimeSeriesMMM(
+        model.config,
+        model.sampler_config,
+        model.data;
+        calibration_steps = [CalibrationStepConfig(method = "add_lift_test_measurements")],
+        lift_test_data = lift_test_data,
+    )
+    state = fit!(calibrated_model)
+
+    @test state isa ModelFitState
+    @test state.status == :fit
+    @test state.artifact.calibration isa MMMCalibrationSpec
+    @test state.artifact.calibration.lift_test isa LiftTestCalibrationPayload
+    @test size(state.artifact.chain, 1) == calibrated_model.sampler_config.draws
 end
 
 @testset "fit! rebuilds spec from current model state" begin
