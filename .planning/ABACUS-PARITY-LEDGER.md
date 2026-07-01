@@ -65,7 +65,8 @@ Each target should pass these gates before it is counted as ported:
 | Multi-dimensional panel MMM | `abacus/mmm/panel.py`, `abacus/mmm/models/panel_types.py` | `src/mmm/panel.jl`, `src/model/types.jl`, `src/postmodel/replay.jl` | scaffolded | `geo_brand_panel` config/data, flattened panel ordering, model-spec metadata, runtime artifact schema, deterministic contribution/decomposition replay, and panel-cell response/metric summaries are covered by validation fixtures; Stage `70` historical-share optimization is implemented for `PanelMMM` and fixture-backed for both `geo_panel` and `geo_brand_panel`. |
 | Hierarchical pooling through priors | `abacus/mmm/panel.py`, `abacus/prior.py` | `src/mmm/panel.jl`, `src/distributions/priors.jl` | scaffolded | Ensure pooling is encoded through priors, not implicit panel defaults. |
 | Mundlak / correlated random effects | Abacus panel/model code and docs | none | missing | Port only after panel-indexed baseline is stable. |
-| Calibration and lift tests | `abacus/mmm/lift_test.py`, `abacus/mmm/calibration/*.py`, `abacus/mmm/builders/calibration.py` | `src/mmm/calibration.jl` | scaffolded | Fixture-backed schema, alignment, monotonicity, scaling, and likelihood-term math (`CalibrationStepConfig`, `exact_row_indices`, `assert_monotonic_lift`, `scale_channel_lift_measurements`, `scale_target_for_lift_measurements`, `scale_lift_measurements`, `lift_test_likelihood_terms`, `cost_per_target_penalties`) are implemented and fixture-tested. Task 15-01 has frozen the `TimeSeriesMMM`-only integration contract (companion internal payload, not a `ModelConfig` field; explicit `PanelMMM`/VI rejection; centered-logistic-only saturation support first) at `.planning/phases/15-calibration-likelihood-integration/PLAN.md`. Tasks 15-02 and 15-03 have landed typed calibration payloads and threaded a raw `TimeSeriesCalibrationInput`/resolved `MMMCalibrationSpec` through `TimeSeriesMMM` construction, fitting, VI rejection, and serialization. Task 15-05 has wired the lift-test log-density term into `_time_series_mmm_model` via `Turing.@addlogprob!` for centered-logistic saturation only; cost-per-target soft penalties are not yet wired into the Turing model (Task 15-06). Panel calibration model integration stays out of scope until a separate contract exists. |
+| Calibration and lift tests | `abacus/mmm/lift_test.py`, `abacus/mmm/calibration/*.py`, `abacus/mmm/builders/calibration.py` | `src/mmm/calibration.jl` | scaffolded | Fixture-backed schema, alignment, monotonicity, scaling, and likelihood-term math (`CalibrationStepConfig`, `exact_row_indices`, `assert_monotonic_lift`, `scale_channel_lift_measurements`, `scale_target_for_lift_measurements`, `scale_lift_measurements`, `lift_test_likelihood_terms`, `cost_per_target_penalties`) are implemented and fixture-tested. Task 15-01 has frozen the `TimeSeriesMMM`-only integration contract (companion internal payload, not a `ModelConfig` field; explicit `PanelMMM`/VI rejection; centered-logistic-only saturation support first) at `.planning/phases/15-calibration-likelihood-integration/PLAN.md`. Tasks 15-02 and 15-03 have landed typed calibration payloads and threaded a raw `TimeSeriesCalibrationInput`/resolved `MMMCalibrationSpec` through `TimeSeriesMMM` construction, fitting, VI rejection, and serialization. Task 15-05 has wired the lift-test log-density term into `_time_series_mmm_model` via `Turing.@addlogprob!` for centered-logistic saturation only, and Task 15-06 has additionally wired the cost-per-target soft-penalty term into the same model via a second, independent `Turing.@addlogprob!` call reusing the existing pure `cost_per_target_total_penalty` helper. Both calibration terms are additive and optional; the full test suite (3943 tests) passes cleanly. Status remains `scaffolded` pending Task 15-07 fixture-backed integration evidence and Task 15-08's ledger/doc closure; panel calibration model integration stays out of scope until a separate contract exists. |
+
 
 | Fitting and sampler config | `abacus/modeling/base.py`, `abacus/pytensor/sampling.py` | `src/inference/mcmc.jl`, `src/model/config.jl` | scaffolded | Compare sampler config parsing and saved fit metadata; numerical posterior equality is not required. |
 | Posterior predictive | `abacus/mmm/base.py`, `abacus/mmm/models/panel_predict.py` | `src/model/results.jl`, `src/inference/results.jl` | scaffolded | Make prediction replay consume saved state for train, holdout, and new data. |
@@ -372,9 +373,56 @@ As of 2026-05-10:
     pipeline integration, and cost-per-target `Turing.@addlogprob!` wiring
     remain untouched and out of scope; Task 15-06 covers cost-per-target
     integration next.
+24. Phase 15 Task 15-06 has landed cost-per-target soft-penalty integration
+    into `_time_series_mmm_model` in `src/mmm/model.jl`, alongside the
+    Task 15-05 lift-test term. The model now also accepts an optional
+    `cost_per_target_payload` keyword; when present, it calls the existing
+    pure helper `cost_per_target_total_penalty` (unchanged from Task 15-02)
+    with the payload's `gathered_cpt`, `targets`, and `sigma`, and adds the
+    resulting scalar via a second, independent `Turing.@addlogprob!` call. No
+    new AD-safe variant of the helper was needed:
+    `CostPerTargetCalibrationPayload`'s fields are fixed caller-supplied
+    `Float64` data (validated/scaled once at calibration-spec-resolution
+    time), never derived from a Turing-sampled parameter, so the helper's
+    internal `Float64` casting is safe to reuse directly. Because the term
+    never depends on a sampled variable, the added log-density contribution
+    is an intentional constant with respect to the parameters being sampled,
+    matching the Task 15-01 frozen contract's requirement to avoid any hidden
+    dependency on posterior predictive or optimization artifacts. The helper
+    call is wrapped in the same `try`/`catch`-to-`-Inf` pattern used for the
+    lift-test term, and the model continues to execute every subsequent `~`
+    statement unconditionally, with no early return, preserving the Task
+    15-05 Turing/DynamicPPL invariant. The lift-test and cost-per-target
+    terms are independent and simply additive: enabling both at once sums
+    both scalar contributions onto the log-joint with no interaction between
+    them. Invalid or non-positive `sigma` is rejected eagerly at
+    `CostPerTargetCalibrationRows` construction time (via the existing
+    `_positive_float_vector` validator), before any `TimeSeriesMMM`/`fit!`
+    call is possible, distinct from the `try`/`catch`-to-`-Inf` pattern that
+    instead handles transient domain violations `cost_per_target_total_penalty`
+    can raise from otherwise-valid data during NUTS's AD gradient probes. New
+    tests in `test/model/builder.jl` add a deterministic log-density
+    comparison (using `Turing.DynamicPPL.condition`/`evaluate!!`/
+    `getlogjoint` against `ABACUS_COST_PER_TARGET_CASES[1]`) proving the
+    calibrated and uncalibrated model logjoint differ by exactly
+    `cost_per_target_total_penalty(...)`, a negative test proving
+    `CostPerTargetCalibrationRows(...)` itself raises `ArgumentError` for
+    non-positive `sigma` at construction time (not `fit!`-time), and a
+    combined smoke test that fits a tiny `TimeSeriesMMM` with both
+    `add_lift_test_measurements` and `add_cost_per_target_calibration` steps
+    configured together, confirming both payload types are present on the
+    fit artifact's calibration spec after a real MCMC fit. The full
+    `Pkg.test()` suite (3943 tests) passes cleanly with these additions:
+    `Pass 3943, Total 3943, 0 failed, 0 errored` (22m11.1s), and
+    `src/mmm/model.jl`/`test/model/builder.jl` are Runic-format-clean.
+    `PanelMMM` calibration, VI calibration, pipeline integration, and broader
+    YAML expansion remain untouched and out of scope; Task 15-07
+    (fixture-backed integration evidence) and Task 15-08
+    (docs/ledger/guardrails closure) are the remaining Phase 15 tasks.
 
 
 ## Plan 14-05 Parity Audit
+
 
 Plan `14-05` is closed on the bounded Abacus parity-recovery surface.
 

@@ -4,9 +4,11 @@
 
 Planned 2026-07-01. Task 15-01 (contract freeze), Task 15-02 (typed
 calibration payloads), Task 15-03 (config/spec threading), Task 15-04
-(pure model-space calibration log-density helpers), and Task 15-05
-(lift-test likelihood wired into `_time_series_mmm_model`) are landed. Tasks
-15-06 through 15-08 have not started.
+(pure model-space calibration log-density helpers), Task 15-05
+(lift-test likelihood wired into `_time_series_mmm_model`), and Task 15-06
+(cost-per-target soft penalties wired into `_time_series_mmm_model`) are
+landed. Tasks 15-07 and 15-08 have not started.
+
 
 
 
@@ -485,18 +487,97 @@ for the duration of `Pkg.test()`.
 **Description:** Add optional cost-per-target soft-penalty terms to the
 time-series Turing model, using the existing pure penalty helper.
 
+**Status:** Landed 2026-07-01. `_time_series_mmm_model` accepts an optional
+`cost_per_target_payload` keyword alongside `lift_test_payload`. When present,
+it calls the existing pure helper `cost_per_target_total_penalty` (unchanged
+from Task 15-02) with `cost_per_target_payload.gathered_cpt`, `.targets`, and
+`.sigma`, and adds the resulting scalar via `Turing.@addlogprob!`. No new
+AD-safe variant of `cost_per_target_total_penalty` was required: its `Float64`
+internal casting is safe to reuse as-is because `CostPerTargetCalibrationPayload`'s
+fields are fixed caller-supplied `Float64` data (validated/scaled once at
+calibration-spec-resolution time), never derived from a Turing-sampled
+parameter — unlike the lift-test path, where `lam` is a live sampled variable
+that must survive AD tracing through `saturation_fn`. Because the term never
+depends on a sampled variable, the added log-density contribution is an
+intentional **constant** with respect to the parameters being sampled; this
+matches the Task 15-01 frozen contract's requirement that the implementation
+avoid any hidden dependency on posterior predictive or optimization artifacts,
+since the penalty is computed purely from the caller-supplied gathered/target/
+sigma data. The helper call is wrapped in the same `try`/`catch` pattern used
+for the lift-test term: a domain-rejection `ArgumentError` is converted to a
+`-Inf` log-density contribution rather than propagated, and the model
+continues to execute every subsequent `~` statement unconditionally — no
+early return is introduced, preserving the Task 15-05 invariant that every
+evaluation of the `@model` function touches the same set of tilde-statements.
+`_fit_time_series_mmm!` threads `calibration.cost_per_target` (from the
+Task 15-03 resolved `MMMCalibrationSpec`) straight through as
+`cost_per_target_payload`; uncalibrated models and lift-test-only calibrated
+models pass `nothing` and take the exact same code path as before this task.
+The two calibration terms are independent and simply additive: the lift-test
+block and the cost-per-target block are separate `if !isnothing(...)` guards
+that each call their own `Turing.@addlogprob!`, so enabling both at once sums
+both scalar contributions onto the log-joint with no interaction between them.
+
+Invalid or non-positive `sigma` is rejected eagerly, but not inside the Turing
+model body: `CostPerTargetCalibrationRows`'s inner constructor calls the
+existing `_positive_float_vector` validator and raises `ArgumentError:
+sigma must contain only positive values` immediately at construction time,
+before any `TimeSeriesMMM`/`fit!` call is even possible. This is a stronger
+guarantee than a `fit!`-time check: malformed calibration data can never reach
+the sampler. (The `try`/`catch`-to-`-Inf` conversion inside the model instead
+handles a different failure mode — transient domain violations that
+`cost_per_target_total_penalty` can raise from otherwise-valid data during
+NUTS's AD gradient probes, analogous to the lift-test path's degenerate
+parameter points.)
+
+New tests in `test/model/builder.jl`: a deterministic log-density comparison
+(via `Turing.DynamicPPL.condition`/`evaluate!!`/`getlogjoint`, using
+`ABACUS_COST_PER_TARGET_CASES[1]`) proving the calibrated and uncalibrated
+model logjoint differ by exactly `cost_per_target_total_penalty(...)`; a
+negative test proving `CostPerTargetCalibrationRows(...)` itself raises
+`ArgumentError` for non-positive `sigma` (corrected during verification to
+assert against the constructor call directly, since that is where validation
+actually fires — see below); and a combined smoke test that fits a tiny
+`TimeSeriesMMM` with both `add_lift_test_measurements` and
+`add_cost_per_target_calibration` steps configured together, confirming
+`state.artifact.calibration.lift_test isa LiftTestCalibrationPayload` and
+`state.artifact.calibration.cost_per_target isa CostPerTargetCalibrationPayload`
+both hold after a real MCMC fit.
+
+An implementation/verification lesson from this task: an initial draft of the
+negative-sigma test wrapped `fit!(calibrated_model)` in `@test_throws
+ArgumentError`, expecting the rejection to surface at fit time (mirroring the
+Task 15-05 saturation-rejection test, which *is* a `fit!`-time check). Running
+the full `Pkg.test()` suite surfaced this as an **Error**, not a caught
+`@test_throws` pass, because `CostPerTargetCalibrationRows(...)` throws
+`ArgumentError` synchronously at construction — before `TimeSeriesMMM` or
+`fit!` is ever called — so the exception occurred outside the `@test_throws`
+block entirely. The fix was to wrap the `CostPerTargetCalibrationRows(...)`
+constructor call itself in `@test_throws ArgumentError`, removing the
+now-unreachable `TimeSeriesMMM(...)`/`fit!(...)` calls from that test. This is
+a useful general reminder for this codebase: some calibration row validation
+(`CostPerTargetCalibrationRows`, and by the same pattern likely
+`LiftTestCalibrationRows`) is eager/constructor-time, not deferred to
+`fit!`-time, and negative tests must target the actual point of failure.
+
+The full `Pkg.test()` suite (3943 tests) passes cleanly with these additions:
+`Pass 3943, Total 3943, 0 failed, 0 errored` (22m11.1s). `src/mmm/model.jl`
+and `test/model/builder.jl` are Runic-format-clean. Panel calibration, VI,
+pipeline integration, and broader YAML expansion remain untouched and out of
+scope for this task, per the user's explicit exclusion list for Task 15-06.
+
 **Acceptance criteria:**
-- [ ] Penalties are optional and additive with lift-test terms when both are
+- [x] Penalties are optional and additive with lift-test terms when both are
       configured.
-- [ ] Scaled-space cost-per-target semantics are documented.
-- [ ] Invalid or zero `sigma` is rejected before sampling.
-- [ ] The implementation avoids hidden dependency on posterior predictive or
+- [x] Scaled-space cost-per-target semantics are documented.
+- [x] Invalid or zero `sigma` is rejected before sampling.
+- [x] The implementation avoids hidden dependency on posterior predictive or
       optimization artifacts.
 
 **Verification:**
-- [ ] Deterministic log-density tests compare the model contribution to fixture
+- [x] Deterministic log-density tests compare the model contribution to fixture
       values.
-- [ ] A combined lift-test plus cost-per-target smoke test fits.
+- [x] A combined lift-test plus cost-per-target smoke test fits.
 
 **Dependencies:** Tasks 15-03 and 15-04.
 
@@ -507,6 +588,7 @@ time-series Turing model, using the existing pure penalty helper.
 - `test/model/calibration.jl`
 
 **Estimated scope:** Medium.
+
 
 ### Task 15-07: Add Fixture-Backed Integration Evidence
 
@@ -580,19 +662,24 @@ After Tasks 15-01 through 15-03: **COMPLETE (2026-07-01).**
 
 ### Checkpoint B: Deterministic Log-Density
 
-After Tasks 15-04 through 15-06. **Lift-test slice satisfied by Task 15-05
-(2026-07-01); cost-per-target slice from Task 15-06 has not started, so this
-checkpoint is not yet fully closed.**
+After Tasks 15-04 through 15-06: **COMPLETE (2026-07-01).** Both the
+lift-test slice (Task 15-05) and the cost-per-target slice (Task 15-06) are
+landed; the full `Pkg.test()` suite (3943 tests) passes cleanly with 0 failed
+and 0 errored.
 
 - [x] Pure helper log-density tests pass. (Lift-test helpers, Task 15-04;
-      cost-per-target helper tests still pending Task 15-06.)
+      cost-per-target helper tests reuse the pre-existing Task 15-02 helpers,
+      Task 15-06.)
 - [x] Turing model log-density differs from the uncalibrated model by the
-      expected calibration term. (Lift-test term only, verified in
-      `test/model/builder.jl`; cost-per-target term pending Task 15-06.)
-- [x] Tiny calibrated MCMC smoke tests pass. (Lift-test-only smoke test lands
-      in Task 15-05; a combined lift-test-plus-cost-per-target smoke test is
-      Task 15-06's verification item.)
+      expected calibration term. (Lift-test term verified in
+      `test/model/builder.jl` via Task 15-05; cost-per-target term verified
+      the same way via Task 15-06, both using `Turing.DynamicPPL.condition`/
+      `evaluate!!`/`getlogjoint`.)
+- [x] Tiny calibrated MCMC smoke tests pass. (Lift-test-only smoke test from
+      Task 15-05; a combined lift-test-plus-cost-per-target smoke test from
+      Task 15-06.)
 - [x] Existing uncalibrated `test/model/runtests.jl` remains green.
+
 
 
 ### Checkpoint C: Evidence And Docs

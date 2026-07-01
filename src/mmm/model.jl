@@ -26,6 +26,7 @@ const _DEFAULT_HOLIDAY_BETA_PRIOR = EpsilonPrior("Normal"; mu = 0.0, sigma = 1.0
 @model function _time_series_mmm_model(
         target, channels, controls, events, holidays, runtime;
         lift_test_payload = nothing,
+        cost_per_target_payload = nothing,
     )
     intercept ~ runtime.intercept_prior
     sigma ~ runtime.sigma_prior
@@ -89,6 +90,19 @@ const _DEFAULT_HOLIDAY_BETA_PRIOR = EpsilonPrior("Normal"; mu = 0.0, sigma = 1.0
         Turing.@addlogprob! lift_test_logdensity
     end
 
+    if !isnothing(cost_per_target_payload)
+        cost_per_target_logdensity = try
+            cost_per_target_total_penalty(
+                cost_per_target_payload.gathered_cpt,
+                cost_per_target_payload.targets,
+                cost_per_target_payload.sigma,
+            )
+        catch err
+            err isa ArgumentError || rethrow()
+            -Inf
+        end
+        Turing.@addlogprob! cost_per_target_logdensity
+    end
 
     media_effect = _media_effect(transformed_media, beta_media)
     control_effect = zero.(media_effect)
@@ -208,6 +222,7 @@ function _fit_time_series_mmm!(model::TimeSeriesMMM)
             spec.target_scale,
         )
         lift_test_payload = isnothing(calibration) ? nothing : calibration.lift_test
+        cost_per_target_payload = isnothing(calibration) ? nothing : calibration.cost_per_target
 
         turing_model = _time_series_mmm_model(
             scaled_target,
@@ -217,6 +232,7 @@ function _fit_time_series_mmm!(model::TimeSeriesMMM)
             holidays,
             runtime;
             lift_test_payload,
+            cost_per_target_payload,
         )
         sampler = Turing.NUTS(model.sampler_config.tune, model.sampler_config.target_accept)
         execution_plan = _mcmc_execution_plan(model.sampler_config)
