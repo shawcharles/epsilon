@@ -8,24 +8,34 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 13 remediation and Phase 14 Abacus parity recovery are
-closed for the bounded v1 evidence spine. The next substantive capability plan
-is now Phase 15 calibration likelihood integration: wire the scaffolded
-calibration/lift-test helper layer into `TimeSeriesMMM` MCMC sampling only,
-with panel and VI calibration kept out of scope until separate contracts exist.
+**Current focus:** Phase 15 calibration likelihood integration is partly
+implemented. `TimeSeriesMMM` MCMC now has both lift-test and cost-per-target
+calibration likelihood terms wired into `_time_series_mmm_model`; remaining
+work is fixture-backed integration evidence plus docs/ledger/guardrail
+closure. Panel calibration, VI calibration, pipeline integration, and broader
+YAML support remain out of scope until separate contracts exist.
 
 ## Current Position
 
 **Current Phase:** 15
 **Current Phase Name:** Calibration Likelihood Integration
 **Total Phases:** 15
-**Current Plan:** planning
+**Current Plan:** 15-07
 **Total Plans in Phase:** 8 tasks
-**Status:** Phase 15 has a robust implementation plan at
-`.planning/phases/15-calibration-likelihood-integration/PLAN.md`; implementation
-has not started. Phase 13 contract/remediation issues are fixed and
-revalidated; Plan 14-05 remains closed with parity audit recorded. Release
-preparation remains paused pending final release-prep decisions. The project has reset its
+**Status:** State saved for pause on 2026-07-01. Phase 15 Tasks 15-01 through
+15-06 are landed and committed. Tasks 15-01 through 15-03 froze the
+`TimeSeriesMMM`-only calibration contract, added typed calibration payloads,
+and threaded raw/resolved calibration payloads through construction, fitting,
+artifact traceability, serialization, and VI rejection. Task 15-04 added pure,
+Turing-independent AD-compatible lift-test log-density helpers. Task 15-05
+wired the lift-test term into `_time_series_mmm_model` via
+`Turing.@addlogprob!`; Task 15-06 wired the cost-per-target soft-penalty term
+into the same model via a second independent `Turing.@addlogprob!` call. The
+remaining Phase 15 work is Task 15-07 fixture-backed integration evidence and
+Task 15-08 docs/ledger/guardrails closure. Phase 13 contract/remediation issues
+are fixed and revalidated; Plan 14-05 remains closed with parity audit
+recorded. Release preparation remains paused pending final release-prep
+decisions. The project has reset its
 planning contract around `.planning/ABACUS-PARITY-LEDGER.md`: existing modules
 are treated as `ported`, `native`, `scaffolded`, `missing`, or `deferred`
 instead of being assumed Abacus-equivalent from phase completion alone. Plan
@@ -61,23 +71,21 @@ bounded scenario-config and manifest stage; it does not automatically refit
 every scenario. The non-UI scenario planner surface is now started with typed
 current/manual/fixed-budget scenario specs and `scenario_plan(result)`
 comparison tables over solved optimization results.
-Calibration/lift-test parity has also started as a scaffolded capability:
-schema, alignment, monotonicity, scaling, Gamma likelihood-term math, and
-cost-per-target soft-penalty helpers are fixture-backed, while Phase 15 plans
-the remaining `TimeSeriesMMM` MCMC likelihood integration.
-**Last Activity:** 2026-05-20
-**Last Activity Description:** Saved handoff after closing Phase 13
-remediation: fitted
-time-series trend and automatic-holiday date-basis state now travels through
-model specs for prediction/replay, unfitted time-series prior prediction
-resolves scale and date-derived state from `model.data`, media/channel arrays
-are rejected when negative, `hill_function` rejects negative inputs with a
-clear `ArgumentError`, and pipeline YAML rejects unknown top-level keys. Full
-`make test`, docs, pipeline, targeted Runic, and `git diff --check` passed.
-`AGENTS.md`, `CHANGELOG.md`, `STATE.md`, `ROADMAP.md`, and the continuation
-handoff now point to the completed Phase 13/14 state.
-**Progress:** 92%
-**Paused At:** `.planning/phases/14-abacus-parity-recovery/.continue-here.md`
+Calibration/lift-test parity is still a `scaffolded` ledger row pending Task
+15-07 and Task 15-08, but `TimeSeriesMMM` MCMC model-side likelihood wiring is
+now landed for both accepted calibration terms.
+**Last Activity:** 2026-07-01
+**Last Activity Description:** Saved handoff after Phase 15 Task 15-06. HEAD
+`797fc54` integrates cost-per-target soft penalties into
+`_time_series_mmm_model`, following Task 15-05's lift-test `@addlogprob!`
+wiring. The latest full suite result from Task 15-06 was clean: `Pass 3943,
+Total 3943, 0 failed, 0 errored` in 22m11.1s. The next task is Task 15-07:
+fixture-backed integration evidence. Local `AGENTS.md` verification guidance
+now defaults routine work to targeted tests and reserves full `make test` for
+phase-closing checkpoints, shared-namespace/export risk, broad contract
+changes, or final pre-merge/release confirmation.
+**Progress:** 96%
+**Paused At:** `.planning/phases/15-calibration-likelihood-integration/.continue-here.md`
 
 ## Performance Metrics
 
@@ -103,6 +111,7 @@ handoff now point to the completed Phase 13/14 state.
 | 12 | 4/4 | Completed | scaling/model-space parity, Stage 60 curve parity, Stage 70 verification, coherent holiday/design contract, and final revalidation/release reconciliation landed |
 | 13 | 6/6 | Completed | fitted trend/holiday prediction-state repair, media-domain validation, pipeline YAML contract hardening, and final release-gate revalidation landed |
 | 14 | 5/5 | Plan complete | Abacus parity recovery across `timeseries`, `geo_panel`, and `geo_brand_panel` demo-style acceptance targets |
+| 15 | 6/8 | In progress | `TimeSeriesMMM` MCMC calibration likelihood wiring landed for lift-test and cost-per-target terms; fixture-backed integration evidence and docs/ledger closure remain |
 
 **Recent Trend:**
 - Last 5 completed plans: `14-01`, `14-02`, `14-03`, `14-04`, `14-05`
@@ -172,9 +181,9 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 - Expand the scenario planner only behind concrete non-UI planning contracts,
   such as manual-allocation response evaluation or saved scenario-store
   artifacts. Automatic scenario refits remain outside the current surface.
-- Implement Phase 15 calibration likelihood integration for `TimeSeriesMMM`
-  MCMC only, following
-  `.planning/phases/15-calibration-likelihood-integration/PLAN.md`.
+- Complete Phase 15 Task 15-07 fixture-backed integration evidence, then Task
+  15-08 docs/ledger/guardrail closure. Keep the calibration row `scaffolded`
+  until those are done.
 - Keep Stage `35` panel holdout validation deferred unless a concrete
   methodological requirement and fixture-backed contract are added.
 - Do not force free channel-by-panel allocation, panel-total bounds, fairness
@@ -211,30 +220,13 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 
 ## Session
 
-**Last Date:** 2026-05-20 00:00
-**Stopped At:** State saved after Phase 13 contract/remediation closeout and
-Plan 14-05 parity audit. Plans 14-01 through 14-04 are implemented, including
-`geo_brand_panel` contribution/decomposition replay, and the first Plan 14-05
-response/metric slice has landed with panel-cell historical-scaling curves for
-`geo_brand_panel`; Plan 14-05 has started pipeline parity by exporting the
-Abacus `timeseries` manifest/artifact contract and validating Epsilon Stage
-`00` metadata artifacts against it; it now also covers Stage `20` fit, Stage
-`30` assessment, Stage `35` validation, Stage `40` decomposition, Stage `50`
-diagnostics, Stage `60` curves, and enabled Stage `70` optimization artifact
-keys with Julia-native equivalents where Abacus uses PyMC/NetCDF-specific
-files. Panel pipeline parity now also covers `geo_panel` and
-`geo_brand_panel` Stage `00` metadata/manifest artifacts, Stage `20` fit
-artifact keys, Stage `30` assessment artifact keys, and Stage `40`
-decomposition artifact keys plus Stage `50` diagnostics artifact keys, with
-Stage `60` response-curve artifact keys also covered and unsupported panel
-stages skipped. Stage `70` panel optimization now supports the agreed
-historical-share v1 policy for both `geo_panel` and `geo_brand_panel`. Stage
-`35` panel validation is explicitly deferred for v1. Plan `14-05` is now
-closed. Stage `05` prior-sensitivity planning is implemented as a bounded
-scenario-config and manifest stage. The non-UI scenario planner now has a
-first bounded spec/table surface over solved optimization results; richer
-scenario execution should be added only with explicit contracts. AI advisor
-plus Dash remain deferred.
-Resume details are in
-`.planning/phases/14-abacus-parity-recovery/.continue-here.md`.
-**Resume File:** `.planning/phases/14-abacus-parity-recovery/.continue-here.md`
+**Last Date:** 2026-07-01 00:00
+**Stopped At:** State saved after Phase 15 Task 15-06. Tasks 15-01 through
+15-06 are landed: contract freeze, typed payloads, config/spec threading, pure
+AD-compatible lift-test log-density helpers, lift-test `Turing.@addlogprob!`
+wiring, and cost-per-target `Turing.@addlogprob!` wiring. The accepted scope is
+still `TimeSeriesMMM` MCMC only and centered-logistic lift-test calibration
+only. Panel calibration, VI calibration, pipeline integration, broader YAML
+expansion, scenario refits, Dash/UI, and AI advisor functionality remain out of
+scope. Resume with Task 15-07 fixture-backed integration evidence.
+**Resume File:** `.planning/phases/15-calibration-likelihood-integration/.continue-here.md`
