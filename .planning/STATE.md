@@ -8,20 +8,32 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 17 calibration YAML and pipeline integration is
-complete. The bounded `TimeSeriesMMM` MCMC calibration likelihood surface is now
-exposed through public dict/YAML parsing and the time-series MCMC pipeline fit
-path, with docs, changelog, and ledger guardrails still keeping panel, VI,
-non-logistic calibration, Dash/UI, and AI-advisor paths out of scope.
+**Current focus:** Phase 18 scenario-store artifacts are complete. Existing
+non-UI `ScenarioPlanResult` tables can now be persisted as local
+Epsilon/Julia-version-bound typed store artifacts with CSV inspection sidecars
+and compatibility guardrails, while hosted/background stores, pipeline store
+emission, automatic refits, future spend paths, Dash/UI, and panel manual
+allocation remain unsupported.
 
 ## Current Position
 
-**Current Phase:** 17
-**Current Phase Name:** Calibration YAML And Pipeline Integration
-**Total Phases:** 17
-**Current Plan:** Phase 17 complete; choose the next bounded parity/capability slice
+**Current Phase:** 18
+**Current Phase Name:** Scenario Store Artifacts
+**Total Phases:** 18
+**Current Plan:** Phase 18 complete; choose the next bounded parity/capability slice
 **Total Plans in Phase:** 4 tasks
-**Status:** Phase 17 is complete at
+**Status:** Phase 18 is complete at
+`.planning/phases/18-scenario-store-artifacts/PLAN.md`. Phase 18 was planned
+before implementation and the plan was reviewed by a subagent under the Three
+Man Team workflow. The landed surface adds `ScenarioStoreArtifact`,
+`write_scenario_store`, `load_scenario_store`, `scenario_store_plan`, and
+`assert_scenario_store_compatible` for existing `ScenarioPlanResult` tables.
+Stores carry trusted model metadata, model spec, coordinate metadata, objective,
+channel order, and current-baseline fields; they write a typed
+`scenario_store.jls` payload plus CSV inspection sidecars; they reject malformed
+tables and incompatible metadata/spec/coordinate/baseline contracts before
+comparison; and they remain local Epsilon/Julia-version-bound artifacts rather
+than portable or untrusted interchange files. Phase 17 is complete at
 `.planning/phases/17-calibration-yaml-pipeline/PLAN.md`. Task 17-01 landed
 bounded public dict/YAML parsing for top-level `calibration` blocks:
 `model_config_from_dict` and `load_public_config` now store a typed
@@ -109,25 +121,28 @@ current/manual/fixed-budget scenario specs, `scenario_plan(result)` comparison
 tables over solved optimization results, time-series manual-allocation
 evaluation over existing response surfaces, manual table projection, and
 combined current/manual/optimized comparison for compatible artifacts.
+Scenario planner local store artifacts are now landed for existing
+`ScenarioPlanResult` tables, with typed payload load/replay and compatibility
+guardrails.
 Calibration/lift-test parity remains a `scaffolded` ledger row after Phase 17:
 `TimeSeriesMMM` MCMC model-side likelihood wiring, fixture-backed integration
 evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
 are landed for both accepted calibration terms, but the wider Abacus
 calibration surface is not complete.
 **Last Activity:** 2026-07-05
-**Last Activity Description:** Phase 17 Task 17-04 closed docs, changelog, and
-ledger guardrails for the bounded calibration YAML/pipeline surface. The docs
-now show the supported top-level `calibration` YAML shape for time-series MCMC
-configs, avoid the stale claim that pipeline/YAML ingestion is wholly
-unsupported, and preserve explicit exclusions for `PanelMMM`, VI,
-non-logistic lift-test calibration, automatic row generation from artifacts,
-Dash/UI workflows, and AI-advisor behaviour. The broad calibration ledger row
-remains `scaffolded`; targeted model/pipeline verification from Tasks 17-01
-through 17-03 remains the code-path evidence for the phase. Docs closure
-verification passed with `make docs`, with the known non-fatal `index.html`
-size warning and deployment skipped outside CI, and `git diff --check`.
+**Last Activity Description:** Phase 18 landed local non-UI scenario-store
+artifacts for existing `ScenarioPlanResult` tables, with typed payload
+serialization, CSV inspection sidecars, copied table projection, strict
+allocation-table validation, and compatibility rejection for metadata, spec,
+coordinate metadata, channel order, objective, and current-baseline mismatches.
+Docs, changelog, roadmap, state, and ledger guardrails keep hosted/background
+stores, pipeline store emission, automatic refits, future spend paths, Dash/UI,
+and panel manual allocation unsupported. Scoped verification passed: targeted
+Runic on touched Julia/test files, focused scenario-planner tests with
+`Pass 129, Total 129`, `make docs` with the known non-fatal `index.html` size
+warning and deployment skipped outside CI, and `git diff --check`.
 **Progress:** 100%
-**Paused At:** `.planning/phases/17-calibration-yaml-pipeline/.continue-here.md`
+**Paused At:** `.planning/phases/18-scenario-store-artifacts/.continue-here.md`
 
 ## Performance Metrics
 
@@ -155,7 +170,8 @@ size warning and deployment skipped outside CI, and `git diff --check`.
 | 14 | 5/5 | Plan complete | Abacus parity recovery across `timeseries`, `geo_panel`, and `geo_brand_panel` demo-style acceptance targets |
 | 15 | 8/8 | Completed | `TimeSeriesMMM` MCMC calibration likelihood wiring, fixture-backed integration evidence, docs, changelog, and ledger guardrails landed for lift-test and cost-per-target terms |
 | 16 | 4/4 | Completed | bounded non-UI manual-allocation evaluation, scenario-plan table projection, combined current/manual/optimized comparison, and docs/changelog/ledger guardrails landed |
-| 17 | 3/4 | In progress | bounded public calibration YAML/dict parsing, time-series constructor threading, and time-series MCMC pipeline fit-stage support landed; docs remain |
+| 17 | 4/4 | Completed | bounded calibration YAML/dict parsing, time-series constructor threading, time-series MCMC pipeline fit-stage support, and docs/changelog/ledger guardrails landed |
+| 18 | 4/4 | Completed | local scenario-store artifacts for existing `ScenarioPlanResult` tables, CSV inspection sidecars, compatibility guardrails, and docs/changelog/ledger closure landed |
 
 **Recent Trend:**
 - Last 5 completed plans: `14-01`, `14-02`, `14-03`, `14-04`, `14-05`
@@ -222,8 +238,9 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 
 ## Pending Todos
 
-- Choose the next bounded parity/capability slice after Phase 17; do not
-  extend calibration into panel, VI, broader saturation-family, or UI paths
+- Choose the next bounded parity/capability slice after Phase 18; do not extend
+  scenario planning into hosted/background stores, automatic refits, future
+  spend paths, pipeline store emission, Dash/UI, or panel manual allocation
   without a separate methodological contract.
 - Phase 15 calibration likelihood integration is closed; keep the calibration
   row `scaffolded` until a separate contract implements panel, VI,

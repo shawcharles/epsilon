@@ -78,7 +78,7 @@ Each target should pass these gates before it is counted as ported:
 | Pipeline runner and artifacts | `abacus/pipeline/*.py`, `abacus/pipeline/stages/*.py` | `src/pipeline/*.jl` | scaffolded | `timeseries` now exports the Abacus pipeline manifest/artifact contract and Epsilon validates Stage `00` through Stage `70` artifact-key parity, using Julia-native serialized artifacts where Abacus uses PyMC/NetCDF-specific files; `geo_panel` and `geo_brand_panel` now cover Stage `00` metadata/manifest parity, Stage `20` fit artifact-key parity, Stage `30` assessment artifact-key parity, Stage `40` decomposition artifact-key parity, Stage `50` diagnostics artifact-key parity, and Stage `60` response-curve artifact-key parity. Both `geo_panel` and `geo_brand_panel` now also cover explicitly enabled Stage `70` historical-share optimization artifacts, with multidimensional `geo`/`brand` coordinate columns preserved in `channel_panel_allocation.csv` for `geo_brand_panel`; other unsupported panel stages are skipped until semantics are fixture-backed. |
 | Prior sensitivity | `abacus/prior_sensitivity/*.py`, `abacus/pipeline/stages/prior_sensitivity.py` | `src/pipeline/config.jl`, `src/pipeline/stages.jl` | ported | Bounded Stage `05` prior-sensitivity planning is implemented: manual and `conservative_mmm` scenario configs are resolved to YAML, human and LLM-safe manifests are emitted, and narrow prior plus explicitly gated structure override paths are validated. Automatic refitting/comparison of every scenario is out of this stage's scope. |
 | Plotting | `abacus/mmm/plotting/*.py`, `abacus/plot.py` | `src/plotting/*.jl` | native/scaffolded | Keep Julia-native Makie plots; compare data inputs, not exact figure appearance. |
-| Scenario planner | `abacus/scenario_planner/*.py` | `src/scenario_planner.jl` | scaffolded | Bounded non-UI planner semantics are started and Phase 16 is closed: typed current/manual/fixed-budget scenario specs, `scenario_plan(result)` tables from solved optimization results, Task 16-01 time-series `evaluate_manual_scenario` response evaluation over existing fitted response surfaces, Task 16-02 manual-evaluation projection into `ScenarioPlanResult` tables, Task 16-03 combined current/manual/optimized projection with artifact mismatch rejection, and Task 16-04 docs/changelog/ledger guardrails. Automatic scenario refits, future spend-path simulation, saved/background scenario stores, free channel-by-panel allocation, panel manual allocation, and Dash UI remain deferred. |
+| Scenario planner | `abacus/scenario_planner/*.py` | `src/scenario_planner.jl` | scaffolded | Bounded non-UI planner semantics are started and Phase 18 is closed: typed current/manual/fixed-budget scenario specs, `scenario_plan(result)` tables from solved optimization results, time-series `evaluate_manual_scenario` response evaluation over existing fitted response surfaces, manual-evaluation projection into `ScenarioPlanResult` tables, combined current/manual/optimized projection with artifact mismatch rejection, and local Epsilon/Julia-version-bound `ScenarioStoreArtifact` persistence with CSV inspection sidecars plus compatibility guardrails. Automatic scenario refits, future spend-path simulation, hosted/background scenario stores, pipeline store emission, free channel-by-panel allocation, panel manual allocation, and Dash UI remain deferred. |
 | AI advisor | `abacus/ai/*.py`, `abacus/pipeline/stages/ai_advisor.py` | none | deferred | Not central to the statistical or methodological port. |
 | Dash/dashboard and product UX | Abacus Dash/dashboard/product layers, `docs-site/`, product assets | `docs/`, Julia-native plots/artifacts | deferred/native | Do not chase Dash or hosted dashboard parity; keep docs and static Julia-native artifacts honest. |
 
@@ -569,6 +569,25 @@ As of 2026-05-10:
     MCMC slice through config and pipeline boundaries. Verification reused the
     targeted model/pipeline tests from Tasks 17-01 through 17-03 and closed the
     docs-only task with `make docs` and `git diff --check`.
+35. Phase 18 landed local scenario-store artifacts for the existing bounded
+    non-UI scenario-planner surface. `ScenarioStoreArtifact` validates
+    `ScenarioPlanResult` tables against trusted `ModelArtifactMetadata`,
+    `MMMModelSpec`, and `ModelCoordinateMetadata` inputs; `write_scenario_store`
+    writes a typed `scenario_store.jls` payload plus deterministic CSV
+    inspection sidecars; `load_scenario_store` restores a validated typed
+    artifact; `scenario_store_plan` projects copied tables; and
+    `assert_scenario_store_compatible` rejects metadata, spec, coordinate,
+    channel-order, objective, and current-baseline mismatches. The store
+    contract is local and Epsilon/Julia-version-bound, not a portable or
+    untrusted interchange format. Scoped verification passed with targeted
+    Runic on `src/scenario_planner.jl`, `src/Epsilon.jl`, and
+    `test/scenario_planner.jl`; focused scenario-planner tests reported
+    `Pass 129, Total 129`; `make docs` passed with the known non-fatal
+    `index.html` size warning and deployment skipped outside CI; and
+    `git diff --check` passed. The scenario planner row remains `scaffolded`
+    because hosted/background stores, pipeline store emission, automatic
+    refits, future spend paths, panel manual allocation, free channel-by-panel
+    allocation, and Dash UI remain unsupported.
 
 
 ## Plan 14-05 Parity Audit

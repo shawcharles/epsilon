@@ -1,9 +1,11 @@
+using CSV
+using DataFrames
 using Dates
 using Epsilon
+using Serialization
 using Test
 
-function _scenario_test_result(; target_type = "revenue")
-    channels = ["tv", "search"]
+function _scenario_test_result(; target_type = "revenue", channels = ["tv", "search"])
     coordinates = Dict("date" => ["2024-01-01"], "channel" => channels)
     coordinate_metadata = ModelCoordinateMetadata(
         "date",
@@ -70,6 +72,45 @@ function _scenario_test_result(; target_type = "revenue")
         92.0,
         Dict{String, Any}("termination_status" => "LOCALLY_SOLVED"),
         audit,
+    )
+end
+
+function _scenario_store_test_plan(
+        result = _scenario_test_result();
+        current = CurrentScenarioSpec(name = "Current Plan", start_date = "2024-01-01", end_date = "2024-01-31"),
+    )
+    optimized = FixedBudgetOptimizedScenarioSpec(
+        name = "Optimized Plan",
+        start_date = "2024-01-01",
+        end_date = "2024-01-31",
+        total_budget = 150.0,
+    )
+    return scenario_plan(result; current_scenario = current, optimized_scenario = optimized)
+end
+
+function _scenario_store_for(result = _scenario_test_result(); plan = _scenario_store_test_plan(result))
+    return ScenarioStoreArtifact(
+        plan;
+        metadata = result.metadata,
+        spec = result.spec,
+        coordinate_metadata = result.coordinate_metadata,
+    )
+end
+
+function _scenario_plan_copy(
+        plan::ScenarioPlanResult;
+        totals = plan.totals,
+        channels = plan.channels,
+        allocations = plan.allocations,
+        metadata = plan.metadata,
+        channel_panel_allocations = plan.channel_panel_allocations,
+    )
+    return ScenarioPlanResult(
+        copy(totals; copycols = true),
+        copy(channels; copycols = true),
+        copy(allocations; copycols = true),
+        copy(metadata; copycols = true),
+        copy(channel_panel_allocations; copycols = true),
     )
 end
 
@@ -497,4 +538,234 @@ end
     for mismatched in mismatches
         @test_throws ArgumentError scenario_plan(result, mismatched)
     end
+end
+
+@testset "scenario store writes typed payload and inspection sidecars" begin
+    result = _scenario_test_result()
+    plan = _scenario_store_test_plan(result)
+
+    mktempdir() do dir
+        @test write_scenario_store(
+            dir,
+            plan;
+            metadata = result.metadata,
+            spec = result.spec,
+            coordinate_metadata = result.coordinate_metadata,
+        ) == dir
+
+        @test isfile(joinpath(dir, "scenario_store.jls"))
+        @test isfile(joinpath(dir, "totals.csv"))
+        @test isfile(joinpath(dir, "channels.csv"))
+        @test isfile(joinpath(dir, "allocations.csv"))
+        @test isfile(joinpath(dir, "metadata.csv"))
+        @test !isfile(joinpath(dir, "channel_panel_allocations.csv"))
+        @test nrow(DataFrame(CSV.File(joinpath(dir, "totals.csv")))) == nrow(plan.totals)
+
+        loaded = load_scenario_store(dir)
+        @test loaded isa ScenarioStoreArtifact
+        loaded_plan = scenario_store_plan(loaded)
+        @test isequal(loaded_plan.totals, plan.totals)
+        @test isequal(loaded_plan.channels, plan.channels)
+        @test isequal(loaded_plan.allocations, plan.allocations)
+        @test isequal(loaded_plan.metadata, plan.metadata)
+        @test isempty(loaded_plan.channel_panel_allocations)
+
+        write(joinpath(dir, "channel_panel_allocations.csv"), "stale\n")
+        @test isfile(joinpath(dir, "channel_panel_allocations.csv"))
+        write_scenario_store(
+            dir,
+            plan;
+            metadata = result.metadata,
+            spec = result.spec,
+            coordinate_metadata = result.coordinate_metadata,
+        )
+        @test !isfile(joinpath(dir, "channel_panel_allocations.csv"))
+
+        panel_plan = _scenario_plan_copy(
+            plan;
+            channel_panel_allocations = DataFrame(
+                baseline_scenario_id = ["current-plan", "current-plan"],
+                optimized_scenario_id = ["optimized-plan", "optimized-plan"],
+                channel = ["tv", "search"],
+                panel_cell = ["north", "north"],
+                current_spend = [60.0, 40.0],
+                optimized_spend = [70.0, 30.0],
+                spend_delta = [10.0, -10.0],
+            ),
+        )
+        write_scenario_store(
+            dir,
+            panel_plan;
+            metadata = result.metadata,
+            spec = result.spec,
+            coordinate_metadata = result.coordinate_metadata,
+        )
+        @test isfile(joinpath(dir, "channel_panel_allocations.csv"))
+        panel_loaded = load_scenario_store(dir)
+        @test nrow(scenario_store_plan(panel_loaded).channel_panel_allocations) == 2
+    end
+end
+
+@testset "scenario store accepts manual and combined scenario plan variants" begin
+    current = CurrentScenarioSpec(name = "Current Plan", start_date = "2024-01-01", end_date = "2024-01-31")
+    manual_scenario = ManualAllocationScenarioSpec(
+        name = "Manual Mix",
+        allocation = Dict("tv" => 120.0, "search" => 30.0),
+        start_date = "2024-01-01",
+        end_date = "2024-01-31",
+    )
+    manual_evaluation = Epsilon._evaluate_manual_scenario(_manual_scenario_problem(), manual_scenario)
+    manual_plan = scenario_plan(manual_evaluation; current_scenario = current)
+    manual_store = ScenarioStoreArtifact(
+        manual_plan;
+        metadata = manual_evaluation.metadata,
+        spec = manual_evaluation.spec,
+        coordinate_metadata = manual_evaluation.coordinate_metadata,
+    )
+    @test scenario_store_plan(manual_store).totals.scenario_type == ["current", "manual_allocation"]
+
+    result = _combined_scenario_test_result()
+    optimized = FixedBudgetOptimizedScenarioSpec(
+        name = "Optimized Plan",
+        start_date = "2024-01-01",
+        end_date = "2024-01-31",
+        total_budget = 150.0,
+    )
+    combined_plan = scenario_plan(result, manual_evaluation; current_scenario = current, optimized_scenario = optimized)
+    combined_store = ScenarioStoreArtifact(
+        combined_plan;
+        metadata = result.metadata,
+        spec = result.spec,
+        coordinate_metadata = result.coordinate_metadata,
+    )
+    @test scenario_store_plan(combined_store).totals.scenario_type == [
+        "current",
+        "manual_allocation",
+        "fixed_budget_optimized",
+    ]
+end
+
+@testset "scenario store copies plan tables on construction and projection" begin
+    result = _scenario_test_result()
+    plan = _scenario_store_test_plan(result)
+    store = _scenario_store_for(result; plan)
+
+    plan.totals.expected_response[1] = -1.0
+    @test store.totals.expected_response[1] == 80.0
+
+    projected = scenario_store_plan(store)
+    projected.totals.expected_response[1] = -2.0
+    projected.channels.spend[1] = -3.0
+    @test store.totals.expected_response[1] == 80.0
+    @test store.channels.spend[1] == 100.0
+end
+
+@testset "scenario store rejects malformed plans" begin
+    result = _scenario_test_result()
+    plan = _scenario_store_test_plan(result)
+
+    missing_current = _scenario_plan_copy(plan)
+    missing_current.totals.scenario_type[1] = "baseline"
+    @test_throws ArgumentError _scenario_store_for(result; plan = missing_current)
+
+    repeated_current_totals = vcat(plan.totals, plan.totals[1:1, :])
+    repeated_current = _scenario_plan_copy(plan; totals = repeated_current_totals)
+    @test_throws ArgumentError _scenario_store_for(result; plan = repeated_current)
+
+    inconsistent_objective = _scenario_plan_copy(plan)
+    inconsistent_objective.metadata.objective[2] = "incremental_response"
+    @test_throws ArgumentError _scenario_store_for(result; plan = inconsistent_objective)
+
+    bad_channel_order = _scenario_plan_copy(plan; channels = plan.channels[[3, 4, 1, 2], :])
+    @test_throws ArgumentError _scenario_store_for(result; plan = bad_channel_order)
+
+    bad_baseline = _scenario_plan_copy(plan)
+    bad_baseline.allocations.baseline_scenario_id[1] = "other-current"
+    @test_throws ArgumentError _scenario_store_for(result; plan = bad_baseline)
+
+    malformed_allocations = _scenario_plan_copy(plan; allocations = select(plan.allocations, Not(:optimized_scenario_id)))
+    @test_throws ArgumentError _scenario_store_for(result; plan = malformed_allocations)
+
+    unknown_scenario = _scenario_plan_copy(plan)
+    unknown_scenario.allocations.optimized_scenario_id[1] = "ghost-plan"
+    @test_throws ArgumentError _scenario_store_for(result; plan = unknown_scenario)
+
+    duplicate_allocation = _scenario_plan_copy(plan; allocations = vcat(plan.allocations, plan.allocations[1:1, :]))
+    @test_throws ArgumentError _scenario_store_for(result; plan = duplicate_allocation)
+
+    missing_channel_allocation = _scenario_plan_copy(plan; allocations = plan.allocations[1:1, :])
+    @test_throws ArgumentError _scenario_store_for(result; plan = missing_channel_allocation)
+end
+
+@testset "scenario store load fails closed for unsupported or corrupt payloads" begin
+    mktempdir() do dir
+        open(joinpath(dir, "scenario_store.jls"), "w") do io
+            serialize(io, (; schema_version = 0))
+        end
+        @test_throws ArgumentError load_scenario_store(dir)
+
+        write(joinpath(dir, "scenario_store.jls"), "not a serialized scenario store")
+        @test_throws ArgumentError load_scenario_store(dir)
+    end
+end
+
+@testset "scenario store compatibility rejects guarded mismatches" begin
+    result = _scenario_test_result()
+    plan = _scenario_store_test_plan(result)
+    reference = _scenario_store_for(result; plan)
+
+    different_metadata = ModelArtifactMetadata(
+        1,
+        epsilon_version(),
+        VERSION,
+        "2026-05-20T00:00:00Z",
+        "TimeSeriesMMM",
+        :mcmc,
+        :success,
+    )
+    metadata_mismatch = ScenarioStoreArtifact(
+        plan;
+        metadata = different_metadata,
+        spec = result.spec,
+        coordinate_metadata = result.coordinate_metadata,
+    )
+    @test_throws ArgumentError assert_scenario_store_compatible(reference, metadata_mismatch)
+
+    spec_result = _scenario_test_result(; target_type = "conversion")
+    spec_mismatch = _scenario_store_for(spec_result; plan = _scenario_store_test_plan(spec_result))
+    @test_throws ArgumentError assert_scenario_store_compatible(reference, spec_mismatch)
+
+    different_coordinates = ModelCoordinateMetadata(
+        "date",
+        (),
+        Dict("date" => ["2024-01-01"], "channel" => ["tv", "search"], "region" => ["north"]),
+        Dict{String, Tuple{Vararg{String}}}(),
+    )
+    coordinate_mismatch = ScenarioStoreArtifact(
+        plan;
+        metadata = result.metadata,
+        spec = result.spec,
+        coordinate_metadata = different_coordinates,
+    )
+    @test_throws ArgumentError assert_scenario_store_compatible(reference, coordinate_mismatch)
+
+    objective_plan = _scenario_plan_copy(plan)
+    objective_plan.totals.objective .= "incremental_response"
+    objective_plan.metadata.objective .= "incremental_response"
+    objective_mismatch = _scenario_store_for(result; plan = objective_plan)
+    @test_throws ArgumentError assert_scenario_store_compatible(reference, objective_mismatch)
+
+    baseline_plan = _scenario_store_test_plan(
+        result;
+        current = CurrentScenarioSpec(name = "Different Current"),
+    )
+    baseline_mismatch = _scenario_store_for(result; plan = baseline_plan)
+    @test_throws ArgumentError assert_scenario_store_compatible(reference, baseline_mismatch)
+
+    reversed_result = _scenario_test_result(; channels = ["search", "tv"])
+    channel_order_mismatch = _scenario_store_for(reversed_result; plan = _scenario_store_test_plan(reversed_result))
+    @test_throws ArgumentError assert_scenario_store_compatible(reference, channel_order_mismatch)
+
+    compatible = _scenario_store_for(result; plan)
+    @test assert_scenario_store_compatible(reference, compatible) === nothing
 end

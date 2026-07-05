@@ -147,6 +147,11 @@ Current repository state on 2026-05-18:
   and Task 17-04 closes docs, changelog, and ledger guardrails while keeping
   panel calibration, VI calibration, non-logistic lift-test calibration,
   Dash/UI, and AI-advisor paths out of scope
+- Phase 18 is now closed: existing non-UI `ScenarioPlanResult` tables can be
+  persisted as local Epsilon/Julia-version-bound `ScenarioStoreArtifact`
+  payloads with CSV inspection sidecars and compatibility guardrails, while
+  Dash/UI, hosted/background stores, automatic refits, future spend paths,
+  pipeline store emission, and panel manual allocation remain out of scope
 
 ## Phases
 
@@ -199,6 +204,11 @@ Current repository state on 2026-05-18:
       bounded `TimeSeriesMMM` MCMC calibration likelihood through public
       YAML/config and pipeline construction without widening the unsupported
       panel, VI, non-logistic, Dash/UI, or AI-advisor calibration surfaces.
+- [x] **Phase 18: Scenario Store Artifacts** - Persist existing non-UI
+      `ScenarioPlanResult` tables as local typed artifacts with CSV inspection
+      sidecars and compatibility guardrails, without adding hosted stores,
+      background jobs, automatic refits, future spend paths, pipeline emission,
+      Dash/UI, or panel manual allocation.
 
 ## Phase Details
 

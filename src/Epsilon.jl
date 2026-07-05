@@ -180,7 +180,12 @@ export ManualScenarioEvaluationResult
 export evaluate_manual_scenario
 export FixedBudgetOptimizedScenarioSpec
 export ScenarioPlanResult
+export ScenarioStoreArtifact
+export assert_scenario_store_compatible
+export load_scenario_store
 export scenario_plan
+export scenario_store_plan
+export write_scenario_store
 export observed_fitted_plot
 export posterior_density_plot
 export prior_posterior_plot

@@ -104,6 +104,15 @@ All notable project changes are recorded here. Epsilon is still on the
   scenarios and one solved fixed-budget optimization result can be projected
   into one deterministic current/manual/optimized `ScenarioPlanResult`, with
   hard artifact and baseline mismatch rejection before table construction.
+- Added local non-UI scenario-store artifacts for existing
+  `ScenarioPlanResult` tables: `write_scenario_store` writes a typed
+  `scenario_store.jls` payload plus CSV inspection sidecars,
+  `load_scenario_store` restores a validated `ScenarioStoreArtifact`,
+  `scenario_store_plan` projects copied tables, and
+  `assert_scenario_store_compatible` rejects incompatible stores. This is a
+  local Epsilon/Julia-version-bound artifact contract, not Dash/UI, hosted
+  stores, background jobs, automatic refits, future spend simulation, pipeline
+  emission, or panel manual allocation.
 - Documented the bounded calibration YAML/pipeline surface with the supported
   top-level `calibration` shape and explicit unsupported paths for panel
   calibration, VI calibration, non-logistic lift-test calibration, Dash/UI

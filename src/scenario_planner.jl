@@ -1,7 +1,18 @@
+using CSV
 using DataFrames
 using Dates
+using Serialization
 
 const _SCENARIO_DEFAULT_RESPONSE_VARIABLE = "total_media_contribution_original_scale"
+const _SCENARIO_STORE_SCHEMA_VERSION = 1
+const _SCENARIO_STORE_PAYLOAD = "scenario_store.jls"
+const _SCENARIO_STORE_SIDECARS = (
+    totals = "totals.csv",
+    channels = "channels.csv",
+    allocations = "allocations.csv",
+    metadata = "metadata.csv",
+    channel_panel_allocations = "channel_panel_allocations.csv",
+)
 
 """
     ScenarioDataArraySpec(values; dims, coords)
@@ -236,6 +247,176 @@ struct ScenarioPlanResult
 end
 
 """
+    ScenarioStoreArtifact(plan; metadata, spec, coordinate_metadata)
+
+Typed local scenario-store artifact for a validated [`ScenarioPlanResult`](@ref).
+
+The serialized store is a local Epsilon/Julia artifact. CSV sidecars written by
+[`write_scenario_store`](@ref) are for inspection only; loads use the typed
+payload as the source of truth.
+"""
+struct ScenarioStoreArtifact
+    schema_version::Int
+    metadata::ModelArtifactMetadata
+    spec::MMMModelSpec
+    coordinate_metadata::ModelCoordinateMetadata
+    objective::Symbol
+    channel_columns::Vector{String}
+    current_baseline::NamedTuple
+    totals::DataFrame
+    channels::DataFrame
+    allocations::DataFrame
+    scenario_metadata::DataFrame
+    channel_panel_allocations::DataFrame
+
+    function ScenarioStoreArtifact(
+            schema_version::Integer,
+            metadata::ModelArtifactMetadata,
+            spec::MMMModelSpec,
+            coordinate_metadata::ModelCoordinateMetadata,
+            objective::Symbol,
+            channel_columns::AbstractVector{<:AbstractString},
+            current_baseline::NamedTuple,
+            totals::DataFrame,
+            channels::DataFrame,
+            allocations::DataFrame,
+            scenario_metadata::DataFrame,
+            channel_panel_allocations::DataFrame,
+        )
+        _validate_scenario_store_schema_version(schema_version)
+        normalized_channels = String.(channel_columns)
+        normalized_channels == spec.channel_columns ||
+            throw(ArgumentError("scenario store channel order must match spec.channel_columns"))
+        plan = ScenarioPlanResult(
+            _copy_scenario_table(totals),
+            _copy_scenario_table(channels),
+            _copy_scenario_table(allocations),
+            _copy_scenario_table(scenario_metadata),
+            _copy_scenario_table(channel_panel_allocations),
+        )
+        derived_objective, derived_channels, derived_baseline = _validate_scenario_store_plan(plan, spec)
+        derived_objective == objective ||
+            throw(ArgumentError("scenario store objective does not match scenario tables"))
+        derived_channels == normalized_channels ||
+            throw(ArgumentError("scenario store channel order does not match scenario tables"))
+        derived_baseline == current_baseline ||
+            throw(ArgumentError("scenario store current baseline fields do not match scenario tables"))
+        return new(
+            Int(schema_version),
+            deepcopy(metadata),
+            deepcopy(spec),
+            deepcopy(coordinate_metadata),
+            objective,
+            copy(normalized_channels),
+            deepcopy(current_baseline),
+            plan.totals,
+            plan.channels,
+            plan.allocations,
+            plan.metadata,
+            plan.channel_panel_allocations,
+        )
+    end
+end
+
+function ScenarioStoreArtifact(
+        plan::ScenarioPlanResult;
+        metadata::ModelArtifactMetadata,
+        spec::MMMModelSpec,
+        coordinate_metadata::ModelCoordinateMetadata,
+    )
+    objective, channel_columns, current_baseline = _validate_scenario_store_plan(plan, spec)
+    return ScenarioStoreArtifact(
+        _SCENARIO_STORE_SCHEMA_VERSION,
+        metadata,
+        spec,
+        coordinate_metadata,
+        objective,
+        channel_columns,
+        current_baseline,
+        plan.totals,
+        plan.channels,
+        plan.allocations,
+        plan.metadata,
+        plan.channel_panel_allocations,
+    )
+end
+
+"""
+    write_scenario_store(path, plan; metadata, spec, coordinate_metadata)
+
+Write a local scenario store directory for `plan`.
+
+The writer replaces the typed payload and known CSV sidecars. It removes stale
+`channel_panel_allocations.csv` sidecars when the current plan has no panel
+allocation table.
+"""
+function write_scenario_store(
+        path::AbstractString,
+        plan::ScenarioPlanResult;
+        metadata::ModelArtifactMetadata,
+        spec::MMMModelSpec,
+        coordinate_metadata::ModelCoordinateMetadata,
+    )
+    store = ScenarioStoreArtifact(plan; metadata, spec, coordinate_metadata)
+    mkpath(path)
+    _write_scenario_store_payload(path, store)
+    _write_scenario_store_sidecars(path, store)
+    return path
+end
+
+"""
+    load_scenario_store(path)::ScenarioStoreArtifact
+
+Load and validate the typed scenario-store payload from `path`.
+"""
+function load_scenario_store(path::AbstractString)::ScenarioStoreArtifact
+    payload_path = joinpath(path, _SCENARIO_STORE_PAYLOAD)
+    payload = try
+        open(deserialize, payload_path)
+    catch err
+        throw(ArgumentError("could not load scenario store payload from $(payload_path): $(sprint(showerror, err))"))
+    end
+    return _scenario_store_from_payload(payload)
+end
+
+"""
+    scenario_store_plan(store)::ScenarioPlanResult
+
+Project a typed scenario store back to a copied [`ScenarioPlanResult`](@ref).
+"""
+function scenario_store_plan(store::ScenarioStoreArtifact)
+    return ScenarioPlanResult(
+        _copy_scenario_table(store.totals),
+        _copy_scenario_table(store.channels),
+        _copy_scenario_table(store.allocations),
+        _copy_scenario_table(store.scenario_metadata),
+        _copy_scenario_table(store.channel_panel_allocations),
+    )
+end
+
+"""
+    assert_scenario_store_compatible(lhs, rhs)
+
+Reject scenario stores that cannot be compared under the same model, coordinate,
+objective, channel-order, and current-baseline contract.
+"""
+function assert_scenario_store_compatible(lhs::ScenarioStoreArtifact, rhs::ScenarioStoreArtifact)
+    lhs.channel_columns == rhs.channel_columns ||
+        throw(ArgumentError("scenario stores are incompatible: channel order differs"))
+    lhs.objective == rhs.objective ||
+        throw(ArgumentError("scenario stores are incompatible: objective differs"))
+    lhs.current_baseline == rhs.current_baseline ||
+        throw(ArgumentError("scenario stores are incompatible: current baseline differs"))
+    lhs.metadata == rhs.metadata ||
+        throw(ArgumentError("scenario stores are incompatible: model metadata differs"))
+    lhs.spec == rhs.spec ||
+        throw(ArgumentError("scenario stores are incompatible: model spec differs"))
+    lhs.coordinate_metadata == rhs.coordinate_metadata ||
+        throw(ArgumentError("scenario stores are incompatible: coordinate metadata differs"))
+    return nothing
+end
+
+"""
     scenario_plan(result; current_scenario=..., optimized_scenario=nothing)
     scenario_plan(result, evaluation/evaluations; current_scenario=..., optimized_scenario=nothing)
 
@@ -331,6 +512,347 @@ function scenario_plan(
     allocations = _manual_scenario_allocations_table(normalized, current_scenario)
     metadata = _manual_scenario_metadata_table(normalized, current_scenario)
     return ScenarioPlanResult(totals, channels, allocations, metadata, DataFrame())
+end
+
+function _copy_scenario_table(table::DataFrame)
+    return copy(table; copycols = true)
+end
+
+function _write_scenario_store_payload(path::AbstractString, store::ScenarioStoreArtifact)
+    payload_path = joinpath(path, _SCENARIO_STORE_PAYLOAD)
+    isfile(payload_path) && rm(payload_path)
+    open(payload_path, "w") do io
+        serialize(io, store)
+    end
+    return payload_path
+end
+
+function _write_scenario_store_sidecars(path::AbstractString, store::ScenarioStoreArtifact)
+    _write_scenario_store_sidecar(path, _SCENARIO_STORE_SIDECARS.totals, store.totals)
+    _write_scenario_store_sidecar(path, _SCENARIO_STORE_SIDECARS.channels, store.channels)
+    _write_scenario_store_sidecar(path, _SCENARIO_STORE_SIDECARS.allocations, store.allocations)
+    _write_scenario_store_sidecar(path, _SCENARIO_STORE_SIDECARS.metadata, store.scenario_metadata)
+    panel_path = joinpath(path, _SCENARIO_STORE_SIDECARS.channel_panel_allocations)
+    if isempty(store.channel_panel_allocations)
+        isfile(panel_path) && rm(panel_path)
+    else
+        _write_scenario_store_sidecar(
+            path,
+            _SCENARIO_STORE_SIDECARS.channel_panel_allocations,
+            store.channel_panel_allocations,
+        )
+    end
+    return nothing
+end
+
+function _write_scenario_store_sidecar(path::AbstractString, filename::AbstractString, table::DataFrame)
+    sidecar_path = joinpath(path, filename)
+    isfile(sidecar_path) && rm(sidecar_path)
+    CSV.write(sidecar_path, table)
+    return sidecar_path
+end
+
+function _scenario_store_from_payload(payload)
+    if payload isa ScenarioStoreArtifact
+        return ScenarioStoreArtifact(
+            payload.schema_version,
+            payload.metadata,
+            payload.spec,
+            payload.coordinate_metadata,
+            payload.objective,
+            payload.channel_columns,
+            payload.current_baseline,
+            payload.totals,
+            payload.channels,
+            payload.allocations,
+            payload.scenario_metadata,
+            payload.channel_panel_allocations,
+        )
+    end
+    if payload isa NamedTuple && :schema_version in propertynames(payload)
+        _validate_scenario_store_schema_version(payload.schema_version)
+    end
+    throw(ArgumentError("scenario store payload must be a ScenarioStoreArtifact"))
+end
+
+function _validate_scenario_store_schema_version(schema_version)
+    schema_version == _SCENARIO_STORE_SCHEMA_VERSION ||
+        throw(ArgumentError("unsupported scenario store schema version: $(schema_version)"))
+    return nothing
+end
+
+function _validate_scenario_store_plan(plan::ScenarioPlanResult, spec::MMMModelSpec)
+    _validate_scenario_store_table_columns(
+        plan.totals,
+        [
+            "scenario_id",
+            "scenario_name",
+            "scenario_type",
+            "total_spend",
+            "expected_response",
+            "response_delta_vs_baseline",
+            "spend_delta_vs_baseline",
+            "default_efficiency_metric",
+            "default_efficiency",
+            "default_efficiency_delta_vs_baseline",
+            "objective",
+        ],
+        "scenario totals",
+    )
+    _validate_scenario_store_table_columns(
+        plan.channels,
+        [
+            "scenario_id",
+            "scenario_name",
+            "scenario_type",
+            "channel",
+            "spend",
+            "spend_share",
+            "expected_response",
+            "default_efficiency_metric",
+        ],
+        "scenario channels",
+    )
+    _validate_scenario_store_table_columns(
+        plan.metadata,
+        [
+            "scenario_id",
+            "scenario_name",
+            "scenario_type",
+            "start_date",
+            "end_date",
+            "requested_total_budget",
+            "response_variable",
+            "solver_status",
+            "model_type",
+            "inference_backend",
+            "objective",
+            "default_efficiency_metric",
+        ],
+        "scenario metadata",
+    )
+    current_baseline = _scenario_store_current_baseline(plan)
+    objective = _scenario_store_objective(plan.totals, plan.metadata)
+    scenario_ids, scenario_types = _scenario_store_scenario_types(plan.totals, plan.metadata)
+    channel_columns = _scenario_store_channel_order(plan.channels, spec.channel_columns, "scenario channels")
+    _scenario_store_channel_order(plan.allocations, spec.channel_columns, "scenario allocations")
+    isempty(plan.channel_panel_allocations) ||
+        _scenario_store_channel_order(plan.channel_panel_allocations, spec.channel_columns, "scenario channel-panel allocations")
+    _validate_scenario_store_current_channels(plan.channels, current_baseline.scenario_id, spec.channel_columns)
+    _validate_scenario_store_baseline_ids(plan.allocations, current_baseline.scenario_id, "scenario allocations")
+    _validate_scenario_store_allocations(
+        plan.allocations,
+        scenario_ids,
+        scenario_types,
+        current_baseline.scenario_id,
+        spec.channel_columns,
+    )
+    _validate_scenario_store_panel_allocations(plan.channel_panel_allocations)
+    isempty(plan.channel_panel_allocations) ||
+        _validate_scenario_store_baseline_ids(
+        plan.channel_panel_allocations,
+        current_baseline.scenario_id,
+        "scenario channel-panel allocations",
+    )
+    return objective, channel_columns, current_baseline
+end
+
+function _validate_scenario_store_table_columns(table::DataFrame, required::AbstractVector{String}, label::AbstractString)
+    missing_columns = setdiff(required, names(table))
+    isempty(missing_columns) ||
+        throw(ArgumentError("$(label) table is missing required columns: $(join(missing_columns, ", "))"))
+    isempty(table) &&
+        throw(ArgumentError("$(label) table must contain at least one row"))
+    return nothing
+end
+
+function _scenario_store_current_baseline(plan::ScenarioPlanResult)
+    total_rows = findall(==("current"), String.(plan.totals.scenario_type))
+    length(total_rows) == 1 ||
+        throw(ArgumentError("scenario store totals must contain exactly one current baseline row"))
+    metadata_rows = findall(==("current"), String.(plan.metadata.scenario_type))
+    length(metadata_rows) == 1 ||
+        throw(ArgumentError("scenario store metadata must contain exactly one current baseline row"))
+    total = plan.totals[only(total_rows), :]
+    metadata = plan.metadata[only(metadata_rows), :]
+    String(total.scenario_id) == String(metadata.scenario_id) ||
+        throw(ArgumentError("scenario store current baseline id must match totals and metadata"))
+    String(total.scenario_name) == String(metadata.scenario_name) ||
+        throw(ArgumentError("scenario store current baseline name must match totals and metadata"))
+    return (
+        scenario_id = String(total.scenario_id),
+        scenario_name = String(total.scenario_name),
+        scenario_type = "current",
+        total_spend = Float64(total.total_spend),
+        expected_response = Float64(total.expected_response),
+        default_efficiency_metric = String(total.default_efficiency_metric),
+        default_efficiency = Float64(total.default_efficiency),
+        start_date = String(metadata.start_date),
+        end_date = String(metadata.end_date),
+    )
+end
+
+function _scenario_store_objective(totals::DataFrame, metadata::DataFrame)
+    total_objectives = unique(String.(totals.objective))
+    length(total_objectives) == 1 ||
+        throw(ArgumentError("scenario store totals must contain one consistent objective"))
+    metadata_objectives = unique(String.(metadata.objective))
+    length(metadata_objectives) == 1 ||
+        throw(ArgumentError("scenario store metadata must contain one consistent objective"))
+    only(total_objectives) == only(metadata_objectives) ||
+        throw(ArgumentError("scenario store objective must match totals and metadata"))
+    return Symbol(only(total_objectives))
+end
+
+function _scenario_store_scenario_types(totals::DataFrame, metadata::DataFrame)
+    totals_order, totals_types = _scenario_store_scenario_type_mapping(totals, "scenario totals")
+    metadata_order, metadata_types = _scenario_store_scenario_type_mapping(metadata, "scenario metadata")
+    totals_order == metadata_order ||
+        throw(ArgumentError("scenario store scenario ids must match totals and metadata"))
+    totals_types == metadata_types ||
+        throw(ArgumentError("scenario store scenario types must match totals and metadata"))
+    return totals_order, totals_types
+end
+
+function _scenario_store_scenario_type_mapping(table::DataFrame, label::AbstractString)
+    _validate_scenario_store_table_columns(table, ["scenario_id", "scenario_type"], label)
+    order = String[]
+    mapping = Dict{String, String}()
+    for row in eachrow(table)
+        scenario_id = String(row.scenario_id)
+        isempty(scenario_id) &&
+            throw(ArgumentError("$(label) scenario_id values must be non-empty"))
+        haskey(mapping, scenario_id) &&
+            throw(ArgumentError("$(label) scenario_id values must be unique"))
+        scenario_type = String(row.scenario_type)
+        isempty(scenario_type) &&
+            throw(ArgumentError("$(label) scenario_type values must be non-empty"))
+        push!(order, scenario_id)
+        mapping[scenario_id] = scenario_type
+    end
+    return order, mapping
+end
+
+function _scenario_store_channel_order(table::DataFrame, expected::AbstractVector{String}, label::AbstractString)
+    _validate_scenario_store_table_columns(table, ["channel"], label)
+    channels = String[]
+    for channel in String.(table.channel)
+        channel in channels || push!(channels, channel)
+    end
+    channels == expected ||
+        throw(ArgumentError("$(label) channel order must match spec.channel_columns"))
+    return channels
+end
+
+function _validate_scenario_store_current_channels(
+        channels::DataFrame,
+        current_scenario_id::AbstractString,
+        expected_channels::AbstractVector{String},
+    )
+    current_rows = channels[String.(channels.scenario_type) .== "current", :]
+    nrow(current_rows) == length(expected_channels) ||
+        throw(ArgumentError("scenario channels must contain exactly one current row per channel"))
+    current_rows.scenario_id == fill(String(current_scenario_id), nrow(current_rows)) ||
+        throw(ArgumentError("scenario channels current rows must use the current baseline id"))
+    String.(current_rows.channel) == expected_channels ||
+        throw(ArgumentError("scenario channels current rows must follow spec.channel_columns"))
+    return nothing
+end
+
+function _validate_scenario_store_allocations(
+        allocations::DataFrame,
+        scenario_ids::AbstractVector{String},
+        scenario_types::AbstractDict{String, String},
+        current_scenario_id::AbstractString,
+        expected_channels::AbstractVector{String},
+    )
+    _validate_scenario_store_table_columns(
+        allocations,
+        ["baseline_scenario_id", "channel", "current_spend", "spend_delta", "current_share"],
+        "scenario allocations",
+    )
+    optimized_shape = all(
+        name -> name in names(allocations), [
+            "optimized_scenario_id",
+            "optimized",
+            "optimized_spend",
+            "optimized_share",
+            "optimized_vs_current_pct",
+        ]
+    )
+    manual_shape = all(
+        name -> name in names(allocations), [
+            "scenario_id",
+            "scenario_type",
+            "scenario_spend",
+            "scenario_share",
+            "scenario_vs_current_pct",
+        ]
+    )
+    optimized_shape || manual_shape ||
+        throw(ArgumentError("scenario allocations table must include optimized or manual allocation columns"))
+    expected_noncurrent = [scenario_id for scenario_id in scenario_ids if scenario_id != String(current_scenario_id)]
+    isempty(expected_noncurrent) &&
+        throw(ArgumentError("scenario allocations require at least one non-current scenario"))
+    channels_by_scenario = Dict{String, Vector{String}}(scenario_id => String[] for scenario_id in expected_noncurrent)
+    for row in eachrow(allocations)
+        has_optimized = optimized_shape && !_scenario_store_missing_or_empty(row.optimized_scenario_id)
+        has_manual = manual_shape && !_scenario_store_missing_or_empty(row.scenario_id)
+        !(has_optimized && has_manual) ||
+            throw(ArgumentError("scenario allocation rows must identify exactly one scenario id"))
+        has_optimized || has_manual ||
+            throw(ArgumentError("scenario allocation rows must identify a scenario id"))
+        scenario_id = has_optimized ? String(row.optimized_scenario_id) : String(row.scenario_id)
+        haskey(scenario_types, scenario_id) ||
+            throw(ArgumentError("scenario allocation rows must reference scenario ids present in totals and metadata"))
+        scenario_id != String(current_scenario_id) ||
+            throw(ArgumentError("scenario allocation rows must not reference the current baseline scenario"))
+        scenario_type = scenario_types[scenario_id]
+        if has_optimized
+            scenario_type == "fixed_budget_optimized" ||
+                throw(ArgumentError("optimized allocation rows must reference fixed_budget_optimized scenarios"))
+        else
+            scenario_type == "manual_allocation" ||
+                throw(ArgumentError("manual allocation rows must reference manual_allocation scenarios"))
+        end
+        haskey(channels_by_scenario, scenario_id) ||
+            throw(ArgumentError("scenario allocation rows include an unexpected non-current scenario"))
+        push!(channels_by_scenario[scenario_id], String(row.channel))
+    end
+    for scenario_id in expected_noncurrent
+        get(channels_by_scenario, scenario_id, String[]) == expected_channels ||
+            throw(ArgumentError("scenario allocations must contain exactly one row per channel for scenario $(scenario_id)"))
+    end
+    return nothing
+end
+
+function _validate_scenario_store_panel_allocations(channel_panel_allocations::DataFrame)
+    isempty(channel_panel_allocations) && return nothing
+    _validate_scenario_store_table_columns(
+        channel_panel_allocations,
+        [
+            "baseline_scenario_id",
+            "optimized_scenario_id",
+            "channel",
+            "panel_cell",
+            "current_spend",
+            "optimized_spend",
+            "spend_delta",
+        ],
+        "scenario channel-panel allocations",
+    )
+    return nothing
+end
+
+function _validate_scenario_store_baseline_ids(table::DataFrame, current_scenario_id::AbstractString, label::AbstractString)
+    all(String.(table.baseline_scenario_id) .== String(current_scenario_id)) ||
+        throw(ArgumentError("$(label) baseline_scenario_id values must match the current baseline id"))
+    return nothing
+end
+
+function _scenario_store_missing_or_empty(value)
+    ismissing(value) && return true
+    return isempty(String(value))
 end
 
 function _scenario_date(value, field::AbstractString)

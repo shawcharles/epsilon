@@ -411,7 +411,15 @@ Epsilon.write_plot_bundle
 Phase 16 extends the bounded non-UI scenario-planner surface with time-series
 manual-allocation evaluation, table projection over existing response surfaces,
 and combined current/manual/optimized comparison against already solved
-fixed-budget optimization results.
+fixed-budget optimization results. Phase 18 adds local scenario-store artifacts
+for those existing `ScenarioPlanResult` tables. These stores are
+Epsilon/Julia-version-bound typed artifacts with CSV inspection sidecars; they
+are not a portable interchange format and should not be loaded from untrusted
+sources. The local artifact layout is `scenario_store.jls`, `totals.csv`,
+`channels.csv`, `allocations.csv`, `metadata.csv`, and optional
+`channel_panel_allocations.csv`. Dash/UI workflows, hosted/background stores,
+automatic refits, future spend paths, pipeline emission, and panel
+manual-allocation evaluation remain unsupported.
 
 ```@docs
 Epsilon.ScenarioDataArraySpec
@@ -422,7 +430,12 @@ Epsilon.ManualScenarioEvaluationResult
 Epsilon.evaluate_manual_scenario
 Epsilon.FixedBudgetOptimizedScenarioSpec
 Epsilon.ScenarioPlanResult
+Epsilon.ScenarioStoreArtifact
 Epsilon.scenario_plan
+Epsilon.write_scenario_store
+Epsilon.load_scenario_store
+Epsilon.scenario_store_plan
+Epsilon.assert_scenario_store_compatible
 ```
 
 ## Calibration
