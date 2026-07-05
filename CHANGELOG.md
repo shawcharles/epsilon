@@ -116,6 +116,10 @@ All notable project changes are recorded here. Epsilon is still on the
 - Added a public API support-status inventory in the docs plus a focused
   `api_exports` test layer that compares the marked inventory table against
   the loaded `Epsilon` module export surface.
+- Added a public API documentation guard to the focused `api_exports` test
+  layer. The guard now requires every inventoried/exported symbol to have a
+  non-empty rendered docstring and an exact `Epsilon.<symbol>` entry in a
+  Documenter `@docs` block under `docs/src`, including bang-suffixed names.
 - Documented the bounded calibration YAML/pipeline surface with the supported
   top-level `calibration` shape and explicit unsupported paths for panel
   calibration, VI calibration, non-logistic lift-test calibration, Dash/UI

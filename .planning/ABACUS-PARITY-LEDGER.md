@@ -45,7 +45,7 @@ Each target should pass these gates before it is counted as ported:
 
 | Abacus Area | Abacus Source | Epsilon Target | Status | Next Work |
 |---|---|---|---|---|
-| Package identity and public exports | `abacus/__init__.py`, `abacus/version.py` | `src/Epsilon.jl`, `docs/src/api.md`, `test/api_exports.jl` | scaffolded | Current exports are inventoried and support-classified in user docs, with a guard test preventing silent undocumented exports. Breaking export cleanup, deprecation, and stronger Abacus API compatibility claims remain future work. |
+| Package identity and public exports | `abacus/__init__.py`, `abacus/version.py` | `src/Epsilon.jl`, `docs/src/api.md`, `test/api_exports.jl` | scaffolded | Current exports are inventoried and support-classified in user docs, with guard tests preventing silent inventory drift and requiring non-empty rendered docstrings plus exact Documenter `@docs` membership for every inventoried/exported symbol. This is documentation hygiene only; breaking export cleanup, deprecation, and stronger Abacus API compatibility claims remain future work. |
 | YAML/public builder | `abacus/mmm/builders/*.py`, `abacus/pipeline/config.py` | `src/model/config.jl`, `src/model/builder.jl`, `src/pipeline/config.jl` | scaffolded | Build config-normalization fixtures from Abacus demo configs and compare the resolved typed spec. |
 | Data validation and preprocessing | `abacus/mmm/preprocessing.py`, `abacus/mmm/validating.py`, `abacus/mmm/models/panel_data.py` | `src/model/types.jl`, `src/model/builder.jl`, `src/mmm/media.jl`, `src/mmm/panel.jl` | scaffolded | `PanelAxis`, `PanelCoordinate`, `panel_axis`, and `panel_coordinates` expose deterministic flat `panel_cell` reconstruction for one-dimensional and multidimensional panels, with declared coordinate columns kept in model order. `ntime`, `npanels`, and `npanel_observations` make panel observation semantics explicit while `nobs(::PanelMMMData)` remains the compatibility flat panel-cell count. Add remaining fixtures for date ordering, channel/control columns, missingness, panel keys, and holdout splits. |
 | Scaling | `abacus/mmm/scaling.py`, `abacus/mmm/preprocessing.py` | `src/transforms/scaling.jl`, `src/mmm/controls.jl` | ported | Keep parity tests tied to Abacus fixture exports; extend to panel-scaled tensors. |
@@ -596,12 +596,27 @@ As of 2026-05-10:
     stale rows, so future exports require explicit support-status wording.
     `docs/make.jl` now includes the Public API page. The ledger row remains
     `scaffolded`: this is an audit and guardrail, not broad Abacus package/API
-    parity, and breaking export cleanup plus docstring-completeness remediation
-    remain future work. Verification passed with focused `api_exports` tests
+    parity, and breaking export cleanup remains future work. Verification
+    passed with focused `api_exports` tests
     (`Pass 610, Total 610`), Runic on touched Julia files, `make docs`,
     `git diff --check`, and the phase-closing `make check-full` gate with
     full `Pkg.test()` reporting `Pass 4720, Total 4720` in 21m02.6s followed
     by a successful docs build.
+37. Phase 20 landed public API documentation hygiene for the same
+    package-identity/public-exports row without changing row status. The
+    focused `api_exports` guard keeps the Phase 19 inventory/export exact-match
+    checks and now also treats doc lookup failures, `nothing`, and empty
+    rendered docs as missing documentation, aggregating failures into sorted
+    symbol lists. It scans fenced Documenter `@docs` blocks under `docs/src`
+    and requires each current inventoried/exported symbol to appear as an exact
+    stripped `Epsilon.<symbol>` line using `String(symbol)`, so names ending in
+    `!` are covered. `test/basic.jl` no longer carries a curated public API
+    docstring smoke list. This is not Abacus behavioural evidence and does not
+    support broader package/API parity claims. Verification passed with
+    focused `api_exports` plus `basic` tests (`Pass 1827, Total 1827`),
+    Runic on touched Julia files, `make docs`, `git diff --check`, and the
+    phase-closing `make check-full` gate with full `Pkg.test()` reporting
+    `Pass 5862, Total 5862` in 20m30.2s followed by a successful docs build.
 
 
 ## Plan 14-05 Parity Audit

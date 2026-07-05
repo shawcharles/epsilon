@@ -8,20 +8,32 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 19 public API export hygiene is complete. The current
-loaded-module export surface is inventoried in user docs with support bands
-and guarded by a focused `api_exports` test. Package identity/public exports
-remain `scaffolded`; breaking export cleanup, docstring-completeness
-remediation, and stronger Abacus API compatibility claims remain future work.
+**Current focus:** Phase 20 public API docstring guard is complete. The current
+loaded-module export surface is inventoried in user docs with support bands and
+guarded by focused `api_exports` checks for exact inventory membership,
+non-empty rendered docstrings, and Documenter `@docs` membership. Package
+identity/public exports remain `scaffolded`; breaking export cleanup and
+stronger Abacus API compatibility claims remain future work.
 
 ## Current Position
 
-**Current Phase:** 19
-**Current Phase Name:** Public API Export Hygiene
-**Total Phases:** 19
-**Current Plan:** Phase 19 complete; choose the next bounded release-prep slice
+**Current Phase:** 20
+**Current Phase Name:** Public API Docstring Guard
+**Total Phases:** 20
+**Current Plan:** Phase 20 complete; choose the next bounded release-prep slice
 **Total Plans in Phase:** 4 tasks
-**Status:** Phase 19 is complete at
+**Status:** Phase 20 is complete at
+`.planning/phases/20-public-api-docstring-guard/PLAN.md`. The focused
+`api_exports` test layer now keeps the Phase 19 inventory/export exact-match
+checks and also treats doc lookup failures, `nothing`, and empty rendered docs
+as missing documentation. It aggregates missing docstring failures into sorted
+symbol lists, scans fenced Documenter `@docs` blocks under `docs/src`, and
+requires every inventoried/exported symbol to appear as an exact stripped
+`Epsilon.<symbol>` line using `String(symbol)` so bang-suffixed names are
+covered. `test/basic.jl` now keeps only the version smoke test, so there is one
+authoritative public API documentation guard. The package identity/public
+exports ledger row remains `scaffolded`; this is documentation hygiene only,
+not Abacus behavioural evidence. Phase 19 is complete at
 `.planning/phases/19-public-api-export-hygiene/PLAN.md`. `docs/src/api.md`
 now defines support bands and carries the marked machine-checkable public API
 inventory, `test/api_exports.jl` compares that inventory exactly against
@@ -138,19 +150,23 @@ evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
 are landed for both accepted calibration terms, but the wider Abacus
 calibration surface is not complete.
 **Last Activity:** 2026-07-05
-**Last Activity Description:** Phase 19 landed the public API support
-inventory and export guardrail without editing `src/Epsilon.jl` or changing
-modelling semantics. `docs/src/api.md` lists 200 current loaded exports under
-support bands; `test/api_exports.jl` guards the table against missing,
-duplicate, empty/malformed, or stale rows. Three Man Team plan and
-implementation reviews cleared with no remaining Must Fix items. Verification
-passed: focused `api_exports` test reported `Pass 610, Total 610`; Runic passed
-on touched Julia files; `make docs` passed with the known non-fatal
-`index.html` size warning; `git diff --check` passed; and the phase-closing
-`make check-full` passed with full `Pkg.test()` reporting `Pass 4720, Total
-4720` in 21m02.6s, followed by a successful docs build.
+**Last Activity Description:** Phase 20 added the public API docstring and
+Documenter membership guard without editing `src/Epsilon.jl` or changing
+modelling semantics. `test/api_exports.jl` now keeps the existing inventory and
+loaded-export exact-match checks, treats doc lookup/rendering failures,
+`nothing`, and empty rendered docs as missing, and requires exact
+`Epsilon.<symbol>` lines inside fenced `@docs` blocks under `docs/src`.
+`test/basic.jl` no longer maintains a curated public API docstring smoke list.
+Scoped verification passed with
+`JULIA_PKG_SERVER_REGISTRY_PREFERENCE=eager julia --project=. -e 'using Pkg; Pkg.test(; test_args=["api_exports", "basic"])'`
+reporting `Pass 1827, Total 1827`; targeted Runic on `test/api_exports.jl`
+and `test/basic.jl`; `make docs` with the known non-fatal `index.html` size
+warning and deployment skipped outside CI; and `git diff --check`.
+The phase-closing `make check-full` gate also passed with full `Pkg.test()`
+reporting `Pass 5862, Total 5862` in 20m30.2s followed by a successful docs
+build.
 **Progress:** 100%
-**Paused At:** `.planning/phases/19-public-api-export-hygiene/PLAN.md`
+**Paused At:** `.planning/phases/20-public-api-docstring-guard/PLAN.md`
 
 ## Performance Metrics
 
@@ -181,6 +197,7 @@ on touched Julia files; `make docs` passed with the known non-fatal
 | 17 | 4/4 | Completed | bounded calibration YAML/dict parsing, time-series constructor threading, time-series MCMC pipeline fit-stage support, and docs/changelog/ledger guardrails landed |
 | 18 | 4/4 | Completed | local scenario-store artifacts for existing `ScenarioPlanResult` tables, CSV inspection sidecars, compatibility guardrails, and docs/changelog/ledger closure landed |
 | 19 | 4/4 | Completed | public API support inventory, docs navigation, focused export guardrail, and conservative changelog/planning/ledger closure landed |
+| 20 | 4/4 | Completed | public API docstring and Documenter `@docs` coverage guard landed as documentation hygiene only |
 
 **Recent Trend:**
 - Last 5 completed plans: `14-01`, `14-02`, `14-03`, `14-04`, `14-05`
@@ -251,9 +268,6 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
   extend scenario planning into hosted/background stores, automatic refits,
   future spend paths, pipeline store emission, Dash/UI, or panel manual
   allocation without a separate methodological contract.
-- Public API export hygiene is guarded, but docstring-completeness remediation
-  remains a separate future task if maintainers want to enforce the full
-  technical-standard docstring rule across every export.
 - Phase 15 calibration likelihood integration is closed; keep the calibration
   row `scaffolded` until a separate contract implements panel, VI,
   broader saturation-family, or UI calibration paths.

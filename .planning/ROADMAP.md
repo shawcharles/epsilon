@@ -156,8 +156,12 @@ Current repository state on 2026-05-18:
   inventoried in `docs/src/api.md` with support bands, and a focused
   `api_exports` guard test prevents silent undocumented exports. The package
   identity/public exports ledger row remains `scaffolded`; breaking export
-  cleanup, docstring-completeness remediation, and stronger Abacus API
-  compatibility claims remain future work
+  cleanup and stronger Abacus API compatibility claims remain future work
+- Phase 20 is closed: the focused `api_exports` guard now enforces that every
+  inventoried/exported public symbol has a non-empty rendered docstring and an
+  exact `Epsilon.<symbol>` entry in a fenced Documenter `@docs` block under
+  `docs/src`. This is documentation hygiene only; the package identity/public
+  exports ledger row remains `scaffolded`
 
 ## Phases
 
@@ -218,6 +222,10 @@ Current repository state on 2026-05-18:
 - [x] **Phase 19: Public API Export Hygiene** - Inventory the current exported
       public surface in user docs and guard it with a focused test, without
       changing exports or model semantics.
+- [x] **Phase 20: Public API Docstring Guard** - Enforce docstring and
+      Documenter `@docs` coverage for every current inventoried/exported public
+      symbol, without changing exports, model semantics, or Abacus parity
+      claims.
 
 ## Phase Details
 
