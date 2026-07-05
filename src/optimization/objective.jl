@@ -388,20 +388,28 @@ end
 Evaluate the bounded Phase 8 total-response objective at one fixed-budget
 allocation over the optimized channel set.
 """
-function _evaluate_budget_objective(problem::BudgetOptimizationProblem, allocation)
-    spend_allocation = _allocation_vector(problem, allocation)
+function _evaluate_budget_objective(
+        problem::BudgetOptimizationProblem,
+        allocation;
+        action::AbstractString = "optimize_budget",
+    )
+    spend_allocation = _allocation_vector(problem, allocation; action)
     return problem.baseline_response +
         problem.fixed_response +
         sum(
-        _evaluate_channel_surface(surface, spend) for
+        _evaluate_channel_surface(surface, spend; action) for
             (surface, spend) in zip(problem.channel_surfaces, spend_allocation)
     )
 end
 
-function _evaluate_budget_objective_gradient(problem::BudgetOptimizationProblem, allocation)
-    spend_allocation = _allocation_vector(problem, allocation)
+function _evaluate_budget_objective_gradient(
+        problem::BudgetOptimizationProblem,
+        allocation;
+        action::AbstractString = "optimize_budget",
+    )
+    spend_allocation = _allocation_vector(problem, allocation; action)
     return [
-        _evaluate_channel_surface_derivative(surface, spend) for
+        _evaluate_channel_surface_derivative(surface, spend; action) for
             (surface, spend) in zip(problem.channel_surfaces, spend_allocation)
     ]
 end

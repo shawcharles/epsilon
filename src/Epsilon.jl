@@ -176,6 +176,8 @@ export ScenarioDataArraySpec
 export AbstractScenarioSpec
 export CurrentScenarioSpec
 export ManualAllocationScenarioSpec
+export ManualScenarioEvaluationResult
+export evaluate_manual_scenario
 export FixedBudgetOptimizedScenarioSpec
 export ScenarioPlanResult
 export scenario_plan

@@ -118,6 +118,53 @@ function ManualAllocationScenarioSpec(;
 end
 
 """
+    ManualScenarioEvaluationResult
+
+Typed result returned by [`evaluate_manual_scenario`](@ref).
+
+The result compares observed/current spend against one evaluated
+`ManualAllocationScenarioSpec`. Manual evaluation is bounded to time-series
+grouped `InferenceResults` and reuses the same response-surface interpolation
+machinery as `optimize_budget`; it does not refit a model, run a new optimizer,
+simulate a future spend path, or evaluate panel allocation semantics.
+"""
+struct ManualScenarioEvaluationResult
+    metadata::ModelArtifactMetadata
+    spec::MMMModelSpec
+    coordinate_metadata::ModelCoordinateMetadata
+    scenario::ManualAllocationScenarioSpec
+    objective::Symbol
+    current_spend::Dict{String, Float64}
+    manual_spend::Dict{String, Float64}
+    current_response::Float64
+    manual_response::Float64
+    current_default_efficiency::Float64
+    manual_default_efficiency::Float64
+end
+
+function Base.:(==)(lhs::ManualScenarioEvaluationResult, rhs::ManualScenarioEvaluationResult)
+    return lhs.metadata == rhs.metadata &&
+        lhs.spec == rhs.spec &&
+        lhs.coordinate_metadata == rhs.coordinate_metadata &&
+        _manual_scenario_equal(lhs.scenario, rhs.scenario) &&
+        lhs.objective == rhs.objective &&
+        lhs.current_spend == rhs.current_spend &&
+        lhs.manual_spend == rhs.manual_spend &&
+        lhs.current_response == rhs.current_response &&
+        lhs.manual_response == rhs.manual_response &&
+        lhs.current_default_efficiency == rhs.current_default_efficiency &&
+        lhs.manual_default_efficiency == rhs.manual_default_efficiency
+end
+
+function _manual_scenario_equal(lhs::ManualAllocationScenarioSpec, rhs::ManualAllocationScenarioSpec)
+    return lhs.name == rhs.name &&
+        lhs.start_date == rhs.start_date &&
+        lhs.end_date == rhs.end_date &&
+        lhs.scenario_id == rhs.scenario_id &&
+        lhs.allocation == rhs.allocation
+end
+
+"""
     FixedBudgetOptimizedScenarioSpec(; name, total_budget, ...)
 
 Describe an optimized fixed-budget scenario for comparison/reporting.
@@ -264,6 +311,109 @@ function _manual_allocation_mapping(allocation::ScenarioDataArraySpec)
     channels = allocation.coords["channel"]
     values = vec(allocation.values)
     return _manual_allocation_mapping(Dict(channel => values[index] for (index, channel) in enumerate(channels)))
+end
+
+"""
+    evaluate_manual_scenario(results, scenario; objective=:total_response, grid=nothing)
+
+Evaluate one manually specified channel allocation against existing fitted
+time-series response surfaces.
+
+`results` must be grouped time-series `InferenceResults`. The supplied
+`ManualAllocationScenarioSpec` may allocate all channels or a subset of
+channels; omitted channels are held at observed spend. The function computes a
+deterministic posterior-mean response comparison using the same bounded
+response-surface interpolation path as `optimize_budget`. It does not refit the
+model, solve an optimization problem, simulate future spend paths, or support
+panel manual allocation.
+"""
+function evaluate_manual_scenario(
+        results::InferenceResults,
+        scenario::ManualAllocationScenarioSpec;
+        objective = :total_response,
+        grid = nothing,
+    )
+    action = "evaluate_manual_scenario"
+    channels = _manual_evaluation_channels(results.spec, scenario)
+    total_budget = _manual_evaluation_total_budget(scenario)
+    problem = _build_budget_optimization_problem(
+        results;
+        total_budget,
+        channels,
+        objective,
+        grid,
+    )
+    return _evaluate_manual_scenario(problem, scenario; action)
+end
+
+function _manual_evaluation_channels(
+        spec::MMMModelSpec,
+        scenario::ManualAllocationScenarioSpec,
+    )
+    provided = collect(keys(scenario.allocation))
+    unknown = sort(setdiff(provided, spec.channel_columns))
+    isempty(unknown) ||
+        throw(
+        ArgumentError(
+            "evaluate_manual_scenario requires manual allocation channels drawn from `InferenceResults.spec.channel_columns`; unknown channels: $(join(unknown, ", "))",
+        ),
+    )
+    channels = [channel for channel in spec.channel_columns if haskey(scenario.allocation, channel)]
+    isempty(channels) &&
+        throw(ArgumentError("evaluate_manual_scenario requires at least one known manual allocation channel"))
+    return channels
+end
+
+function _manual_evaluation_total_budget(scenario::ManualAllocationScenarioSpec)
+    total_budget = sum(values(scenario.allocation))
+    isfinite(total_budget) && total_budget > 0.0 ||
+        throw(ArgumentError("evaluate_manual_scenario requires manual allocation total spend to be positive and finite"))
+    return total_budget
+end
+
+function _current_spend_mapping(problem::BudgetOptimizationProblem)
+    mapping = Dict{String, Float64}()
+    for (index, channel) in enumerate(problem.optimized_channels)
+        mapping[channel] = problem.current_spend[index]
+    end
+    for (index, channel) in enumerate(problem.fixed_channels)
+        mapping[channel] = problem.fixed_spend[index]
+    end
+    return mapping
+end
+
+function _manual_spend_mapping(
+        problem::BudgetOptimizationProblem,
+        scenario::ManualAllocationScenarioSpec,
+    )
+    mapping = _current_spend_mapping(problem)
+    for channel in problem.optimized_channels
+        mapping[channel] = scenario.allocation[channel]
+    end
+    return mapping
+end
+
+function _evaluate_manual_scenario(
+        problem::BudgetOptimizationProblem,
+        scenario::ManualAllocationScenarioSpec;
+        action::AbstractString = "evaluate_manual_scenario",
+    )
+    manual_response = _evaluate_budget_objective(problem, scenario.allocation; action)
+    current_spend = _current_spend_mapping(problem)
+    manual_spend = _manual_spend_mapping(problem, scenario)
+    return ManualScenarioEvaluationResult(
+        problem.metadata,
+        problem.spec,
+        problem.coordinate_metadata,
+        scenario,
+        problem.objective,
+        current_spend,
+        manual_spend,
+        problem.current_response,
+        manual_response,
+        _default_efficiency(problem, problem.current_response, current_spend),
+        _default_efficiency(problem, manual_response, manual_spend),
+    )
 end
 
 function _scenario_total_spend(spend::AbstractDict{String, Float64})

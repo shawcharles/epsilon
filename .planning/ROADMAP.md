@@ -133,6 +133,10 @@ Current repository state on 2026-05-18:
   and ledger guardrails keeping panel calibration, VI calibration, pipeline/YAML
   ingestion, broader saturation-family calibration, Dash/UI workflows, and
   AI-advisor behaviour out of scope until separate contracts exist
+- Phase 16 is now planned: the bounded non-UI scenario planner will add
+  manual-allocation response evaluation over existing fitted time-series
+  response surfaces, without automatic refits, Dash/UI workflows, background
+  scenario stores, or free channel-by-panel allocation
 
 ## Phases
 
@@ -177,6 +181,10 @@ Current repository state on 2026-05-18:
       with fixture-backed log-density evidence and explicit guardrails keeping
       panel, VI, pipeline/YAML, broader saturation-family, Dash/UI, and
       AI-advisor calibration out of scope.
+- [ ] **Phase 16: Scenario Planner Manual Allocation Evaluation** - Evaluate
+      manually specified channel allocations against existing fitted
+      time-series response surfaces, keeping scenario planning non-UI,
+      no-refit, and bounded away from free panel allocation.
 
 ## Phase Details
 

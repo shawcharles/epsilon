@@ -8,22 +8,28 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 15 calibration likelihood integration is closed.
-`TimeSeriesMMM` MCMC now has both lift-test and cost-per-target calibration
-likelihood terms wired into `_time_series_mmm_model`, with fixture-backed
-integration evidence and user-facing docs for the accepted bounded path. Panel
-calibration, VI calibration, pipeline/YAML calibration ingestion, broader
-lift-test saturation families, Dash/UI workflows, and AI-advisor behaviour
-remain out of scope until separate contracts exist.
+**Current focus:** Phase 16 scenario planner manual-allocation evaluation is
+starting. The target is a bounded non-UI path that evaluates manually specified
+channel allocations against existing fitted time-series response surfaces
+without refitting, re-optimizing, adding Dash/UI workflows, creating background
+scenario stores, or introducing free channel-by-panel allocation.
 
 ## Current Position
 
-**Current Phase:** 15
-**Current Phase Name:** Calibration Likelihood Integration
-**Total Phases:** 15
-**Current Plan:** Phase 15 complete
-**Total Plans in Phase:** 8 tasks
-**Status:** Phase 15 Tasks 15-01 through 15-08 are landed. Tasks 15-01 through
+**Current Phase:** 16
+**Current Phase Name:** Scenario Planner Manual Allocation Evaluation
+**Total Phases:** 16
+**Current Plan:** 16-02
+**Total Plans in Phase:** 4 tasks
+**Status:** Phase 16 is planned at
+`.planning/phases/16-scenario-planner-manual-allocation/PLAN.md`. Task 16-01
+is landed: `ManualScenarioEvaluationResult` and
+`evaluate_manual_scenario(results, scenario)` evaluate one bounded time-series
+manual allocation against existing response surfaces without refitting,
+re-optimizing, simulating future paths, or adding panel allocation semantics.
+Task 16-02 is next and should project evaluated manual scenarios into
+`ScenarioPlanResult` tables. Phase 15 Tasks 15-01 through 15-08 are landed.
+Tasks 15-01 through
 15-03 froze the
 `TimeSeriesMMM`-only calibration contract, added typed calibration payloads,
 and threaded raw/resolved calibration payloads through construction, fitting,
@@ -83,16 +89,18 @@ Calibration/lift-test parity remains a `scaffolded` ledger row after Phase 15:
 evidence, and docs are landed for both accepted calibration terms, but the
 wider Abacus calibration surface is not complete.
 **Last Activity:** 2026-07-05
-**Last Activity Description:** Repo-wide pre-existing Runic drift was cleared
-with the existing `make format` target across `src/`, `test/`, and `docs/`.
-This was a mechanical formatter-only cleanup; no model, API, fixture, or
-methodology semantics were intentionally changed. Verification was scoped to
-the relevant local gate: `make format-check` passed, and `git diff --check`
-reported no whitespace errors. A broader `make check-release` run was started
-too aggressively for this formatter-only slice and was stopped before
-completion.
-**Progress:** 100%
-**Paused At:** `.planning/phases/15-calibration-likelihood-integration/.continue-here.md`
+**Last Activity Description:** Phase 16 Task 16-01 landed the bounded manual
+scenario evaluation contract. `evaluate_manual_scenario(results, scenario)`
+and `ManualScenarioEvaluationResult` reuse existing Phase 8 response-surface
+interpolation semantics for time-series grouped `InferenceResults`. Omitted
+channels are held at observed spend; invalid channels, zero-total evaluated
+budgets, and out-of-domain spends fail closed. The slice does not refit,
+optimize, simulate future paths, add Dash/UI/background scenario stores, or add
+panel manual-allocation semantics. Scoped verification passed:
+`julia --project=. -e 'using Pkg; Pkg.test(; test_args=["scenario_planner"])'`
+reported `Pass 43, Total 43`; targeted Runic and `git diff --check` passed.
+**Progress:** 25%
+**Paused At:** `.planning/phases/16-scenario-planner-manual-allocation/.continue-here.md`
 
 ## Performance Metrics
 
@@ -119,6 +127,7 @@ completion.
 | 13 | 6/6 | Completed | fitted trend/holiday prediction-state repair, media-domain validation, pipeline YAML contract hardening, and final release-gate revalidation landed |
 | 14 | 5/5 | Plan complete | Abacus parity recovery across `timeseries`, `geo_panel`, and `geo_brand_panel` demo-style acceptance targets |
 | 15 | 8/8 | Completed | `TimeSeriesMMM` MCMC calibration likelihood wiring, fixture-backed integration evidence, docs, changelog, and ledger guardrails landed for lift-test and cost-per-target terms |
+| 16 | 1/4 | In progress | manual-allocation response evaluation contract landed for the bounded non-UI scenario planner |
 
 **Recent Trend:**
 - Last 5 completed plans: `14-01`, `14-02`, `14-03`, `14-04`, `14-05`
@@ -185,9 +194,10 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 
 ## Pending Todos
 
-- Expand the scenario planner only behind concrete non-UI planning contracts,
-  such as manual-allocation response evaluation or saved scenario-store
-  artifacts. Automatic scenario refits remain outside the current surface.
+- Execute Phase 16 manual-allocation response evaluation behind the concrete
+  non-UI planning contract. Automatic scenario refits, Dash/UI, background
+  scenario stores, and free channel-by-panel allocation remain outside the
+  current surface.
 - Phase 15 calibration likelihood integration is closed; keep the calibration
   row `scaffolded` until a separate contract implements panel, VI,
   pipeline/YAML, broader saturation-family, or UI calibration paths.
@@ -228,14 +238,9 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 ## Session
 
 **Last Date:** 2026-07-05
-**Stopped At:** Phase 15 is closed. Tasks 15-01 through 15-08 are landed:
-contract freeze, typed payloads, config/spec threading, pure AD-compatible
-lift-test log-density helpers, lift-test `Turing.@addlogprob!` wiring,
-cost-per-target `Turing.@addlogprob!` wiring, fixture-backed combined
-calibration integration evidence, and docs/changelog/ledger guardrail closure.
-The accepted scope is still `TimeSeriesMMM` MCMC only and centered-logistic
-lift-test calibration only. Panel calibration, VI calibration, pipeline/YAML
-calibration ingestion, broader lift-test saturation families, scenario refits,
-Dash/UI, and AI-advisor functionality remain out of scope. Resume with a new
-post-Phase-15 priority decision.
-**Resume File:** `.planning/phases/15-calibration-likelihood-integration/.continue-here.md`
+**Stopped At:** Phase 16 Task 16-01 is landed. Resume with Task 16-02:
+project evaluated manual scenarios into `ScenarioPlanResult` tables while
+preserving existing `scenario_plan(::BudgetOptimizationResult)` output. Do not
+widen into automatic scenario refits, Dash/UI, background scenario stores, or
+panel manual allocation.
+**Resume File:** `.planning/phases/16-scenario-planner-manual-allocation/.continue-here.md`

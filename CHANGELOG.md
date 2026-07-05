@@ -83,6 +83,12 @@ All notable project changes are recorded here. Epsilon is still on the
   and log-density helpers. `PanelMMM` calibration, VI calibration, pipeline/YAML
   ingestion, broader saturation-family calibration, Dash/UI workflows, and
   AI-advisor behaviour remain unsupported.
+- Added the first evaluated manual-allocation scenario-planner contract:
+  `evaluate_manual_scenario(results, scenario)` and
+  `ManualScenarioEvaluationResult` evaluate one `ManualAllocationScenarioSpec`
+  against existing time-series response surfaces without refitting, solving a
+  new optimization problem, adding Dash/UI workflow, or introducing panel
+  manual-allocation semantics.
 
 ### Changed
 

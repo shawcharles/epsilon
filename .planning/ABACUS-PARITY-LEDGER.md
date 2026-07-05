@@ -78,7 +78,7 @@ Each target should pass these gates before it is counted as ported:
 | Pipeline runner and artifacts | `abacus/pipeline/*.py`, `abacus/pipeline/stages/*.py` | `src/pipeline/*.jl` | scaffolded | `timeseries` now exports the Abacus pipeline manifest/artifact contract and Epsilon validates Stage `00` through Stage `70` artifact-key parity, using Julia-native serialized artifacts where Abacus uses PyMC/NetCDF-specific files; `geo_panel` and `geo_brand_panel` now cover Stage `00` metadata/manifest parity, Stage `20` fit artifact-key parity, Stage `30` assessment artifact-key parity, Stage `40` decomposition artifact-key parity, Stage `50` diagnostics artifact-key parity, and Stage `60` response-curve artifact-key parity. Both `geo_panel` and `geo_brand_panel` now also cover explicitly enabled Stage `70` historical-share optimization artifacts, with multidimensional `geo`/`brand` coordinate columns preserved in `channel_panel_allocation.csv` for `geo_brand_panel`; other unsupported panel stages are skipped until semantics are fixture-backed. |
 | Prior sensitivity | `abacus/prior_sensitivity/*.py`, `abacus/pipeline/stages/prior_sensitivity.py` | `src/pipeline/config.jl`, `src/pipeline/stages.jl` | ported | Bounded Stage `05` prior-sensitivity planning is implemented: manual and `conservative_mmm` scenario configs are resolved to YAML, human and LLM-safe manifests are emitted, and narrow prior plus explicitly gated structure override paths are validated. Automatic refitting/comparison of every scenario is out of this stage's scope. |
 | Plotting | `abacus/mmm/plotting/*.py`, `abacus/plot.py` | `src/plotting/*.jl` | native/scaffolded | Keep Julia-native Makie plots; compare data inputs, not exact figure appearance. |
-| Scenario planner | `abacus/scenario_planner/*.py` | `src/scenario_planner.jl` | scaffolded | Bounded non-UI planner semantics are started: typed current/manual/fixed-budget scenario specs and `scenario_plan(result)` emit Abacus-like totals, channel, allocation, metadata, and panel allocation tables from solved optimization results. Automatic scenario refits, future spend-path simulation, background jobs, and Dash UI remain deferred. |
+| Scenario planner | `abacus/scenario_planner/*.py` | `src/scenario_planner.jl` | scaffolded | Bounded non-UI planner semantics are started: typed current/manual/fixed-budget scenario specs, `scenario_plan(result)` tables from solved optimization results, and Task 16-01 time-series `evaluate_manual_scenario` response evaluation over existing fitted response surfaces. Automatic scenario refits, future spend-path simulation, saved/background scenario stores, free channel-by-panel allocation, and Dash UI remain deferred. |
 | AI advisor | `abacus/ai/*.py`, `abacus/pipeline/stages/ai_advisor.py` | none | deferred | Not central to the statistical or methodological port. |
 | Dash/dashboard and product UX | Abacus Dash/dashboard/product layers, `docs-site/`, product assets | `docs/`, Julia-native plots/artifacts | deferred/native | Do not chase Dash or hosted dashboard parity; keep docs and static Julia-native artifacts honest. |
 
@@ -460,6 +460,18 @@ As of 2026-05-10:
     Phase-closing verification passed with `make check-full`: `Pkg.test()`
     reported `Pass 3969, Total 3969` in 23m42.2s, followed by a successful docs
     build.
+27. Phase 16 Task 16-01 started bounded scenario-planner manual-allocation
+    evaluation. `evaluate_manual_scenario(results, scenario)` and
+    `ManualScenarioEvaluationResult` evaluate one `ManualAllocationScenarioSpec`
+    against existing time-series response surfaces by reusing the Phase 8
+    response-surface interpolation path. Omitted channels are held at observed
+    spend. The slice does not refit a model, solve a new optimization problem,
+    simulate future spend paths, add saved/background scenario stores, add
+    Dash/UI behaviour, or implement panel manual-allocation semantics. Evidence
+    is deterministic and synthetic-surface based in `test/scenario_planner.jl`;
+    scoped verification passed with
+    `julia --project=. -e 'using Pkg; Pkg.test(; test_args=["scenario_planner"])'`
+    reporting `Pass 43, Total 43`.
 
 
 ## Plan 14-05 Parity Audit

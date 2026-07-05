@@ -73,6 +73,61 @@ function _scenario_test_result(; target_type = "revenue")
     )
 end
 
+function _manual_scenario_problem(; optimized_channels = ["tv", "search"], total_budget = 150.0, target_type = "revenue")
+    shell = _scenario_test_result(; target_type)
+    fixed_channels = [channel for channel in shell.spec.channel_columns if !(channel in Set(optimized_channels))]
+    current_spend = Dict("tv" => 100.0, "search" => 50.0)
+    surfaces = Dict(
+        "tv" => Epsilon.BudgetChannelSurface(
+            "tv",
+            100.0,
+            [0.0, 200.0],
+            [0.0, 100.0],
+            0.0,
+            200.0,
+        ),
+        "search" => Epsilon.BudgetChannelSurface(
+            "search",
+            50.0,
+            [0.0, 100.0],
+            [0.0, 60.0],
+            0.0,
+            100.0,
+        ),
+    )
+    current_response_by_channel = Dict("tv" => 50.0, "search" => 30.0)
+    optimized_surfaces = [surfaces[channel] for channel in optimized_channels]
+    optimized_current_spend = [current_spend[channel] for channel in optimized_channels]
+    fixed_spend = [current_spend[channel] for channel in fixed_channels]
+    fixed_response = sum(current_response_by_channel[channel] for channel in fixed_channels; init = 0.0)
+    baseline_response = 20.0
+    optimized_current_response = sum(current_response_by_channel[channel] for channel in optimized_channels; init = 0.0)
+    return Epsilon.BudgetOptimizationProblem(
+        shell.metadata,
+        shell.spec,
+        shell.coordinate_metadata,
+        :total_response,
+        total_budget,
+        optimized_channels,
+        fixed_channels,
+        optimized_current_spend,
+        fixed_spend,
+        baseline_response,
+        fixed_response,
+        baseline_response + fixed_response + optimized_current_response,
+        optimized_surfaces,
+        Epsilon.BudgetConstraintAudit(
+            total_budget,
+            optimized_channels,
+            fixed_channels,
+            Epsilon.BudgetChannelConstraint[
+                Epsilon.BudgetChannelConstraint(channel, current_spend[channel], nothing, nothing, nothing, nothing, 0.0, surfaces[channel].effective_upper)
+                    for channel in optimized_channels
+            ],
+        ),
+    )
+end
+
 @testset "scenario planner specs validate bounded Abacus-like semantics" begin
     current = CurrentScenarioSpec(name = "Status Quo FY24", start_date = "2024-01-01", end_date = Date(2024, 1, 31))
     @test current.scenario_id == "status-quo-fy24"
@@ -154,4 +209,58 @@ end
     plan = scenario_plan(result)
     @test plan.totals.default_efficiency_metric == ["cpa", "cpa"]
     @test plan.channels.default_efficiency_metric == fill("cpa", 4)
+end
+
+@testset "manual scenario evaluation reuses bounded response surfaces" begin
+    problem = _manual_scenario_problem()
+    scenario = ManualAllocationScenarioSpec(
+        name = "Manual Mix",
+        allocation = Dict("tv" => 120.0, "search" => 30.0),
+    )
+
+    evaluation = Epsilon._evaluate_manual_scenario(problem, scenario)
+    @test evaluation isa ManualScenarioEvaluationResult
+    @test evaluation.scenario.scenario_id == "manual-mix"
+    @test evaluation.current_spend == Dict("tv" => 100.0, "search" => 50.0)
+    @test evaluation.manual_spend == Dict("tv" => 120.0, "search" => 30.0)
+    @test evaluation.current_response == 100.0
+    @test evaluation.manual_response == 98.0
+    @test evaluation.manual_response - evaluation.current_response == -2.0
+    @test evaluation.current_default_efficiency == 100.0 / 150.0
+    @test evaluation.manual_default_efficiency == 98.0 / 150.0
+end
+
+@testset "manual scenario evaluation holds omitted channels fixed" begin
+    problem = _manual_scenario_problem(; optimized_channels = ["tv"], total_budget = 120.0)
+    scenario = ManualAllocationScenarioSpec(
+        name = "TV Upweight",
+        allocation = Dict("tv" => 120.0),
+    )
+
+    evaluation = Epsilon._evaluate_manual_scenario(problem, scenario)
+    @test evaluation.current_spend == Dict("tv" => 100.0, "search" => 50.0)
+    @test evaluation.manual_spend == Dict("tv" => 120.0, "search" => 50.0)
+    @test evaluation.current_response == 100.0
+    @test evaluation.manual_response == 110.0
+    @test evaluation.manual_default_efficiency == 110.0 / 170.0
+end
+
+@testset "manual scenario evaluation fails closed on invalid contracts" begin
+    problem = _manual_scenario_problem(; total_budget = 280.0)
+    invalid_channel = ManualAllocationScenarioSpec(
+        name = "Unknown",
+        allocation = Dict("podcast" => 10.0),
+    )
+    zero_total = ManualAllocationScenarioSpec(
+        name = "Zero",
+        allocation = Dict("tv" => 0.0),
+    )
+    out_of_domain = ManualAllocationScenarioSpec(
+        name = "Too High",
+        allocation = Dict("tv" => 250.0, "search" => 30.0),
+    )
+
+    @test_throws ArgumentError Epsilon._manual_evaluation_channels(problem.spec, invalid_channel)
+    @test_throws ArgumentError Epsilon._manual_evaluation_total_budget(zero_total)
+    @test_throws ArgumentError Epsilon._evaluate_manual_scenario(problem, out_of_domain)
 end
