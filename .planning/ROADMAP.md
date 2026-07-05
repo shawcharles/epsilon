@@ -167,6 +167,11 @@ Current repository state on 2026-05-18:
   `api_exports` lane validates the triage table against the public API
   inventory. This is governance hygiene only; no exports, runtime warnings, or
   Abacus API parity claims changed
+- Phase 22 is closed: `.planning/API-EXPORT-CLEANUP-RFC.md`
+  records a small candidate-only cleanup RFC for exported validation helpers,
+  and the focused `api_exports` lane guards the RFC/register relationship. This
+  is governance hygiene only; no exports, runtime warnings, behaviour, or
+  Abacus API parity claims change
 
 ## Phases
 
@@ -234,6 +239,10 @@ Current repository state on 2026-05-18:
 - [x] **Phase 21: Public API Export Triage** - Add a guarded lifecycle triage
       register for every current loaded export, without changing exports,
       runtime behaviour, or Abacus parity claims.
+- [x] **Phase 22: Public API Export Cleanup RFC** - Record a small
+      candidate-only cleanup RFC for exported validation helpers and guard the
+      RFC/register relationship, without changing exports, runtime behaviour,
+      or Abacus parity claims.
 
 ## Phase Details
 

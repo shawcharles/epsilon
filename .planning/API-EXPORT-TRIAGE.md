@@ -20,6 +20,8 @@ Lifecycle values:
   decision before a stable release.
 - `deprecation-candidate`: likely should be unexported, renamed, or moved
   behind a narrower surface in a later breaking/deprecation phase.
+  This is governance status only: it does not add `Base.depwarn`,
+  `@deprecate`, export removal, or runtime behaviour change in Phase 22.
 
 <!-- BEGIN PUBLIC API TRIAGE -->
 | Symbol | Domain | Support | Lifecycle | Replacement / Migration | Rationale |
@@ -210,16 +212,16 @@ Lifecycle values:
 | `tanh_saturation` | Transforms | core | keep-public | n/a | Documented core surface with strongest current Epsilon support. |
 | `trace_plot` | Plotting | bounded | keep-bounded | n/a | Supported for the documented bounded slice; broader semantics remain out of scope. |
 | `transform` | Transforms | core | keep-public | n/a | Documented core surface with strongest current Epsilon support. |
-| `validate_calibration_step_config` | Calibration | scaffolded | review-before-v1 | n/a | Implemented and exported today, but final public disposition needs review before v1. |
+| `validate_calibration_step_config` | Calibration | scaffolded | deprecation-candidate | Use `CalibrationStepConfig` construction or `load_public_config` calibration parsing. | Implemented and exported today, but final public disposition needs review before v1. |
 | `validate_channel_values` | Validation | bounded | keep-bounded | n/a | Supported for the documented bounded slice; broader semantics remain out of scope. |
 | `validate_column_indices` | Validation | scaffolded | review-before-v1 | n/a | Implemented and exported today, but final public disposition needs review before v1. |
-| `validate_cost_per_target_calibration_payload` | Calibration | scaffolded | review-before-v1 | n/a | Implemented and exported today, but final public disposition needs review before v1. |
-| `validate_lift_test_calibration_payload` | Calibration | scaffolded | review-before-v1 | n/a | Implemented and exported today, but final public disposition needs review before v1. |
+| `validate_cost_per_target_calibration_payload` | Calibration | scaffolded | deprecation-candidate | Use `build_cost_per_target_calibration_payload`. | Implemented and exported today, but final public disposition needs review before v1. |
+| `validate_lift_test_calibration_payload` | Calibration | scaffolded | deprecation-candidate | Use `build_lift_test_calibration_payload`. | Implemented and exported today, but final public disposition needs review before v1. |
 | `validate_lift_test_columns` | Calibration | scaffolded | review-before-v1 | n/a | Implemented and exported today, but final public disposition needs review before v1. |
-| `validate_mmm_data` | Model data | scaffolded | review-before-v1 | n/a | Implemented and exported today, but final public disposition needs review before v1. |
-| `validate_model_config` | Configuration | scaffolded | review-before-v1 | n/a | Implemented and exported today, but final public disposition needs review before v1. |
+| `validate_mmm_data` | Model data | scaffolded | deprecation-candidate | Use `MMMData` construction before building `TimeSeriesMMM`. | Implemented and exported today, but final public disposition needs review before v1. |
+| `validate_model_config` | Configuration | scaffolded | deprecation-candidate | Use `ModelConfig` construction or `load_model_config`. | Implemented and exported today, but final public disposition needs review before v1. |
 | `validate_panel_mmm_data` | Model data | bounded | keep-bounded | n/a | Supported for the documented bounded slice; broader semantics remain out of scope. |
-| `validate_sampler_config` | Inference | scaffolded | review-before-v1 | n/a | Implemented and exported today, but final public disposition needs review before v1. |
+| `validate_sampler_config` | Inference | scaffolded | deprecation-candidate | Use `SamplerConfig` construction or `load_sampler_config`. | Implemented and exported today, but final public disposition needs review before v1. |
 | `validate_target_data` | Model data | scaffolded | review-before-v1 | n/a | Implemented and exported today, but final public disposition needs review before v1. |
 | `weibull_adstock` | Transforms | core | keep-public | n/a | Documented core surface with strongest current Epsilon support. |
 | `write_plot_bundle` | Plotting | bounded | keep-bounded | n/a | Supported for the documented bounded slice; broader semantics remain out of scope. |

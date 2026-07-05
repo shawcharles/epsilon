@@ -125,6 +125,12 @@ All notable project changes are recorded here. Epsilon is still on the
   every current export's triage row aligned with the documented inventory. This
   is pre-v1 governance hygiene only, not an export cleanup or Abacus API parity
   claim.
+- Added a candidate-only public API cleanup RFC at
+  `.planning/API-EXPORT-CLEANUP-RFC.md`, marking a small set of exported
+  validation helpers as planning-level `deprecation-candidate` rows with
+  concrete migration paths and focused RFC/register consistency checks. This
+  does not remove exports, add runtime deprecation warnings, or change Abacus
+  behavioural evidence.
 - Documented the bounded calibration YAML/pipeline surface with the supported
   top-level `calibration` shape and explicit unsupported paths for panel
   calibration, VI calibration, non-logistic lift-test calibration, Dash/UI

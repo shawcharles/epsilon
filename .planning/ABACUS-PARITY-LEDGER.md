@@ -45,7 +45,7 @@ Each target should pass these gates before it is counted as ported:
 
 | Abacus Area | Abacus Source | Epsilon Target | Status | Next Work |
 |---|---|---|---|---|
-| Package identity and public exports | `abacus/__init__.py`, `abacus/version.py` | `src/Epsilon.jl`, `docs/src/api.md`, `test/api_exports.jl`, `.planning/API-EXPORT-TRIAGE.md` | scaffolded | Current exports are inventoried, documented, and lifecycle-triaged in a guarded planning register. Guard tests prevent silent inventory drift, require non-empty rendered docstrings plus exact Documenter `@docs` membership, and keep lifecycle triage aligned with the inventory. This is governance hygiene only, not Abacus behavioural evidence; export removals/deprecations and stronger Abacus API compatibility claims remain future work. |
+| Package identity and public exports | `abacus/__init__.py`, `abacus/version.py` | `src/Epsilon.jl`, `docs/src/api.md`, `test/api_exports.jl`, `.planning/API-EXPORT-TRIAGE.md`, `.planning/API-EXPORT-CLEANUP-RFC.md` | scaffolded | Current exports are inventoried, documented, lifecycle-triaged, and now backed by a small candidate-only cleanup RFC for selected validation helpers. Guard tests prevent silent inventory drift, require non-empty rendered docstrings plus exact Documenter `@docs` membership, keep lifecycle triage aligned with the inventory, and keep `deprecation-candidate` rows matched to RFC migration text. This is governance/RFC hygiene only, not runtime deprecation and not Abacus behavioural evidence; export removals, runtime warnings, and stronger Abacus API compatibility claims remain future work. |
 | YAML/public builder | `abacus/mmm/builders/*.py`, `abacus/pipeline/config.py` | `src/model/config.jl`, `src/model/builder.jl`, `src/pipeline/config.jl` | scaffolded | Build config-normalization fixtures from Abacus demo configs and compare the resolved typed spec. |
 | Data validation and preprocessing | `abacus/mmm/preprocessing.py`, `abacus/mmm/validating.py`, `abacus/mmm/models/panel_data.py` | `src/model/types.jl`, `src/model/builder.jl`, `src/mmm/media.jl`, `src/mmm/panel.jl` | scaffolded | `PanelAxis`, `PanelCoordinate`, `panel_axis`, and `panel_coordinates` expose deterministic flat `panel_cell` reconstruction for one-dimensional and multidimensional panels, with declared coordinate columns kept in model order. `ntime`, `npanels`, and `npanel_observations` make panel observation semantics explicit while `nobs(::PanelMMMData)` remains the compatibility flat panel-cell count. Add remaining fixtures for date ordering, channel/control columns, missingness, panel keys, and holdout splits. |
 | Scaling | `abacus/mmm/scaling.py`, `abacus/mmm/preprocessing.py` | `src/transforms/scaling.jl`, `src/mmm/controls.jl` | ported | Keep parity tests tied to Abacus fixture exports; extend to panel-scaled tensors. |
@@ -634,6 +634,22 @@ As of 2026-05-10:
     Runic on `test/api_exports.jl`, `make docs`, `git diff --check`, and the
     phase-closing `make check-full` gate with full `Pkg.test()` reporting
     `Pass 7083, Total 7083` in 20m56.1s followed by a successful docs build.
+39. Phase 22 landed a candidate-only cleanup RFC for the same
+    package-identity/public-exports row without changing row status.
+    `.planning/API-EXPORT-CLEANUP-RFC.md` marks six exported validation helpers
+    as planning-level `deprecation-candidate` rows with concrete migration
+    paths to existing constructors, loaders, or payload builders. The focused
+    `api_exports` guard now validates the RFC markers, exact seven-column
+    header, current/proposed lifecycle cells, no-runtime/export decision text,
+    current export and triage membership, one-to-one `deprecation-candidate`
+    coverage, and exact migration-text matches against
+    `.planning/API-EXPORT-TRIAGE.md`. This is governance/RFC hygiene only; it
+    is not runtime deprecation, export removal, or Abacus behavioural evidence.
+    Verification passed with focused `api_exports` plus `basic` tests
+    (`Pass 3689, Total 3689`), Runic on `test/api_exports.jl`,
+    `git diff --check`, and the phase-closing `make check-full` gate with full
+    `Pkg.test()` reporting `Pass 7724, Total 7724` in 19m53.1s followed by a
+    successful docs build.
 
 
 ## Plan 14-05 Parity Audit

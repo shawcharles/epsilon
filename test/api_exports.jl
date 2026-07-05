@@ -4,10 +4,14 @@ using Epsilon
 const API_EXPORTS_DOC_PATH = joinpath(@__DIR__, "..", "docs", "src", "api.md")
 const API_EXPORTS_DOCS_SRC_PATH = joinpath(@__DIR__, "..", "docs", "src")
 const API_EXPORTS_TRIAGE_PATH = joinpath(@__DIR__, "..", ".planning", "API-EXPORT-TRIAGE.md")
+const API_EXPORTS_CLEANUP_RFC_PATH = joinpath(@__DIR__, "..", ".planning", "API-EXPORT-CLEANUP-RFC.md")
 const API_EXPORTS_INVENTORY_BEGIN = "<!-- BEGIN PUBLIC API INVENTORY -->"
 const API_EXPORTS_INVENTORY_END = "<!-- END PUBLIC API INVENTORY -->"
 const API_EXPORTS_TRIAGE_BEGIN = "<!-- BEGIN PUBLIC API TRIAGE -->"
 const API_EXPORTS_TRIAGE_END = "<!-- END PUBLIC API TRIAGE -->"
+const API_EXPORTS_CLEANUP_RFC_BEGIN = "<!-- BEGIN PUBLIC API CLEANUP CANDIDATES -->"
+const API_EXPORTS_CLEANUP_RFC_END = "<!-- END PUBLIC API CLEANUP CANDIDATES -->"
+const API_EXPORTS_CLEANUP_RFC_DECISION = "Candidate only; no runtime or export change in Phase 22."
 const API_EXPORTS_TRIAGE_LIFECYCLES = Set(
     [
         "keep-public",
@@ -43,6 +47,10 @@ end
 
 function _api_exports_marked_triage_table(text::AbstractString)
     return _api_exports_marked_table(text, API_EXPORTS_TRIAGE_BEGIN, API_EXPORTS_TRIAGE_END)
+end
+
+function _api_exports_marked_cleanup_rfc_table(text::AbstractString)
+    return _api_exports_marked_table(text, API_EXPORTS_CLEANUP_RFC_BEGIN, API_EXPORTS_CLEANUP_RFC_END)
 end
 
 function _api_exports_parse_inventory_rows(table_text::AbstractString)
@@ -114,6 +122,52 @@ function _api_exports_parse_triage_rows(table_text::AbstractString)
     return parsed
 end
 
+function _api_exports_parse_cleanup_rfc_candidate_rows(table_text::AbstractString)
+    rows = split(table_text, '\n')
+    nonempty_rows = filter(row -> !isempty(strip(row)), rows)
+
+    @test length(nonempty_rows) >= 2
+    @test strip(nonempty_rows[1]) == "| Symbol | Current Lifecycle | Proposed Lifecycle | Migration | Rationale | Risk | Decision |"
+    @test strip(nonempty_rows[2]) == "|---|---|---|---|---|---|---|"
+
+    parsed = NamedTuple{
+        (:symbol, :current_lifecycle, :proposed_lifecycle, :migration, :rationale, :risk, :decision),
+        Tuple{Symbol, String, String, String, String, String, String},
+    }[]
+    for row in nonempty_rows[3:end]
+        match_result = match(
+            r"^\|\s*`([^`]+)`\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|$",
+            row,
+        )
+        @test !isnothing(match_result)
+        isnothing(match_result) && continue
+
+        current_lifecycle = strip(match_result.captures[2])
+        proposed_lifecycle = strip(match_result.captures[3])
+        migration = strip(match_result.captures[4])
+        rationale = strip(match_result.captures[5])
+        risk = strip(match_result.captures[6])
+        decision = strip(match_result.captures[7])
+        @test !isempty(rationale)
+        @test !isempty(risk)
+
+        push!(
+            parsed,
+            (
+                symbol = Symbol(match_result.captures[1]),
+                current_lifecycle = current_lifecycle,
+                proposed_lifecycle = proposed_lifecycle,
+                migration = migration,
+                rationale = rationale,
+                risk = risk,
+                decision = decision,
+            ),
+        )
+    end
+
+    return parsed
+end
+
 function _api_exports_countmap(values)
     counts = Dict{Symbol, Int}()
     for value in values
@@ -136,6 +190,11 @@ end
 function _api_exports_triage_rows()
     table_text = _api_exports_marked_triage_table(read(API_EXPORTS_TRIAGE_PATH, String))
     return _api_exports_parse_triage_rows(table_text)
+end
+
+function _api_exports_cleanup_rfc_candidate_rows()
+    table_text = _api_exports_marked_cleanup_rfc_table(read(API_EXPORTS_CLEANUP_RFC_PATH, String))
+    return _api_exports_parse_cleanup_rfc_candidate_rows(table_text)
 end
 
 function _api_exports_public_symbols()
@@ -288,4 +347,70 @@ end
     @test empty_rationale_symbols == Symbol[]
     @test weak_deprecation_migration_symbols == Symbol[]
     @test length(triage_rows) == length(exported_symbols)
+end
+
+@testset "public API cleanup RFC candidates match triage" begin
+    exported_symbols = _api_exports_current_symbols()
+    triage_rows = _api_exports_triage_rows()
+    rfc_rows = _api_exports_cleanup_rfc_candidate_rows()
+
+    triage_by_symbol = Dict(row.symbol => row for row in triage_rows)
+    triage_deprecation_symbols = sort(
+        unique([row.symbol for row in triage_rows if row.lifecycle == "deprecation-candidate"]),
+    )
+    rfc_symbols = [row.symbol for row in rfc_rows]
+    rfc_symbol_set = Set(rfc_symbols)
+
+    duplicate_rfc_symbols = sort([symbol for (symbol, count) in pairs(_api_exports_countmap(rfc_symbols)) if count > 1])
+    missing_export_symbols = sort(collect(setdiff(rfc_symbol_set, exported_symbols)))
+    missing_triage_symbols = sort(
+        unique([row.symbol for row in rfc_rows if !haskey(triage_by_symbol, row.symbol)]),
+    )
+    current_lifecycle_mismatched_symbols = sort(
+        unique([row.symbol for row in rfc_rows if row.current_lifecycle != "review-before-v1"]),
+    )
+    proposed_lifecycle_mismatched_symbols = sort(
+        unique([row.symbol for row in rfc_rows if row.proposed_lifecycle != "deprecation-candidate"]),
+    )
+    weak_migration_symbols = sort(
+        unique(
+            [
+                row.symbol for row in rfc_rows if isempty(strip(row.migration)) ||
+                    lowercase(strip(row.migration)) == "n/a"
+            ],
+        ),
+    )
+    invalid_decision_symbols = sort(
+        unique([row.symbol for row in rfc_rows if row.decision != API_EXPORTS_CLEANUP_RFC_DECISION]),
+    )
+    triage_lifecycle_mismatched_symbols = sort(
+        unique(
+            [
+                row.symbol for row in rfc_rows if haskey(triage_by_symbol, row.symbol) &&
+                    triage_by_symbol[row.symbol].lifecycle != "deprecation-candidate"
+            ],
+        ),
+    )
+    missing_rfc_for_triage_symbols = sort(collect(setdiff(Set(triage_deprecation_symbols), rfc_symbol_set)))
+    stale_rfc_deprecation_symbols = sort(collect(setdiff(rfc_symbol_set, Set(triage_deprecation_symbols))))
+    migration_mismatched_symbols = sort(
+        unique(
+            [
+                row.symbol for row in rfc_rows if haskey(triage_by_symbol, row.symbol) &&
+                    triage_by_symbol[row.symbol].migration != row.migration
+            ],
+        ),
+    )
+
+    @test duplicate_rfc_symbols == Symbol[]
+    @test missing_export_symbols == Symbol[]
+    @test missing_triage_symbols == Symbol[]
+    @test current_lifecycle_mismatched_symbols == Symbol[]
+    @test proposed_lifecycle_mismatched_symbols == Symbol[]
+    @test weak_migration_symbols == Symbol[]
+    @test invalid_decision_symbols == Symbol[]
+    @test triage_lifecycle_mismatched_symbols == Symbol[]
+    @test missing_rfc_for_triage_symbols == Symbol[]
+    @test stale_rfc_deprecation_symbols == Symbol[]
+    @test migration_mismatched_symbols == Symbol[]
 end
