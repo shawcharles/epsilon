@@ -1,0 +1,43 @@
+# Calibration
+
+The calibration/lift-test surface covers fixture-backed schema, pure helper
+semantics, and the bounded `TimeSeriesMMM` MCMC likelihood integration for
+centered-logistic lift-test calibration plus cost-per-target soft penalties.
+
+Panel calibration, VI calibration, and broader pipeline integration remain
+outside the current supported surface.
+
+```@docs
+Epsilon.CalibrationStepConfig
+Epsilon.validate_calibration_step_config
+Epsilon.LiftTestCalibrationRows
+Epsilon.CostPerTargetCalibrationRows
+Epsilon.TimeSeriesCalibrationInput
+Epsilon.MMMCalibrationSpec
+Epsilon.UnalignedValuesError
+Epsilon.NonMonotonicError
+Epsilon.exact_row_indices
+Epsilon.validate_lift_test_columns
+Epsilon.assert_monotonic_lift
+Epsilon.scale_channel_lift_measurements
+Epsilon.scale_target_for_lift_measurements
+Epsilon.scale_lift_measurements
+Epsilon.gamma_shape_scale
+Epsilon.lift_test_gamma_distribution
+Epsilon.lift_test_estimated_lift
+Epsilon.lift_test_estimated_lift_ad
+Epsilon.lift_test_likelihood_terms
+Epsilon.lift_test_log_density
+Epsilon.lift_test_payload_log_density
+Epsilon.LiftTestCalibrationPayload
+Epsilon.validate_lift_test_calibration_payload
+Epsilon.build_lift_test_calibration_payload
+Epsilon.CostPerTargetCalibrationPayload
+Epsilon.validate_cost_per_target_calibration_payload
+Epsilon.build_cost_per_target_calibration_payload
+Epsilon.cost_per_target_penalties
+Epsilon.cost_per_target_total_penalty
+Epsilon._validate_calibration_steps_and_rows
+Epsilon._build_calibration_input
+Epsilon._resolve_calibration_spec
+```

@@ -4,7 +4,7 @@ export JULIA_PKG_SERVER_REGISTRY_PREFERENCE ?= eager
 
 .PHONY: instantiate test test-full test-model test-optimization test-validation \
 	format format-check format-check-touched docs check check-optimization \
-	check-validation check-full quality parity-check
+	check-validation check-full check-release quality parity-check
 
 instantiate:
 	$(JULIA) --project=. -e 'using Pkg; Pkg.instantiate()'
@@ -51,7 +51,9 @@ check-optimization: format-check-touched test-optimization
 
 check-validation: format-check-touched test-validation
 
-check-full: format-check test-full docs
+check-full: format-check-touched test-full docs
+
+check-release: format-check test-full docs
 
 quality: check-full
 

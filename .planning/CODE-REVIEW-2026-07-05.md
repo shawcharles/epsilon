@@ -217,7 +217,7 @@ Sampled files show no obvious `O(n²)` patterns where `O(n)` would do, no unnece
 - phase-closing and pre-merge work need a single full local gate that runs formatting, `Pkg.test()`, Aqua, doctests, and docs build,
 - known repo-wide Runic drift must not make scoped work unreproducible.
 
-The highest-leverage fix is therefore **canonical local gate scripts**, not hosted CI. `make check`, `make check-optimization`, `make check-validation`, and `make check-full` are the appropriate enforcement surface for this repo.
+The highest-leverage fix is therefore **canonical local gate scripts**, not hosted CI. `make check`, `make check-optimization`, `make check-validation`, and `make check-full` are the appropriate enforcement surface for this repo. Because repo-wide Runic drift is known to pre-exist this slice, keep `make check-full` practical with touched-file formatting plus full tests/docs, and reserve repo-wide formatting for a stricter `make check-release` gate after that drift is cleared.
 
 ### 7.3 Manifest handling
 

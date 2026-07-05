@@ -95,9 +95,12 @@ Required local quality-gate checks:
 - `make check-optimization`, `make check-validation`, or another focused test
   lane when the active slice touches those subsystems.
 - `make check-full` before phase-closing checkpoint commits, shared namespace or
-  export-surface changes, and final pre-merge/pre-release confirmation. This
-  runs the repo-wide formatting check, full `Pkg.test()` suite, Aqua quality
+  export-surface changes, and final pre-merge confirmation. This runs
+  touched-file Runic formatting, the full `Pkg.test()` suite, Aqua quality
   checks, doctests, and docs build.
+- `make check-release` for the stricter release gate once repo-wide Runic drift
+  has been cleared. This adds the repo-wide `make format-check` requirement to
+  the full test/docs gate.
 
 Deferred until the model core exists:
 
