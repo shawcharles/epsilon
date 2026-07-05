@@ -277,26 +277,26 @@ end
 function _validate_scaler_shape(scaler, data::AbstractVector)
     scaler.fitted_ndims == 1 ||
         throw(
-            ArgumentError(
-                "scaler was fitted on matrix data and cannot be applied to vector data",
-            ),
-        )
+        ArgumentError(
+            "scaler was fitted on matrix data and cannot be applied to vector data",
+        ),
+    )
     return nothing
 end
 
 function _validate_scaler_shape(scaler, data::AbstractMatrix)
     scaler.fitted_ndims == 2 ||
         throw(
-            ArgumentError(
-                "scaler was fitted on vector data and cannot be applied to matrix data",
-            ),
-        )
+        ArgumentError(
+            "scaler was fitted on vector data and cannot be applied to matrix data",
+        ),
+    )
     size(data, 2) == scaler.fitted_nfeatures ||
         throw(
-            ArgumentError(
-                "matrix data must have $(scaler.fitted_nfeatures) feature columns to match the fitted scaler",
-            ),
-        )
+        ArgumentError(
+            "matrix data must have $(scaler.fitted_nfeatures) feature columns to match the fitted scaler",
+        ),
+    )
     return nothing
 end
 

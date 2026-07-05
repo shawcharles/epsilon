@@ -3,12 +3,14 @@ include("../fixtures/abacus/optimization/cases.jl")
 using Epsilon
 using Test
 
-const _OPTIMIZATION_SUCCESS_STATUSES = Set([
-    :optimal,
-    :locally_solved,
-    :almost_optimal,
-    :almost_locally_solved,
-])
+const _OPTIMIZATION_SUCCESS_STATUSES = Set(
+    [
+        :optimal,
+        :locally_solved,
+        :almost_optimal,
+        :almost_locally_solved,
+    ]
+)
 
 function _optimization_fixture_shell(case)
     coordinates = Dict(
@@ -96,13 +98,13 @@ function _fixture_problem(case)
     )
     surfaces = Epsilon.BudgetChannelSurface[
         Epsilon.BudgetChannelSurface(
-            case.optimized_channels[index],
-            _lookup_value(case, :current_spend_all, case.optimized_channels[index]),
-            copy(case.spend_grids[index]),
-            copy(case.response_grids[index]),
-            Float64(case.effective_lower[index]),
-            isnan(case.effective_upper[index]) ? nothing : Float64(case.effective_upper[index]),
-        ) for index in eachindex(case.optimized_channels)
+                case.optimized_channels[index],
+                _lookup_value(case, :current_spend_all, case.optimized_channels[index]),
+                copy(case.spend_grids[index]),
+                copy(case.response_grids[index]),
+                Float64(case.effective_lower[index]),
+                isnan(case.effective_upper[index]) ? nothing : Float64(case.effective_upper[index]),
+            ) for index in eachindex(case.optimized_channels)
     ]
     current_spend = [
         _lookup_value(case, :current_spend_all, channel) for channel in case.optimized_channels

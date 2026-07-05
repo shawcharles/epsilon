@@ -3,16 +3,16 @@ using Epsilon
 using Test
 
 function feature_matrix_time_series_model(;
-    seasonality = Dict{String, Any}(),
-    trend = Dict{String, Any}(),
-    events = Dict{String, Any}(),
-    holidays = Dict{String, Any}(),
-    controls_config = Dict{String, Any}(),
-    include_controls::Bool = false,
-    event_values = nothing,
-    dates = 1:6,
-    random_seed::Int = 41,
-)
+        seasonality = Dict{String, Any}(),
+        trend = Dict{String, Any}(),
+        events = Dict{String, Any}(),
+        holidays = Dict{String, Any}(),
+        controls_config = Dict{String, Any}(),
+        include_controls::Bool = false,
+        event_values = nothing,
+        dates = 1:6,
+        random_seed::Int = 41,
+    )
     control_columns = include_controls ? ["price_index"] : String[]
     config = ModelConfig(
         date_column = "date",
@@ -54,10 +54,10 @@ function feature_matrix_time_series_model(;
 end
 
 function assert_feature_matrix_bundle(
-    model::TimeSeriesMMM;
-    target_symbol::Symbol = Symbol("target[1]"),
-    parameter_symbols::Vector{Symbol} = Symbol[],
-)
+        model::TimeSeriesMMM;
+        target_symbol::Symbol = Symbol("target[1]"),
+        parameter_symbols::Vector{Symbol} = Symbol[],
+    )
     state = fit!(model)
     @test state isa ModelFitState
     @test state.backend == :turing
@@ -68,13 +68,14 @@ function assert_feature_matrix_bundle(
     for parameter_symbol in parameter_symbols
         @test parameter_symbol in names(state.artifact.chain)
     end
+    return
 end
 
 function assert_feature_matrix_bundle(
-    model::PanelMMM;
-    target_symbol::Symbol = Symbol("target[1, 1]"),
-    parameter_symbols::Vector{Symbol} = Symbol[],
-)
+        model::PanelMMM;
+        target_symbol::Symbol = Symbol("target[1, 1]"),
+        parameter_symbols::Vector{Symbol} = Symbol[],
+    )
     state = fit!(model)
     @test state isa ModelFitState
     @test state.backend == :turing
@@ -85,6 +86,7 @@ function assert_feature_matrix_bundle(
     for parameter_symbol in parameter_symbols
         @test parameter_symbol in names(state.artifact.chain)
     end
+    return
 end
 
 @testset "Phase 5 Supported Feature Matrix" begin

@@ -16,7 +16,7 @@ using Test
 
     dist = instantiate_distribution(prior)
     @test dist isa Scaled
-    @test isapprox(logpdf(dist, 1.5), logpdf(instantiate_distribution(EpsilonPrior("HalfNormal"; sigma = 1.0)), 0.75) - log(2.0); atol = 1e-12)
+    @test isapprox(logpdf(dist, 1.5), logpdf(instantiate_distribution(EpsilonPrior("HalfNormal"; sigma = 1.0)), 0.75) - log(2.0); atol = 1.0e-12)
 
     samples = [rand(dist) for _ in 1:128]
     @test all(x -> x >= 0.0, samples)
@@ -27,7 +27,7 @@ using Test
     @test minimum(bounded) == 2.0
     @test maximum(bounded) == 6.0
     @test mean(bounded) == 4.0
-    @test var(bounded) ≈ 4 / 3 atol = 1e-12 rtol = 1e-12
+    @test var(bounded) ≈ 4 / 3 atol = 1.0e-12 rtol = 1.0e-12
 
     nested_special = instantiate_distribution(
         EpsilonPrior("Scaled"; base = LogNormalPrior(; mean = 4.0, std = 3.0), scale = 2.0),
@@ -78,8 +78,8 @@ end
 
     reference = 1.5 + 2.0 * TDist(7.0)
     for x in (-2.0, 0.0, 1.5, 4.0)
-        @test isapprox(pdf(dist, x), pdf(reference, x); atol = 1e-12, rtol = 1e-10)
-        @test isapprox(logpdf(dist, x), logpdf(reference, x); atol = 1e-12, rtol = 1e-10)
+        @test isapprox(pdf(dist, x), pdf(reference, x); atol = 1.0e-12, rtol = 1.0e-10)
+        @test isapprox(logpdf(dist, x), logpdf(reference, x); atol = 1.0e-12, rtol = 1.0e-10)
     end
 
     draws = [rand(dist) for _ in 1:256]
@@ -113,8 +113,8 @@ end
 
     dist = instantiate_distribution(prior)
     @test dist isa LogNormal
-    @test isapprox(mean(dist), 4.0; atol = 1e-10)
-    @test isapprox(std(dist), 3.0; atol = 1e-10)
+    @test isapprox(mean(dist), 4.0; atol = 1.0e-10)
+    @test isapprox(std(dist), 3.0; atol = 1.0e-10)
 
     payload = Epsilon.to_dict(prior)
     @test deserialize_prior(payload) == prior
@@ -196,7 +196,7 @@ end
     parsed = deserialize_model_config(config)
     @test parsed["lam"] == LogNormalPrior(; mean = 1.0, std = 2.0, dims = ("channel",))
     @test parsed["masked"] ==
-          MaskedPrior(
+        MaskedPrior(
         EpsilonPrior("Normal"; mu = 0.0, sigma = 1.0, dims = ("channel",)),
         [true, false, true];
         mask_dims = ("channel",),

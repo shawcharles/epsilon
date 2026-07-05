@@ -42,15 +42,17 @@ const _PIPELINE_CLI_OPTION_KEYS = Dict(
     "--random-seed" => :random_seed,
 )
 
-const _PIPELINE_CLI_INTEGER_KEYS = Set((
-    :prior_samples,
-    :curve_points,
-    :draws,
-    :tune,
-    :chains,
-    :cores,
-    :random_seed,
-))
+const _PIPELINE_CLI_INTEGER_KEYS = Set(
+    (
+        :prior_samples,
+        :curve_points,
+        :draws,
+        :tune,
+        :chains,
+        :cores,
+        :random_seed,
+    )
+)
 
 """
     pipeline_main(args = ARGS)

@@ -17,10 +17,10 @@ end
 
 function Base.:(==)(lhs::ModelResults, rhs::ModelResults)
     return lhs.metadata == rhs.metadata &&
-           lhs.spec == rhs.spec &&
-           _results_component_equal(lhs.chain, rhs.chain) &&
-           _results_component_equal(lhs.posterior_predictive, rhs.posterior_predictive) &&
-           _results_component_equal(lhs.prior_predictive, rhs.prior_predictive)
+        lhs.spec == rhs.spec &&
+        _results_component_equal(lhs.chain, rhs.chain) &&
+        _results_component_equal(lhs.posterior_predictive, rhs.posterior_predictive) &&
+        _results_component_equal(lhs.prior_predictive, rhs.prior_predictive)
 end
 
 _results_component_equal(::Nothing, ::Nothing) = true
@@ -35,12 +35,12 @@ function _results_component_equal(lhs, rhs)
 end
 
 function ModelResults(
-    metadata::ModelArtifactMetadata,
-    spec::MMMModelSpec,
-    chain;
-    posterior_predictive = nothing,
-    prior_predictive = nothing,
-)
+        metadata::ModelArtifactMetadata,
+        spec::MMMModelSpec,
+        chain;
+        posterior_predictive = nothing,
+        prior_predictive = nothing,
+    )
     return ModelResults{typeof(chain), typeof(posterior_predictive), typeof(prior_predictive)}(
         metadata,
         spec,
@@ -59,11 +59,11 @@ The richer grouped `InferenceResults` surface is the backend-agnostic artifact
 entry point for supported variational fits.
 """
 function model_results(
-    model::TimeSeriesMMM;
-    new_data::MMMData = model.data,
-    include_posterior_predictive::Bool = true,
-    include_prior_predictive::Bool = false,
-)
+        model::TimeSeriesMMM;
+        new_data::MMMData = model.data,
+        include_posterior_predictive::Bool = true,
+        include_prior_predictive::Bool = false,
+    )
     state = _require_successful_turing_fit(model.fit_state, "model_results")
 
     artifact = state.artifact
@@ -77,7 +77,7 @@ function model_results(
     posterior_predictive = include_posterior_predictive ? _predict_time_series_mmm(model, new_data) : nothing
     prior_predictive = include_prior_predictive ? _prior_predict_time_series_mmm(model, new_data) : nothing
     control_transform_state = hasproperty(artifact, :runtime) &&
-                              hasproperty(artifact.runtime, :control_transform_state) ?
+        hasproperty(artifact.runtime, :control_transform_state) ?
         artifact.runtime.control_transform_state : nothing
     spec = _build_model_spec(
         artifact.spec,
@@ -94,11 +94,11 @@ function model_results(
 end
 
 function model_results(
-    model::PanelMMM;
-    new_data::PanelMMMData = model.data,
-    include_posterior_predictive::Bool = true,
-    include_prior_predictive::Bool = false,
-)
+        model::PanelMMM;
+        new_data::PanelMMMData = model.data,
+        include_posterior_predictive::Bool = true,
+        include_prior_predictive::Bool = false,
+    )
     state = _require_successful_turing_fit(model.fit_state, "model_results")
 
     artifact = state.artifact

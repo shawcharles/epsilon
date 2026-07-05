@@ -7,12 +7,12 @@ function sampler_diagnostics(model::PanelMMM)
 end
 
 function sampler_warnings(
-    model::PanelMMM;
-    numerical_error_threshold::Int = 0,
-    energy_error_threshold::Float64 = 100.0,
-    tree_depth_threshold::Int = 10,
-    acceptance_rate_threshold::Float64 = 0.65,
-)
+        model::PanelMMM;
+        numerical_error_threshold::Int = 0,
+        energy_error_threshold::Float64 = 100.0,
+        tree_depth_threshold::Int = 10,
+        acceptance_rate_threshold::Float64 = 0.65,
+    )
     return sampler_warnings(
         sampler_diagnostics(model);
         numerical_error_threshold,
@@ -23,10 +23,10 @@ function sampler_warnings(
 end
 
 function convergence_report(
-    model::PanelMMM;
-    rhat_threshold::Float64 = 1.05,
-    ess_threshold::Float64 = 100.0,
-)
+        model::PanelMMM;
+        rhat_threshold::Float64 = 1.05,
+        ess_threshold::Float64 = 100.0,
+    )
     return convergence_report(
         model_results(model; include_posterior_predictive = false);
         rhat_threshold,
@@ -35,9 +35,9 @@ function convergence_report(
 end
 
 function convergence_warnings(
-    model::PanelMMM;
-    rhat_threshold::Float64 = 1.05,
-    ess_threshold::Float64 = 100.0,
-)
+        model::PanelMMM;
+        rhat_threshold::Float64 = 1.05,
+        ess_threshold::Float64 = 100.0,
+    )
     return convergence_warnings(convergence_report(model; rhat_threshold, ess_threshold))
 end

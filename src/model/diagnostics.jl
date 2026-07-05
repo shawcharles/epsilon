@@ -15,9 +15,9 @@ end
 
 function Base.:(==)(lhs::ParameterDiagnostics, rhs::ParameterDiagnostics)
     return lhs.rhat == rhs.rhat &&
-           lhs.ess_bulk == rhs.ess_bulk &&
-           lhs.ess_tail == rhs.ess_tail &&
-           lhs.mcse_mean == rhs.mcse_mean
+        lhs.ess_bulk == rhs.ess_bulk &&
+        lhs.ess_tail == rhs.ess_tail &&
+        lhs.mcse_mean == rhs.mcse_mean
 end
 
 """
@@ -32,7 +32,7 @@ end
 
 function Base.:(==)(lhs::ModelDiagnostics, rhs::ModelDiagnostics)
     return lhs.metadata == rhs.metadata &&
-           lhs.parameter_diagnostics == rhs.parameter_diagnostics
+        lhs.parameter_diagnostics == rhs.parameter_diagnostics
 end
 
 """
@@ -57,17 +57,17 @@ end
 
 function Base.:(==)(lhs::SamplerDiagnostics, rhs::SamplerDiagnostics)
     return lhs.metadata == rhs.metadata &&
-           lhs.numerical_error_count == rhs.numerical_error_count &&
-           lhs.numerical_error_rate == rhs.numerical_error_rate &&
-           lhs.mean_abs_hamiltonian_energy_error == rhs.mean_abs_hamiltonian_energy_error &&
-           lhs.max_abs_hamiltonian_energy_error == rhs.max_abs_hamiltonian_energy_error &&
-           lhs.max_abs_max_hamiltonian_energy_error == rhs.max_abs_max_hamiltonian_energy_error &&
-           lhs.max_tree_depth == rhs.max_tree_depth &&
-           lhs.mean_tree_depth == rhs.mean_tree_depth &&
-           lhs.max_n_steps == rhs.max_n_steps &&
-           lhs.mean_n_steps == rhs.mean_n_steps &&
-           lhs.mean_acceptance_rate == rhs.mean_acceptance_rate &&
-           lhs.mean_step_size == rhs.mean_step_size
+        lhs.numerical_error_count == rhs.numerical_error_count &&
+        lhs.numerical_error_rate == rhs.numerical_error_rate &&
+        lhs.mean_abs_hamiltonian_energy_error == rhs.mean_abs_hamiltonian_energy_error &&
+        lhs.max_abs_hamiltonian_energy_error == rhs.max_abs_hamiltonian_energy_error &&
+        lhs.max_abs_max_hamiltonian_energy_error == rhs.max_abs_max_hamiltonian_energy_error &&
+        lhs.max_tree_depth == rhs.max_tree_depth &&
+        lhs.mean_tree_depth == rhs.mean_tree_depth &&
+        lhs.max_n_steps == rhs.max_n_steps &&
+        lhs.mean_n_steps == rhs.mean_n_steps &&
+        lhs.mean_acceptance_rate == rhs.mean_acceptance_rate &&
+        lhs.mean_step_size == rhs.mean_step_size
 end
 
 """
@@ -85,10 +85,10 @@ end
 
 function Base.:(==)(lhs::SamplerWarning, rhs::SamplerWarning)
     return lhs.metric == rhs.metric &&
-           lhs.severity == rhs.severity &&
-           lhs.value == rhs.value &&
-           lhs.threshold == rhs.threshold &&
-           lhs.message == rhs.message
+        lhs.severity == rhs.severity &&
+        lhs.value == rhs.value &&
+        lhs.threshold == rhs.threshold &&
+        lhs.message == rhs.message
 end
 
 """
@@ -104,8 +104,8 @@ end
 
 function Base.:(==)(lhs::SamplerWarnings, rhs::SamplerWarnings)
     return lhs.metadata == rhs.metadata &&
-           lhs.warnings == rhs.warnings &&
-           lhs.summary == rhs.summary
+        lhs.warnings == rhs.warnings &&
+        lhs.summary == rhs.summary
 end
 
 """
@@ -122,9 +122,9 @@ end
 
 function Base.:(==)(lhs::ConvergenceIssue, rhs::ConvergenceIssue)
     return lhs.parameter == rhs.parameter &&
-           lhs.metric == rhs.metric &&
-           lhs.value == rhs.value &&
-           lhs.threshold == rhs.threshold
+        lhs.metric == rhs.metric &&
+        lhs.value == rhs.value &&
+        lhs.threshold == rhs.threshold
 end
 
 """
@@ -140,8 +140,8 @@ end
 
 function Base.:(==)(lhs::ConvergenceReport, rhs::ConvergenceReport)
     return lhs.metadata == rhs.metadata &&
-           lhs.issues == rhs.issues &&
-           lhs.summary == rhs.summary
+        lhs.issues == rhs.issues &&
+        lhs.summary == rhs.summary
 end
 
 """
@@ -158,9 +158,9 @@ end
 
 function Base.:(==)(lhs::ConvergenceWarning, rhs::ConvergenceWarning)
     return lhs.parameter == rhs.parameter &&
-           lhs.metric == rhs.metric &&
-           lhs.severity == rhs.severity &&
-           lhs.message == rhs.message
+        lhs.metric == rhs.metric &&
+        lhs.severity == rhs.severity &&
+        lhs.message == rhs.message
 end
 
 """
@@ -176,8 +176,8 @@ end
 
 function Base.:(==)(lhs::ConvergenceWarnings, rhs::ConvergenceWarnings)
     return lhs.metadata == rhs.metadata &&
-           lhs.warnings == rhs.warnings &&
-           lhs.summary == rhs.summary
+        lhs.warnings == rhs.warnings &&
+        lhs.summary == rhs.summary
 end
 
 """
@@ -258,12 +258,12 @@ Build typed user-facing warnings from sampler diagnostics, fitted results, or a
 fitted model.
 """
 function sampler_warnings(
-    diagnostics::SamplerDiagnostics;
-    numerical_error_threshold::Int = 0,
-    energy_error_threshold::Float64 = 100.0,
-    tree_depth_threshold::Int = 10,
-    acceptance_rate_threshold::Float64 = 0.65,
-)
+        diagnostics::SamplerDiagnostics;
+        numerical_error_threshold::Int = 0,
+        energy_error_threshold::Float64 = 100.0,
+        tree_depth_threshold::Int = 10,
+        acceptance_rate_threshold::Float64 = 0.65,
+    )
     warnings = SamplerWarning[]
 
     if diagnostics.numerical_error_count > numerical_error_threshold
@@ -329,12 +329,12 @@ function sampler_warnings(
 end
 
 function sampler_warnings(
-    results::ModelResults;
-    numerical_error_threshold::Int = 0,
-    energy_error_threshold::Float64 = 100.0,
-    tree_depth_threshold::Int = 10,
-    acceptance_rate_threshold::Float64 = 0.65,
-)
+        results::ModelResults;
+        numerical_error_threshold::Int = 0,
+        energy_error_threshold::Float64 = 100.0,
+        tree_depth_threshold::Int = 10,
+        acceptance_rate_threshold::Float64 = 0.65,
+    )
     return sampler_warnings(
         sampler_diagnostics(results);
         numerical_error_threshold,
@@ -345,12 +345,12 @@ function sampler_warnings(
 end
 
 function sampler_warnings(
-    model::TimeSeriesMMM;
-    numerical_error_threshold::Int = 0,
-    energy_error_threshold::Float64 = 100.0,
-    tree_depth_threshold::Int = 10,
-    acceptance_rate_threshold::Float64 = 0.65,
-)
+        model::TimeSeriesMMM;
+        numerical_error_threshold::Int = 0,
+        energy_error_threshold::Float64 = 100.0,
+        tree_depth_threshold::Int = 10,
+        acceptance_rate_threshold::Float64 = 0.65,
+    )
     return sampler_warnings(
         sampler_diagnostics(model);
         numerical_error_threshold,
@@ -368,10 +368,10 @@ Build a typed threshold-based convergence report from fitted model results or a
 fitted model.
 """
 function convergence_report(
-    results::ModelResults;
-    rhat_threshold::Float64 = 1.05,
-    ess_threshold::Float64 = 100.0,
-)
+        results::ModelResults;
+        rhat_threshold::Float64 = 1.05,
+        ess_threshold::Float64 = 100.0,
+    )
     return convergence_report(
         model_diagnostics(results);
         rhat_threshold,
@@ -380,10 +380,10 @@ function convergence_report(
 end
 
 function convergence_report(
-    model::TimeSeriesMMM;
-    rhat_threshold::Float64 = 1.05,
-    ess_threshold::Float64 = 100.0,
-)
+        model::TimeSeriesMMM;
+        rhat_threshold::Float64 = 1.05,
+        ess_threshold::Float64 = 100.0,
+    )
     return convergence_report(
         model_results(model; include_posterior_predictive = false);
         rhat_threshold,
@@ -409,11 +409,11 @@ fitted model.
 function convergence_warnings(report::ConvergenceReport)
     warnings = [
         ConvergenceWarning(
-            issue.parameter,
-            issue.metric,
-            _warning_severity(issue.metric),
-            _warning_message(issue),
-        ) for issue in report.issues
+                issue.parameter,
+                issue.metric,
+                _warning_severity(issue.metric),
+                _warning_message(issue),
+            ) for issue in report.issues
     ]
     sort!(warnings; by = warning -> (warning.parameter, String(warning.metric)))
     summary = (
@@ -426,18 +426,18 @@ function convergence_warnings(report::ConvergenceReport)
 end
 
 function convergence_warnings(
-    results::ModelResults;
-    rhat_threshold::Float64 = 1.05,
-    ess_threshold::Float64 = 100.0,
-)
+        results::ModelResults;
+        rhat_threshold::Float64 = 1.05,
+        ess_threshold::Float64 = 100.0,
+    )
     return convergence_warnings(convergence_report(results; rhat_threshold, ess_threshold))
 end
 
 function convergence_warnings(
-    model::TimeSeriesMMM;
-    rhat_threshold::Float64 = 1.05,
-    ess_threshold::Float64 = 100.0,
-)
+        model::TimeSeriesMMM;
+        rhat_threshold::Float64 = 1.05,
+        ess_threshold::Float64 = 100.0,
+    )
     return convergence_warnings(convergence_report(model; rhat_threshold, ess_threshold))
 end
 
@@ -474,10 +474,10 @@ function _internal_metric(chain, name::Symbol)
 end
 
 function convergence_report(
-    diagnostics::ModelDiagnostics;
-    rhat_threshold::Float64 = 1.05,
-    ess_threshold::Float64 = 100.0,
-)
+        diagnostics::ModelDiagnostics;
+        rhat_threshold::Float64 = 1.05,
+        ess_threshold::Float64 = 100.0,
+    )
     issues = ConvergenceIssue[]
 
     for (name, parameter_diagnostics) in diagnostics.parameter_diagnostics

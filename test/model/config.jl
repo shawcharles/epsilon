@@ -102,16 +102,16 @@ using Test
     @test model.seasonality["type"] == "fourier"
     @test model.seasonality["n_order"] == 2
     @test model.seasonality["priors"]["beta"] ==
-          EpsilonPrior("Laplace"; mu = 0.0, b = 0.25, dims = ("fourier_mode",))
+        EpsilonPrior("Laplace"; mu = 0.0, b = 0.25, dims = ("fourier_mode",))
     @test model.trend["type"] == "linear"
     @test model.trend["priors"]["beta"] ==
-          EpsilonPrior("Normal"; mu = 0.0, sigma = 0.25, dims = ("trend_term",))
+        EpsilonPrior("Normal"; mu = 0.0, sigma = 0.25, dims = ("trend_term",))
     @test model.events["columns"] == ["promo", "holiday"]
     @test model.events["priors"]["beta"] ==
-          EpsilonPrior("Normal"; mu = 0.0, sigma = 0.5, dims = ("event",))
+        EpsilonPrior("Normal"; mu = 0.0, sigma = 0.5, dims = ("event",))
     @test model.controls["transform"] == "standardize"
     @test model.controls["priors"]["beta"] ==
-          EpsilonPrior("Normal"; mu = 0.0, sigma = 0.75, dims = ("control",))
+        EpsilonPrior("Normal"; mu = 0.0, sigma = 0.75, dims = ("control",))
     @test haskey(model.extras, "validation")
 
     @test sampler.draws == 1500
@@ -126,9 +126,9 @@ end
         write(
             holidays_path,
             "ds,holiday,country,year\n" *
-            "01/01/2024,New Year,UK,2024\n" *
-            "15/01/2024,Promo Day,UK,2024\n" *
-            "29/01/2024,Promo Day,UK,2024\n",
+                "01/01/2024,New Year,UK,2024\n" *
+                "15/01/2024,Promo Day,UK,2024\n" *
+                "29/01/2024,Promo Day,UK,2024\n",
         )
 
         raw = Dict(
@@ -155,7 +155,7 @@ end
         @test model.holidays["path"] == holidays_path
         @test model.holidays["countries"] == ["UK"]
         @test model.holidays["priors"]["beta"] ==
-              EpsilonPrior("Normal"; mu = 0.0, sigma = 0.5, dims = ("holiday",))
+            EpsilonPrior("Normal"; mu = 0.0, sigma = 0.5, dims = ("holiday",))
 
         config_path = joinpath(tmpdir, "holiday_config.yml")
         write(
@@ -221,7 +221,7 @@ end
     @test loaded.model_config.channel_columns == ["tv", "search"]
     @test loaded.model_config.controls["transform"] == "standardize"
     @test loaded.model_config.controls["priors"]["beta"] ==
-          EpsilonPrior("Normal"; mu = 0.0, sigma = 0.75, dims = ("control",))
+        EpsilonPrior("Normal"; mu = 0.0, sigma = 0.75, dims = ("control",))
     @test loaded.sampler_config.draws == 1200
     @test loaded.model_config.saturation["priors"]["lam"] == LogNormalPrior(; mean = 1.2, std = 0.4, dims = ("channel",))
 end
@@ -444,7 +444,7 @@ end
     @test model.events["windows"][1]["name"] == "promo"
     @test model.events["windows"][2]["start_date"] == "2024-01-29"
     @test model.events["priors"]["beta"] ==
-          EpsilonPrior("Normal"; mu = 0.0, sigma = 0.5, dims = ("event",))
+        EpsilonPrior("Normal"; mu = 0.0, sigma = 0.5, dims = ("event",))
 
     @test_throws ModelConfigError model_config_from_dict(
         Dict(
@@ -489,7 +489,7 @@ end
     @test model.trend["type"] == "changepoint"
     @test model.trend["n_changepoints"] == 4
     @test model.trend["priors"]["delta"] ==
-          EpsilonPrior("Laplace"; mu = 0.0, b = 0.15, dims = ("trend_term",))
+        EpsilonPrior("Laplace"; mu = 0.0, b = 0.15, dims = ("trend_term",))
 
     @test_throws ModelConfigError model_config_from_dict(
         Dict(

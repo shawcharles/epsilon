@@ -15,21 +15,21 @@ end
 
 function Base.:(==)(lhs::InferenceSampleStats, rhs::InferenceSampleStats)
     return _results_component_equal(lhs.internals, rhs.internals) &&
-           lhs.diagnostics == rhs.diagnostics &&
-           lhs.sampler_diagnostics == rhs.sampler_diagnostics &&
-           lhs.sampler_warnings == rhs.sampler_warnings &&
-           lhs.convergence_report == rhs.convergence_report &&
-           lhs.convergence_warnings == rhs.convergence_warnings
+        lhs.diagnostics == rhs.diagnostics &&
+        lhs.sampler_diagnostics == rhs.sampler_diagnostics &&
+        lhs.sampler_warnings == rhs.sampler_warnings &&
+        lhs.convergence_report == rhs.convergence_report &&
+        lhs.convergence_warnings == rhs.convergence_warnings
 end
 
 function InferenceSampleStats(;
-    internals = nothing,
-    diagnostics = nothing,
-    sampler_diagnostics = nothing,
-    sampler_warnings = nothing,
-    convergence_report = nothing,
-    convergence_warnings = nothing,
-)
+        internals = nothing,
+        diagnostics = nothing,
+        sampler_diagnostics = nothing,
+        sampler_warnings = nothing,
+        convergence_report = nothing,
+        convergence_warnings = nothing,
+    )
     return InferenceSampleStats{typeof(internals)}(
         internals,
         diagnostics,
@@ -64,26 +64,26 @@ end
 
 function Base.:(==)(lhs::InferenceResults, rhs::InferenceResults)
     return lhs.metadata == rhs.metadata &&
-           lhs.spec == rhs.spec &&
-           lhs.coordinate_metadata == rhs.coordinate_metadata &&
-           _results_component_equal(lhs.posterior, rhs.posterior) &&
-           _results_component_equal(lhs.prior, rhs.prior) &&
-           _results_component_equal(lhs.posterior_predictive, rhs.posterior_predictive) &&
-           _results_component_equal(lhs.prior_predictive, rhs.prior_predictive) &&
-           lhs.sample_stats == rhs.sample_stats &&
-           lhs.observed_data == rhs.observed_data
+        lhs.spec == rhs.spec &&
+        lhs.coordinate_metadata == rhs.coordinate_metadata &&
+        _results_component_equal(lhs.posterior, rhs.posterior) &&
+        _results_component_equal(lhs.prior, rhs.prior) &&
+        _results_component_equal(lhs.posterior_predictive, rhs.posterior_predictive) &&
+        _results_component_equal(lhs.prior_predictive, rhs.prior_predictive) &&
+        lhs.sample_stats == rhs.sample_stats &&
+        lhs.observed_data == rhs.observed_data
 end
 
 function InferenceResults(
-    metadata::ModelArtifactMetadata,
-    spec::MMMModelSpec;
-    posterior = nothing,
-    prior = nothing,
-    posterior_predictive = nothing,
-    prior_predictive = nothing,
-    sample_stats = InferenceSampleStats(),
-    observed_data = nothing,
-)
+        metadata::ModelArtifactMetadata,
+        spec::MMMModelSpec;
+        posterior = nothing,
+        prior = nothing,
+        posterior_predictive = nothing,
+        prior_predictive = nothing,
+        sample_stats = InferenceSampleStats(),
+        observed_data = nothing,
+    )
     return InferenceResults{
         typeof(posterior),
         typeof(prior),
@@ -115,12 +115,12 @@ and observed-data content together across the currently supported Turing-backed
 and variational fit states.
 """
 function inference_results(
-    model::TimeSeriesMMM;
-    new_data::MMMData = model.data,
-    include_prior::Bool = true,
-    include_posterior_predictive::Bool = true,
-    include_prior_predictive::Bool = true,
-)
+        model::TimeSeriesMMM;
+        new_data::MMMData = model.data,
+        include_prior::Bool = true,
+        include_posterior_predictive::Bool = true,
+        include_prior_predictive::Bool = true,
+    )
     state = _require_successful_posterior_fit(model.fit_state, "inference_results")
     artifact = _require_grouped_inference_artifact(state.artifact)
 
@@ -137,7 +137,7 @@ function inference_results(
         nothing
     end
     control_transform_state = hasproperty(artifact, :runtime) &&
-                              hasproperty(artifact.runtime, :control_transform_state) ?
+        hasproperty(artifact.runtime, :control_transform_state) ?
         artifact.runtime.control_transform_state : nothing
     spec = _build_model_spec(
         artifact.spec,
@@ -157,12 +157,12 @@ function inference_results(
 end
 
 function inference_results(
-    model::PanelMMM;
-    new_data::PanelMMMData = model.data,
-    include_prior::Bool = true,
-    include_posterior_predictive::Bool = true,
-    include_prior_predictive::Bool = true,
-)
+        model::PanelMMM;
+        new_data::PanelMMMData = model.data,
+        include_prior::Bool = true,
+        include_posterior_predictive::Bool = true,
+        include_prior_predictive::Bool = true,
+    )
     state = _require_successful_posterior_fit(model.fit_state, "inference_results")
     artifact = _require_grouped_inference_artifact(state.artifact)
 
@@ -220,10 +220,10 @@ function load_inference_results(path::AbstractString)
     metadata = get(payload, :metadata, nothing)
     metadata isa ModelArtifactMetadata ||
         throw(
-            ArgumentError(
-                "serialized inference-results payload must include ModelArtifactMetadata",
-            ),
-        )
+        ArgumentError(
+            "serialized inference-results payload must include ModelArtifactMetadata",
+        ),
+    )
     _validate_artifact_metadata(metadata)
 
     spec = get(payload, :spec, nothing)
@@ -233,32 +233,32 @@ function load_inference_results(path::AbstractString)
     coordinate_metadata = get(payload, :coordinate_metadata, nothing)
     coordinate_metadata isa ModelCoordinateMetadata ||
         throw(
-            ArgumentError(
-                "serialized inference-results payload must include ModelCoordinateMetadata",
-            ),
-        )
+        ArgumentError(
+            "serialized inference-results payload must include ModelCoordinateMetadata",
+        ),
+    )
     coordinate_metadata == spec.coordinate_metadata ||
         throw(
-            ArgumentError(
-                "serialized inference-results coordinate metadata must match the stored MMMModelSpec",
-            ),
-        )
+        ArgumentError(
+            "serialized inference-results coordinate metadata must match the stored MMMModelSpec",
+        ),
+    )
 
     sample_stats = get(payload, :sample_stats, nothing)
     sample_stats isa InferenceSampleStats ||
         throw(
-            ArgumentError(
-                "serialized inference-results payload must include InferenceSampleStats",
-            ),
-        )
+        ArgumentError(
+            "serialized inference-results payload must include InferenceSampleStats",
+        ),
+    )
 
     observed_data = get(payload, :observed_data, nothing)
     observed_data isa Union{Nothing, MMMData, PanelMMMData} ||
         throw(
-            ArgumentError(
-                "serialized inference-results payload must include nothing, MMMData, or PanelMMMData",
-            ),
-        )
+        ArgumentError(
+            "serialized inference-results payload must include nothing, MMMData, or PanelMMMData",
+        ),
+    )
 
     return InferenceResults(
         metadata,

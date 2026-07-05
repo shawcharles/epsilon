@@ -12,9 +12,9 @@ end
 
 function Base.:(==)(lhs::MaskedPrior, rhs::MaskedPrior)
     return lhs.prior == rhs.prior &&
-           lhs.dims == rhs.dims &&
-           lhs.active_dim == rhs.active_dim &&
-           lhs.mask == rhs.mask
+        lhs.dims == rhs.dims &&
+        lhs.active_dim == rhs.active_dim &&
+        lhs.mask == rhs.mask
 end
 
 function MaskedPrior(prior, mask; mask_dims = prior_dims(prior), active_dim = nothing)
@@ -87,9 +87,9 @@ function _is_masked_prior_mapping(value::AbstractDict)
     end
 
     return !_has_key(value, :distribution) &&
-           !_has_key(value, :dist) &&
-           !_has_key(value, :special_prior) &&
-           _has_key(value, :prior) &&
-           _has_key(value, :mask) &&
-           (_has_key(value, :mask_dims) || _has_key(value, :active_dim))
+        !_has_key(value, :dist) &&
+        !_has_key(value, :special_prior) &&
+        _has_key(value, :prior) &&
+        _has_key(value, :mask) &&
+        (_has_key(value, :mask_dims) || _has_key(value, :active_dim))
 end

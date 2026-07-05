@@ -8,11 +8,11 @@ Nested mappings are merged with precedence `defaults < config < overrides`.
 Non-mapping values replace the whole node at the same path.
 """
 function model_config_from_dict(
-    config::AbstractDict;
-    defaults::AbstractDict = Dict{String, Any}(),
-    overrides::AbstractDict = Dict{String, Any}(),
-    base_path::Union{Nothing, AbstractString} = nothing,
-)
+        config::AbstractDict;
+        defaults::AbstractDict = Dict{String, Any}(),
+        overrides::AbstractDict = Dict{String, Any}(),
+        base_path::Union{Nothing, AbstractString} = nothing,
+    )
     merged = _merge_public_config(defaults, config, overrides)
     merged = _resolve_model_relative_paths(merged; base_path)
 
@@ -125,10 +125,10 @@ sampler mapping. Nested mappings are merged with precedence
 `defaults < config < overrides`.
 """
 function sampler_config_from_dict(
-    config::AbstractDict;
-    defaults::AbstractDict = Dict{String, Any}(),
-    overrides::AbstractDict = Dict{String, Any}(),
-)
+        config::AbstractDict;
+        defaults::AbstractDict = Dict{String, Any}(),
+        overrides::AbstractDict = Dict{String, Any}(),
+    )
     merged = _merge_public_config(defaults, config, overrides)
     fit_cfg = _has_key(merged, :fit) ? _lookup(merged, :fit) : merged
     fit_cfg isa AbstractDict || throw(ModelConfigError("fit configuration must be a mapping"))
@@ -157,10 +157,10 @@ Load a YAML config file and return typed model and sampler config objects plus
 the merged effective mapping.
 """
 function load_public_config(
-    path::AbstractString;
-    defaults::AbstractDict = Dict{String, Any}(),
-    overrides::AbstractDict = Dict{String, Any}(),
-)
+        path::AbstractString;
+        defaults::AbstractDict = Dict{String, Any}(),
+        overrides::AbstractDict = Dict{String, Any}(),
+    )
     raw = YAML.load_file(path)
     raw isa AbstractDict || throw(ModelConfigError("top-level YAML content must be a mapping"))
     merged = _merge_public_config(defaults, raw, overrides)
@@ -176,10 +176,10 @@ end
 Load and return only the typed `ModelConfig`.
 """
 function load_model_config(
-    path::AbstractString;
-    defaults::AbstractDict = Dict{String, Any}(),
-    overrides::AbstractDict = Dict{String, Any}(),
-)
+        path::AbstractString;
+        defaults::AbstractDict = Dict{String, Any}(),
+        overrides::AbstractDict = Dict{String, Any}(),
+    )
     return load_public_config(path; defaults, overrides).model_config
 end
 
@@ -189,10 +189,10 @@ end
 Load and return only the typed `SamplerConfig`.
 """
 function load_sampler_config(
-    path::AbstractString;
-    defaults::AbstractDict = Dict{String, Any}(),
-    overrides::AbstractDict = Dict{String, Any}(),
-)
+        path::AbstractString;
+        defaults::AbstractDict = Dict{String, Any}(),
+        overrides::AbstractDict = Dict{String, Any}(),
+    )
     return load_public_config(path; defaults, overrides).sampler_config
 end
 
@@ -297,10 +297,10 @@ function _top_level_extras(config::AbstractDict)
 end
 
 function _merge_public_config(
-    defaults::AbstractDict,
-    config::AbstractDict,
-    overrides::AbstractDict,
-)
+        defaults::AbstractDict,
+        config::AbstractDict,
+        overrides::AbstractDict,
+    )
     merged = _normalize_config_value(defaults)
     merged = _deep_merge_config(merged, _normalize_config_value(config))
     merged = _deep_merge_config(merged, _normalize_config_value(overrides))
@@ -308,14 +308,14 @@ function _merge_public_config(
 end
 
 function _deep_merge_config(
-    base::Dict{String, Any},
-    override::Dict{String, Any},
-)
+        base::Dict{String, Any},
+        override::Dict{String, Any},
+    )
     merged = copy(base)
     for (key, override_value) in override
         if haskey(merged, key) &&
-           merged[key] isa AbstractDict &&
-           override_value isa AbstractDict
+                merged[key] isa AbstractDict &&
+                override_value isa AbstractDict
             merged[key] = _deep_merge_config(
                 _normalize_config_value(merged[key]),
                 _normalize_config_value(override_value),
@@ -348,9 +348,9 @@ function _normalize_config_value(value)
 end
 
 function _resolve_model_relative_paths(
-    config::Dict{String, Any};
-    base_path::Union{Nothing, AbstractString},
-)
+        config::Dict{String, Any};
+        base_path::Union{Nothing, AbstractString},
+    )
     isnothing(base_path) && return config
     resolved = _normalize_config_value(config)
     holidays_cfg = get(resolved, "holidays", nothing)

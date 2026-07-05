@@ -68,9 +68,9 @@ end
 
 function Base.:(==)(lhs::AbstractSpecialPrior, rhs::AbstractSpecialPrior)
     return typeof(lhs) === typeof(rhs) &&
-           getfield(lhs, :dims) == getfield(rhs, :dims) &&
-           getfield(lhs, :centered) == getfield(rhs, :centered) &&
-           _special_parameter_equal(getfield(lhs, :parameters), getfield(rhs, :parameters))
+        getfield(lhs, :dims) == getfield(rhs, :dims) &&
+        getfield(lhs, :centered) == getfield(rhs, :centered) &&
+        _special_parameter_equal(getfield(lhs, :parameters), getfield(rhs, :parameters))
 end
 
 function Base.hash(prior::AbstractSpecialPrior, h::UInt)
@@ -130,8 +130,8 @@ function deserialize_special_prior(value::AbstractDict)
     else
         Dict{Symbol, Any}(
             Symbol(key) => _deserialize_nested(item) for (key, item) in value if !(
-                Symbol(key) in Set((:special_prior, :dims, :centered, :kwargs))
-            )
+                    Symbol(key) in Set((:special_prior, :dims, :centered, :kwargs))
+                )
         )
     end
 
@@ -289,10 +289,10 @@ function Distributions.rand(rng::Random.AbstractRNG, d::SkewStudentT, dims::Dims
 end
 
 function Distributions.rand(
-    rng::Random.AbstractRNG,
-    d::SkewStudentT,
-    dim1::Int,
-    moredims::Int...,
-)
+        rng::Random.AbstractRNG,
+        d::SkewStudentT,
+        dim1::Int,
+        moredims::Int...,
+    )
     return rand(rng, d, (dim1, moredims...))
 end

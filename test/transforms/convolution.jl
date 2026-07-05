@@ -8,7 +8,7 @@ using Test
         for case in ABACUS_BATCHED_CONVOLUTION_CASES
             actual = batched_convolution(case.x, case.w, case.axis, case.mode)
             @test size(actual) == size(case.expected)
-            @test actual ≈ case.expected atol = 1e-12 rtol = 1e-12
+            @test actual ≈ case.expected atol = 1.0e-12 rtol = 1.0e-12
         end
     end
 

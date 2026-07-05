@@ -29,19 +29,19 @@ end
 
 function Base.:(==)(lhs::EpsilonPrior, rhs::EpsilonPrior)
     return lhs.distribution == rhs.distribution &&
-           lhs.parameters == rhs.parameters &&
-           lhs.dims == rhs.dims &&
-           lhs.centered == rhs.centered &&
-           lhs.transform == rhs.transform
+        lhs.parameters == rhs.parameters &&
+        lhs.dims == rhs.dims &&
+        lhs.centered == rhs.centered &&
+        lhs.transform == rhs.transform
 end
 
 function EpsilonPrior(
-    distribution::AbstractString,
-    parameters::AbstractDict{<:Any, <:Any};
-    dims = nothing,
-    centered::Bool = true,
-    transform = nothing,
-)
+        distribution::AbstractString,
+        parameters::AbstractDict{<:Any, <:Any};
+        dims = nothing,
+        centered::Bool = true,
+        transform = nothing,
+    )
     normalized_parameters = Dict{Symbol, Any}(
         Symbol(key) => value for (key, value) in parameters
     )
@@ -55,12 +55,12 @@ function EpsilonPrior(
 end
 
 function EpsilonPrior(
-    distribution::AbstractString;
-    dims = nothing,
-    centered::Bool = true,
-    transform = nothing,
-    kwargs...,
-)
+        distribution::AbstractString;
+        dims = nothing,
+        centered::Bool = true,
+        transform = nothing,
+        kwargs...,
+    )
     return EpsilonPrior(
         distribution,
         Dict{Symbol, Any}(Symbol(key) => value for (key, value) in kwargs);
@@ -112,9 +112,9 @@ Walk a model configuration dictionary and convert prior-like mappings into
 `EpsilonPrior` values. Non-prior entries are preserved.
 """
 function deserialize_model_config(
-    model_config::AbstractDict;
-    non_distributions = (),
-)
+        model_config::AbstractDict;
+        non_distributions = (),
+    )
     ignored = Set(string.(collect(non_distributions)))
     parse_errors = String[]
     parsed = Dict{Any, Any}()
@@ -122,9 +122,9 @@ function deserialize_model_config(
     for (name, value) in model_config
         key = string(name)
         if key in ignored ||
-           value isa EpsilonPrior ||
-           (value isa AbstractVector && !(value isa AbstractString)) ||
-           !(value isa AbstractDict)
+                value isa EpsilonPrior ||
+                (value isa AbstractVector && !(value isa AbstractString)) ||
+                !(value isa AbstractDict)
             parsed[name] = value
             continue
         end
@@ -146,7 +146,7 @@ function deserialize_model_config(
         throw(
             ModelConfigError(
                 "$(length(parse_errors)) errors occurred while parsing model configuration. " *
-                "Errors: $(join(parse_errors, ", "))",
+                    "Errors: $(join(parse_errors, ", "))",
             ),
         )
     end

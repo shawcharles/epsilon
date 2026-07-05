@@ -45,26 +45,26 @@ function _validate_seasonality_config(config::Dict{String, Any})
     if seasonality_type === :fourier
         isempty(setdiff(keys_set, Set(["type", "n_order", "priors"]))) ||
             throw(
-                ArgumentError(
-                    "fourier seasonality supports only `type`, `n_order`, and `priors` in the current model path",
-                ),
-            )
+            ArgumentError(
+                "fourier seasonality supports only `type`, `n_order`, and `priors` in the current model path",
+            ),
+        )
         n_order = get(config, "n_order", nothing)
         n_order isa Integer || throw(ArgumentError("seasonality.n_order must be a positive integer"))
         Int(n_order) > 0 || throw(ArgumentError("seasonality.n_order must be positive"))
         isempty(setdiff(prior_keys, Set(["beta"]))) ||
             throw(
-                ArgumentError(
-                    "fourier seasonality supports only seasonality.priors.beta in the current model path",
-                ),
-            )
+            ArgumentError(
+                "fourier seasonality supports only seasonality.priors.beta in the current model path",
+            ),
+        )
     else
         isempty(setdiff(keys_set, Set(["type"]))) ||
             throw(
-                ArgumentError(
-                    "seasonality.type = `none` supports only `type` in the current model path",
-                ),
-            )
+            ArgumentError(
+                "seasonality.type = `none` supports only `type` in the current model path",
+            ),
+        )
     end
 
     return nothing

@@ -20,12 +20,12 @@ end
 
 function Base.:(==)(lhs::ModelArtifactMetadata, rhs::ModelArtifactMetadata)
     return lhs.schema_version == rhs.schema_version &&
-           lhs.epsilon_version == rhs.epsilon_version &&
-           lhs.julia_version == rhs.julia_version &&
-           lhs.created_at_utc == rhs.created_at_utc &&
-           lhs.model_type == rhs.model_type &&
-           lhs.backend == rhs.backend &&
-           lhs.fit_status == rhs.fit_status
+        lhs.epsilon_version == rhs.epsilon_version &&
+        lhs.julia_version == rhs.julia_version &&
+        lhs.created_at_utc == rhs.created_at_utc &&
+        lhs.model_type == rhs.model_type &&
+        lhs.backend == rhs.backend &&
+        lhs.fit_status == rhs.fit_status
 end
 
 """
@@ -165,10 +165,10 @@ function _restore_fit_state(state_payload::NamedTuple)
 end
 
 function _artifact_metadata(
-    model_type::AbstractString;
-    backend::Union{Nothing, Symbol} = nothing,
-    fit_status::Union{Nothing, Symbol} = nothing,
-)
+        model_type::AbstractString;
+        backend::Union{Nothing, Symbol} = nothing,
+        fit_status::Union{Nothing, Symbol} = nothing,
+    )
     return ModelArtifactMetadata(
         _MODEL_IO_SCHEMA_VERSION,
         pkgversion(@__MODULE__),
@@ -181,9 +181,9 @@ function _artifact_metadata(
 end
 
 function _validate_artifact_metadata(
-    metadata::ModelArtifactMetadata;
-    expected_model_type::Union{Nothing, AbstractString} = nothing,
-)
+        metadata::ModelArtifactMetadata;
+        expected_model_type::Union{Nothing, AbstractString} = nothing,
+    )
     metadata.schema_version == _MODEL_IO_SCHEMA_VERSION ||
         throw(ArgumentError("serialized metadata schema version does not match the loader"))
     metadata.epsilon_version == pkgversion(@__MODULE__) ||

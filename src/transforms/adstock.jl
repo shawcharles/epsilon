@@ -14,13 +14,13 @@ Apply binomial adstock along `axis`.
 non-convolved dimensions of `x`.
 """
 function binomial_adstock(
-    x::AbstractArray,
-    alpha::Union{Real, AbstractArray} = 0.5,
-    l_max::Integer = 12;
-    normalize::Bool = false,
-    axis::Integer = 1,
-    mode::Union{ConvMode, AbstractString, Symbol} = After,
-)
+        x::AbstractArray,
+        alpha::Union{Real, AbstractArray} = 0.5,
+        l_max::Integer = 12;
+        normalize::Bool = false,
+        axis::Integer = 1,
+        mode::Union{ConvMode, AbstractString, Symbol} = After,
+    )
     l_max > 0 || throw(ArgumentError("l_max must be positive"))
     _validate_strict_alpha(alpha)
 
@@ -39,13 +39,13 @@ Apply geometric adstock along `axis`.
 non-convolved dimensions of `x`.
 """
 function geometric_adstock(
-    x::AbstractArray,
-    alpha::Union{Real, AbstractArray} = 0.0,
-    l_max::Integer = 12;
-    normalize::Bool = false,
-    axis::Integer = 1,
-    mode::Union{ConvMode, AbstractString, Symbol} = After,
-)
+        x::AbstractArray,
+        alpha::Union{Real, AbstractArray} = 0.0,
+        l_max::Integer = 12;
+        normalize::Bool = false,
+        axis::Integer = 1,
+        mode::Union{ConvMode, AbstractString, Symbol} = After,
+    )
     l_max > 0 || throw(ArgumentError("l_max must be positive"))
     _validate_alpha(alpha)
 
@@ -64,14 +64,14 @@ Apply delayed adstock along `axis`.
 against the non-convolved dimensions of `x`.
 """
 function delayed_adstock(
-    x::AbstractArray,
-    alpha::Union{Real, AbstractArray} = 0.0,
-    theta::Union{Real, AbstractArray} = 0,
-    l_max::Integer = 12;
-    normalize::Bool = false,
-    axis::Integer = 1,
-    mode::Union{ConvMode, AbstractString, Symbol} = After,
-)
+        x::AbstractArray,
+        alpha::Union{Real, AbstractArray} = 0.0,
+        theta::Union{Real, AbstractArray} = 0,
+        l_max::Integer = 12;
+        normalize::Bool = false,
+        axis::Integer = 1,
+        mode::Union{ConvMode, AbstractString, Symbol} = After,
+    )
     l_max > 0 || throw(ArgumentError("l_max must be positive"))
     _validate_alpha(alpha)
 
@@ -97,15 +97,15 @@ leading self-retention term before cumulative multiplication, so the effective
 kernel has `l_max + 1` entries.
 """
 function weibull_adstock(
-    x::AbstractArray,
-    lam::Union{Real, AbstractArray} = 1,
-    k::Union{Real, AbstractArray} = 1,
-    l_max::Integer = 12;
-    axis::Integer = 1,
-    mode::Union{ConvMode, AbstractString, Symbol} = After,
-    type::Union{WeibullType, AbstractString, Symbol} = PDF,
-    normalize::Bool = false,
-)
+        x::AbstractArray,
+        lam::Union{Real, AbstractArray} = 1,
+        k::Union{Real, AbstractArray} = 1,
+        l_max::Integer = 12;
+        axis::Integer = 1,
+        mode::Union{ConvMode, AbstractString, Symbol} = After,
+        type::Union{WeibullType, AbstractString, Symbol} = PDF,
+        normalize::Bool = false,
+    )
     l_max > 0 || throw(ArgumentError("l_max must be positive"))
     _validate_positive(lam, "lam")
     _validate_positive(k, "k")
@@ -194,21 +194,21 @@ function _geometric_adstock_weights(alpha::AbstractArray, l_max::Integer, x_type
 end
 
 function _delayed_adstock_weights(
-    alpha::Real,
-    theta::Real,
-    l_max::Integer,
-    x_type::Type,
-)
+        alpha::Real,
+        theta::Real,
+        l_max::Integer,
+        x_type::Type,
+    )
     exponents = (collect(0:(l_max - 1)) .- theta) .^ 2
     return alpha .^ exponents
 end
 
 function _delayed_adstock_weights(
-    alpha::AbstractArray,
-    theta::AbstractArray,
-    l_max::Integer,
-    x_type::Type,
-)
+        alpha::AbstractArray,
+        theta::AbstractArray,
+        l_max::Integer,
+        x_type::Type,
+    )
     batch_shape = _broadcast_batch_shape(size(alpha), size(theta))
     alpha_array = broadcast((a, _t) -> a, alpha, theta)
     theta_array = broadcast((_a, t) -> t, alpha, theta)
@@ -219,44 +219,44 @@ function _delayed_adstock_weights(
 end
 
 function _delayed_adstock_weights(
-    alpha::Real,
-    theta::AbstractArray,
-    l_max::Integer,
-    x_type::Type,
-)
+        alpha::Real,
+        theta::AbstractArray,
+        l_max::Integer,
+        x_type::Type,
+    )
     alpha_array = fill(alpha, size(theta))
     return _delayed_adstock_weights(alpha_array, theta, l_max, x_type)
 end
 
 function _delayed_adstock_weights(
-    alpha::AbstractArray,
-    theta::Real,
-    l_max::Integer,
-    x_type::Type,
-)
+        alpha::AbstractArray,
+        theta::Real,
+        l_max::Integer,
+        x_type::Type,
+    )
     theta_array = fill(theta, size(alpha))
     return _delayed_adstock_weights(alpha, theta_array, l_max, x_type)
 end
 
 function _weibull_adstock_weights(
-    type::WeibullType,
-    lam::Real,
-    k::Real,
-    l_max::Integer,
-    x_type::Type,
-)
+        type::WeibullType,
+        lam::Real,
+        k::Real,
+        l_max::Integer,
+        x_type::Type,
+    )
     out_type = promote_type(float(x_type), typeof(float(lam)), typeof(float(k)))
     t = out_type.(collect(1:l_max))
     return _weibull_weights_from_arrays(type, t, out_type(lam), out_type(k))
 end
 
 function _weibull_adstock_weights(
-    type::WeibullType,
-    lam::AbstractArray,
-    k::AbstractArray,
-    l_max::Integer,
-    x_type::Type,
-)
+        type::WeibullType,
+        lam::AbstractArray,
+        k::AbstractArray,
+        l_max::Integer,
+        x_type::Type,
+    )
     batch_shape = _broadcast_batch_shape(size(lam), size(k))
     out_type = promote_type(float(x_type), float(eltype(lam)), float(eltype(k)))
     lam_array = broadcast((l, _k) -> convert(out_type, l), lam, k)
@@ -268,24 +268,24 @@ function _weibull_adstock_weights(
 end
 
 function _weibull_adstock_weights(
-    type::WeibullType,
-    lam::Real,
-    k::AbstractArray,
-    l_max::Integer,
-    x_type::Type,
-)
+        type::WeibullType,
+        lam::Real,
+        k::AbstractArray,
+        l_max::Integer,
+        x_type::Type,
+    )
     out_type = promote_type(float(x_type), typeof(float(lam)), float(eltype(k)))
     lam_array = fill(convert(out_type, lam), size(k))
     return _weibull_adstock_weights(type, lam_array, k, l_max, x_type)
 end
 
 function _weibull_adstock_weights(
-    type::WeibullType,
-    lam::AbstractArray,
-    k::Real,
-    l_max::Integer,
-    x_type::Type,
-)
+        type::WeibullType,
+        lam::AbstractArray,
+        k::Real,
+        l_max::Integer,
+        x_type::Type,
+    )
     out_type = promote_type(float(x_type), float(eltype(lam)), typeof(float(k)))
     k_array = fill(convert(out_type, k), size(lam))
     return _weibull_adstock_weights(type, lam, k_array, l_max, x_type)

@@ -14,7 +14,7 @@ using Test
         )
 
         @test prior ==
-              EpsilonPrior(
+            EpsilonPrior(
             "Normal";
             mu = 0.0,
             sigma = 1.0,
@@ -39,7 +39,7 @@ using Test
         )
 
         @test prior ==
-              EpsilonPrior(
+            EpsilonPrior(
             "Normal";
             mu = EpsilonPrior("HalfNormal"; sigma = 2.0),
             sigma = 1.0,
@@ -77,7 +77,7 @@ end
 
     @test parsed["beta"] == EpsilonPrior("Normal"; mu = 0.0, sigma = 1.0)
     @test parsed["alpha"] ==
-          EpsilonPrior(
+        EpsilonPrior(
         "Gamma";
         alpha = 3.0,
         beta = EpsilonPrior("HalfNormal"; sigma = 1.5),
@@ -113,11 +113,11 @@ end
     gamma_prior = EpsilonPrior("Gamma"; alpha = 3.0, beta = 2.0)
     gamma_dist = instantiate_distribution(gamma_prior)
     @test gamma_dist isa Gamma
-    @test isapprox(mean(gamma_dist), 1.5; atol = 1e-12)
+    @test isapprox(mean(gamma_dist), 1.5; atol = 1.0e-12)
 
     exponential = instantiate_distribution(EpsilonPrior("Exponential"; lam = 4.0))
     @test exponential isa Exponential
-    @test isapprox(mean(exponential), 0.25; atol = 1e-12)
+    @test isapprox(mean(exponential), 0.25; atol = 1.0e-12)
 
     uniform = instantiate_distribution(EpsilonPrior("Uniform"; lower = -1.0, upper = 3.0))
     @test uniform isa Uniform
@@ -129,8 +129,8 @@ end
     @test halfcauchy isa Truncated
 
     student_t = instantiate_distribution(EpsilonPrior("StudentT"; nu = 7.0, mu = 1.0, sigma = 2.0))
-    @test isapprox(mean(student_t), 1.0; atol = 1e-12)
-    @test isapprox(std(student_t), 2.0 * std(TDist(7.0)); atol = 1e-12)
+    @test isapprox(mean(student_t), 1.0; atol = 1.0e-12)
+    @test isapprox(std(student_t), 2.0 * std(TDist(7.0)); atol = 1.0e-12)
 
     lognormal = instantiate_distribution(EpsilonPrior("LogNormal"; mu = 0.5, sigma = 0.25))
     @test lognormal isa LogNormal

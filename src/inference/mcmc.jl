@@ -11,10 +11,10 @@ end
 
 function Base.:(==)(lhs::MCMCExecutionPlan, rhs::MCMCExecutionPlan)
     return lhs.mode == rhs.mode &&
-           lhs.requested_chains == rhs.requested_chains &&
-           lhs.requested_cores == rhs.requested_cores &&
-           lhs.effective_cores == rhs.effective_cores &&
-           lhs.available_threads == rhs.available_threads
+        lhs.requested_chains == rhs.requested_chains &&
+        lhs.requested_cores == rhs.requested_cores &&
+        lhs.effective_cores == rhs.effective_cores &&
+        lhs.available_threads == rhs.available_threads
 end
 
 function _mcmc_execution_plan(config::SamplerConfig)
@@ -32,7 +32,7 @@ function _mcmc_execution_plan(config::SamplerConfig)
     end
 
     if effective_cores > 1 && available_threads > 1 &&
-       config.chains <= effective_cores && config.chains <= available_threads
+            config.chains <= effective_cores && config.chains <= available_threads
         return MCMCExecutionPlan(
             :threads,
             config.chains,
@@ -141,11 +141,11 @@ function _sampler_warning_message(warnings::SamplerWarnings)
 end
 
 function _mcmc_diagnostics_bundle(
-    metadata::ModelArtifactMetadata,
-    spec::MMMModelSpec,
-    chain,
-    compute_convergence_checks::Bool,
-)
+        metadata::ModelArtifactMetadata,
+        spec::MMMModelSpec,
+        chain,
+        compute_convergence_checks::Bool,
+    )
     if !compute_convergence_checks
         return (
             diagnostics = nothing,
@@ -189,10 +189,10 @@ function _mcmc_diagnostics_bundle(
 end
 
 function _successful_turing_fit!(
-    model::Union{TimeSeriesMMM, PanelMMM},
-    artifact,
-    message::AbstractString,
-)
+        model::Union{TimeSeriesMMM, PanelMMM},
+        artifact,
+        message::AbstractString,
+    )
     return _successful_fit!(model, :turing, artifact, message)
 end
 
@@ -206,11 +206,11 @@ function _mark_failed_turing_fit!(model::Union{TimeSeriesMMM, PanelMMM}, err)
 end
 
 function _successful_fit!(
-    model::Union{TimeSeriesMMM, PanelMMM},
-    backend::Symbol,
-    artifact,
-    message::AbstractString,
-)
+        model::Union{TimeSeriesMMM, PanelMMM},
+        backend::Symbol,
+        artifact,
+        message::AbstractString,
+    )
     state = ModelFitState(
         :fit,
         backend;
@@ -222,10 +222,10 @@ function _successful_fit!(
 end
 
 function _mark_failed_fit!(
-    model::Union{TimeSeriesMMM, PanelMMM},
-    backend::Symbol,
-    message::AbstractString,
-)
+        model::Union{TimeSeriesMMM, PanelMMM},
+        backend::Symbol,
+        message::AbstractString,
+    )
     state = ModelFitState(
         :error,
         backend;
@@ -249,10 +249,10 @@ function _require_successful_posterior_fit(state::Union{Nothing, ModelFitState},
     state = _require_successful_fit_state(state, action)
     state.backend in (:turing, :variational) ||
         throw(
-            ArgumentError(
-                "$action currently supports only posterior-backed fit states",
-            ),
-        )
+        ArgumentError(
+            "$action currently supports only posterior-backed fit states",
+        ),
+    )
     hasproperty(state.artifact, :chain) ||
         throw(ArgumentError("cannot $action because the last fit! did not produce posterior draws"))
     return state

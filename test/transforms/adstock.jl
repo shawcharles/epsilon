@@ -18,7 +18,7 @@ using Test
                 mode = case.mode,
             )
             @test size(actual) == size(case.expected)
-            @test actual ≈ case.expected atol = 1e-12 rtol = 1e-12
+            @test actual ≈ case.expected atol = 1.0e-12 rtol = 1.0e-12
         end
     end
 
@@ -48,7 +48,7 @@ end
                 mode = case.mode,
             )
             @test size(actual) == size(case.expected)
-            @test actual ≈ case.expected atol = 1e-12 rtol = 1e-12
+            @test actual ≈ case.expected atol = 1.0e-12 rtol = 1.0e-12
         end
     end
 
@@ -73,7 +73,7 @@ end
                 mode = case.mode,
             )
             @test size(actual) == size(case.expected)
-            @test actual ≈ case.expected atol = 1e-12 rtol = 1e-12
+            @test actual ≈ case.expected atol = 1.0e-12 rtol = 1.0e-12
         end
     end
 
@@ -105,7 +105,7 @@ end
                 normalize = case.normalize,
             )
             @test size(actual) == size(case.expected)
-            @test actual ≈ case.expected atol = 1e-12 rtol = 1e-12
+            @test actual ≈ case.expected atol = 1.0e-12 rtol = 1.0e-12
         end
     end
 

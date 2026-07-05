@@ -3,10 +3,10 @@ using Test
 using YAML
 
 function _plotting_pipeline_test_config(
-    fixture::AbstractString;
-    validation_enabled::Bool = false,
-    optimization_block = Dict("enabled" => false),
-)
+        fixture::AbstractString;
+        validation_enabled::Bool = false,
+        optimization_block = Dict("enabled" => false),
+    )
     config = YAML.load_file(fixture)
     config["validation"] = Dict(
         "enabled" => validation_enabled,
@@ -84,21 +84,23 @@ end
             action = "test",
         )
         prior_parameters = Set(Symbol.(names(grouped.prior, :parameters)))
-        expected_prior_posteriors = sort([
-            "prior_posterior_$(Epsilon._plot_parameter_slug(parameter)).png" for
-            parameter in selected if parameter in prior_parameters
-        ])
+        expected_prior_posteriors = sort(
+            [
+                "prior_posterior_$(Epsilon._plot_parameter_slug(parameter)).png" for
+                    parameter in selected if parameter in prior_parameters
+            ]
+        )
         actual_prior_posteriors = sort(filter(name -> startswith(name, "prior_posterior_"), readdir(diagnostics_dir)))
 
         @test actual_prior_posteriors == expected_prior_posteriors
         for path in [
-            joinpath(diagnostics_dir, name) for name in readdir(diagnostics_dir)
-        ]
+                joinpath(diagnostics_dir, name) for name in readdir(diagnostics_dir)
+            ]
             @test filesize(path) > 0
         end
         for path in [
-            joinpath(postmodel_dir, name) for name in readdir(postmodel_dir)
-        ]
+                joinpath(postmodel_dir, name) for name in readdir(postmodel_dir)
+            ]
             @test filesize(path) > 0
         end
     end

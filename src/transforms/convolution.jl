@@ -22,11 +22,11 @@ dimensions in `w` against the non-convolved dimensions of `x`.
 - `Overlap`: centered overlap
 """
 function batched_convolution(
-    x::AbstractArray,
-    w::AbstractArray,
-    axis::Integer = 1,
-    mode::Union{ConvMode, AbstractString, Symbol} = After,
-)
+        x::AbstractArray,
+        w::AbstractArray,
+        axis::Integer = 1,
+        mode::Union{ConvMode, AbstractString, Symbol} = After,
+    )
     parsed_mode = _parse_conv_mode(mode)
     normalized_axis = _normalize_axis(axis, ndims(x))
     x_moved = _move_axis_to_last(x, normalized_axis)
@@ -113,12 +113,12 @@ function _broadcast_batch_index(batch_shape::Tuple, out_index::CartesianIndex, o
 end
 
 function _source_index(
-    t::Integer,
-    lag::Integer,
-    lag_length::Integer,
-    overlap_shift::Integer,
-    mode::ConvMode,
-)
+        t::Integer,
+        lag::Integer,
+        lag_length::Integer,
+        overlap_shift::Integer,
+        mode::ConvMode,
+    )
     if mode === After
         return t - lag + 1
     elseif mode === Before

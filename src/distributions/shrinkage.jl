@@ -94,11 +94,11 @@ Apply the horseshoe coefficient construction to latent standard-normal draws
 and shrinkage scales.
 """
 function horseshoe_coefficients(
-    prior::HorseshoePrior,
-    z::AbstractArray,
-    local_scales,
-    global_scale,
-)
+        prior::HorseshoePrior,
+        z::AbstractArray,
+        local_scales,
+        global_scale,
+    )
     scale = Float64(prior.parameters[:scale])
     return Float64.(z) .* Float64.(local_scales) .* Float64(global_scale) .* scale
 end
@@ -113,10 +113,10 @@ belongs to the stochastic slab prior in the later model layer and is not part
 of this closed-form local-scale update.
 """
 function regularized_local_scales(
-    prior::FinnishHorseshoePrior,
-    local_scales,
-    global_scale,
-)
+        prior::FinnishHorseshoePrior,
+        local_scales,
+        global_scale,
+    )
     lambda = Float64.(local_scales)
     tau = Float64(global_scale)
     c2 = Float64(prior.parameters[:slab_scale])^2
@@ -133,11 +133,11 @@ latent draws have already been supplied. It does not sample or otherwise
 consume `slab_df`.
 """
 function finnish_horseshoe_coefficients(
-    prior::FinnishHorseshoePrior,
-    z::AbstractArray,
-    local_scales,
-    global_scale,
-)
+        prior::FinnishHorseshoePrior,
+        z::AbstractArray,
+        local_scales,
+        global_scale,
+    )
     lambda_tilde = regularized_local_scales(prior, local_scales, global_scale)
     scale = Float64(prior.parameters[:scale])
     return Float64.(z) .* lambda_tilde .* Float64(global_scale) .* scale
@@ -155,10 +155,10 @@ upstream stochastic prior over those quantities and are therefore model-layer
 metadata rather than inputs to this variance calculation.
 """
 function r2d2_variance_weights(
-    prior::R2D2Prior,
-    phi,
-    tau2,
-)
+        prior::R2D2Prior,
+        phi,
+        tau2,
+    )
     phi_values = Float64.(phi)
     all(phi_values .>= 0) || throw(ArgumentError("R2D2 variance weights require nonnegative phi values"))
     total = sum(phi_values)
@@ -178,11 +178,11 @@ does not sample or otherwise consume the prior's `mean_R2` or `concentration`
 hyperparameters directly.
 """
 function r2d2_coefficients(
-    prior::R2D2Prior,
-    z::AbstractArray,
-    phi,
-    tau2,
-)
+        prior::R2D2Prior,
+        z::AbstractArray,
+        phi,
+        tau2,
+    )
     variances = r2d2_variance_weights(prior, phi, tau2)
     size(z) == size(variances) || throw(ArgumentError("z and phi must have matching shapes"))
     return Float64.(z) .* sqrt.(variances)

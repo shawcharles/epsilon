@@ -11,16 +11,16 @@ This Phase 10 surface is currently supported only for Turing-backed MCMC
 artifacts. VI-backed grouped inference results are rejected explicitly.
 """
 function trace_plot(
-    results::InferenceResults;
-    parameters = nothing,
-    max_parameters::Integer = 8,
-)
+        results::InferenceResults;
+        parameters = nothing,
+        max_parameters::Integer = 8,
+    )
     results.metadata.backend === :turing ||
         throw(
-            ArgumentError(
-                "trace_plot currently supports only MCMC-backed `InferenceResults`; VI-backed grouped artifacts are unsupported in the bounded Phase 10 surface",
-            ),
-        )
+        ArgumentError(
+            "trace_plot currently supports only MCMC-backed `InferenceResults`; VI-backed grouped artifacts are unsupported in the bounded Phase 10 surface",
+        ),
+    )
     posterior = _require_plot_posterior(results, "trace_plot")
     selected = _select_plot_parameters(
         posterior;
@@ -70,10 +70,10 @@ This Phase 10 surface requires grouped posterior draws on
 rows.
 """
 function posterior_density_plot(
-    results::InferenceResults;
-    parameters = nothing,
-    max_parameters::Integer = 8,
-)
+        results::InferenceResults;
+        parameters = nothing,
+        max_parameters::Integer = 8,
+    )
     posterior = _require_plot_posterior(results, "posterior_density_plot")
     selected = _select_plot_parameters(
         posterior;
@@ -244,54 +244,54 @@ end
 function _require_plot_posterior(results::InferenceResults, action::AbstractString)
     isnothing(results.posterior) &&
         throw(
-            ArgumentError(
-                "$action requires grouped posterior draws on `InferenceResults.posterior`",
-            ),
-        )
+        ArgumentError(
+            "$action requires grouped posterior draws on `InferenceResults.posterior`",
+        ),
+    )
     return results.posterior
 end
 
 function _require_plot_prior(results::InferenceResults, action::AbstractString)
     isnothing(results.prior) &&
         throw(
-            ArgumentError(
-                "$action requires grouped prior draws on `InferenceResults.prior`",
-            ),
-        )
+        ArgumentError(
+            "$action requires grouped prior draws on `InferenceResults.prior`",
+        ),
+    )
     return results.prior
 end
 
 function _require_time_series_plot_results(
-    results::InferenceResults,
-    action::AbstractString,
-)
+        results::InferenceResults,
+        action::AbstractString,
+    )
     results.spec.model_kind === :time_series_mmm ||
         throw(
-            ArgumentError(
-                "$action currently supports only time-series grouped inference artifacts; panel plotting is not supported in the bounded Phase 10 surface",
-            ),
-        )
+        ArgumentError(
+            "$action currently supports only time-series grouped inference artifacts; panel plotting is not supported in the bounded Phase 10 surface",
+        ),
+    )
     results.observed_data isa MMMData ||
         throw(
-            ArgumentError(
-                "$action requires `InferenceResults.observed_data` to carry MMMData",
-            ),
-        )
+        ArgumentError(
+            "$action requires `InferenceResults.observed_data` to carry MMMData",
+        ),
+    )
     isnothing(results.posterior_predictive) &&
         throw(
-            ArgumentError(
-                "$action requires posterior predictive draws on `InferenceResults.posterior_predictive`",
-            ),
-        )
+        ArgumentError(
+            "$action requires posterior predictive draws on `InferenceResults.posterior_predictive`",
+        ),
+    )
     return results.observed_data
 end
 
 function _select_plot_parameters(
-    chain;
-    parameters,
-    max_parameters::Integer,
-    action::AbstractString,
-)
+        chain;
+        parameters,
+        max_parameters::Integer,
+        action::AbstractString,
+    )
     Int(max_parameters) > 0 ||
         throw(ArgumentError("$action requires `max_parameters` to be positive"))
     available = Symbol.(names(chain, :parameters))
@@ -306,10 +306,10 @@ function _select_plot_parameters(
     for parameter in selected
         parameter in available ||
             throw(
-                ArgumentError(
-                    "$action requested parameter `$(parameter)` but it is not present in the grouped chain",
-                ),
-            )
+            ArgumentError(
+                "$action requested parameter `$(parameter)` but it is not present in the grouped chain",
+            ),
+        )
     end
     return selected
 end
@@ -407,9 +407,9 @@ function _time_axis_ticks(dates)
 end
 
 function _parameter_figure(
-    nparameters::Integer;
-    size = (1000, 560),
-)
+        nparameters::Integer;
+        size = (1000, 560),
+    )
     nparameters > 0 || throw(ArgumentError("plot requires at least one parameter"))
     ncols = min(2, Int(nparameters))
     nrows = ceil(Int, Int(nparameters) / ncols)

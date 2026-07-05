@@ -6,16 +6,16 @@ using Test
         scaler = MaxAbsScaler()
         data = [1.0, -2.0, 4.0]
         scaled = fit_transform!(scaler, data)
-        @test scaled ≈ [0.25, -0.5, 1.0] atol = 1e-12 rtol = 1e-12
-        @test Epsilon.inverse_transform(scaler, scaled) ≈ data atol = 1e-12 rtol = 1e-12
+        @test scaled ≈ [0.25, -0.5, 1.0] atol = 1.0e-12 rtol = 1.0e-12
+        @test Epsilon.inverse_transform(scaler, scaled) ≈ data atol = 1.0e-12 rtol = 1.0e-12
     end
 
     @testset "matrix scaling" begin
         scaler = MaxAbsScaler()
         data = [1.0 2.0 0.0; 4.0 -1.0 0.0]
         scaled = fit_transform!(scaler, data)
-        @test scaled ≈ [0.25 1.0 0.0; 1.0 -0.5 0.0] atol = 1e-12 rtol = 1e-12
-        @test Epsilon.inverse_transform(scaler, scaled) ≈ data atol = 1e-12 rtol = 1e-12
+        @test scaled ≈ [0.25 1.0 0.0; 1.0 -0.5 0.0] atol = 1.0e-12 rtol = 1.0e-12
+        @test Epsilon.inverse_transform(scaler, scaled) ≈ data atol = 1.0e-12 rtol = 1.0e-12
     end
 
     @testset "fitted requirement" begin
@@ -47,9 +47,9 @@ end
         scaler = StandardScaler()
         data = [1.0, 2.0, 3.0, 4.0]
         scaled = fit_transform!(scaler, data)
-        @test isapprox(sum(scaled) / length(scaled), 0.0; atol = 1e-12)
-        @test isapprox(sqrt(sum(scaled .^ 2) / length(scaled)), 1.0; atol = 1e-12)
-        @test Epsilon.inverse_transform(scaler, scaled) ≈ data atol = 1e-12 rtol = 1e-12
+        @test isapprox(sum(scaled) / length(scaled), 0.0; atol = 1.0e-12)
+        @test isapprox(sqrt(sum(scaled .^ 2) / length(scaled)), 1.0; atol = 1.0e-12)
+        @test Epsilon.inverse_transform(scaler, scaled) ≈ data atol = 1.0e-12 rtol = 1.0e-12
     end
 
     @testset "shape validation" begin
@@ -76,7 +76,7 @@ end
     @testset "target scaling" begin
         wrapper = MaxAbsScaleTarget()
         scaled = max_abs_scale_target_data(wrapper, [2.0, 4.0, 8.0])
-        @test scaled ≈ [0.25, 0.5, 1.0] atol = 1e-12 rtol = 1e-12
+        @test scaled ≈ [0.25, 0.5, 1.0] atol = 1.0e-12 rtol = 1.0e-12
         @test wrapper.target_transformer.scale == [8.0]
     end
 
@@ -84,7 +84,7 @@ end
         wrapper = MaxAbsScaleChannels([1, 3])
         data = [1.0 10.0 5.0; 2.0 20.0 10.0]
         scaled = max_abs_scale_channel_data(wrapper, data)
-        @test scaled ≈ [0.5 10.0 0.5; 1.0 20.0 1.0] atol = 1e-12 rtol = 1e-12
+        @test scaled ≈ [0.5 10.0 0.5; 1.0 20.0 1.0] atol = 1.0e-12 rtol = 1.0e-12
     end
 
     @testset "control scaling" begin
@@ -92,14 +92,14 @@ end
         data = [1.0 10.0 5.0; 2.0 20.0 7.0; 3.0 30.0 9.0]
         scaled = standardize_control_data(wrapper, data)
         @test scaled[:, 1] == data[:, 1]
-        @test isapprox(sum(scaled[:, 2]) / size(scaled, 1), 0.0; atol = 1e-12)
-        @test isapprox(sum(scaled[:, 3]) / size(scaled, 1), 0.0; atol = 1e-12)
+        @test isapprox(sum(scaled[:, 2]) / size(scaled, 1), 0.0; atol = 1.0e-12)
+        @test isapprox(sum(scaled[:, 3]) / size(scaled, 1), 0.0; atol = 1.0e-12)
     end
 
     @testset "channel normalization" begin
         data = [1.0 2.0; 2.0 4.0]
         scaled, wrapper = normalize_channel_columns(data, [1, 2])
-        @test scaled ≈ [0.5 0.5; 1.0 1.0] atol = 1e-12 rtol = 1e-12
+        @test scaled ≈ [0.5 0.5; 1.0 1.0] atol = 1.0e-12 rtol = 1.0e-12
         @test wrapper.channel_transformer.scale == [2.0, 4.0]
     end
 end

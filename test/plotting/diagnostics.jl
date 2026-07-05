@@ -8,7 +8,7 @@ function _plot_axes(figure)
 end
 
 function _assert_plot_saves(figure, stem::AbstractString)
-    mktempdir() do directory
+    return mktempdir() do directory
         for extension in ("png", "svg", "pdf")
             path = joinpath(directory, "$(stem).$(extension)")
             save(path, figure)
@@ -32,7 +32,7 @@ end
     @test figure isa Figure
     @test length(axes) == 3
     @test [axes[1].title[], axes[2].title[], axes[3].title[]] ==
-          ["alpha[1]", "alpha[2]", "beta_controls[1]"]
+        ["alpha[1]", "alpha[2]", "beta_controls[1]"]
     _assert_plot_saves(figure, "trace")
 end
 

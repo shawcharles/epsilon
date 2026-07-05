@@ -83,17 +83,14 @@ Calibration/lift-test parity remains a `scaffolded` ledger row after Phase 15:
 evidence, and docs are landed for both accepted calibration terms, but the
 wider Abacus calibration surface is not complete.
 **Last Activity:** 2026-07-05
-**Last Activity Description:** Phase 15 Task 15-08 closed docs, changelog,
-ledger, and guardrails for the bounded calibration likelihood integration.
-Docs now state the supported `TimeSeriesMMM` MCMC centered-logistic lift-test
-and cost-per-target calibration surface plus unsupported panel, VI,
-pipeline/YAML, broader saturation-family, Dash/UI, and AI-advisor paths.
-`CHANGELOG.md` records the bounded user-facing capability, and the parity
-ledger records why the calibration row remains `scaffolded` despite the landed
-time-series MCMC slice. Task 15-07's latest model-lane verification was
-`Pass 897, Total 897` in 8m14.5s. Task 15-08 phase-closing verification passed:
-`make check-full` reported `Pkg.test()` `Pass 3969, Total 3969` in 23m42.2s,
-then built docs successfully.
+**Last Activity Description:** Repo-wide pre-existing Runic drift was cleared
+with the existing `make format` target across `src/`, `test/`, and `docs/`.
+This was a mechanical formatter-only cleanup; no model, API, fixture, or
+methodology semantics were intentionally changed. Verification was scoped to
+the relevant local gate: `make format-check` passed, and `git diff --check`
+reported no whitespace errors. A broader `make check-release` run was started
+too aggressively for this formatter-only slice and was stopped before
+completion.
 **Progress:** 100%
 **Paused At:** `.planning/phases/15-calibration-likelihood-integration/.continue-here.md`
 
@@ -213,9 +210,9 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 - Broad Abacus parity claims beyond the ledger-backed `timeseries`,
   `geo_panel`, and `geo_brand_panel` evidence spine remain blocked on explicit
   acceptance evidence.
-- Repo-wide `make format-check` still fails on pre-existing Runic drift outside
-  the Phase 13 remediation slice; targeted Runic checks on touched Julia files
-  passed.
+- Repo-wide `make format-check` is now clean after the formatter-only Runic
+  drift cleanup. Keep day-to-day verification scoped; do not run the full suite
+  for future formatter-only changes.
 - The clean-worktree benchmark rerun remains outstanding if maintainers want a
   release artifact without the current published `git_dirty = true` note.
 

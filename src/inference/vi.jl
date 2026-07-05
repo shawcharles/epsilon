@@ -3,9 +3,9 @@ using Random
 using Turing
 
 function approximate_fit!(
-    model::TimeSeriesMMM,
-    config::VariationalConfig = VariationalConfig(),
-)
+        model::TimeSeriesMMM,
+        config::VariationalConfig = VariationalConfig(),
+    )
     if !isnothing(model.calibration)
         err = ArgumentError(
             "approximate_fit! does not support calibrated TimeSeriesMMM models; calibration likelihood terms are only supported through fit! (Turing NUTS)",
@@ -17,9 +17,9 @@ function approximate_fit!(
 end
 
 function approximate_fit!(
-    model::PanelMMM,
-    config::VariationalConfig = VariationalConfig(),
-)
+        model::PanelMMM,
+        config::VariationalConfig = VariationalConfig(),
+    )
     err = ArgumentError(
         "approximate_fit! currently supports only TimeSeriesMMM; PanelMMM variational inference is not supported in the current Phase 6 surface",
     )
@@ -28,9 +28,9 @@ function approximate_fit!(
 end
 
 function _approximate_fit_time_series_mmm!(
-    model::TimeSeriesMMM,
-    config::VariationalConfig,
-)
+        model::TimeSeriesMMM,
+        config::VariationalConfig,
+    )
     try
         runtime, controls = _turing_runtime(model.config, model.data)
         spec = _build_model_spec(
@@ -85,10 +85,10 @@ function _variational_rng(config::VariationalConfig; offset::Int = 0)
 end
 
 function _variational_family(
-    rng,
-    turing_model,
-    config::VariationalConfig,
-)
+        rng,
+        turing_model,
+        config::VariationalConfig,
+    )
     if config.family === :meanfield_gaussian
         return Turing.Variational.q_meanfield_gaussian(rng, turing_model)
     end
@@ -101,11 +101,11 @@ function _variational_family(
 end
 
 function _materialize_variational_chain(
-    rng,
-    approximation,
-    turing_model,
-    draws::Int,
-)
+        rng,
+        approximation,
+        turing_model,
+        draws::Int,
+    )
     sample_matrix = reshape(rand(rng, approximation, draws), :, draws)
     logdensity = Turing.DynamicPPL.LogDensityFunction(turing_model)
     params_matrix = reshape(
@@ -117,9 +117,9 @@ function _materialize_variational_chain(
 end
 
 function _variational_fit_message(
-    model_label::AbstractString,
-    config::VariationalConfig,
-)
+        model_label::AbstractString,
+        config::VariationalConfig,
+    )
     return "$model_label fitted with the current mean-field Gaussian ADVI path for $(config.max_iters) iterations and materialized $(config.draws) posterior draws."
 end
 
@@ -133,11 +133,11 @@ function _mark_failed_variational_fit!(model::Union{TimeSeriesMMM, PanelMMM}, er
 end
 
 function _sampler_config_with_draws(
-    config::SamplerConfig,
-    draws::Int;
-    chains::Int = config.chains,
-    cores::Int = config.cores,
-)
+        config::SamplerConfig,
+        draws::Int;
+        chains::Int = config.chains,
+        cores::Int = config.cores,
+    )
     return SamplerConfig(
         draws = draws,
         tune = config.tune,

@@ -200,19 +200,19 @@ end
 function _require_time_series_postmodel_plot(results, action::AbstractString)
     results.spec.model_kind === :time_series_mmm ||
         throw(
-            ArgumentError(
-                "$action currently supports only time-series post-model results; panel post-model plotting is unsupported in the bounded Phase 10 surface",
-            ),
-        )
+        ArgumentError(
+            "$action currently supports only time-series post-model results; panel post-model plotting is unsupported in the bounded Phase 10 surface",
+        ),
+    )
     return results
 end
 
 function _selected_media_component_indices(
-    results::ContributionResults;
-    channels,
-    action::AbstractString,
-)
-    media_indices = findall(==( :media), results.component_kinds)
+        results::ContributionResults;
+        channels,
+        action::AbstractString,
+    )
+    media_indices = findall(==(:media), results.component_kinds)
     isempty(media_indices) &&
         throw(ArgumentError("$action requires at least one media contribution component"))
     isnothing(channels) && return media_indices
@@ -224,10 +224,10 @@ function _selected_media_component_indices(
         index = findfirst(==(component_name), results.component_names)
         isnothing(index) &&
             throw(
-                ArgumentError(
-                    "$action requested channel `$(channel)` but it is not present in the contribution results",
-                ),
-            )
+            ArgumentError(
+                "$action requested channel `$(channel)` but it is not present in the contribution results",
+            ),
+        )
         push!(selected_indices, index)
     end
     return selected_indices
@@ -258,10 +258,10 @@ function _contribution_component_summary(results::ContributionResults, indices::
 end
 
 function _area_plot_series(
-    results::ContributionResults;
-    channels,
-    action::AbstractString,
-)
+        results::ContributionResults;
+        channels,
+        action::AbstractString,
+    )
     mean_values, _, _ = _draw_level_summary(results.values)
     component_indices = collect(eachindex(results.component_names))
     if isnothing(channels)
@@ -299,11 +299,11 @@ function _area_plot_series(
 end
 
 function _stacked_signed_area!(
-    ax::Axis,
-    x_values,
-    values::AbstractMatrix,
-    labels::Vector{String},
-)
+        ax::Axis,
+        x_values,
+        values::AbstractMatrix,
+        labels::Vector{String},
+    )
     positive_base = zeros(Float64, size(values, 1))
     negative_base = zeros(Float64, size(values, 1))
     for index in axes(values, 2)
@@ -329,6 +329,7 @@ function _stacked_signed_area!(
             negative_base = lower
         end
     end
+    return
 end
 
 function _marginal_response_summary(results::ResponseCurveResults)
@@ -351,17 +352,17 @@ function _marginal_curve_summary(results)
 end
 
 function _curve_family_plot(
-    results;
-    action::AbstractString,
-    title::AbstractString,
-    ylabel::AbstractString,
-    line_label::AbstractString,
-    marginal_title::AbstractString,
-    marginal_ylabel::AbstractString,
-    marginal_label::AbstractString,
-    line_color,
-    marginal_color,
-)
+        results;
+        action::AbstractString,
+        title::AbstractString,
+        ylabel::AbstractString,
+        line_label::AbstractString,
+        marginal_title::AbstractString,
+        marginal_ylabel::AbstractString,
+        marginal_label::AbstractString,
+        line_color,
+        marginal_color,
+    )
     response_mean, response_lower, response_upper = _draw_level_summary(results.values)
     mean_response = vec(response_mean)
     lower_response = vec(response_lower)
