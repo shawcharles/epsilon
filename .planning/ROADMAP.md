@@ -141,9 +141,10 @@ Current repository state on 2026-05-18:
   matching the bounded non-UI manual-allocation surface
 - Phase 17 has started: Task 17-01 parses bounded public `calibration`
   YAML/dict blocks into the existing typed `TimeSeriesCalibrationInput` under
-  `ModelConfig.extras["calibration"]`, while keeping pipeline fitting, panel
-  calibration, VI calibration, non-logistic lift-test calibration, Dash/UI, and
-  AI-advisor paths out of scope
+  `ModelConfig.extras["calibration"]`; Task 17-02 threads that parsed payload
+  into time-series construction with explicit panel rejection, while keeping
+  pipeline fitting, panel calibration, VI calibration, non-logistic lift-test
+  calibration, Dash/UI, and AI-advisor paths out of scope
 
 ## Phases
 

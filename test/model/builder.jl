@@ -73,6 +73,49 @@ end
     @test combined_model.calibration.lift_test == lift_test_data
     @test combined_model.calibration.cost_per_target == cost_per_target_data
 
+    parsed_config = model_config_from_dict(
+        Dict(
+            "data" => Dict("date_column" => "date"),
+            "target" => Dict("column" => "revenue"),
+            "media" => Dict(
+                "channels" => ["tv", "search"],
+                "controls" => ["price_index"],
+                "saturation" => Dict("type" => "logistic"),
+            ),
+            "calibration" => Dict(
+                "steps" => [
+                    Dict("method" => "add_lift_test_measurements"),
+                    Dict("method" => "add_cost_per_target_calibration"),
+                ],
+                "lift_test" => Dict(
+                    "channel" => ["tv"],
+                    "x" => [1.0],
+                    "delta_x" => [0.5],
+                    "delta_y" => [0.3],
+                    "sigma" => [0.1],
+                ),
+                "cost_per_target" => Dict(
+                    "gathered_cpt" => [2.0],
+                    "targets" => [1.5],
+                    "sigma" => [0.2],
+                ),
+            ),
+        ),
+    )
+    parsed_calibration = parsed_config.extras["calibration"]
+    parsed_model = TimeSeriesMMM(parsed_config, model.sampler_config, model.data)
+    @test parsed_model.calibration === parsed_calibration
+    @test parsed_model.calibration.lift_test == lift_test_data
+    @test parsed_model.calibration.cost_per_target == cost_per_target_data
+
+    @test_throws ArgumentError TimeSeriesMMM(
+        parsed_config,
+        model.sampler_config,
+        model.data;
+        calibration_steps = calibration_steps,
+        lift_test_data = lift_test_data,
+    )
+
     @test_throws ArgumentError TimeSeriesMMM(
         model.config,
         model.sampler_config,

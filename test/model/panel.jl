@@ -63,6 +63,25 @@ end
         model.data;
         lift_test_data = lift_test_data,
     )
+
+    parsed_config = ModelConfig(
+        date_column = model.config.date_column,
+        target_column = model.config.target_column,
+        target_type = model.config.target_type,
+        channel_columns = model.config.channel_columns,
+        dims = model.config.dims,
+        adstock = model.config.adstock,
+        saturation = model.config.saturation,
+        priors = model.config.priors,
+        extras = Dict(
+            "calibration" => TimeSeriesCalibrationInput(
+                calibration_steps,
+                lift_test_data,
+                nothing,
+            ),
+        ),
+    )
+    @test_throws ArgumentError PanelMMM(parsed_config, model.sampler_config, model.data)
 end
 
 @testset "build_model for PanelMMM" begin

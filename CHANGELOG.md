@@ -86,9 +86,10 @@ All notable project changes are recorded here. Epsilon is still on the
 - Added bounded public dict/YAML parsing for top-level `calibration` blocks:
   valid lift-test and cost-per-target row payloads now resolve into the
   existing typed `TimeSeriesCalibrationInput` under
-  `ModelConfig.extras["calibration"]`. Pipeline fitting, panel calibration, VI
-  calibration, non-logistic lift-test calibration, Dash/UI workflows, and
-  AI-advisor behaviour remain unsupported.
+  `ModelConfig.extras["calibration"]` and are consumed by `TimeSeriesMMM`
+  construction. Pipeline fitting, panel calibration, VI calibration,
+  non-logistic lift-test calibration, Dash/UI workflows, and AI-advisor
+  behaviour remain unsupported.
 - Added the first evaluated manual-allocation scenario-planner contract:
   `evaluate_manual_scenario(results, scenario)` and
   `ManualScenarioEvaluationResult` evaluate one `ManualAllocationScenarioSpec`

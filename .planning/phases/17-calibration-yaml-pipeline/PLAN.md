@@ -2,7 +2,7 @@
 
 ## Status
 
-Task 17-01 is landed. Tasks 17-02 through 17-04 remain.
+Tasks 17-01 and 17-02 are landed. Tasks 17-03 and 17-04 remain.
 
 ## Goal
 
@@ -81,17 +81,25 @@ duplicating row extraction logic.
 
 **Acceptance criteria:**
 
-- [ ] Parsed calibration reaches `TimeSeriesMMM.calibration` unchanged.
-- [ ] Panel construction rejects parsed calibration explicitly.
-- [ ] Existing programmatic calibration constructor arguments remain
+- [x] Parsed calibration reaches `TimeSeriesMMM.calibration` unchanged.
+- [x] Panel construction rejects parsed calibration explicitly.
+- [x] Existing programmatic calibration constructor arguments remain
       compatible.
 
 **Verification:**
 
-- [ ] Targeted model builder tests.
-- [ ] Targeted Runic check on touched Julia files.
+- [x] Targeted model builder tests.
+- [x] Targeted Runic check on touched Julia files.
 
 **Dependencies:** Task 17-01.
+
+**Status:** Landed. `TimeSeriesMMM` now consumes a parsed
+`TimeSeriesCalibrationInput` from `ModelConfig.extras["calibration"]` when
+constructor calibration keywords are absent. Supplying both parsed calibration
+and constructor calibration keywords raises an explicit `ArgumentError` instead
+of silently choosing one source. `PanelMMM` rejects parsed calibration from
+`ModelConfig.extras` explicitly. Programmatic time-series constructor
+calibration arguments remain supported.
 
 ## Task 17-03: Pipeline Acceptance And Fit Smoke
 

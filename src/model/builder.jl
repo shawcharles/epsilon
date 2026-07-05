@@ -404,8 +404,51 @@ function TimeSeriesMMM(
         cost_per_target_data::Union{Nothing, CostPerTargetCalibrationRows} = nothing,
     )
     _validate_model_data_alignment(config, data)
-    calibration = _build_calibration_input(calibration_steps, lift_test_data, cost_per_target_data)
+    calibration = _resolve_time_series_calibration_input(
+        config,
+        calibration_steps,
+        lift_test_data,
+        cost_per_target_data,
+    )
     return TimeSeriesMMM(config, sampler_config, data, nothing, nothing, calibration)
+end
+
+function _resolve_time_series_calibration_input(
+        config::ModelConfig,
+        calibration_steps::Vector{CalibrationStepConfig},
+        lift_test_data::Union{Nothing, LiftTestCalibrationRows},
+        cost_per_target_data::Union{Nothing, CostPerTargetCalibrationRows},
+    )
+    parsed_calibration = _calibration_input_from_config(config)
+    has_constructor_calibration = !isempty(calibration_steps) ||
+        !isnothing(lift_test_data) ||
+        !isnothing(cost_per_target_data)
+
+    if !isnothing(parsed_calibration) && has_constructor_calibration
+        throw(
+            ArgumentError(
+                "calibration supplied both in ModelConfig.extras and TimeSeriesMMM constructor keywords",
+            ),
+        )
+    end
+
+    !isnothing(parsed_calibration) && return parsed_calibration
+    return _build_calibration_input(calibration_steps, lift_test_data, cost_per_target_data)
+end
+
+function _calibration_input_from_config(config::ModelConfig)
+    haskey(config.extras, "calibration") || return nothing
+    calibration = config.extras["calibration"]
+    isnothing(calibration) && return nothing
+    calibration isa TimeSeriesCalibrationInput ||
+        throw(ArgumentError("ModelConfig.extras[\"calibration\"] must be a TimeSeriesCalibrationInput"))
+    return calibration
+end
+
+function _reject_panel_calibration_config(config::ModelConfig)
+    isnothing(_calibration_input_from_config(config)) ||
+        throw(ArgumentError("PanelMMM does not support calibration from ModelConfig.extras"))
+    return nothing
 end
 
 
@@ -426,6 +469,7 @@ end
 
 function PanelMMM(config::ModelConfig, sampler_config::SamplerConfig, data::PanelMMMData)
     _validate_model_data_alignment(config, data)
+    _reject_panel_calibration_config(config)
     return PanelMMM(config, sampler_config, data, nothing, nothing)
 end
 
