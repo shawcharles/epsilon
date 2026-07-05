@@ -90,10 +90,14 @@ Once the test suite grows, group files by package layer:
 
 Required local quality-gate checks:
 
-- tests on Julia `1.10` and `1.11`
-- formatting check
-- docs build
-- Aqua quality checks
+- `make check` for routine scoped iteration: touched-file Runic formatting plus
+  the current high-churn model-layer test lane.
+- `make check-optimization`, `make check-validation`, or another focused test
+  lane when the active slice touches those subsystems.
+- `make check-full` before phase-closing checkpoint commits, shared namespace or
+  export-surface changes, and final pre-merge/pre-release confirmation. This
+  runs the repo-wide formatting check, full `Pkg.test()` suite, Aqua quality
+  checks, doctests, and docs build.
 
 Deferred until the model core exists:
 

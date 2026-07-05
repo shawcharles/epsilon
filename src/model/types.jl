@@ -201,6 +201,10 @@ end
     MMMData(; dates, target, channels, channel_names, controls=nothing, control_names=String[], events=nothing, event_names=String[])
 
 Typed container for the arrays that define one MMM training dataset.
+
+`target` and `channels` are stored in the caller's original measurement units.
+Downstream spend-like arguments, including optimizer `total_budget` and bounds,
+must use the same channel units and time aggregation level.
 """
 struct MMMData{D <: AbstractVector, T <: AbstractVector, C <: AbstractMatrix, U, V}
     dates::D
@@ -259,6 +263,10 @@ panel-cell axis and `panel_coordinates` can carry the original coordinate value
 for each declared panel dimension. Use [`ntime`](@ref), [`npanels`](@ref), and
 [`npanel_observations`](@ref) when code needs to distinguish the shared time
 axis from flattened panel-cell observations.
+
+`target` and `channels` are stored in the caller's original measurement units.
+Downstream spend-like arguments, including optimizer `total_budget` and bounds,
+must use the same channel units and time aggregation level.
 """
 struct PanelMMMData{D <: AbstractVector, T <: AbstractMatrix, C <: AbstractArray}
     dates::D

@@ -58,6 +58,13 @@ The exporters write compact Julia or summary-sized fixture artifacts so the
 Epsilon test suite can consume them directly without adding extra parsing
 dependencies or giant draw dumps to the repo.
 
+Each generated Julia fixture should record its exporter, local Abacus root, and
+Abacus git revision in the file header. A `(dirty)` suffix means the local
+Abacus checkout had uncommitted changes when that fixture was exported. Treat
+that header as the per-file provenance source of truth when reviewing fixture
+freshness; this README records the workflow, not a single global Abacus
+revision.
+
 Phase 14 parity recovery adds a stricter fixture spine for the bundled Abacus
 demo-style paths:
 

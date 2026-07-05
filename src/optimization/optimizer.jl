@@ -67,12 +67,21 @@ function _feasible_initial_allocation(problem::BudgetOptimizationProblem)
         remaining_budget -= increment
     end
 
-    remaining_budget <= tolerance ||
-        throw(ArgumentError("optimize_budget requires a feasible initial allocation"))
-
-    if !isempty(allocation)
-        allocation[end] += remaining_budget
+    if !isempty(allocation) && !iszero(remaining_budget)
+        for index in reverse(eachindex(allocation))
+            lower = constraints[index].effective_lower
+            upper = constraints[index].effective_upper
+            candidate = allocation[index] + remaining_budget
+            if candidate < lower || (!isnothing(upper) && candidate > Float64(upper))
+                continue
+            end
+            allocation[index] = candidate
+            remaining_budget = 0.0
+            break
+        end
     end
+    abs(remaining_budget) <= tolerance ||
+        throw(ArgumentError("optimize_budget requires a feasible initial allocation"))
     return allocation
 end
 
@@ -308,6 +317,15 @@ curves are defined by a shared historical spend delta within each channel.
 Supported constraints are the fixed total-budget equality, optional per-channel
 absolute bounds, optional observed-relative guardrails, and optional channel
 subset selection with unselected channels held fixed at observed spend.
+
+`total_budget`, observed spend, explicit bounds, and response-curve spend grids
+must all use the same original input units as the channel columns supplied to
+`MMMData` or `PanelMMMData`. Epsilon does not convert currencies, time
+aggregation levels, or thousands/millions scaling at the optimizer boundary.
+
+The nonlinear solve accepts locally feasible optima from Ipopt; response curves
+are smooth interpolations of posterior-mean grids, not a proof of global
+concavity.
 """
 function optimize_budget(
         results::InferenceResults;

@@ -281,3 +281,42 @@ end
     @test projected[2] <= 2.0 + 1.0e-12
     @test projected[3] <= 2.0 + 1.0e-12
 end
+
+@testset "feasible initial allocation does not exceed bounded channels for tolerance residuals" begin
+    model = sample_time_series_model()
+    fit!(model)
+    grouped = _grouped_results_for_optimization(model)
+    base_problem = Epsilon._build_budget_optimization_problem(grouped; total_budget = sum(model.data.channels))
+    tolerance = sqrt(eps(Float64))
+    constraints = [
+        Epsilon.BudgetChannelConstraint("tv", 1.0, nothing, 1.0, nothing, nothing, 0.0, 1.0),
+        Epsilon.BudgetChannelConstraint("search", 1.0, nothing, 1.0, nothing, nothing, 0.0, 1.0),
+    ]
+    audit = Epsilon.BudgetConstraintAudit(
+        2.0 + tolerance / 2,
+        ["tv", "search"],
+        String[],
+        constraints,
+    )
+    problem = Epsilon.BudgetOptimizationProblem(
+        base_problem.metadata,
+        base_problem.spec,
+        base_problem.coordinate_metadata,
+        base_problem.objective,
+        audit.total_budget,
+        audit.optimized_channels,
+        audit.fixed_channels,
+        [1.0, 1.0],
+        Float64[],
+        base_problem.baseline_response,
+        0.0,
+        base_problem.current_response,
+        base_problem.channel_surfaces,
+        audit,
+    )
+
+    allocation = Epsilon._feasible_initial_allocation(problem)
+
+    @test all(allocation .<= 1.0)
+    @test sum(allocation) ≈ audit.total_budget atol = tolerance rtol = 0.0
+end
