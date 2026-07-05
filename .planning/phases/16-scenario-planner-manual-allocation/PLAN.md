@@ -2,7 +2,7 @@
 
 ## Status
 
-Tasks 16-01, 16-02, and 16-03 are landed. Task 16-04 remains.
+Phase 16 is complete. Tasks 16-01 through 16-04 are landed.
 
 ## Goal
 
@@ -161,20 +161,29 @@ optimizer recommendation.
 
 ## Task 16-04: Documentation, Changelog, And Ledger Guardrails
 
+**Status: Landed (2026-07-05).** Reconciled release docs, README status
+wording, changelog notes, roadmap state, and the Abacus parity ledger to record
+the bounded Phase 16 surface exactly: non-UI time-series manual allocation
+evaluation over existing response surfaces, manual table projection, and
+combined current/manual/optimized comparison when supplied compatible artifacts.
+The wording keeps Dash/UI, hosted/background scenario stores, automatic refits,
+future spend-path simulation, and panel manual allocation outside the supported
+surface.
+
 **Description:** Update user-facing docs, changelog, and the Abacus parity
 ledger to record the bounded manual-allocation evaluation surface without
 claiming Dash or scenario-store parity.
 
 **Acceptance criteria:**
 
-- [ ] Docs describe supported manual allocation semantics and exclusions.
-- [ ] Changelog records the new user-facing planner capability.
-- [ ] Ledger row remains no stronger than the evidence supports.
+- [x] Docs describe supported manual allocation semantics and exclusions.
+- [x] Changelog records the new user-facing planner capability.
+- [x] Ledger row remains no stronger than the evidence supports.
 
 **Verification:**
 
-- [ ] `make docs`
-- [ ] Targeted scenario planner tests.
+- [x] `make docs`
+- [x] Targeted scenario planner tests.
 
 **Dependencies:** Tasks 16-01 through 16-03.
 
@@ -198,10 +207,10 @@ After Tasks 16-02 and 16-03: **COMPLETE (2026-07-05).**
 
 ## Checkpoint C: Closure
 
-After Task 16-04:
+After Task 16-04: **COMPLETE (2026-07-05).**
 
-- [ ] Docs, changelog, and ledger match the implemented surface exactly.
-- [ ] Any broader verification is either run deliberately or deferred with a
+- [x] Docs, changelog, and ledger match the implemented surface exactly.
+- [x] Any broader verification is either run deliberately or deferred with a
       precise reason.
 
 ## Risks And Mitigations

@@ -103,6 +103,15 @@ bounded VI, with retained Abacus-backed parity fixtures covering the bounded
 allocation surface. Phase 14 extends this to bounded `PanelMMM` historical-share
 optimization for `geo_panel` and `geo_brand_panel`.
 
+The bounded non-UI scenario planner now supports typed current, manual
+allocation, and fixed-budget optimized scenario specs. `evaluate_manual_scenario`
+evaluates `TimeSeriesMMM` manual channel allocations against existing response
+surfaces without refitting or solving, and `scenario_plan` can project current,
+manual-allocation, and solved optimization rows into deterministic comparison
+tables when the supplied artifacts match. Panel manual allocation, arbitrary
+future spend-path simulation, hosted/background scenario stores, automatic
+scenario refits, and Dash/UI workflows remain outside this surface.
+
 Phase 9 is now closed: `run_pipeline(PipelineRunConfig(...))` and
 `pipeline_main(args = ARGS)` are the canonical bounded pipeline entry points,
 and the repo now ships a thin `bin/epsilon` wrapper for the same `epsilon run

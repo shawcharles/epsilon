@@ -156,9 +156,10 @@ All notable project changes are recorded here. Epsilon is still on the
 - AI advisor and Plotly Dash/dashboard parity remain deferred.
 - Panel Stage `35` validation remains deferred; adding it for parity alone is
   intentionally avoided.
-- Scenario planner execution remains bounded to optimizer-derived comparison
-  tables; richer scenario simulation, automatic refits, and UI workflows are
-  still outside the current surface.
+- Scenario planner execution remains bounded to existing optimizer outputs and
+  time-series manual-allocation evaluations over existing response surfaces;
+  richer scenario simulation, automatic refits, background stores/jobs, panel
+  manual allocation, and UI workflows are still outside the current surface.
 - Repo-wide `make format-check` still reports pre-existing Runic drift outside
   the Phase 13 remediation slice; targeted Runic checks on the touched Julia
   files passed.

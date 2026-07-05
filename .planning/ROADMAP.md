@@ -116,10 +116,14 @@ Current repository state on 2026-05-18:
 - optional Stage `05` prior-sensitivity planning is now implemented as a
   bounded scenario-config and manifest stage, matching Abacus's planning
   semantics without automatically fitting every scenario
-- the scenario planner surface is now started with bounded non-UI scenario
-  specs and optimizer-derived comparison tables; richer manual-allocation
-  response evaluation, saved scenario stores, automatic scenario refits, and
-  Dash workflows remain outside the current surface
+- Phase 16 is now closed: the bounded non-UI scenario planner supports typed
+  current/manual/fixed-budget specs, solved-optimization comparison tables,
+  time-series manual-allocation response evaluation over existing fitted
+  response surfaces, manual table projection, and combined
+  current/manual/optimized comparison with artifact mismatch rejection. Saved
+  scenario stores, automatic scenario refits, future spend-path simulation,
+  panel manual allocation, and Dash workflows remain outside the current
+  surface
 - `centered_logistic_saturation` is the explicit public name for Epsilon's
   zero-baselined logistic-family curve; the older `logistic_saturation` export
   remains a compatibility alias, and `media.saturation.type = "logistic"`
@@ -133,10 +137,8 @@ Current repository state on 2026-05-18:
   and ledger guardrails keeping panel calibration, VI calibration, pipeline/YAML
   ingestion, broader saturation-family calibration, Dash/UI workflows, and
   AI-advisor behaviour out of scope until separate contracts exist
-- Phase 16 is now planned: the bounded non-UI scenario planner will add
-  manual-allocation response evaluation over existing fitted time-series
-  response surfaces, without automatic refits, Dash/UI workflows, background
-  scenario stores, or free channel-by-panel allocation
+- Phase 16 is now closed with documentation, changelog, and ledger guardrails
+  matching the bounded non-UI manual-allocation surface
 
 ## Phases
 
@@ -181,7 +183,7 @@ Current repository state on 2026-05-18:
       with fixture-backed log-density evidence and explicit guardrails keeping
       panel, VI, pipeline/YAML, broader saturation-family, Dash/UI, and
       AI-advisor calibration out of scope.
-- [ ] **Phase 16: Scenario Planner Manual Allocation Evaluation** - Evaluate
+- [x] **Phase 16: Scenario Planner Manual Allocation Evaluation** - Evaluate
       manually specified channel allocations against existing fitted
       time-series response surfaces, keeping scenario planning non-UI,
       no-refit, and bounded away from free panel allocation.

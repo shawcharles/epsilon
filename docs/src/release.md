@@ -37,6 +37,10 @@ The canonical entry points for the closed v1 surface are:
   - `optimize_budget(results; ...)`
 - scenario planning:
   - `scenario_plan(result)` over solved budget optimization results
+  - `evaluate_manual_scenario(results, scenario)` for bounded time-series
+    manual allocation evaluation over existing response surfaces
+  - `scenario_plan(result, evaluations)` for compatible
+    current/manual/optimized comparison without re-solving
 - pipeline:
   - `run_pipeline(PipelineRunConfig(...))`
   - `bin/epsilon run path/to/config.yml`
@@ -56,7 +60,7 @@ The canonical entry points for the closed v1 surface are:
 | Inference | `INF-TS-MCMC`, `INF-P-MCMC`, `INF-TS-VI` | VI is explicit and bounded to `TimeSeriesMMM` |
 | Post-model | `POST-TS-MCMC`, `POST-TS-VI`, `POST-P-MCMC` | Deterministic replay from grouped `InferenceResults`; post-model result arrays have validated axis-order contracts, and panel response/metric curves are panel-cell/channel artifacts with explicit `delta_grid` historical-scaling semantics |
 | Optimization | `OPT-TS-MCMC`, `OPT-TS-VI`, `OPT-P-MCMC` | Fixed-budget `:total_response` only; panel optimization allocates channel totals and preserves historical within-channel panel-cell spend shares |
-| Scenario planner | solved time-series and bounded panel optimization results | Non-UI comparison tables over existing optimizer outputs; typed current, manual-allocation, and fixed-budget optimized scenario specs are supported, while automatic scenario refits and Dash workflows remain deferred |
+| Scenario planner | solved time-series and bounded panel optimization results; evaluated time-series manual allocations | Non-UI comparison tables over existing optimizer outputs and existing time-series response surfaces; typed current, manual-allocation, and fixed-budget optimized scenario specs are supported. Compatible evaluated manual scenarios can be compared with one solved optimization result, while panel manual allocation, automatic scenario refits, future-path simulation, background jobs, and Dash workflows remain deferred |
 | Pipeline | bounded time-series MCMC Stage `00`-`70` path, including optional Stage `05` prior-sensitivity planning; panel Stage `00` metadata, optional Stage `05` prior-sensitivity planning, Stage `20` fit, Stage `30` assessment, Stage `40` decomposition, Stage `50` diagnostics, Stage `60` response-curve path, and explicitly enabled Stage `70` historical-share optimization | `run_pipeline(config)` and `epsilon run config.yml`, with stage-local plot artifacts; Phase 14 validates Abacus-compatible Stage `00` through Stage `70` artifact keys against an exported Abacus `timeseries` pipeline contract, and validates `geo_panel` / `geo_brand_panel` Stage `00`-`60` keys plus `geo_panel` and `geo_brand_panel` Stage `70` historical-share optimization artifacts against exported Abacus panel contracts where semantics match. Stage `05` writes resolved prior-sensitivity scenario configs and human/LLM-safe manifests; it does not refit every scenario automatically. Julia-native serialized artifacts are used where Abacus uses PyMC/NetCDF-specific files |
 | Plotting | grouped diagnostics, time-series post-model, channel-level time-series and panel optimization, deterministic plot bundle | Direct plots return Makie `Figure` objects; `write_plot_bundle(run)` is the optional curated export |
 
@@ -77,8 +81,10 @@ The release gate keeps the unsupported surface explicit:
   fairness/weighted panel optimization objectives
 - automatic fitting/comparison of every prior-sensitivity scenario; Stage `05`
   deliberately writes scenario plans for deliberate follow-on runs
+- panel manual-allocation evaluation
 - scenario planner simulation over arbitrary future spend paths, background
-  execution, and interactive scenario-planner UI workflows
+  execution, hosted scenario stores, and interactive scenario-planner UI
+  workflows
 - panel post-model plotting beyond contribution/decomposition summary artifacts
 - unsupported panel pipeline stages beyond Stage `00` through Stage `60` and
   explicitly enabled Stage `70` historical-share optimization

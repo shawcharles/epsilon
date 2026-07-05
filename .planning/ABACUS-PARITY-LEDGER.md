@@ -78,7 +78,7 @@ Each target should pass these gates before it is counted as ported:
 | Pipeline runner and artifacts | `abacus/pipeline/*.py`, `abacus/pipeline/stages/*.py` | `src/pipeline/*.jl` | scaffolded | `timeseries` now exports the Abacus pipeline manifest/artifact contract and Epsilon validates Stage `00` through Stage `70` artifact-key parity, using Julia-native serialized artifacts where Abacus uses PyMC/NetCDF-specific files; `geo_panel` and `geo_brand_panel` now cover Stage `00` metadata/manifest parity, Stage `20` fit artifact-key parity, Stage `30` assessment artifact-key parity, Stage `40` decomposition artifact-key parity, Stage `50` diagnostics artifact-key parity, and Stage `60` response-curve artifact-key parity. Both `geo_panel` and `geo_brand_panel` now also cover explicitly enabled Stage `70` historical-share optimization artifacts, with multidimensional `geo`/`brand` coordinate columns preserved in `channel_panel_allocation.csv` for `geo_brand_panel`; other unsupported panel stages are skipped until semantics are fixture-backed. |
 | Prior sensitivity | `abacus/prior_sensitivity/*.py`, `abacus/pipeline/stages/prior_sensitivity.py` | `src/pipeline/config.jl`, `src/pipeline/stages.jl` | ported | Bounded Stage `05` prior-sensitivity planning is implemented: manual and `conservative_mmm` scenario configs are resolved to YAML, human and LLM-safe manifests are emitted, and narrow prior plus explicitly gated structure override paths are validated. Automatic refitting/comparison of every scenario is out of this stage's scope. |
 | Plotting | `abacus/mmm/plotting/*.py`, `abacus/plot.py` | `src/plotting/*.jl` | native/scaffolded | Keep Julia-native Makie plots; compare data inputs, not exact figure appearance. |
-| Scenario planner | `abacus/scenario_planner/*.py` | `src/scenario_planner.jl` | scaffolded | Bounded non-UI planner semantics are started: typed current/manual/fixed-budget scenario specs, `scenario_plan(result)` tables from solved optimization results, Task 16-01 time-series `evaluate_manual_scenario` response evaluation over existing fitted response surfaces, Task 16-02 manual-evaluation projection into `ScenarioPlanResult` tables, and Task 16-03 combined current/manual/optimized projection with artifact mismatch rejection. Automatic scenario refits, future spend-path simulation, saved/background scenario stores, free channel-by-panel allocation, and Dash UI remain deferred. |
+| Scenario planner | `abacus/scenario_planner/*.py` | `src/scenario_planner.jl` | scaffolded | Bounded non-UI planner semantics are started and Phase 16 is closed: typed current/manual/fixed-budget scenario specs, `scenario_plan(result)` tables from solved optimization results, Task 16-01 time-series `evaluate_manual_scenario` response evaluation over existing fitted response surfaces, Task 16-02 manual-evaluation projection into `ScenarioPlanResult` tables, Task 16-03 combined current/manual/optimized projection with artifact mismatch rejection, and Task 16-04 docs/changelog/ledger guardrails. Automatic scenario refits, future spend-path simulation, saved/background scenario stores, free channel-by-panel allocation, panel manual allocation, and Dash UI remain deferred. |
 | AI advisor | `abacus/ai/*.py`, `abacus/pipeline/stages/ai_advisor.py` | none | deferred | Not central to the statistical or methodological port. |
 | Dash/dashboard and product UX | Abacus Dash/dashboard/product layers, `docs-site/`, product assets | `docs/`, Julia-native plots/artifacts | deferred/native | Do not chase Dash or hosted dashboard parity; keep docs and static Julia-native artifacts honest. |
 
@@ -499,6 +499,21 @@ As of 2026-05-10:
     `JULIA_PKG_SERVER_REGISTRY_PREFERENCE=eager julia --project=. -e 'using Pkg; Pkg.test(; test_args=["scenario_planner"])'`
     reporting `Pass 88, Total 88`; touched-file Runic and `git diff --check`
     also passed.
+30. Phase 16 Task 16-04 closed documentation, changelog, and ledger guardrails
+    for the bounded scenario-planner manual-allocation surface. Release docs,
+    README status wording, changelog notes, roadmap state, and this ledger now
+    describe the supported surface as non-UI time-series manual allocation over
+    existing response surfaces, manual table projection, and combined
+    current/manual/optimized comparison when compatible artifacts are supplied.
+    The same artifacts explicitly keep Dash/UI, hosted/background scenario
+    stores, automatic refits, future spend-path simulation, panel manual
+    allocation, and free channel-by-panel allocation outside the supported
+    surface. The scenario planner row remains `scaffolded` because broader
+    Abacus scenario-planner product parity is not implemented. Scoped
+    verification passed with targeted scenario-planner tests reporting
+    `Pass 88, Total 88`; `make docs` passed with the known non-fatal
+    `index.html` size warning; and `git diff --check` passed. The full suite
+    was intentionally not run for this documentation closure.
 
 
 ## Plan 14-05 Parity Audit
@@ -531,11 +546,12 @@ Plan `14-05` is closed on the bounded Abacus parity-recovery surface.
 
 Now that Plan `14-05` is closed:
 
-1. Expand scenario planner semantics only where the next slice has a concrete
-   non-UI planning contract, such as manual-allocation response evaluation or
-   saved scenario-store artifacts. Automatic prior-sensitivity scenario
-   fitting/comparison remains outside the bounded Stage `05` planning
-   contract.
+1. Treat the Phase 16 scenario-planner manual-allocation surface as closed.
+   Any further scenario-planner expansion, including saved scenario-store
+   artifacts, background jobs, future-path simulation, or automatic refits,
+   needs a separate non-UI planning contract first. Automatic
+   prior-sensitivity scenario fitting/comparison remains outside the bounded
+   Stage `05` planning contract.
 2. Keep free channel-by-panel allocation, aggregate panel budget allocation,
    panel-total bounds, and fairness/weighted objectives out of the pipeline
    until those semantics have explicit validity contracts.
