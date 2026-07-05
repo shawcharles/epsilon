@@ -8,23 +8,34 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 22 public API export cleanup RFC is complete. The
-current loaded-module export surface is inventoried in user docs
-with support bands, guarded by focused `api_exports` checks for exact inventory
-membership, non-empty rendered docstrings, Documenter `@docs` membership,
-lifecycle triage alignment, and candidate-only cleanup RFC/register
-consistency. Package identity/public exports remain `scaffolded`; runtime
-deprecation warnings, export cleanup, and stronger Abacus API compatibility
-claims remain future work.
+**Current focus:** Phase 23 runtime deprecation design is complete. The current
+loaded-module export surface is inventoried in user docs with support bands,
+guarded by focused `api_exports` checks for exact inventory membership,
+non-empty rendered docstrings, Documenter `@docs` membership, lifecycle triage
+alignment, and candidate-only cleanup RFC/register consistency. Phase 23 adds a
+design-only runtime-deprecation contract for the six validation-helper
+candidates, including the required wrapper/internal-helper split before any
+warning can safely land. Package identity/public exports remain `scaffolded`;
+runtime deprecation warnings, export cleanup, and stronger Abacus API
+compatibility claims remain future work.
 
 ## Current Position
 
-**Current Phase:** 22
-**Current Phase Name:** Public API Export Cleanup RFC
-**Total Phases:** 22
-**Current Plan:** Phase 22 complete; choose the next bounded release-prep slice
-**Total Plans in Phase:** 5 tasks
-**Status:** Phase 22 is complete at
+**Current Phase:** 23
+**Current Phase Name:** Runtime Deprecation Design
+**Total Phases:** 23
+**Current Plan:** Phase 23 complete; choose the next bounded release-prep slice
+**Total Plans in Phase:** 4 tasks
+**Status:** Phase 23 is complete at
+`.planning/phases/23-runtime-deprecation-design/PLAN.md`. The design document
+at `.planning/API-RUNTIME-DEPRECATION-DESIGN.md` records the future
+runtime-deprecation implementation contract for the six Phase 22
+validation-helper candidates. The key design decision is that later runtime
+warnings must use public warning wrappers around warning-free internal
+validation helpers, because the current validators are called by supported
+constructors and builders. This is design hygiene only; no exports, runtime
+warnings, modelling semantics, tests, user-facing docs, or Abacus API parity
+claims changed. Phase 22 is complete at
 `.planning/phases/22-public-api-export-cleanup-rfc/PLAN.md`. The candidate-only
 cleanup RFC at `.planning/API-EXPORT-CLEANUP-RFC.md` marks six exported
 validation helpers as planning-level `deprecation-candidate` rows, each with a
@@ -174,20 +185,18 @@ evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
 are landed for both accepted calibration terms, but the wider Abacus
 calibration surface is not complete.
 **Last Activity:** 2026-07-05
-**Last Activity Description:** Phase 22 added
-`.planning/API-EXPORT-CLEANUP-RFC.md`, marked six RFC-backed validation-helper
-rows in `.planning/API-EXPORT-TRIAGE.md` as candidate-only
-`deprecation-candidate` governance entries, and extended `test/api_exports.jl`
-to guard the RFC/register relationship. This is governance hygiene only; no
-exports, runtime deprecation warnings, modelling semantics, or Abacus API
-parity claims changed. Scoped verification passed with
-`JULIA_PKG_SERVER_REGISTRY_PREFERENCE=eager julia --project=. -e 'using Pkg; Pkg.test(; test_args=["api_exports", "basic"])'`
-reporting `Pass 3689, Total 3689`; targeted Runic on `test/api_exports.jl`;
-and `git diff --check`. The phase-closing `make check-full` gate also passed
-with full `Pkg.test()` reporting `Pass 7724, Total 7724` in 19m53.1s followed
-by a successful docs build.
+**Last Activity Description:** Phase 23 added
+`.planning/API-RUNTIME-DEPRECATION-DESIGN.md`, reviewed the plan with a
+subagent before implementation, and recorded the future runtime-deprecation
+contract for the six Phase 22 validation-helper candidates. The document pins
+the public wrapper/internal-helper split, future warning texts, targeted tests,
+documentation timing, and rollback criteria. This is design hygiene only; no
+exports, runtime deprecation warnings, source files, tests, user-facing docs,
+modelling semantics, or Abacus API parity claims changed. Scoped verification
+was limited to `git diff --check` because the final diff is planning/changelog
+only.
 **Progress:** 100%
-**Paused At:** `.planning/phases/22-public-api-export-cleanup-rfc/PLAN.md`
+**Paused At:** `.planning/phases/23-runtime-deprecation-design/PLAN.md`
 
 ## Performance Metrics
 
@@ -221,6 +230,7 @@ by a successful docs build.
 | 20 | 4/4 | Completed | public API docstring and Documenter `@docs` coverage guard landed as documentation hygiene only |
 | 21 | 5/5 | Completed | public API lifecycle triage register and focused guard landed as governance hygiene only |
 | 22 | 5/5 | Completed | candidate-only public API cleanup RFC and focused RFC/register guard landed; no runtime or export changes |
+| 23 | 4/4 | Completed | runtime deprecation design contract landed for the six Phase 22 validation-helper candidates; no runtime or export changes |
 
 **Recent Trend:**
 - Last 5 completed plans: `14-01`, `14-02`, `14-03`, `14-04`, `14-05`
@@ -287,8 +297,10 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 
 ## Pending Todos
 
-- Phase 22 is complete; do not treat the `deprecation-candidate` rows as
-  runtime deprecations, export removals, or stable v1 API decisions.
+- Phase 23 is complete; do not treat the runtime deprecation design as an
+  implemented warning, export removal, or stable v1 API decision.
+- Phase 22 remains candidate-only; the `deprecation-candidate` rows are not
+  runtime deprecations or export removals.
 - Choose the next bounded release-prep slice; do not
   extend scenario planning into hosted/background stores, automatic refits,
   future spend paths, pipeline store emission, Dash/UI, or panel manual
@@ -333,6 +345,6 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 ## Session
 
 **Last Date:** 2026-07-05
-**Stopped At:** Phase 22 is complete. Do not treat candidate rows as runtime
-deprecations, export removals, or stable v1 API decisions.
-**Resume File:** `.planning/phases/22-public-api-export-cleanup-rfc/PLAN.md`
+**Stopped At:** Phase 23 is complete. Runtime deprecation warnings are designed
+but not implemented.
+**Resume File:** `.planning/phases/23-runtime-deprecation-design/PLAN.md`

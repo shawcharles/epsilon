@@ -131,6 +131,11 @@ All notable project changes are recorded here. Epsilon is still on the
   concrete migration paths and focused RFC/register consistency checks. This
   does not remove exports, add runtime deprecation warnings, or change Abacus
   behavioural evidence.
+- Added a design-only runtime deprecation plan at
+  `.planning/API-RUNTIME-DEPRECATION-DESIGN.md` for those six validation-helper
+  candidates. It records the future wrapper/internal-helper split, warning
+  text, tests, and rollback criteria needed before any runtime warning can
+  safely land; it does not change exports or runtime behaviour.
 - Documented the bounded calibration YAML/pipeline surface with the supported
   top-level `calibration` shape and explicit unsupported paths for panel
   calibration, VI calibration, non-logistic lift-test calibration, Dash/UI

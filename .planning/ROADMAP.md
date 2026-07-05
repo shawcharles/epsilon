@@ -172,6 +172,11 @@ Current repository state on 2026-05-18:
   and the focused `api_exports` lane guards the RFC/register relationship. This
   is governance hygiene only; no exports, runtime warnings, behaviour, or
   Abacus API parity claims change
+- Phase 23 is closed: `.planning/API-RUNTIME-DEPRECATION-DESIGN.md` records
+  the future runtime-deprecation implementation contract for the six Phase 22
+  validation-helper candidates, including the required public-wrapper/internal-
+  helper split. This is design hygiene only; no exports, runtime warnings,
+  behaviour, tests, user-facing docs, or Abacus parity claims change
 
 ## Phases
 
@@ -243,6 +248,10 @@ Current repository state on 2026-05-18:
       candidate-only cleanup RFC for exported validation helpers and guard the
       RFC/register relationship, without changing exports, runtime behaviour,
       or Abacus parity claims.
+- [x] **Phase 23: Runtime Deprecation Design** - Record the future
+      runtime-deprecation implementation contract for the six Phase 22
+      validation-helper candidates, without changing exports, runtime
+      behaviour, tests, user-facing docs, or Abacus parity claims.
 
 ## Phase Details
 
