@@ -8,21 +8,28 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 16 scenario planner manual-allocation evaluation is
-complete. The next step is to choose the next parity/capability slice without
-reopening Dash/UI workflows, background scenario stores, automatic refits,
-future spend-path simulation, panel manual allocation, or free
-channel-by-panel allocation unless a separate methodological contract is
-written first.
+**Current focus:** Phase 17 calibration YAML and pipeline integration is in
+progress. Task 17-01 has landed bounded public dict/YAML parsing into
+`ModelConfig.extras["calibration"]`; Task 17-02 should thread that parsed
+payload through time-series construction without widening into panel, VI,
+non-logistic calibration, Dash/UI, or AI-advisor paths.
 
 ## Current Position
 
-**Current Phase:** 16
-**Current Phase Name:** Scenario Planner Manual Allocation Evaluation
-**Total Phases:** 16
-**Current Plan:** Phase 16 complete; next slice not yet selected
+**Current Phase:** 17
+**Current Phase Name:** Calibration YAML And Pipeline Integration
+**Total Phases:** 17
+**Current Plan:** Task 17-02: Thread Parsed Calibration Into Time-Series Model Construction
 **Total Plans in Phase:** 4 tasks
-**Status:** Phase 16 is complete at
+**Status:** Phase 17 is in progress at
+`.planning/phases/17-calibration-yaml-pipeline/PLAN.md`. Task 17-01 landed
+bounded public dict/YAML parsing for top-level `calibration` blocks:
+`model_config_from_dict` and `load_public_config` now store a typed
+`TimeSeriesCalibrationInput` in `ModelConfig.extras["calibration"]`, reject
+panel and VI-like calibration configs, reject repeated or malformed steps, and
+coerce YAML row vectors to the same concrete row types used by programmatic
+constructors. Pipeline fitting is not yet wired; that remains Tasks 17-02 and
+17-03. Phase 16 is complete at
 `.planning/phases/16-scenario-planner-manual-allocation/PLAN.md`. Task 16-01
 landed `ManualScenarioEvaluationResult` and
 `evaluate_manual_scenario(results, scenario)` evaluate one bounded time-series
@@ -99,21 +106,19 @@ Calibration/lift-test parity remains a `scaffolded` ledger row after Phase 15:
 evidence, and docs are landed for both accepted calibration terms, but the
 wider Abacus calibration surface is not complete.
 **Last Activity:** 2026-07-05
-**Last Activity Description:** Phase 16 Task 16-04 closed the
-documentation/changelog/ledger guardrails for the bounded scenario-planner
-manual-allocation surface. Release docs, README, changelog, roadmap, state,
-and `.planning/ABACUS-PARITY-LEDGER.md` now describe the supported surface as
-non-UI time-series manual allocation over existing response surfaces, manual
-table projection, and combined current/manual/optimized comparison when
-compatible artifacts are supplied. The same docs explicitly keep Dash/UI,
-background or hosted scenario stores, automatic refits, future spend-path
-simulation, panel manual allocation, and free channel-by-panel allocation out
-of scope. Scoped verification passed: targeted scenario-planner tests reported
-`Pass 88, Total 88`, `make docs` passed with the known non-fatal index-size
-warning, and `git diff --check` passed. The full suite was not run for this
-documentation closure.
-**Progress:** 100%
-**Paused At:** `.planning/phases/16-scenario-planner-manual-allocation/.continue-here.md`
+**Last Activity Description:** Phase 17 Task 17-01 landed bounded public
+calibration config parsing. Valid lift-test and cost-per-target YAML/dict
+payloads now resolve into `TimeSeriesCalibrationInput` under
+`ModelConfig.extras["calibration"]`; unsupported keys, `params.dist`,
+repeated/missing steps, malformed row vectors, panel configs, and VI-like fit
+backends fail closed. The change deliberately does not thread parsed
+calibration into pipeline fitting yet. Scoped verification passed:
+`julia --project=. test/model/config.jl`, targeted Runic on
+`src/model/config.jl` and `test/model/config.jl`, and
+`JULIA_PKG_SERVER_REGISTRY_PREFERENCE=eager julia --project=. -e 'using Pkg; Pkg.test(; test_args=["model"])'`
+reporting `Pass 913, Total 913`.
+**Progress:** 25%
+**Paused At:** `.planning/phases/17-calibration-yaml-pipeline/.continue-here.md`
 
 ## Performance Metrics
 
@@ -141,6 +146,7 @@ documentation closure.
 | 14 | 5/5 | Plan complete | Abacus parity recovery across `timeseries`, `geo_panel`, and `geo_brand_panel` demo-style acceptance targets |
 | 15 | 8/8 | Completed | `TimeSeriesMMM` MCMC calibration likelihood wiring, fixture-backed integration evidence, docs, changelog, and ledger guardrails landed for lift-test and cost-per-target terms |
 | 16 | 4/4 | Completed | bounded non-UI manual-allocation evaluation, scenario-plan table projection, combined current/manual/optimized comparison, and docs/changelog/ledger guardrails landed |
+| 17 | 1/4 | In progress | bounded public calibration YAML/dict parsing landed; time-series construction and pipeline threading remain |
 
 **Recent Trend:**
 - Last 5 completed plans: `14-01`, `14-02`, `14-03`, `14-04`, `14-05`
@@ -207,13 +213,13 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 
 ## Pending Todos
 
-- Choose the next parity/capability slice now that Phase 16 is closed. Do not
-  reopen Dash/UI, hosted/background scenario stores, automatic refits, future
-  spend-path simulation, panel manual allocation, or free channel-by-panel
-  allocation without a separate methodological contract.
+- Continue Phase 17 with Task 17-02: thread parsed
+  `ModelConfig.extras["calibration"]` into time-series model construction and
+  reject parsed calibration explicitly for panel construction.
 - Phase 15 calibration likelihood integration is closed; keep the calibration
   row `scaffolded` until a separate contract implements panel, VI,
-  pipeline/YAML, broader saturation-family, or UI calibration paths.
+  pipeline construction/fitting, broader saturation-family, or UI calibration
+  paths.
 - Keep Stage `35` panel holdout validation deferred unless a concrete
   methodological requirement and fixture-backed contract are added.
 - Do not force free channel-by-panel allocation, panel-total bounds, fairness

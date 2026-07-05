@@ -83,6 +83,12 @@ All notable project changes are recorded here. Epsilon is still on the
   and log-density helpers. `PanelMMM` calibration, VI calibration, pipeline/YAML
   ingestion, broader saturation-family calibration, Dash/UI workflows, and
   AI-advisor behaviour remain unsupported.
+- Added bounded public dict/YAML parsing for top-level `calibration` blocks:
+  valid lift-test and cost-per-target row payloads now resolve into the
+  existing typed `TimeSeriesCalibrationInput` under
+  `ModelConfig.extras["calibration"]`. Pipeline fitting, panel calibration, VI
+  calibration, non-logistic lift-test calibration, Dash/UI workflows, and
+  AI-advisor behaviour remain unsupported.
 - Added the first evaluated manual-allocation scenario-planner contract:
   `evaluate_manual_scenario(results, scenario)` and
   `ManualScenarioEvaluationResult` evaluate one `ManualAllocationScenarioSpec`

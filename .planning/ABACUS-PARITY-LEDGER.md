@@ -65,7 +65,7 @@ Each target should pass these gates before it is counted as ported:
 | Multi-dimensional panel MMM | `abacus/mmm/panel.py`, `abacus/mmm/models/panel_types.py` | `src/mmm/panel.jl`, `src/model/types.jl`, `src/postmodel/replay.jl` | scaffolded | `geo_brand_panel` config/data, flattened panel ordering, model-spec metadata, runtime artifact schema, deterministic contribution/decomposition replay, and panel-cell response/metric summaries are covered by validation fixtures; Stage `70` historical-share optimization is implemented for `PanelMMM` and fixture-backed for both `geo_panel` and `geo_brand_panel`. |
 | Hierarchical pooling through priors | `abacus/mmm/panel.py`, `abacus/prior.py` | `src/mmm/panel.jl`, `src/distributions/priors.jl` | scaffolded | Ensure pooling is encoded through priors, not implicit panel defaults. |
 | Mundlak / correlated random effects | Abacus panel/model code and docs | none | missing | Port only after panel-indexed baseline is stable. |
-| Calibration and lift tests | `abacus/mmm/lift_test.py`, `abacus/mmm/calibration/*.py`, `abacus/mmm/builders/calibration.py` | `src/mmm/calibration.jl` | scaffolded | Fixture-backed schema, alignment, monotonicity, scaling, and likelihood-term math (`CalibrationStepConfig`, `exact_row_indices`, `assert_monotonic_lift`, `scale_channel_lift_measurements`, `scale_target_for_lift_measurements`, `scale_lift_measurements`, `lift_test_likelihood_terms`, `cost_per_target_penalties`) are implemented and fixture-tested. Phase 15 has landed the bounded `TimeSeriesMMM` MCMC integration: typed calibration payloads thread through construction, fitting, artifact traceability, VI rejection, and serialization; `_time_series_mmm_model` adds optional independent `Turing.@addlogprob!` terms for centered-logistic lift-test calibration and cost-per-target soft penalties; and fixture-backed integration evidence verifies the accepted combined path against Abacus scaling/graph-helper semantics and a conditioned Turing logjoint. Both calibration terms are additive, optional, and scaled into model space. Status deliberately remains `scaffolded` after Task 15-08 because this ledger row covers more than the implemented bounded slice: `PanelMMM` calibration, VI calibration, pipeline/YAML calibration ingestion, broader lift-test saturation families, Dash/UI workflows, and AI-advisor behaviour remain unsupported or deferred until separate contracts exist. |
+| Calibration and lift tests | `abacus/mmm/lift_test.py`, `abacus/mmm/calibration/*.py`, `abacus/mmm/builders/calibration.py` | `src/mmm/calibration.jl` | scaffolded | Fixture-backed schema, alignment, monotonicity, scaling, and likelihood-term math (`CalibrationStepConfig`, `exact_row_indices`, `assert_monotonic_lift`, `scale_channel_lift_measurements`, `scale_target_for_lift_measurements`, `scale_lift_measurements`, `lift_test_likelihood_terms`, `cost_per_target_penalties`) are implemented and fixture-tested. Phase 15 has landed the bounded `TimeSeriesMMM` MCMC integration: typed calibration payloads thread through construction, fitting, artifact traceability, VI rejection, and serialization; `_time_series_mmm_model` adds optional independent `Turing.@addlogprob!` terms for centered-logistic lift-test calibration and cost-per-target soft penalties; and fixture-backed integration evidence verifies the accepted combined path against Abacus scaling/graph-helper semantics and a conditioned Turing logjoint. Task 17-01 now parses bounded public dict/YAML `calibration` blocks into the existing `TimeSeriesCalibrationInput` payload under `ModelConfig.extras["calibration"]`. Both calibration terms are additive, optional, and scaled into model space. Status deliberately remains `scaffolded` because this ledger row covers more than the implemented bounded slice: `PanelMMM` calibration, VI calibration, pipeline model-construction/fitting integration, broader lift-test saturation families, Dash/UI workflows, and AI-advisor behaviour remain unsupported or deferred until separate contracts exist. |
 
 
 | Fitting and sampler config | `abacus/modeling/base.py`, `abacus/pytensor/sampling.py` | `src/inference/mcmc.jl`, `src/model/config.jl` | scaffolded | Compare sampler config parsing and saved fit metadata; numerical posterior equality is not required. |
@@ -514,6 +514,22 @@ As of 2026-05-10:
     `Pass 88, Total 88`; `make docs` passed with the known non-fatal
     `index.html` size warning; and `git diff --check` passed. The full suite
     was intentionally not run for this documentation closure.
+31. Phase 17 Task 17-01 started bounded calibration YAML/pipeline integration
+    by parsing public dict/YAML `calibration` blocks into the existing typed
+    `TimeSeriesCalibrationInput` payload stored at
+    `ModelConfig.extras["calibration"]`. Valid lift-test and cost-per-target
+    row blocks construct the same row objects as programmatic callers, while
+    unsupported top-level calibration keys, unsupported row keys,
+    `params.dist`, repeated methods, missing matching rows, malformed row
+    vectors, panel configs, and VI-like fit backends fail closed through
+    `ModelConfigError`. The slice deliberately does not yet wire parsed
+    calibration into pipeline model construction or fitting; `PanelMMM`
+    calibration, VI calibration, non-logistic lift-test calibration, Dash/UI,
+    and AI-advisor paths remain unsupported. Scoped verification passed:
+    `julia --project=. test/model/config.jl`, targeted Runic on touched Julia
+    files, and
+    `JULIA_PKG_SERVER_REGISTRY_PREFERENCE=eager julia --project=. -e 'using Pkg; Pkg.test(; test_args=["model"])'`
+    reporting `Pass 913, Total 913`.
 
 
 ## Plan 14-05 Parity Audit

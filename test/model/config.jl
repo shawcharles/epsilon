@@ -518,3 +518,209 @@ end
         ),
     )
 end
+
+@testset "calibration config parses bounded YAML payloads" begin
+    raw = Dict(
+        "data" => Dict("date_column" => "date"),
+        "target" => Dict("column" => "revenue"),
+        "media" => Dict(
+            "channels" => ["tv", "search"],
+            "saturation" => Dict("type" => "logistic"),
+        ),
+        "calibration" => Dict(
+            "steps" => [
+                Dict("method" => "add_lift_test_measurements"),
+                Dict("method" => "add_cost_per_target_calibration"),
+            ],
+            "lift_test" => Dict(
+                "channel" => ["tv", "search"],
+                "x" => [100.0, 50.0],
+                "delta_x" => [20.0, -10.0],
+                "delta_y" => [12.0, -5.0],
+                "sigma" => [3.0, 2.0],
+            ),
+            "cost_per_target" => Dict(
+                "gathered_cpt" => [2.0],
+                "targets" => [1.5],
+                "sigma" => [0.25],
+            ),
+        ),
+    )
+
+    model = model_config_from_dict(raw)
+    calibration = model.extras["calibration"]
+    @test calibration isa TimeSeriesCalibrationInput
+    @test [step.method for step in calibration.steps] == [
+        "add_lift_test_measurements",
+        "add_cost_per_target_calibration",
+    ]
+    @test calibration.lift_test == LiftTestCalibrationRows(
+        channel = ["tv", "search"],
+        x = [100.0, 50.0],
+        delta_x = [20.0, -10.0],
+        delta_y = [12.0, -5.0],
+        sigma = [3.0, 2.0],
+    )
+    @test calibration.cost_per_target == CostPerTargetCalibrationRows(
+        gathered_cpt = [2.0],
+        targets = [1.5],
+        sigma = [0.25],
+    )
+
+    mktempdir() do tmpdir
+        config_path = joinpath(tmpdir, "calibrated.yml")
+        write(
+            config_path,
+            """
+            data:
+              date_column: date
+            target:
+              column: revenue
+            media:
+              channels: [tv]
+              saturation:
+                type: logistic
+            fit:
+              backend: mcmc
+            calibration:
+              steps:
+                - method: add_lift_test_measurements
+              lift_test:
+                channel: [tv]
+                x: [100.0]
+                delta_x: [20.0]
+                delta_y: [12.0]
+                sigma: [3.0]
+            """,
+        )
+
+        loaded = load_public_config(config_path)
+        loaded_calibration = loaded.model_config.extras["calibration"]
+        @test loaded_calibration isa TimeSeriesCalibrationInput
+        @test loaded_calibration.lift_test == LiftTestCalibrationRows(
+            channel = ["tv"],
+            x = [100.0],
+            delta_x = [20.0],
+            delta_y = [12.0],
+            sigma = [3.0],
+        )
+    end
+
+    uncalibrated = model_config_from_dict(
+        Dict(
+            "data" => Dict("date_column" => "date"),
+            "target" => Dict("column" => "revenue"),
+            "media" => Dict("channels" => ["tv"]),
+        ),
+    )
+    @test !haskey(uncalibrated.extras, "calibration")
+end
+
+@testset "calibration config rejects unsupported or malformed payloads" begin
+    base = Dict(
+        "data" => Dict("date_column" => "date"),
+        "target" => Dict("column" => "revenue"),
+        "media" => Dict("channels" => ["tv"], "saturation" => Dict("type" => "logistic")),
+    )
+    lift_rows = Dict(
+        "channel" => ["tv"],
+        "x" => [100.0],
+        "delta_x" => [20.0],
+        "delta_y" => [12.0],
+        "sigma" => [3.0],
+    )
+
+    @test_throws ModelConfigError model_config_from_dict(
+        merge(
+            copy(base),
+            Dict(
+                "dimensions" => Dict("panel" => ["geo"]),
+                "calibration" => Dict(
+                    "steps" => [Dict("method" => "add_lift_test_measurements")],
+                    "lift_test" => lift_rows,
+                ),
+            ),
+        ),
+    )
+    @test_throws ModelConfigError model_config_from_dict(
+        merge(
+            copy(base),
+            Dict(
+                "fit" => Dict("backend" => "vi"),
+                "calibration" => Dict(
+                    "steps" => [Dict("method" => "add_lift_test_measurements")],
+                    "lift_test" => lift_rows,
+                ),
+            ),
+        ),
+    )
+    @test_throws ModelConfigError model_config_from_dict(
+        merge(
+            copy(base),
+            Dict(
+                "calibration" => Dict(
+                    "steps" => [
+                        Dict(
+                            "method" => "add_lift_test_measurements",
+                            "params" => Dict("dist" => "Gamma"),
+                        ),
+                    ],
+                    "lift_test" => lift_rows,
+                ),
+            ),
+        ),
+    )
+    @test_throws ModelConfigError model_config_from_dict(
+        merge(
+            copy(base),
+            Dict(
+                "calibration" => Dict(
+                    "steps" => [
+                        Dict("method" => "add_lift_test_measurements"),
+                        Dict("method" => "add_lift_test_measurements"),
+                    ],
+                    "lift_test" => lift_rows,
+                ),
+            ),
+        ),
+    )
+    @test_throws ModelConfigError model_config_from_dict(
+        merge(copy(base), Dict("calibration" => Dict("steps" => [Dict("method" => "add_lift_test_measurements")]))),
+    )
+    @test_throws ModelConfigError model_config_from_dict(
+        merge(
+            copy(base),
+            Dict(
+                "calibration" => Dict(
+                    "steps" => [Dict("method" => "add_lift_test_measurements")],
+                    "lift_test" => merge(copy(lift_rows), Dict("sigma" => [0.0])),
+                ),
+            ),
+        ),
+    )
+    @test_throws ModelConfigError model_config_from_dict(
+        merge(copy(base), Dict("calibration" => Dict("steps" => []))),
+    )
+    @test_throws ModelConfigError model_config_from_dict(
+        merge(
+            copy(base),
+            Dict(
+                "calibration" => Dict(
+                    "steps" => [Dict("method" => "add_lift_test_measurements")],
+                    "lift_test" => merge(copy(lift_rows), Dict("x" => ["100.0"])),
+                ),
+            ),
+        ),
+    )
+    @test_throws ModelConfigError model_config_from_dict(
+        merge(
+            copy(base),
+            Dict(
+                "calibration" => Dict(
+                    "steps" => [Dict("method" => "add_lift_test_measurements")],
+                    "lift_test" => merge(copy(lift_rows), Dict("unexpected" => [1.0])),
+                ),
+            ),
+        ),
+    )
+end

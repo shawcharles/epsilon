@@ -34,15 +34,19 @@ function model_config_from_dict(
     saturation_cfg = _mapping_or_empty(media_cfg, :saturation)
 
     typed_priors = isempty(priors_cfg) ? Dict{String, Any}() : Dict{String, Any}(deserialize_model_config(priors_cfg))
+    panel_dims = _string_vector_or_empty(dimensions_cfg, :panel)
 
     try
+        calibration = _parse_model_calibration_config(merged, panel_dims)
+        extras = _top_level_extras(merged)
+        isnothing(calibration) || (extras["calibration"] = calibration)
         return ModelConfig(
             date_column = _required_string(data_cfg, :date_column),
             target_column = _required_string(target_cfg, :column),
             target_type = _string_or_default(target_cfg, :type, "revenue"),
             channel_columns = _required_string_vector(media_cfg, :channels),
             control_columns = _string_vector_or_empty(media_cfg, :controls),
-            dims = _string_vector_or_empty(dimensions_cfg, :panel),
+            dims = panel_dims,
             adstock = _deserialize_transform_config(adstock_cfg),
             saturation = _deserialize_transform_config(saturation_cfg),
             seasonality = _deserialize_transform_config(seasonality_cfg),
@@ -51,7 +55,7 @@ function model_config_from_dict(
             holidays = _deserialize_holidays_config(holidays_cfg),
             controls = _deserialize_transform_config(controls_cfg),
             priors = typed_priors,
-            extras = _top_level_extras(merged),
+            extras = extras,
         )
     catch err
         err isa ArgumentError || rethrow()
@@ -227,7 +231,7 @@ function _string_vector_or_empty(config::AbstractDict, key::Symbol; required::Bo
     value isa AbstractVector || throw(ModelConfigError("$(String(key)) must be a list of strings"))
     all(item -> item isa AbstractString, value) ||
         throw(ModelConfigError("$(String(key)) must be a list of strings"))
-    return [String(item) for item in value]
+    return String[String(item) for item in value]
 end
 
 function _string_or_default(config::AbstractDict, key::Symbol, default::AbstractString)
@@ -292,8 +296,202 @@ function _deserialize_holidays_config(config::AbstractDict)
 end
 
 function _top_level_extras(config::AbstractDict)
-    known = Set(("data", "target", "media", "dimensions", "seasonality", "trend", "events", "holidays", "controls", "priors", "fit"))
+    known = Set(
+        (
+            "calibration",
+            "data",
+            "target",
+            "media",
+            "dimensions",
+            "seasonality",
+            "trend",
+            "events",
+            "holidays",
+            "controls",
+            "priors",
+            "fit",
+        ),
+    )
     return Dict{String, Any}(String(key) => value for (key, value) in config if !(String(key) in known))
+end
+
+function _parse_model_calibration_config(
+        config::AbstractDict,
+        panel_dims::AbstractVector{String},
+    )
+    block = _lookup(config, :calibration, nothing)
+    isnothing(block) && return nothing
+    block isa AbstractDict || throw(ModelConfigError("calibration must be a mapping"))
+    _validate_model_calibration_yaml_contract(config, panel_dims)
+
+    normalized = _normalize_config_value(block)
+    allowed = Set(("steps", "lift_test", "lift_test_data", "cost_per_target", "cost_per_target_data"))
+    extra = setdiff(Set(keys(normalized)), allowed)
+    isempty(extra) ||
+        throw(
+        ArgumentError(
+            "calibration includes unsupported keys: $(join(sort!(collect(extra)), ", "))",
+        ),
+    )
+
+    steps = _parse_calibration_steps(normalized)
+    lift_test = _parse_lift_test_calibration_rows(normalized)
+    cost_per_target = _parse_cost_per_target_calibration_rows(normalized)
+    isempty(steps) && isnothing(lift_test) && isnothing(cost_per_target) &&
+        throw(ArgumentError("calibration must include at least one configured step"))
+    return _build_calibration_input(steps, lift_test, cost_per_target)
+end
+
+function _validate_model_calibration_yaml_contract(
+        config::AbstractDict,
+        panel_dims::AbstractVector{String},
+    )
+    isempty(panel_dims) ||
+        throw(
+        ArgumentError(
+            "calibration YAML is supported only for TimeSeriesMMM configs; dimensions.panel must be empty",
+        ),
+    )
+    for key in (:vi, :variational, :approximate_fit)
+        _has_key(config, key) ||
+            continue
+        throw(
+            ArgumentError(
+                "calibration YAML does not support variational inference; use TimeSeriesMMM with fit! (Turing/NUTS)",
+            ),
+        )
+    end
+
+    fit_cfg = _lookup(config, :fit, nothing)
+    isnothing(fit_cfg) && return nothing
+    fit_cfg isa AbstractDict || throw(ModelConfigError("fit configuration must be a mapping"))
+    backend = _lookup(fit_cfg, :backend, nothing)
+    isnothing(backend) && return nothing
+    backend isa AbstractString ||
+        throw(ModelConfigError("fit.backend must be a string when calibration is configured"))
+    backend_name = lowercase(strip(String(backend)))
+    backend_name in ("mcmc", "nuts", "turing") ||
+        throw(
+        ArgumentError(
+            "calibration YAML supports only MCMC/Turing fit backends; got $(String(backend))",
+        ),
+    )
+    return nothing
+end
+
+function _parse_calibration_steps(block::Dict{String, Any})
+    raw_steps = _lookup(block, :steps, nothing)
+    raw_steps isa AbstractVector || throw(ModelConfigError("calibration.steps must be a list"))
+    steps = CalibrationStepConfig[]
+    for (index, raw_step) in enumerate(raw_steps)
+        raw_step isa AbstractDict ||
+            throw(ModelConfigError("calibration.steps[$(index)] must be a mapping"))
+        step = _normalize_config_value(raw_step)
+        allowed = Set(("method", "params"))
+        extra = setdiff(Set(keys(step)), allowed)
+        isempty(extra) ||
+            throw(
+            ArgumentError(
+                "calibration.steps[$(index)] includes unsupported keys: $(join(sort!(collect(extra)), ", "))",
+            ),
+        )
+        method = _lookup(step, :method, nothing)
+        method isa AbstractString ||
+            throw(ModelConfigError("calibration.steps[$(index)].method must be a string"))
+        params = _lookup(step, :params, Dict{String, Any}())
+        params isa AbstractDict ||
+            throw(ModelConfigError("calibration.steps[$(index)].params must be a mapping"))
+        push!(steps, CalibrationStepConfig(method = method, params = params))
+    end
+    return steps
+end
+
+function _parse_lift_test_calibration_rows(block::Dict{String, Any})
+    raw = _single_calibration_rows_block(block, "lift_test", "lift_test_data")
+    isnothing(raw) && return nothing
+    rows = _normalize_config_value(raw)
+    _reject_extra_calibration_row_keys(
+        rows,
+        Set(("channel", "x", "delta_x", "delta_y", "sigma")),
+        "calibration.lift_test",
+    )
+    return LiftTestCalibrationRows(
+        channel = _required_calibration_string_vector(rows, :channel, "calibration.lift_test.channel"),
+        x = _required_calibration_real_vector(rows, :x, "calibration.lift_test.x"),
+        delta_x = _required_calibration_real_vector(rows, :delta_x, "calibration.lift_test.delta_x"),
+        delta_y = _required_calibration_real_vector(rows, :delta_y, "calibration.lift_test.delta_y"),
+        sigma = _required_calibration_real_vector(rows, :sigma, "calibration.lift_test.sigma"),
+    )
+end
+
+function _parse_cost_per_target_calibration_rows(block::Dict{String, Any})
+    raw = _single_calibration_rows_block(block, "cost_per_target", "cost_per_target_data")
+    isnothing(raw) && return nothing
+    rows = _normalize_config_value(raw)
+    _reject_extra_calibration_row_keys(
+        rows,
+        Set(("gathered_cpt", "targets", "sigma")),
+        "calibration.cost_per_target",
+    )
+    return CostPerTargetCalibrationRows(
+        gathered_cpt = _required_calibration_real_vector(rows, :gathered_cpt, "calibration.cost_per_target.gathered_cpt"),
+        targets = _required_calibration_real_vector(rows, :targets, "calibration.cost_per_target.targets"),
+        sigma = _required_calibration_real_vector(rows, :sigma, "calibration.cost_per_target.sigma"),
+    )
+end
+
+function _reject_extra_calibration_row_keys(
+        rows::Dict{String, Any},
+        allowed::Set{String},
+        name::AbstractString,
+    )
+    extra = setdiff(Set(keys(rows)), allowed)
+    isempty(extra) ||
+        throw(
+        ArgumentError(
+            "$(name) includes unsupported keys: $(join(sort!(collect(extra)), ", "))",
+        ),
+    )
+    return nothing
+end
+
+function _single_calibration_rows_block(
+        block::Dict{String, Any},
+        preferred::AbstractString,
+        alias::AbstractString,
+    )
+    has_preferred = haskey(block, preferred)
+    has_alias = haskey(block, alias)
+    has_preferred && has_alias &&
+        throw(ArgumentError("calibration must not define both $(preferred) and $(alias)"))
+    raw = has_preferred ? block[preferred] : has_alias ? block[alias] : nothing
+    isnothing(raw) && return nothing
+    raw isa AbstractDict || throw(ModelConfigError("calibration.$(preferred) must be a mapping"))
+    return raw
+end
+
+function _required_calibration_string_vector(
+        block::Dict{String, Any},
+        key::Symbol,
+        name::AbstractString,
+    )
+    value = _lookup(block, key, nothing)
+    value isa AbstractVector || throw(ModelConfigError("$(name) must be a list"))
+    all(item -> item isa AbstractString, value) ||
+        throw(ModelConfigError("$(name) must be a list of strings"))
+    return String[String(item) for item in value]
+end
+
+function _required_calibration_real_vector(
+        block::Dict{String, Any},
+        key::Symbol,
+        name::AbstractString,
+    )
+    value = _lookup(block, key, nothing)
+    value isa AbstractVector || throw(ModelConfigError("$(name) must be a list"))
+    all(item -> item isa Real, value) ||
+        throw(ModelConfigError("$(name) must be a list of numbers"))
+    return Float64[Float64(item) for item in value]
 end
 
 function _merge_public_config(
