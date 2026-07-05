@@ -45,7 +45,7 @@ Each target should pass these gates before it is counted as ported:
 
 | Abacus Area | Abacus Source | Epsilon Target | Status | Next Work |
 |---|---|---|---|---|
-| Package identity and public exports | `abacus/__init__.py`, `abacus/version.py` | `src/Epsilon.jl` | scaffolded | Audit exports against the supported core API and remove or document surfaces that are not parity-backed. |
+| Package identity and public exports | `abacus/__init__.py`, `abacus/version.py` | `src/Epsilon.jl`, `docs/src/api.md`, `test/api_exports.jl` | scaffolded | Current exports are inventoried and support-classified in user docs, with a guard test preventing silent undocumented exports. Breaking export cleanup, deprecation, and stronger Abacus API compatibility claims remain future work. |
 | YAML/public builder | `abacus/mmm/builders/*.py`, `abacus/pipeline/config.py` | `src/model/config.jl`, `src/model/builder.jl`, `src/pipeline/config.jl` | scaffolded | Build config-normalization fixtures from Abacus demo configs and compare the resolved typed spec. |
 | Data validation and preprocessing | `abacus/mmm/preprocessing.py`, `abacus/mmm/validating.py`, `abacus/mmm/models/panel_data.py` | `src/model/types.jl`, `src/model/builder.jl`, `src/mmm/media.jl`, `src/mmm/panel.jl` | scaffolded | `PanelAxis`, `PanelCoordinate`, `panel_axis`, and `panel_coordinates` expose deterministic flat `panel_cell` reconstruction for one-dimensional and multidimensional panels, with declared coordinate columns kept in model order. `ntime`, `npanels`, and `npanel_observations` make panel observation semantics explicit while `nobs(::PanelMMMData)` remains the compatibility flat panel-cell count. Add remaining fixtures for date ordering, channel/control columns, missingness, panel keys, and holdout splits. |
 | Scaling | `abacus/mmm/scaling.py`, `abacus/mmm/preprocessing.py` | `src/transforms/scaling.jl`, `src/mmm/controls.jl` | ported | Keep parity tests tied to Abacus fixture exports; extend to panel-scaled tensors. |
@@ -588,6 +588,20 @@ As of 2026-05-10:
     because hosted/background stores, pipeline store emission, automatic
     refits, future spend paths, panel manual allocation, free channel-by-panel
     allocation, and Dash UI remain unsupported.
+36. Phase 19 landed public API export hygiene for the package identity/public
+    exports row. `docs/src/api.md` defines support bands and inventories the
+    200 current loaded exports from `names(Epsilon; all = false, imported =
+    false)` with `:Epsilon` removed. `test/api_exports.jl` parses only the
+    marked inventory table and rejects missing, duplicate, empty/malformed, or
+    stale rows, so future exports require explicit support-status wording.
+    `docs/make.jl` now includes the Public API page. The ledger row remains
+    `scaffolded`: this is an audit and guardrail, not broad Abacus package/API
+    parity, and breaking export cleanup plus docstring-completeness remediation
+    remain future work. Verification passed with focused `api_exports` tests
+    (`Pass 610, Total 610`), Runic on touched Julia files, `make docs`,
+    `git diff --check`, and the phase-closing `make check-full` gate with
+    full `Pkg.test()` reporting `Pass 4720, Total 4720` in 21m02.6s followed
+    by a successful docs build.
 
 
 ## Plan 14-05 Parity Audit

@@ -8,22 +8,30 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 18 scenario-store artifacts are complete. Existing
-non-UI `ScenarioPlanResult` tables can now be persisted as local
-Epsilon/Julia-version-bound typed store artifacts with CSV inspection sidecars
-and compatibility guardrails, while hosted/background stores, pipeline store
-emission, automatic refits, future spend paths, Dash/UI, and panel manual
-allocation remain unsupported.
+**Current focus:** Phase 19 public API export hygiene is complete. The current
+loaded-module export surface is inventoried in user docs with support bands
+and guarded by a focused `api_exports` test. Package identity/public exports
+remain `scaffolded`; breaking export cleanup, docstring-completeness
+remediation, and stronger Abacus API compatibility claims remain future work.
 
 ## Current Position
 
-**Current Phase:** 18
-**Current Phase Name:** Scenario Store Artifacts
-**Total Phases:** 18
-**Current Plan:** Phase 18 complete; choose the next bounded parity/capability slice
+**Current Phase:** 19
+**Current Phase Name:** Public API Export Hygiene
+**Total Phases:** 19
+**Current Plan:** Phase 19 complete; choose the next bounded release-prep slice
 **Total Plans in Phase:** 4 tasks
-**Status:** Phase 18 is complete at
-`.planning/phases/18-scenario-store-artifacts/PLAN.md`. Phase 18 was planned
+**Status:** Phase 19 is complete at
+`.planning/phases/19-public-api-export-hygiene/PLAN.md`. `docs/src/api.md`
+now defines support bands and carries the marked machine-checkable public API
+inventory, `test/api_exports.jl` compares that inventory exactly against
+`Set(Symbol.(names(Epsilon; all = false, imported = false)))` minus `:Epsilon`,
+and `docs/make.jl` includes the page in the docs navigation. The package
+identity/public exports ledger row remains `scaffolded`; this phase documents
+and guards the current surface without removing exports or claiming broad
+Abacus API parity. Phase 18 is complete at
+`.planning/phases/18-scenario-store-artifacts/PLAN.md`.
+Phase 18 was planned
 before implementation and the plan was reviewed by a subagent under the Three
 Man Team workflow. The landed surface adds `ScenarioStoreArtifact`,
 `write_scenario_store`, `load_scenario_store`, `scenario_store_plan`, and
@@ -130,19 +138,19 @@ evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
 are landed for both accepted calibration terms, but the wider Abacus
 calibration surface is not complete.
 **Last Activity:** 2026-07-05
-**Last Activity Description:** Phase 18 landed local non-UI scenario-store
-artifacts for existing `ScenarioPlanResult` tables, with typed payload
-serialization, CSV inspection sidecars, copied table projection, strict
-allocation-table validation, and compatibility rejection for metadata, spec,
-coordinate metadata, channel order, objective, and current-baseline mismatches.
-Docs, changelog, roadmap, state, and ledger guardrails keep hosted/background
-stores, pipeline store emission, automatic refits, future spend paths, Dash/UI,
-and panel manual allocation unsupported. Scoped verification passed: targeted
-Runic on touched Julia/test files, focused scenario-planner tests with
-`Pass 129, Total 129`, `make docs` with the known non-fatal `index.html` size
-warning and deployment skipped outside CI, and `git diff --check`.
+**Last Activity Description:** Phase 19 landed the public API support
+inventory and export guardrail without editing `src/Epsilon.jl` or changing
+modelling semantics. `docs/src/api.md` lists 200 current loaded exports under
+support bands; `test/api_exports.jl` guards the table against missing,
+duplicate, empty/malformed, or stale rows. Three Man Team plan and
+implementation reviews cleared with no remaining Must Fix items. Verification
+passed: focused `api_exports` test reported `Pass 610, Total 610`; Runic passed
+on touched Julia files; `make docs` passed with the known non-fatal
+`index.html` size warning; `git diff --check` passed; and the phase-closing
+`make check-full` passed with full `Pkg.test()` reporting `Pass 4720, Total
+4720` in 21m02.6s, followed by a successful docs build.
 **Progress:** 100%
-**Paused At:** `.planning/phases/18-scenario-store-artifacts/.continue-here.md`
+**Paused At:** `.planning/phases/19-public-api-export-hygiene/PLAN.md`
 
 ## Performance Metrics
 
@@ -172,6 +180,7 @@ warning and deployment skipped outside CI, and `git diff --check`.
 | 16 | 4/4 | Completed | bounded non-UI manual-allocation evaluation, scenario-plan table projection, combined current/manual/optimized comparison, and docs/changelog/ledger guardrails landed |
 | 17 | 4/4 | Completed | bounded calibration YAML/dict parsing, time-series constructor threading, time-series MCMC pipeline fit-stage support, and docs/changelog/ledger guardrails landed |
 | 18 | 4/4 | Completed | local scenario-store artifacts for existing `ScenarioPlanResult` tables, CSV inspection sidecars, compatibility guardrails, and docs/changelog/ledger closure landed |
+| 19 | 4/4 | Completed | public API support inventory, docs navigation, focused export guardrail, and conservative changelog/planning/ledger closure landed |
 
 **Recent Trend:**
 - Last 5 completed plans: `14-01`, `14-02`, `14-03`, `14-04`, `14-05`
@@ -238,10 +247,13 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 
 ## Pending Todos
 
-- Choose the next bounded parity/capability slice after Phase 18; do not extend
-  scenario planning into hosted/background stores, automatic refits, future
-  spend paths, pipeline store emission, Dash/UI, or panel manual allocation
-  without a separate methodological contract.
+- Choose the next bounded release-prep slice; do not
+  extend scenario planning into hosted/background stores, automatic refits,
+  future spend paths, pipeline store emission, Dash/UI, or panel manual
+  allocation without a separate methodological contract.
+- Public API export hygiene is guarded, but docstring-completeness remediation
+  remains a separate future task if maintainers want to enforce the full
+  technical-standard docstring rule across every export.
 - Phase 15 calibration likelihood integration is closed; keep the calibration
   row `scaffolded` until a separate contract implements panel, VI,
   broader saturation-family, or UI calibration paths.

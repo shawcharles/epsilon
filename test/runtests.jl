@@ -8,6 +8,7 @@ _run_test_layer(name::Symbol) = isempty(_REQUESTED_TEST_LAYERS) || name in _REQU
 
 @testset "Epsilon.jl" begin
     _run_test_layer(:basic) && include("basic.jl")
+    _run_test_layer(:api_exports) && include("api_exports.jl")
     _run_test_layer(:distributions) && include("distributions/runtests.jl")
     _run_test_layer(:model) && include("model/runtests.jl")
     _run_test_layer(:inference) && include("inference/runtests.jl")

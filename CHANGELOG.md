@@ -113,6 +113,9 @@ All notable project changes are recorded here. Epsilon is still on the
   local Epsilon/Julia-version-bound artifact contract, not Dash/UI, hosted
   stores, background jobs, automatic refits, future spend simulation, pipeline
   emission, or panel manual allocation.
+- Added a public API support-status inventory in the docs plus a focused
+  `api_exports` test layer that compares the marked inventory table against
+  the loaded `Epsilon` module export surface.
 - Documented the bounded calibration YAML/pipeline surface with the supported
   top-level `calibration` shape and explicit unsupported paths for panel
   calibration, VI calibration, non-logistic lift-test calibration, Dash/UI

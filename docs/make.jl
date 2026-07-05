@@ -7,6 +7,7 @@ makedocs(
     format = Documenter.HTML(; prettyurls = get(ENV, "CI", "false") == "true"),
     pages = [
         "Home" => "index.md",
+        "Public API" => "api.md",
         "Calibration" => "calibration.md",
         "Release Gate" => "release.md",
         "Benchmarks" => "benchmarks.md",

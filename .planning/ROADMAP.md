@@ -152,6 +152,12 @@ Current repository state on 2026-05-18:
   payloads with CSV inspection sidecars and compatibility guardrails, while
   Dash/UI, hosted/background stores, automatic refits, future spend paths,
   pipeline store emission, and panel manual allocation remain out of scope
+- Phase 19 is closed: the current loaded-module public export surface is
+  inventoried in `docs/src/api.md` with support bands, and a focused
+  `api_exports` guard test prevents silent undocumented exports. The package
+  identity/public exports ledger row remains `scaffolded`; breaking export
+  cleanup, docstring-completeness remediation, and stronger Abacus API
+  compatibility claims remain future work
 
 ## Phases
 
@@ -209,6 +215,9 @@ Current repository state on 2026-05-18:
       sidecars and compatibility guardrails, without adding hosted stores,
       background jobs, automatic refits, future spend paths, pipeline emission,
       Dash/UI, or panel manual allocation.
+- [x] **Phase 19: Public API Export Hygiene** - Inventory the current exported
+      public surface in user docs and guard it with a focused test, without
+      changing exports or model semantics.
 
 ## Phase Details
 
