@@ -2,7 +2,7 @@
 
 ## Status
 
-Task 16-01 is landed. Tasks 16-02 through 16-04 remain.
+Tasks 16-01 and 16-02 are landed. Tasks 16-03 and 16-04 remain.
 
 ## Goal
 
@@ -91,6 +91,15 @@ efficiency using the existing response-surface interpolation path.
 
 ## Task 16-02: Scenario Plan Table Projection
 
+**Status: Landed (2026-07-05).** Added `scenario_plan` overloads for one
+`ManualScenarioEvaluationResult` or a vector of manual evaluation results. The
+manual path projects current plus manual-allocation rows into
+`ScenarioPlanResult` totals, channel, allocation, and metadata tables with
+explicit `scenario_type = "manual_allocation"` values. The existing
+`scenario_plan(::BudgetOptimizationResult)` output remains backward
+compatible. Task 16-03 remains responsible for combining manual evaluations
+with solved fixed-budget optimization output.
+
 **Description:** Project one or more `ManualScenarioEvaluationResult` values
 into `ScenarioPlanResult` tables alongside the current scenario. This task
 should preserve the existing current-versus-optimized `scenario_plan(result)`
@@ -98,16 +107,16 @@ method and add a clearly separate manual-evaluation path.
 
 **Acceptance criteria:**
 
-- [ ] Manual rows appear in totals, channel, allocation, and metadata tables.
-- [ ] Existing `scenario_plan(::BudgetOptimizationResult)` output remains
+- [x] Manual rows appear in totals, channel, allocation, and metadata tables.
+- [x] Existing `scenario_plan(::BudgetOptimizationResult)` output remains
       backward compatible.
-- [ ] Table columns distinguish `manual_allocation` from
+- [x] Table columns distinguish `manual_allocation` from
       `fixed_budget_optimized`.
 
 **Verification:**
 
-- [ ] `julia --project=. -e 'using Pkg; Pkg.test(; test_args=["scenario_planner"])'`
-- [ ] Targeted Runic check on touched Julia files.
+- [x] `julia --project=. -e 'using Pkg; Pkg.test(; test_args=["scenario_planner"])'`
+- [x] Targeted Runic check on touched Julia files.
 
 **Dependencies:** Task 16-01.
 

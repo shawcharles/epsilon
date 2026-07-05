@@ -89,6 +89,10 @@ All notable project changes are recorded here. Epsilon is still on the
   against existing time-series response surfaces without refitting, solving a
   new optimization problem, adding Dash/UI workflow, or introducing panel
   manual-allocation semantics.
+- Extended `scenario_plan` so one or more evaluated manual-allocation scenarios
+  project into `ScenarioPlanResult` totals, channel, allocation, and metadata
+  tables with explicit `manual_allocation` scenario rows while preserving the
+  existing solved-optimization table contract.
 
 ### Changed
 

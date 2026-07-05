@@ -266,6 +266,39 @@ function scenario_plan(
     return ScenarioPlanResult(totals, channels, allocations, metadata, channel_panel_allocations)
 end
 
+"""
+    scenario_plan(evaluation; current_scenario=...)
+    scenario_plan(evaluations; current_scenario=...)
+
+Project evaluated manual-allocation scenarios into deterministic non-UI
+scenario-planner tables.
+
+This overload consumes one or more `ManualScenarioEvaluationResult` values.
+It reports the supplied current scenario plus each evaluated manual allocation
+as `scenario_type = "manual_allocation"`. It does not refit, optimize, simulate
+future spend paths, or combine manual rows with solved optimization output; use
+the optimizer-backed `scenario_plan(result)` method for solved fixed-budget
+optimization results.
+"""
+function scenario_plan(
+        evaluation::ManualScenarioEvaluationResult;
+        current_scenario::CurrentScenarioSpec = CurrentScenarioSpec(name = "Current"),
+    )
+    return scenario_plan([evaluation]; current_scenario)
+end
+
+function scenario_plan(
+        evaluations::AbstractVector{<:ManualScenarioEvaluationResult};
+        current_scenario::CurrentScenarioSpec = CurrentScenarioSpec(name = "Current"),
+    )
+    normalized = _validated_manual_evaluations(evaluations)
+    totals = _manual_scenario_totals_table(normalized, current_scenario)
+    channels = _manual_scenario_channels_table(normalized, current_scenario)
+    allocations = _manual_scenario_allocations_table(normalized, current_scenario)
+    metadata = _manual_scenario_metadata_table(normalized, current_scenario)
+    return ScenarioPlanResult(totals, channels, allocations, metadata, DataFrame())
+end
+
 function _scenario_date(value, field::AbstractString)
     isnothing(value) && return nothing
     value isa Date && return value
@@ -428,6 +461,30 @@ function _scenario_response_delta(current::Real, optimized::Real)
     return Float64(optimized) - Float64(current)
 end
 
+function _validated_manual_evaluations(evaluations::AbstractVector{<:ManualScenarioEvaluationResult})
+    isempty(evaluations) &&
+        throw(ArgumentError("scenario_plan requires at least one manual scenario evaluation"))
+    normalized = collect(evaluations)
+    reference = first(normalized)
+    for evaluation in normalized[2:end]
+        evaluation.metadata == reference.metadata ||
+            throw(ArgumentError("scenario_plan requires manual evaluations from the same model artifact"))
+        evaluation.spec == reference.spec ||
+            throw(ArgumentError("scenario_plan requires manual evaluations with the same model spec"))
+        evaluation.coordinate_metadata == reference.coordinate_metadata ||
+            throw(ArgumentError("scenario_plan requires manual evaluations with the same coordinate metadata"))
+        evaluation.objective == reference.objective ||
+            throw(ArgumentError("scenario_plan requires manual evaluations with the same objective"))
+        evaluation.current_spend == reference.current_spend ||
+            throw(ArgumentError("scenario_plan requires manual evaluations with the same current spend baseline"))
+        evaluation.current_response == reference.current_response ||
+            throw(ArgumentError("scenario_plan requires manual evaluations with the same current response baseline"))
+        evaluation.current_default_efficiency == reference.current_default_efficiency ||
+            throw(ArgumentError("scenario_plan requires manual evaluations with the same current efficiency baseline"))
+    end
+    return normalized
+end
+
 function _scenario_totals_table(
         result::_BudgetOptimizationResultLike,
         current::CurrentScenarioSpec,
@@ -450,6 +507,54 @@ function _scenario_totals_table(
             result.optimized_default_efficiency - result.current_default_efficiency,
         ],
         objective = fill(String(result.objective), 2),
+    )
+end
+
+function _manual_scenario_totals_table(
+        evaluations::AbstractVector{ManualScenarioEvaluationResult},
+        current::CurrentScenarioSpec,
+    )
+    reference = first(evaluations)
+    current_total_spend = _scenario_total_spend(reference.current_spend)
+    scenario_id = [current.scenario_id]
+    scenario_name = [current.name]
+    scenario_type = ["current"]
+    total_spend = [current_total_spend]
+    expected_response = [reference.current_response]
+    response_delta_vs_baseline = [0.0]
+    spend_delta_vs_baseline = [0.0]
+    default_efficiency_metric = [_scenario_efficiency_metric(reference.spec)]
+    default_efficiency = [reference.current_default_efficiency]
+    default_efficiency_delta_vs_baseline = [0.0]
+    objective = [String(reference.objective)]
+
+    for evaluation in evaluations
+        manual_total_spend = _scenario_total_spend(evaluation.manual_spend)
+        push!(scenario_id, evaluation.scenario.scenario_id)
+        push!(scenario_name, evaluation.scenario.name)
+        push!(scenario_type, "manual_allocation")
+        push!(total_spend, manual_total_spend)
+        push!(expected_response, evaluation.manual_response)
+        push!(response_delta_vs_baseline, _scenario_response_delta(evaluation.current_response, evaluation.manual_response))
+        push!(spend_delta_vs_baseline, manual_total_spend - current_total_spend)
+        push!(default_efficiency_metric, _scenario_efficiency_metric(evaluation.spec))
+        push!(default_efficiency, evaluation.manual_default_efficiency)
+        push!(default_efficiency_delta_vs_baseline, evaluation.manual_default_efficiency - evaluation.current_default_efficiency)
+        push!(objective, String(evaluation.objective))
+    end
+
+    return DataFrame(;
+        scenario_id,
+        scenario_name,
+        scenario_type,
+        total_spend,
+        expected_response,
+        response_delta_vs_baseline,
+        spend_delta_vs_baseline,
+        default_efficiency_metric,
+        default_efficiency,
+        default_efficiency_delta_vs_baseline,
+        objective,
     )
 end
 
@@ -502,6 +607,57 @@ function _scenario_channels_table(
     )
 end
 
+function _manual_scenario_channels_table(
+        evaluations::AbstractVector{ManualScenarioEvaluationResult},
+        current::CurrentScenarioSpec,
+    )
+    reference = first(evaluations)
+    current_total_spend = _scenario_total_spend(reference.current_spend)
+
+    scenario_id = String[]
+    scenario_name = String[]
+    scenario_type = String[]
+    channel = String[]
+    spend = Float64[]
+    spend_share = Float64[]
+    expected_response = Union{Missing, Float64}[]
+    default_efficiency_metric = String[]
+
+    for channel_name in reference.spec.channel_columns
+        push!(scenario_id, current.scenario_id)
+        push!(scenario_name, current.name)
+        push!(scenario_type, "current")
+        push!(channel, channel_name)
+        push!(spend, reference.current_spend[channel_name])
+        push!(spend_share, _safe_metric_ratio(reference.current_spend[channel_name], current_total_spend))
+        push!(expected_response, missing)
+        push!(default_efficiency_metric, _scenario_efficiency_metric(reference.spec))
+
+        for evaluation in evaluations
+            manual_total_spend = _scenario_total_spend(evaluation.manual_spend)
+            push!(scenario_id, evaluation.scenario.scenario_id)
+            push!(scenario_name, evaluation.scenario.name)
+            push!(scenario_type, "manual_allocation")
+            push!(channel, channel_name)
+            push!(spend, evaluation.manual_spend[channel_name])
+            push!(spend_share, _safe_metric_ratio(evaluation.manual_spend[channel_name], manual_total_spend))
+            push!(expected_response, missing)
+            push!(default_efficiency_metric, _scenario_efficiency_metric(evaluation.spec))
+        end
+    end
+
+    return DataFrame(;
+        scenario_id,
+        scenario_name,
+        scenario_type,
+        channel,
+        spend,
+        spend_share,
+        expected_response,
+        default_efficiency_metric,
+    )
+end
+
 function _channel_response_lookup(result::BudgetOptimizationResult)
     return Dict{String, Float64}(), Dict{String, Float64}()
 end
@@ -540,6 +696,56 @@ function _scenario_allocations_table(
     return table
 end
 
+function _manual_scenario_allocations_table(
+        evaluations::AbstractVector{ManualScenarioEvaluationResult},
+        current::CurrentScenarioSpec,
+    )
+    reference = first(evaluations)
+    current_total_spend = _scenario_total_spend(reference.current_spend)
+
+    baseline_scenario_id = String[]
+    scenario_id = String[]
+    scenario_type = String[]
+    channel = String[]
+    current_spend = Float64[]
+    scenario_spend = Float64[]
+    spend_delta = Float64[]
+    current_share = Float64[]
+    scenario_share = Float64[]
+    scenario_vs_current_pct = Float64[]
+
+    for evaluation in evaluations
+        manual_total_spend = _scenario_total_spend(evaluation.manual_spend)
+        for channel_name in evaluation.spec.channel_columns
+            current_channel_spend = evaluation.current_spend[channel_name]
+            manual_channel_spend = evaluation.manual_spend[channel_name]
+            push!(baseline_scenario_id, current.scenario_id)
+            push!(scenario_id, evaluation.scenario.scenario_id)
+            push!(scenario_type, "manual_allocation")
+            push!(channel, channel_name)
+            push!(current_spend, current_channel_spend)
+            push!(scenario_spend, manual_channel_spend)
+            push!(spend_delta, manual_channel_spend - current_channel_spend)
+            push!(current_share, _safe_metric_ratio(current_channel_spend, current_total_spend))
+            push!(scenario_share, _safe_metric_ratio(manual_channel_spend, manual_total_spend))
+            push!(scenario_vs_current_pct, _safe_metric_ratio(manual_channel_spend, current_channel_spend) - 1.0)
+        end
+    end
+
+    return DataFrame(;
+        baseline_scenario_id,
+        scenario_id,
+        scenario_type,
+        channel,
+        current_spend,
+        scenario_spend,
+        spend_delta,
+        current_share,
+        scenario_share,
+        scenario_vs_current_pct,
+    )
+end
+
 function _scenario_metadata_table(
         result::_BudgetOptimizationResultLike,
         current::CurrentScenarioSpec,
@@ -569,6 +775,55 @@ function _scenario_metadata_table(
         metadata[!, :panel_allocation_mode] = fill(String(result.panel_allocation_mode), 2)
     end
     return metadata
+end
+
+function _manual_scenario_metadata_table(
+        evaluations::AbstractVector{ManualScenarioEvaluationResult},
+        current::CurrentScenarioSpec,
+    )
+    reference = first(evaluations)
+    scenario_id = [current.scenario_id]
+    scenario_name = [current.name]
+    scenario_type = ["current"]
+    start_date = [_date_string(current.start_date)]
+    end_date = [_date_string(current.end_date)]
+    requested_total_budget = [NaN]
+    response_variable = [""]
+    solver_status = [""]
+    model_type = [reference.metadata.model_type]
+    inference_backend = [String(reference.metadata.backend)]
+    objective = [String(reference.objective)]
+    default_efficiency_metric = [_scenario_efficiency_metric(reference.spec)]
+
+    for evaluation in evaluations
+        push!(scenario_id, evaluation.scenario.scenario_id)
+        push!(scenario_name, evaluation.scenario.name)
+        push!(scenario_type, "manual_allocation")
+        push!(start_date, _date_string(evaluation.scenario.start_date))
+        push!(end_date, _date_string(evaluation.scenario.end_date))
+        push!(requested_total_budget, _scenario_total_spend(evaluation.manual_spend))
+        push!(response_variable, _SCENARIO_DEFAULT_RESPONSE_VARIABLE)
+        push!(solver_status, "")
+        push!(model_type, evaluation.metadata.model_type)
+        push!(inference_backend, String(evaluation.metadata.backend))
+        push!(objective, String(evaluation.objective))
+        push!(default_efficiency_metric, _scenario_efficiency_metric(evaluation.spec))
+    end
+
+    return DataFrame(;
+        scenario_id,
+        scenario_name,
+        scenario_type,
+        start_date,
+        end_date,
+        requested_total_budget,
+        response_variable,
+        solver_status,
+        model_type,
+        inference_backend,
+        objective,
+        default_efficiency_metric,
+    )
 end
 
 function _date_string(value::Union{Nothing, Date})

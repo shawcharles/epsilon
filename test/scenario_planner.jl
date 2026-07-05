@@ -264,3 +264,87 @@ end
     @test_throws ArgumentError Epsilon._manual_evaluation_total_budget(zero_total)
     @test_throws ArgumentError Epsilon._evaluate_manual_scenario(problem, out_of_domain)
 end
+
+@testset "scenario_plan projects manual evaluations into comparison tables" begin
+    full_problem = _manual_scenario_problem()
+    full_scenario = ManualAllocationScenarioSpec(
+        name = "Manual Mix",
+        allocation = Dict("tv" => 120.0, "search" => 30.0),
+        start_date = "2024-01-01",
+        end_date = "2024-01-31",
+    )
+    subset_problem = _manual_scenario_problem(; optimized_channels = ["tv"], total_budget = 120.0)
+    subset_scenario = ManualAllocationScenarioSpec(
+        name = "TV Upweight",
+        allocation = Dict("tv" => 120.0),
+        start_date = "2024-01-01",
+        end_date = "2024-01-31",
+    )
+    full_evaluation = Epsilon._evaluate_manual_scenario(full_problem, full_scenario)
+    subset_evaluation = Epsilon._evaluate_manual_scenario(subset_problem, subset_scenario)
+    current = CurrentScenarioSpec(
+        name = "Current Plan",
+        start_date = "2024-01-01",
+        end_date = "2024-01-31",
+    )
+
+    plan = scenario_plan([full_evaluation, subset_evaluation]; current_scenario = current)
+    @test plan isa ScenarioPlanResult
+    @test isempty(plan.channel_panel_allocations)
+
+    @test plan.totals.scenario_id == ["current-plan", "manual-mix", "tv-upweight"]
+    @test plan.totals.scenario_type == ["current", "manual_allocation", "manual_allocation"]
+    @test plan.totals.total_spend == [150.0, 150.0, 170.0]
+    @test plan.totals.expected_response == [100.0, 98.0, 110.0]
+    @test plan.totals.response_delta_vs_baseline == [0.0, -2.0, 10.0]
+    @test plan.totals.spend_delta_vs_baseline == [0.0, 0.0, 20.0]
+
+    @test names(plan.channels) == [
+        "scenario_id",
+        "scenario_name",
+        "scenario_type",
+        "channel",
+        "spend",
+        "spend_share",
+        "expected_response",
+        "default_efficiency_metric",
+    ]
+    @test size(plan.channels, 1) == 6
+    @test plan.channels.scenario_type == [
+        "current",
+        "manual_allocation",
+        "manual_allocation",
+        "current",
+        "manual_allocation",
+        "manual_allocation",
+    ]
+    @test plan.channels.channel == ["tv", "tv", "tv", "search", "search", "search"]
+    @test plan.channels.spend == [100.0, 120.0, 120.0, 50.0, 30.0, 50.0]
+
+    @test names(plan.allocations) == [
+        "baseline_scenario_id",
+        "scenario_id",
+        "scenario_type",
+        "channel",
+        "current_spend",
+        "scenario_spend",
+        "spend_delta",
+        "current_share",
+        "scenario_share",
+        "scenario_vs_current_pct",
+    ]
+    @test size(plan.allocations, 1) == 4
+    @test plan.allocations.scenario_id == ["manual-mix", "manual-mix", "tv-upweight", "tv-upweight"]
+    @test plan.allocations.scenario_type == fill("manual_allocation", 4)
+    @test plan.allocations.spend_delta == [20.0, -20.0, 20.0, 0.0]
+
+    @test plan.metadata.scenario_id == ["current-plan", "manual-mix", "tv-upweight"]
+    @test plan.metadata.scenario_type == ["current", "manual_allocation", "manual_allocation"]
+    @test isnan(plan.metadata.requested_total_budget[1])
+    @test plan.metadata.requested_total_budget[2:3] == [150.0, 170.0]
+    @test plan.metadata.solver_status == ["", "", ""]
+end
+
+@testset "scenario_plan manual projection validates inputs" begin
+    @test_throws ArgumentError scenario_plan(ManualScenarioEvaluationResult[])
+end
