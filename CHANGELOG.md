@@ -93,6 +93,10 @@ All notable project changes are recorded here. Epsilon is still on the
   project into `ScenarioPlanResult` totals, channel, allocation, and metadata
   tables with explicit `manual_allocation` scenario rows while preserving the
   existing solved-optimization table contract.
+- Extended `scenario_plan` again so compatible evaluated manual-allocation
+  scenarios and one solved fixed-budget optimization result can be projected
+  into one deterministic current/manual/optimized `ScenarioPlanResult`, with
+  hard artifact and baseline mismatch rejection before table construction.
 
 ### Changed
 

@@ -144,7 +144,9 @@ remediation pass on the bounded reference time-series story:
   `scenario_plan(result)` tables over solved budget optimization results. It
   also evaluates time-series manual allocations against existing fitted
   response surfaces and projects evaluated manual scenarios into
-  `ScenarioPlanResult` tables without refitting or re-optimizing. The surface
+  `ScenarioPlanResult` tables without refitting or re-optimizing. Compatible
+  evaluated manual scenarios and one solved fixed-budget optimization result
+  can also be compared in a single deterministic plan. The surface
   mirrors Abacus's reusable business-planning store semantics without Dash UI,
   background jobs, automatic scenario refits, or free panel allocation
 - the bounded calibration surface now supports `TimeSeriesMMM` MCMC
@@ -406,8 +408,9 @@ Epsilon.write_plot_bundle
 ## Scenario Planner
 
 Phase 16 extends the bounded non-UI scenario-planner surface with time-series
-manual-allocation evaluation and table projection over existing response
-surfaces.
+manual-allocation evaluation, table projection over existing response surfaces,
+and combined current/manual/optimized comparison against already solved
+fixed-budget optimization results.
 
 ```@docs
 Epsilon.ScenarioDataArraySpec

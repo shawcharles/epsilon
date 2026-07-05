@@ -128,6 +128,59 @@ function _manual_scenario_problem(; optimized_channels = ["tv", "search"], total
     )
 end
 
+function _combined_scenario_test_result()
+    problem = _manual_scenario_problem()
+    current_spend = Dict("tv" => 100.0, "search" => 50.0)
+    optimized_spend = Dict("tv" => 110.0, "search" => 40.0)
+    return BudgetOptimizationResult(
+        problem.metadata,
+        problem.spec,
+        problem.coordinate_metadata,
+        problem.objective,
+        problem.optimized_channels,
+        problem.fixed_channels,
+        current_spend,
+        optimized_spend,
+        problem.current_response,
+        108.0,
+        100.0 / 150.0,
+        108.0 / 150.0,
+        :locally_solved,
+        108.0,
+        Dict{String, Any}("termination_status" => "LOCALLY_SOLVED"),
+        problem.constraint_audit,
+    )
+end
+
+function _manual_evaluation_with(
+        evaluation::ManualScenarioEvaluationResult;
+        metadata = evaluation.metadata,
+        spec = evaluation.spec,
+        coordinate_metadata = evaluation.coordinate_metadata,
+        scenario = evaluation.scenario,
+        objective = evaluation.objective,
+        current_spend = evaluation.current_spend,
+        manual_spend = evaluation.manual_spend,
+        current_response = evaluation.current_response,
+        manual_response = evaluation.manual_response,
+        current_default_efficiency = evaluation.current_default_efficiency,
+        manual_default_efficiency = evaluation.manual_default_efficiency,
+    )
+    return ManualScenarioEvaluationResult(
+        metadata,
+        spec,
+        coordinate_metadata,
+        scenario,
+        objective,
+        current_spend,
+        manual_spend,
+        current_response,
+        manual_response,
+        current_default_efficiency,
+        manual_default_efficiency,
+    )
+end
+
 @testset "scenario planner specs validate bounded Abacus-like semantics" begin
     current = CurrentScenarioSpec(name = "Status Quo FY24", start_date = "2024-01-01", end_date = Date(2024, 1, 31))
     @test current.scenario_id == "status-quo-fy24"
@@ -347,4 +400,101 @@ end
 
 @testset "scenario_plan manual projection validates inputs" begin
     @test_throws ArgumentError scenario_plan(ManualScenarioEvaluationResult[])
+end
+
+@testset "scenario_plan combines manual evaluations with solved optimization" begin
+    result = _combined_scenario_test_result()
+    first_scenario = ManualAllocationScenarioSpec(
+        name = "Manual Mix",
+        allocation = Dict("tv" => 120.0, "search" => 30.0),
+        start_date = "2024-01-01",
+        end_date = "2024-01-31",
+    )
+    second_scenario = ManualAllocationScenarioSpec(
+        name = "Search Hold",
+        allocation = Dict("tv" => 100.0, "search" => 50.0),
+        start_date = "2024-01-01",
+        end_date = "2024-01-31",
+    )
+    first_evaluation = Epsilon._evaluate_manual_scenario(_manual_scenario_problem(), first_scenario)
+    second_evaluation = Epsilon._evaluate_manual_scenario(_manual_scenario_problem(), second_scenario)
+    current = CurrentScenarioSpec(
+        name = "Current Plan",
+        start_date = "2024-01-01",
+        end_date = "2024-01-31",
+    )
+    optimized = FixedBudgetOptimizedScenarioSpec(
+        name = "Optimized Plan",
+        start_date = "2024-01-01",
+        end_date = "2024-01-31",
+        total_budget = 150.0,
+    )
+
+    plan = scenario_plan(result, [first_evaluation, second_evaluation]; current_scenario = current, optimized_scenario = optimized)
+    single_plan = scenario_plan(result, first_evaluation; current_scenario = current, optimized_scenario = optimized)
+
+    @test plan.totals.scenario_id == ["current-plan", "manual-mix", "search-hold", "optimized-plan"]
+    @test plan.totals.scenario_type == ["current", "manual_allocation", "manual_allocation", "fixed_budget_optimized"]
+    @test plan.totals.expected_response == [100.0, 98.0, 100.0, 108.0]
+    @test plan.totals.response_delta_vs_baseline == [0.0, -2.0, 0.0, 8.0]
+    @test single_plan.totals.scenario_id == ["current-plan", "manual-mix", "optimized-plan"]
+
+    @test plan.channels.channel == ["tv", "tv", "tv", "tv", "search", "search", "search", "search"]
+    @test plan.channels.scenario_type == [
+        "current",
+        "manual_allocation",
+        "manual_allocation",
+        "fixed_budget_optimized",
+        "current",
+        "manual_allocation",
+        "manual_allocation",
+        "fixed_budget_optimized",
+    ]
+    @test plan.channels.spend == [100.0, 120.0, 100.0, 110.0, 50.0, 30.0, 50.0, 40.0]
+
+    @test size(plan.allocations, 1) == 6
+    @test plan.allocations.scenario_id[1:4] == ["manual-mix", "manual-mix", "search-hold", "search-hold"]
+    @test plan.allocations.optimized_scenario_id[5:6] == ["optimized-plan", "optimized-plan"]
+    @test plan.metadata.scenario_id == ["current-plan", "manual-mix", "search-hold", "optimized-plan"]
+    @test plan.metadata.solver_status == ["", "", "", "locally_solved"]
+    @test isempty(plan.channel_panel_allocations)
+end
+
+@testset "scenario_plan rejects combined artifact mismatches" begin
+    result = _combined_scenario_test_result()
+    scenario = ManualAllocationScenarioSpec(
+        name = "Manual Mix",
+        allocation = Dict("tv" => 120.0, "search" => 30.0),
+    )
+    evaluation = Epsilon._evaluate_manual_scenario(_manual_scenario_problem(), scenario)
+    different_metadata = ModelArtifactMetadata(
+        1,
+        epsilon_version(),
+        VERSION,
+        "2026-05-20T00:00:00Z",
+        "TimeSeriesMMM",
+        :mcmc,
+        :success,
+    )
+    different_spec = _scenario_test_result(; target_type = "conversion").spec
+    different_coordinates = ModelCoordinateMetadata(
+        "date",
+        (),
+        Dict("date" => ["2024-01-01"], "channel" => ["search", "tv"]),
+        Dict{String, Tuple{Vararg{String}}}(),
+    )
+
+    mismatches = [
+        _manual_evaluation_with(evaluation; metadata = different_metadata),
+        _manual_evaluation_with(evaluation; spec = different_spec),
+        _manual_evaluation_with(evaluation; coordinate_metadata = different_coordinates),
+        _manual_evaluation_with(evaluation; objective = :incremental_response),
+        _manual_evaluation_with(evaluation; current_spend = Dict("tv" => 99.0, "search" => 50.0)),
+        _manual_evaluation_with(evaluation; current_response = 99.0),
+        _manual_evaluation_with(evaluation; current_default_efficiency = 0.5),
+    ]
+
+    for mismatched in mismatches
+        @test_throws ArgumentError scenario_plan(result, mismatched)
+    end
 end

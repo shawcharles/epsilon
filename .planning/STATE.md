@@ -19,7 +19,7 @@ scenario stores, or introducing free channel-by-panel allocation.
 **Current Phase:** 16
 **Current Phase Name:** Scenario Planner Manual Allocation Evaluation
 **Total Phases:** 16
-**Current Plan:** 16-03
+**Current Plan:** 16-04
 **Total Plans in Phase:** 4 tasks
 **Status:** Phase 16 is planned at
 `.planning/phases/16-scenario-planner-manual-allocation/PLAN.md`. Task 16-01
@@ -30,9 +30,11 @@ re-optimizing, simulating future paths, or adding panel allocation semantics.
 Task 16-02 is landed: evaluated manual scenarios now project into
 `ScenarioPlanResult` totals, channel, allocation, and metadata tables with
 explicit `manual_allocation` rows while preserving the existing optimizer-backed
-`scenario_plan(::BudgetOptimizationResult)` contract. Task 16-03 is next and
-should combine current, manual, and optimized scenarios safely when the caller
-supplies both manual evaluations and a solved optimization result. Phase 15
+`scenario_plan(::BudgetOptimizationResult)` contract. Task 16-03 is landed:
+compatible manual evaluations and one solved optimization result can now be
+combined into one current/manual/optimized `ScenarioPlanResult` with hard
+artifact and baseline mismatch rejection. Task 16-04 is next and should close
+docs, changelog, and ledger guardrails for the bounded Phase 16 surface. Phase 15
 Tasks 15-01 through 15-08 are landed.
 Tasks 15-01 through
 15-03 froze the
@@ -94,17 +96,19 @@ Calibration/lift-test parity remains a `scaffolded` ledger row after Phase 15:
 evidence, and docs are landed for both accepted calibration terms, but the
 wider Abacus calibration surface is not complete.
 **Last Activity:** 2026-07-05
-**Last Activity Description:** Phase 16 Task 16-02 landed manual scenario table
-projection. `scenario_plan` now accepts one `ManualScenarioEvaluationResult` or
-a vector of manual evaluation results and returns `ScenarioPlanResult` tables
-with current plus `manual_allocation` rows in totals, channel, allocation, and
-metadata outputs. The existing solved-optimization
-`scenario_plan(::BudgetOptimizationResult)` output remains backward compatible.
-The slice still does not combine manual and optimized rows; that remains Task
-16-03. Scoped verification passed:
-`julia --project=. -e 'using Pkg; Pkg.test(; test_args=["scenario_planner"])'`
-reported `Pass 67, Total 67`; targeted Runic and `git diff --check` passed.
-**Progress:** 50%
+**Last Activity Description:** Phase 16 Task 16-03 landed combined
+current/manual/optimized scenario planning. `scenario_plan(result, evaluation)`
+and `scenario_plan(result, evaluations)` now accept a solved
+`BudgetOptimizationResult` or `PanelBudgetOptimizationResult` plus compatible
+already evaluated manual-allocation scenarios, reject mismatched artifact
+metadata/model spec/coordinate metadata/objective/current-baseline fields, and
+return one deterministic `ScenarioPlanResult` without fitting, manual
+reevaluation, or a new optimization solve. Scoped verification passed:
+targeted Runic on `src/scenario_planner.jl` and `test/scenario_planner.jl`,
+`git diff --check`, and
+`JULIA_PKG_SERVER_REGISTRY_PREFERENCE=eager julia --project=. -e 'using Pkg; Pkg.test(; test_args=["scenario_planner"])'`
+reported `Pass 88, Total 88`.
+**Progress:** 75%
 **Paused At:** `.planning/phases/16-scenario-planner-manual-allocation/.continue-here.md`
 
 ## Performance Metrics
@@ -132,7 +136,7 @@ reported `Pass 67, Total 67`; targeted Runic and `git diff --check` passed.
 | 13 | 6/6 | Completed | fitted trend/holiday prediction-state repair, media-domain validation, pipeline YAML contract hardening, and final release-gate revalidation landed |
 | 14 | 5/5 | Plan complete | Abacus parity recovery across `timeseries`, `geo_panel`, and `geo_brand_panel` demo-style acceptance targets |
 | 15 | 8/8 | Completed | `TimeSeriesMMM` MCMC calibration likelihood wiring, fixture-backed integration evidence, docs, changelog, and ledger guardrails landed for lift-test and cost-per-target terms |
-| 16 | 2/4 | In progress | manual-allocation response evaluation and scenario-plan table projection landed for the bounded non-UI scenario planner |
+| 16 | 3/4 | In progress | manual-allocation response evaluation, scenario-plan table projection, and combined current/manual/optimized comparison landed for the bounded non-UI scenario planner |
 
 **Recent Trend:**
 - Last 5 completed plans: `14-01`, `14-02`, `14-03`, `14-04`, `14-05`
@@ -243,10 +247,9 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 ## Session
 
 **Last Date:** 2026-07-05
-**Stopped At:** Phase 16 Tasks 16-01 and 16-02 are landed. Resume with Task
-16-03: combine current, manual, and optimized scenarios safely when the caller
-supplies both manual evaluations and a solved optimization result. Refuse
-mismatched model specs or coordinate metadata. Do not widen into automatic
+**Stopped At:** Phase 16 Tasks 16-01 through 16-03 are landed. Resume with
+Task 16-04: close docs, changelog, and ledger guardrails for the bounded
+manual-allocation scenario-planner surface. Do not widen into automatic
 scenario refits, Dash/UI, background scenario stores, or panel manual
 allocation.
 **Resume File:** `.planning/phases/16-scenario-planner-manual-allocation/.continue-here.md`

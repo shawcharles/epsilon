@@ -2,7 +2,7 @@
 
 ## Status
 
-Tasks 16-01 and 16-02 are landed. Tasks 16-03 and 16-04 remain.
+Tasks 16-01, 16-02, and 16-03 are landed. Task 16-04 remains.
 
 ## Goal
 
@@ -18,8 +18,8 @@ In scope:
 - `TimeSeriesMMM`/`InferenceResults` manual channel-allocation evaluation.
 - Existing `ManualAllocationScenarioSpec` inputs.
 - Existing response-curve and bounded optimization interpolation semantics.
-- Deterministic comparison tables against current spend and, later, solved
-  fixed-budget optimization results.
+- Deterministic comparison tables against current spend and solved fixed-budget
+  optimization results.
 
 Out of scope:
 
@@ -41,8 +41,8 @@ Out of scope:
   because panel response curves use shared historical-scaling deltas, not
   direct channel-by-panel spend cells.
 - The existing `ManualAllocationScenarioSpec` remains an intent object. Task
-  16-01 adds an evaluated result object; later tasks project that result into
-  `ScenarioPlanResult` tables.
+  16-01 adds an evaluated result object; Tasks 16-02 and 16-03 project that
+  result into `ScenarioPlanResult` tables.
 
 ## Task 16-01: Manual Scenario Evaluation Contract
 
@@ -124,24 +124,36 @@ method and add a clearly separate manual-evaluation path.
 
 ## Task 16-03: Optimized Plus Manual Comparison
 
+**Status: Landed (2026-07-05).** Added `scenario_plan(result, evaluation)` and
+`scenario_plan(result, evaluations)` overloads so current, already evaluated
+manual-allocation scenarios, and one solved fixed-budget optimization result can
+be compared in one deterministic `ScenarioPlanResult`. The combined path
+validates artifact metadata, model spec, coordinate metadata, objective,
+current spend, current response, and current efficiency before table
+construction. It reuses the existing manual-only and optimizer-only table
+builders and does not refit, evaluate a manual scenario, or solve a new
+optimization problem.
+
 **Description:** Allow a scenario plan to combine current, manual, and solved
-fixed-budget optimized scenarios when the caller supplies both the original
-grouped `InferenceResults` and the solved optimization result. This is the
+fixed-budget optimized scenarios when the caller supplies already evaluated
+manual scenarios and the solved optimization result. This is the
 analyst-facing comparison surface: current plan, proposed manual mix, and
 optimizer recommendation.
 
 **Acceptance criteria:**
 
-- [ ] Manual and optimized scenarios can be compared in one deterministic
+- [x] Manual and optimized scenarios can be compared in one deterministic
       result.
-- [ ] The function refuses mismatched model specs or coordinate metadata
+- [x] The function refuses mismatched model specs or coordinate metadata
       between grouped results and optimization results.
-- [ ] No additional optimization solve or model fit is triggered.
+- [x] No additional optimization solve or model fit is triggered.
 
 **Verification:**
 
-- [ ] Scenario planner tests.
-- [ ] Optimisation summary tests if shared table helpers change.
+- [x] Scenario planner tests.
+- [x] Optimisation summary tests if shared table helpers change.
+      Not run separately because Task 16-03 reused existing optimizer table
+      helpers without editing optimization summary code.
 
 **Dependencies:** Tasks 16-01 and 16-02.
 
@@ -178,11 +190,11 @@ After Task 16-01: **COMPLETE (2026-07-05).**
 
 ## Checkpoint B: Planner Projection
 
-After Tasks 16-02 and 16-03:
+After Tasks 16-02 and 16-03: **COMPLETE (2026-07-05).**
 
-- [ ] Manual scenarios appear in comparison tables.
-- [ ] Existing optimized scenario tables are backward compatible.
-- [ ] Combined current/manual/optimized comparison refuses mismatched artifacts.
+- [x] Manual scenarios appear in comparison tables.
+- [x] Existing optimized scenario tables are backward compatible.
+- [x] Combined current/manual/optimized comparison refuses mismatched artifacts.
 
 ## Checkpoint C: Closure
 
@@ -204,8 +216,8 @@ After Task 16-04:
 
 ## Open Questions
 
-- Should Task 16-03 accept multiple manual scenarios in one call, or should that
-  wait for saved scenario-store artifacts?
+- Task 16-03 accepts one or more already evaluated manual scenarios directly;
+  saved scenario-store artifacts remain outside Phase 16.
 - Should manual scenario evaluation expose uncertainty intervals from draw-level
   response curves, or keep the first surface on posterior-mean response for
   parity with Phase 8 optimization?

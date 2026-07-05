@@ -237,6 +237,7 @@ end
 
 """
     scenario_plan(result; current_scenario=..., optimized_scenario=nothing)
+    scenario_plan(result, evaluation/evaluations; current_scenario=..., optimized_scenario=nothing)
 
 Build deterministic scenario-planner comparison tables from a solved
 `BudgetOptimizationResult` or `PanelBudgetOptimizationResult`.
@@ -245,6 +246,11 @@ This function is intentionally a reporting/planning projection. It does not
 simulate new spend paths, refit models, or solve another optimization problem.
 For panel results it preserves the v1 historical-share policy already encoded
 by `optimize_budget`.
+
+When supplied with already evaluated manual-allocation scenarios, the combined
+overload returns one plan with current, manual, and optimised scenarios after
+verifying that all artifacts share the same model metadata, spec, coordinate
+metadata, objective, and current baseline.
 """
 function scenario_plan(
         result::_BudgetOptimizationResultLike;
@@ -266,6 +272,34 @@ function scenario_plan(
     return ScenarioPlanResult(totals, channels, allocations, metadata, channel_panel_allocations)
 end
 
+function scenario_plan(
+        result::_BudgetOptimizationResultLike,
+        evaluation::ManualScenarioEvaluationResult;
+        current_scenario::CurrentScenarioSpec = CurrentScenarioSpec(name = "Current"),
+        optimized_scenario::Union{Nothing, FixedBudgetOptimizedScenarioSpec} = nothing,
+    )
+    return scenario_plan(result, [evaluation]; current_scenario, optimized_scenario)
+end
+
+function scenario_plan(
+        result::_BudgetOptimizationResultLike,
+        evaluations::AbstractVector{<:ManualScenarioEvaluationResult};
+        current_scenario::CurrentScenarioSpec = CurrentScenarioSpec(name = "Current"),
+        optimized_scenario::Union{Nothing, FixedBudgetOptimizedScenarioSpec} = nothing,
+    )
+    normalized = _validated_manual_evaluations(evaluations)
+    _validate_manual_evaluations_match_optimization(result, normalized)
+    optimized = _optimized_scenario_spec(result, current_scenario, optimized_scenario)
+
+    manual_plan = scenario_plan(normalized; current_scenario)
+    optimized_plan = scenario_plan(result; current_scenario, optimized_scenario = optimized)
+    totals = vcat(manual_plan.totals, _without_current_rows(optimized_plan.totals))
+    channels = _combined_scenario_channels_table(manual_plan.channels, optimized_plan.channels, result.spec.channel_columns)
+    allocations = vcat(manual_plan.allocations, optimized_plan.allocations; cols = :union)
+    metadata = vcat(manual_plan.metadata, _without_current_rows(optimized_plan.metadata); cols = :union)
+    return ScenarioPlanResult(totals, channels, allocations, metadata, optimized_plan.channel_panel_allocations)
+end
+
 """
     scenario_plan(evaluation; current_scenario=...)
     scenario_plan(evaluations; current_scenario=...)
@@ -276,9 +310,9 @@ scenario-planner tables.
 This overload consumes one or more `ManualScenarioEvaluationResult` values.
 It reports the supplied current scenario plus each evaluated manual allocation
 as `scenario_type = "manual_allocation"`. It does not refit, optimize, simulate
-future spend paths, or combine manual rows with solved optimization output; use
-the optimizer-backed `scenario_plan(result)` method for solved fixed-budget
-optimization results.
+future spend paths, or solve optimization. Use `scenario_plan(result, evaluations)`
+when compatible manual evaluations and a solved fixed-budget optimization
+result should be compared in one plan.
 """
 function scenario_plan(
         evaluation::ManualScenarioEvaluationResult;
@@ -485,6 +519,46 @@ function _validated_manual_evaluations(evaluations::AbstractVector{<:ManualScena
     return normalized
 end
 
+function _validate_manual_evaluations_match_optimization(
+        result::_BudgetOptimizationResultLike,
+        evaluations::AbstractVector{ManualScenarioEvaluationResult},
+    )
+    reference = first(evaluations)
+    result.metadata == reference.metadata ||
+        throw(ArgumentError("scenario_plan requires manual evaluations and optimization result from the same model artifact"))
+    result.spec == reference.spec ||
+        throw(ArgumentError("scenario_plan requires manual evaluations and optimization result with the same model spec"))
+    result.coordinate_metadata == reference.coordinate_metadata ||
+        throw(ArgumentError("scenario_plan requires manual evaluations and optimization result with the same coordinate metadata"))
+    result.objective == reference.objective ||
+        throw(ArgumentError("scenario_plan requires manual evaluations and optimization result with the same objective"))
+    result.current_spend == reference.current_spend ||
+        throw(ArgumentError("scenario_plan requires manual evaluations and optimization result with the same current spend baseline"))
+    result.current_response == reference.current_response ||
+        throw(ArgumentError("scenario_plan requires manual evaluations and optimization result with the same current response baseline"))
+    result.current_default_efficiency == reference.current_default_efficiency ||
+        throw(ArgumentError("scenario_plan requires manual evaluations and optimization result with the same current efficiency baseline"))
+    return nothing
+end
+
+function _optimized_scenario_spec(
+        result::_BudgetOptimizationResultLike,
+        current_scenario::CurrentScenarioSpec,
+        optimized_scenario::Union{Nothing, FixedBudgetOptimizedScenarioSpec},
+    )
+    isnothing(optimized_scenario) || return optimized_scenario
+    return FixedBudgetOptimizedScenarioSpec(
+        name = "Optimized",
+        start_date = current_scenario.start_date,
+        end_date = current_scenario.end_date,
+        total_budget = result.constraint_audit.total_budget,
+    )
+end
+
+function _without_current_rows(table::DataFrame)
+    return filter(:scenario_type => !=("current"), table)
+end
+
 function _scenario_totals_table(
         result::_BudgetOptimizationResultLike,
         current::CurrentScenarioSpec,
@@ -656,6 +730,26 @@ function _manual_scenario_channels_table(
         expected_response,
         default_efficiency_metric,
     )
+end
+
+function _combined_scenario_channels_table(
+        manual_channels::DataFrame,
+        optimized_channels::DataFrame,
+        channel_columns::AbstractVector{String},
+    )
+    combined = manual_channels[[], :]
+    for channel_name in channel_columns
+        append!(combined, manual_channels[manual_channels.channel .== channel_name, :])
+        append!(
+            combined,
+            optimized_channels[
+                (optimized_channels.channel .== channel_name) .&
+                    (optimized_channels.scenario_type .!= "current"),
+                :,
+            ],
+        )
+    end
+    return combined
 end
 
 function _channel_response_lookup(result::BudgetOptimizationResult)
