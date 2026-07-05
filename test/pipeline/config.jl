@@ -55,6 +55,72 @@ end
     @test loaded.optimization_config["enabled"] == false
 end
 
+@testset "_load_pipeline_configuration accepts bounded calibration payloads" begin
+    mktempdir() do tmpdir
+        config_path = joinpath(tmpdir, "calibrated.yml")
+        write(
+            config_path,
+            """
+            data:
+              date_column: date
+              dataset_path: data.csv
+            target:
+              column: revenue
+            media:
+              channels: [tv, search]
+              saturation:
+                type: logistic
+            fit:
+              backend: mcmc
+              draws: 8
+              tune: 8
+              chains: 1
+              cores: 1
+              progressbar: false
+              compute_convergence_checks: false
+            calibration:
+              steps:
+                - method: add_lift_test_measurements
+                - method: add_cost_per_target_calibration
+              lift_test:
+                channel: [tv]
+                x: [1.0]
+                delta_x: [0.5]
+                delta_y: [0.3]
+                sigma: [0.1]
+              cost_per_target:
+                gathered_cpt: [2.0]
+                targets: [1.5]
+                sigma: [0.2]
+            """,
+        )
+
+        loaded = Epsilon._load_pipeline_configuration(PipelineRunConfig(config_path = config_path))
+        calibration = loaded.model_config.extras["calibration"]
+
+        @test haskey(loaded.model_config_dict, "calibration")
+        @test calibration isa TimeSeriesCalibrationInput
+        @test loaded.sampler_config.draws == 8
+        @test loaded.sampler_config.tune == 8
+        @test [step.method for step in calibration.steps] == [
+            "add_lift_test_measurements",
+            "add_cost_per_target_calibration",
+        ]
+        @test calibration.lift_test == LiftTestCalibrationRows(
+            channel = ["tv"],
+            x = [1.0],
+            delta_x = [0.5],
+            delta_y = [0.3],
+            sigma = [0.1],
+        )
+        @test calibration.cost_per_target == CostPerTargetCalibrationRows(
+            gathered_cpt = [2.0],
+            targets = [1.5],
+            sigma = [0.2],
+        )
+    end
+end
+
 @testset "prior_sensitivity conservative_mmm expands bounded prior scenarios" begin
     mktempdir() do tmpdir
         config_path = joinpath(tmpdir, "prior_sensitivity.yml")
@@ -260,6 +326,62 @@ end
         )
         @test_throws ArgumentError Epsilon._load_pipeline_configuration(
             PipelineRunConfig(config_path = structure_prior_path),
+        )
+
+        panel_calibration_path = joinpath(tmpdir, "panel_calibration.yml")
+        write(
+            panel_calibration_path,
+            """
+            data:
+              date_column: date
+              dataset_path: data.csv
+            target:
+              column: revenue
+            dimensions:
+              panel: [geo]
+            media:
+              channels: [tv]
+            calibration:
+              steps:
+                - method: add_lift_test_measurements
+              lift_test:
+                channel: [tv]
+                x: [1.0]
+                delta_x: [0.5]
+                delta_y: [0.3]
+                sigma: [0.1]
+            """,
+        )
+        @test_throws ModelConfigError Epsilon._load_pipeline_configuration(
+            PipelineRunConfig(config_path = panel_calibration_path),
+        )
+
+        calibrated_vi_path = joinpath(tmpdir, "calibrated_vi.yml")
+        write(
+            calibrated_vi_path,
+            """
+            data:
+              date_column: date
+              dataset_path: data.csv
+            target:
+              column: revenue
+            media:
+              channels: [tv]
+            fit:
+              backend: vi
+            calibration:
+              steps:
+                - method: add_lift_test_measurements
+              lift_test:
+                channel: [tv]
+                x: [1.0]
+                delta_x: [0.5]
+                delta_y: [0.3]
+                sigma: [0.1]
+            """,
+        )
+        @test_throws ArgumentError Epsilon._load_pipeline_configuration(
+            PipelineRunConfig(config_path = calibrated_vi_path),
         )
     end
 end

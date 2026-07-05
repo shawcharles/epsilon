@@ -71,6 +71,7 @@ end
 
 const _PIPELINE_ALLOWED_FIT_KEYS = Set(
     (
+        "backend",
         "draws",
         "tune",
         "chains",
@@ -125,6 +126,7 @@ const _PIPELINE_BLOCKED_TOP_LEVEL_KEYS = Set(("vi", "variational", "approximate_
 const _PIPELINE_ALLOWED_TOP_LEVEL_KEYS = Set(
     (
         "ai_advisor",
+        "calibration",
         "controls",
         "data",
         "dimensions",
@@ -322,6 +324,22 @@ function _validate_pipeline_fit_contract(config::Dict{String, Any})
         throw(
         ArgumentError(
             "run_pipeline does not support additional fit keys in the bounded Phase 9 YAML surface: $(join(sort!(collect(extra)), ", "))",
+        ),
+    )
+    _validate_pipeline_fit_backend(fit_cfg)
+    return nothing
+end
+
+function _validate_pipeline_fit_backend(fit_cfg::AbstractDict)
+    backend = _lookup(fit_cfg, :backend, nothing)
+    isnothing(backend) && return nothing
+    backend isa AbstractString ||
+        throw(ModelConfigError("fit.backend must be a string"))
+    backend_name = lowercase(strip(String(backend)))
+    backend_name in ("mcmc", "nuts", "turing") ||
+        throw(
+        ArgumentError(
+            "run_pipeline supports only MCMC/Turing fit backends; got $(String(backend))",
         ),
     )
     return nothing

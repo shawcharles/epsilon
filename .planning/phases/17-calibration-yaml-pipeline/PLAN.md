@@ -2,7 +2,7 @@
 
 ## Status
 
-Tasks 17-01 and 17-02 are landed. Tasks 17-03 and 17-04 remain.
+Tasks 17-01 through 17-03 are landed. Task 17-04 remains.
 
 ## Goal
 
@@ -109,18 +109,27 @@ validation strict for unsupported calibration shapes.
 
 **Acceptance criteria:**
 
-- [ ] Pipeline top-level allowlist accepts `calibration`.
-- [ ] Time-series MCMC pipeline model construction receives parsed calibration.
-- [ ] Pipeline rejects panel calibration and VI-like calibration before fit.
-- [ ] A tiny calibrated pipeline smoke test proves the artifact contains a
+- [x] Pipeline top-level allowlist accepts `calibration`.
+- [x] Time-series MCMC pipeline model construction receives parsed calibration.
+- [x] Pipeline rejects panel calibration and VI-like calibration before fit.
+- [x] A tiny calibrated pipeline smoke test proves the artifact contains a
       resolved `MMMCalibrationSpec`.
 
 **Verification:**
 
-- [ ] Targeted pipeline config/run tests.
-- [ ] Targeted model calibration tests as needed.
+- [x] Targeted pipeline config tests.
+- [x] Targeted pipeline calibration fit-stage smoke.
 
 **Dependencies:** Tasks 17-01 and 17-02.
+
+**Status:** Landed. Pipeline YAML now accepts bounded top-level
+`calibration` blocks and accepts `fit.backend` only for MCMC/Turing aliases.
+The pipeline loader passes parsed calibration through `ModelConfig`, and the
+time-series metadata/fit path constructs a calibrated `TimeSeriesMMM` through
+the same constructor path as programmatic use. Panel calibration and VI-like
+pipeline calibration are rejected before fit. A small pipeline fit-stage smoke
+verifies the saved/fitted model artifact carries a resolved
+`MMMCalibrationSpec` with lift-test and cost-per-target payloads.
 
 ## Task 17-04: Docs, Changelog, And Ledger Guardrails
 

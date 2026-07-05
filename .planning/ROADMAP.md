@@ -142,8 +142,9 @@ Current repository state on 2026-05-18:
 - Phase 17 has started: Task 17-01 parses bounded public `calibration`
   YAML/dict blocks into the existing typed `TimeSeriesCalibrationInput` under
   `ModelConfig.extras["calibration"]`; Task 17-02 threads that parsed payload
-  into time-series construction with explicit panel rejection, while keeping
-  pipeline fitting, panel calibration, VI calibration, non-logistic lift-test
+  into time-series construction with explicit panel rejection; Task 17-03
+  threads the parsed payload through bounded time-series MCMC pipeline fitting,
+  while keeping panel calibration, VI calibration, non-logistic lift-test
   calibration, Dash/UI, and AI-advisor paths out of scope
 
 ## Phases
