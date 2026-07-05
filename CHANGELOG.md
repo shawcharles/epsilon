@@ -104,6 +104,10 @@ All notable project changes are recorded here. Epsilon is still on the
   scenarios and one solved fixed-budget optimization result can be projected
   into one deterministic current/manual/optimized `ScenarioPlanResult`, with
   hard artifact and baseline mismatch rejection before table construction.
+- Documented the bounded calibration YAML/pipeline surface with the supported
+  top-level `calibration` shape and explicit unsupported paths for panel
+  calibration, VI calibration, non-logistic lift-test calibration, Dash/UI
+  workflows, and AI-advisor behaviour.
 
 ### Changed
 

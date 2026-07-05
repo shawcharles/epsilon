@@ -2,7 +2,7 @@
 
 ## Status
 
-Tasks 17-01 through 17-03 are landed. Task 17-04 remains.
+Phase 17 is complete. Tasks 17-01 through 17-04 are landed.
 
 ## Goal
 
@@ -139,17 +139,29 @@ calibration row beyond `scaffolded`.
 
 **Acceptance criteria:**
 
-- [ ] Docs show the supported YAML shape and unsupported paths.
-- [ ] Changelog records the capability without implying panel/VI/UI support.
-- [ ] Ledger remains conservative and explicitly names remaining unsupported
+- [x] Docs show the supported YAML shape and unsupported paths.
+- [x] Changelog records the capability without implying panel/VI/UI support.
+- [x] Ledger remains conservative and explicitly names remaining unsupported
       calibration surfaces.
 
 **Verification:**
 
-- [ ] `make docs`
-- [ ] Targeted model/pipeline tests from the closed slice.
+- [x] `make docs`
+- [x] Targeted model/pipeline tests from the closed slice.
 
 **Dependencies:** Tasks 17-01 through 17-03.
+
+**Status:** Landed. The calibration docs now show the accepted top-level YAML
+`calibration` shape for bounded time-series MCMC configs and state that the
+public dict/YAML path resolves into the same `TimeSeriesCalibrationInput`
+payload as programmatic construction. The docs, changelog, and ledger also keep
+the unsupported surface explicit: `PanelMMM` calibration, VI calibration,
+non-logistic lift-test saturation, automatic row generation from artifacts,
+Dash/UI workflows, and AI-advisor behaviour remain outside the implemented
+contract. The broad calibration ledger row deliberately remains `scaffolded`.
+The phase reused the targeted model/pipeline verification from Tasks 17-01
+through 17-03 and closed this docs-only task with a docs build and whitespace
+check.
 
 ## Risks And Mitigations
 

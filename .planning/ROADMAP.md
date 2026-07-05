@@ -139,13 +139,14 @@ Current repository state on 2026-05-18:
   AI-advisor behaviour out of scope until separate contracts exist
 - Phase 16 is now closed with documentation, changelog, and ledger guardrails
   matching the bounded non-UI manual-allocation surface
-- Phase 17 has started: Task 17-01 parses bounded public `calibration`
+- Phase 17 is now closed: Task 17-01 parses bounded public `calibration`
   YAML/dict blocks into the existing typed `TimeSeriesCalibrationInput` under
   `ModelConfig.extras["calibration"]`; Task 17-02 threads that parsed payload
   into time-series construction with explicit panel rejection; Task 17-03
-  threads the parsed payload through bounded time-series MCMC pipeline fitting,
-  while keeping panel calibration, VI calibration, non-logistic lift-test
-  calibration, Dash/UI, and AI-advisor paths out of scope
+  threads the parsed payload through bounded time-series MCMC pipeline fitting;
+  and Task 17-04 closes docs, changelog, and ledger guardrails while keeping
+  panel calibration, VI calibration, non-logistic lift-test calibration,
+  Dash/UI, and AI-advisor paths out of scope
 
 ## Phases
 
@@ -194,7 +195,7 @@ Current repository state on 2026-05-18:
       manually specified channel allocations against existing fitted
       time-series response surfaces, keeping scenario planning non-UI,
       no-refit, and bounded away from free panel allocation.
-- [ ] **Phase 17: Calibration YAML And Pipeline Integration** - Expose the
+- [x] **Phase 17: Calibration YAML And Pipeline Integration** - Expose the
       bounded `TimeSeriesMMM` MCMC calibration likelihood through public
       YAML/config and pipeline construction without widening the unsupported
       panel, VI, non-logistic, Dash/UI, or AI-advisor calibration surfaces.

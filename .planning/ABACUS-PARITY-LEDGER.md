@@ -446,10 +446,11 @@ As of 2026-05-10:
     it does not add panel calibration, VI calibration, pipeline integration,
     broader YAML expansion, Dash/UI parity, or AI-advisor behavior.
 26. Phase 15 Task 15-08 closed the documentation and ledger guardrails for the
-    bounded calibration slice. The calibration docs now describe the supported
+    bounded calibration slice at the Phase 15 boundary. The calibration docs
+    described the supported
     surface as `TimeSeriesMMM` MCMC only, with centered-logistic lift-test
     calibration and cost-per-target soft penalties as optional additive
-    scaled-space terms. They also explicitly document unsupported paths:
+    scaled-space terms. They also explicitly documented unsupported paths:
     `PanelMMM` calibration, VI calibration, pipeline/YAML ingestion,
     non-logistic lift-test saturation families, Dash/UI workflows, and
     AI-advisor behaviour. `CHANGELOG.md` records the new user-facing
@@ -554,6 +555,20 @@ As of 2026-05-10:
     Scoped verification passed with `julia --project=. test/pipeline/config.jl`,
     `julia --project=. test/pipeline/calibration.jl`, targeted Runic on touched
     pipeline files, and `git diff --check`.
+34. Phase 17 Task 17-04 closed docs, changelog, and ledger guardrails for the
+    bounded calibration YAML/pipeline surface. `docs/src/calibration.md` now
+    shows the accepted top-level `calibration` YAML shape for time-series MCMC
+    configs, states that public dict/YAML parsing resolves into the existing
+    `TimeSeriesCalibrationInput` payload, and names the remaining unsupported
+    surfaces: `PanelMMM` calibration, VI calibration, non-logistic lift-test
+    calibration, automatic row generation from artifacts, Dash/UI workflows,
+    and AI-advisor behaviour. `docs/src/index.md` and `CHANGELOG.md` were
+    updated to avoid the stale claim that pipeline/YAML ingestion is wholly
+    unsupported. The broad calibration ledger row remains `scaffolded` because
+    this phase only exposes the already-implemented bounded `TimeSeriesMMM`
+    MCMC slice through config and pipeline boundaries. Verification reused the
+    targeted model/pipeline tests from Tasks 17-01 through 17-03 and closed the
+    docs-only task with `make docs` and `git diff --check`.
 
 
 ## Plan 14-05 Parity Audit

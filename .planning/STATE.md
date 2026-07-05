@@ -8,21 +8,20 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 17 calibration YAML and pipeline integration is in
-progress. Tasks 17-01 through 17-03 have landed bounded public dict/YAML
-parsing, time-series constructor threading, and time-series MCMC pipeline
-fit-stage support for `ModelConfig.extras["calibration"]`; Task 17-04 should
-close docs, changelog, and ledger guardrails without widening into panel, VI,
-non-logistic calibration, Dash/UI, or AI-advisor paths.
+**Current focus:** Phase 17 calibration YAML and pipeline integration is
+complete. The bounded `TimeSeriesMMM` MCMC calibration likelihood surface is now
+exposed through public dict/YAML parsing and the time-series MCMC pipeline fit
+path, with docs, changelog, and ledger guardrails still keeping panel, VI,
+non-logistic calibration, Dash/UI, and AI-advisor paths out of scope.
 
 ## Current Position
 
 **Current Phase:** 17
 **Current Phase Name:** Calibration YAML And Pipeline Integration
 **Total Phases:** 17
-**Current Plan:** Task 17-04: Docs, Changelog, And Ledger Guardrails
+**Current Plan:** Phase 17 complete; choose the next bounded parity/capability slice
 **Total Plans in Phase:** 4 tasks
-**Status:** Phase 17 is in progress at
+**Status:** Phase 17 is complete at
 `.planning/phases/17-calibration-yaml-pipeline/PLAN.md`. Task 17-01 landed
 bounded public dict/YAML parsing for top-level `calibration` blocks:
 `model_config_from_dict` and `load_public_config` now store a typed
@@ -36,7 +35,10 @@ constructor arguments, and `PanelMMM` rejects parsed calibration explicitly.
 Task 17-03 landed bounded time-series MCMC pipeline acceptance: top-level
 `calibration` YAML is accepted, `fit.backend` is MCMC/Turing-only, the
 time-series metadata/fit path receives parsed calibration through
-`ModelConfig`, and panel/VI-like calibration is rejected before fit. Phase 16 is complete at
+`ModelConfig`, and panel/VI-like calibration is rejected before fit. Task
+17-04 closed docs, changelog, and ledger guardrails: the docs now show the
+supported YAML shape and name the remaining unsupported paths, and the broad
+calibration ledger row remains `scaffolded`. Phase 16 is complete at
 `.planning/phases/16-scenario-planner-manual-allocation/PLAN.md`. Task 16-01
 landed `ManualScenarioEvaluationResult` and
 `evaluate_manual_scenario(results, scenario)` evaluate one bounded time-series
@@ -107,21 +109,24 @@ current/manual/fixed-budget scenario specs, `scenario_plan(result)` comparison
 tables over solved optimization results, time-series manual-allocation
 evaluation over existing response surfaces, manual table projection, and
 combined current/manual/optimized comparison for compatible artifacts.
-Calibration/lift-test parity remains a `scaffolded` ledger row after Phase 15:
+Calibration/lift-test parity remains a `scaffolded` ledger row after Phase 17:
 `TimeSeriesMMM` MCMC model-side likelihood wiring, fixture-backed integration
-evidence, and docs are landed for both accepted calibration terms, but the
-wider Abacus calibration surface is not complete.
+evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
+are landed for both accepted calibration terms, but the wider Abacus
+calibration surface is not complete.
 **Last Activity:** 2026-07-05
-**Last Activity Description:** Phase 17 Task 17-03 landed bounded pipeline
-calibration acceptance. Pipeline YAML now accepts top-level `calibration`,
-validates `fit.backend` as MCMC/Turing-only, rejects panel/VI-like calibration
-before fit, and threads parsed calibration into the time-series metadata/fit
-path. A small pipeline fit-stage smoke proves the fitted/saved model artifact
-contains a resolved `MMMCalibrationSpec` with lift-test and cost-per-target
-payloads. Scoped verification passed: `julia --project=. test/pipeline/config.jl`,
-`julia --project=. test/pipeline/calibration.jl`, targeted Runic on the touched
-pipeline files, and `git diff --check`.
-**Progress:** 75%
+**Last Activity Description:** Phase 17 Task 17-04 closed docs, changelog, and
+ledger guardrails for the bounded calibration YAML/pipeline surface. The docs
+now show the supported top-level `calibration` YAML shape for time-series MCMC
+configs, avoid the stale claim that pipeline/YAML ingestion is wholly
+unsupported, and preserve explicit exclusions for `PanelMMM`, VI,
+non-logistic lift-test calibration, automatic row generation from artifacts,
+Dash/UI workflows, and AI-advisor behaviour. The broad calibration ledger row
+remains `scaffolded`; targeted model/pipeline verification from Tasks 17-01
+through 17-03 remains the code-path evidence for the phase. Docs closure
+verification passed with `make docs`, with the known non-fatal `index.html`
+size warning and deployment skipped outside CI, and `git diff --check`.
+**Progress:** 100%
 **Paused At:** `.planning/phases/17-calibration-yaml-pipeline/.continue-here.md`
 
 ## Performance Metrics
@@ -217,9 +222,9 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 
 ## Pending Todos
 
-- Continue Phase 17 with Task 17-04: update user-facing docs and close
-  changelog/ledger guardrails for the bounded YAML/pipeline calibration
-  surface without moving the broad calibration row beyond `scaffolded`.
+- Choose the next bounded parity/capability slice after Phase 17; do not
+  extend calibration into panel, VI, broader saturation-family, or UI paths
+  without a separate methodological contract.
 - Phase 15 calibration likelihood integration is closed; keep the calibration
   row `scaffolded` until a separate contract implements panel, VI,
   broader saturation-family, or UI calibration paths.

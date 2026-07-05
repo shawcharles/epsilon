@@ -153,9 +153,10 @@ remediation pass on the bounded reference time-series story:
   calibration likelihood terms for centered-logistic lift-test measurements and
   cost-per-target soft penalties. Calibration terms are optional, additive,
   scaled into model space, and fixture-backed against comparable Abacus helper
-  semantics. `PanelMMM` calibration, VI calibration, pipeline/YAML calibration
-  ingestion, non-logistic lift-test saturation families, Dash/UI workflows, and
-  AI-advisor behaviour remain unsupported.
+  semantics. Public dict/YAML configs and the bounded time-series MCMC pipeline
+  path can now carry those calibration terms into model construction.
+  `PanelMMM` calibration, VI calibration, non-logistic lift-test saturation
+  families, Dash/UI workflows, and AI-advisor behaviour remain unsupported.
 - HSGP is deferred from the supported surface
 
 ## Release Gate
