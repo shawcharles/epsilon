@@ -6,8 +6,9 @@ Planned 2026-07-01. Task 15-01 (contract freeze), Task 15-02 (typed
 calibration payloads), Task 15-03 (config/spec threading), Task 15-04
 (pure model-space calibration log-density helpers), Task 15-05
 (lift-test likelihood wired into `_time_series_mmm_model`), and Task 15-06
-(cost-per-target soft penalties wired into `_time_series_mmm_model`) are
-landed. Tasks 15-07 and 15-08 have not started.
+(cost-per-target soft penalties wired into `_time_series_mmm_model`), and
+Task 15-07 (fixture-backed integration evidence) are landed. Task 15-08
+(documentation, ledger, changelog, and guardrail closure) remains.
 
 
 
@@ -592,23 +593,51 @@ scope for this task, per the user's explicit exclusion list for Task 15-06.
 
 ### Task 15-07: Add Fixture-Backed Integration Evidence
 
+**Status: Landed (2026-07-05).** The exporter now emits
+`test/fixtures/abacus/calibration_integration_cases.jl`, a deterministic
+Julia-literal fixture for the accepted centered-logistic `TimeSeriesMMM` MCMC
+calibration path. The fixture is generated from Abacus's real scaling and
+graph-helper surfaces: `scale_lift_measurements`,
+`add_saturation_observations`, and `add_cost_per_target_potentials`. Julia
+tests consume only the generated fixture: `test/model/calibration.jl` verifies
+payload construction and the additive model-space log-density against the
+fixture, and `test/model/builder.jl` verifies that `_time_series_mmm_model`
+changes the conditioned Turing logjoint by exactly the fixture's total
+calibration term. The direct `test/model/builder.jl` file also now guards its
+fixture includes so it no longer depends on `test/model/calibration.jl` having
+run first in the shared `Main` namespace.
+
+Verification: `PYTHONNOUSERSITE=1 python scripts/export_abacus_fixtures.py`
+completed successfully and produced the new fixture. It also restamped existing
+fixture provenance headers from the current local Abacus checkout
+(`7fd0ef30aacc33c97342d21087c3f3653bb8a74c (dirty)`, with unrelated Abacus
+worktree changes in `LICENSE` and `assets/state-space-ideas/`); those
+header-only changes were reverted as unrelated churn. `julia --project=@runic
+-m Runic --check --diff test/model/calibration.jl test/model/builder.jl
+test/fixtures/abacus/calibration_integration_cases.jl` passed, and
+`make test-model` passed with `Pass 897, Total 897` in 8m14.5s. A direct
+`julia --project=. test/model/calibration.jl` run is not valid in this repo
+because test-only dependencies such as `ForwardDiff` are available through
+`Pkg.test()`, not the main project environment.
+
 **Description:** Extend the Abacus fixture exporter only as needed to produce
 deterministic model-integration evidence for the accepted time-series
 calibration path.
 
 **Acceptance criteria:**
-- [ ] New fixtures are deterministic Julia literals under
+- [x] New fixtures are deterministic Julia literals under
       `test/fixtures/abacus/`.
-- [ ] The exporter calls real Abacus calibration helpers for comparable
+- [x] The exporter calls real Abacus calibration helpers for comparable
       preprocessing/log-density semantics.
-- [ ] Julia tests consume fixture files only; no Python runtime dependency is
+- [x] Julia tests consume fixture files only; no Python runtime dependency is
       introduced.
-- [ ] Fixture README documents the regeneration command and fixture purpose.
+- [x] Fixture README documents the regeneration command and fixture purpose.
 
 **Verification:**
-- [ ] `PYTHONNOUSERSITE=1 python scripts/export_abacus_fixtures.py` regenerates
-      fixtures without unrelated churn.
-- [ ] New fixture-backed Julia tests pass.
+- [x] `PYTHONNOUSERSITE=1 python scripts/export_abacus_fixtures.py` regenerates
+      the new fixture; existing-fixture header-only provenance churn from the
+      dirty local Abacus checkout was observed and reverted.
+- [x] New fixture-backed Julia tests pass.
 
 **Dependencies:** Tasks 15-04 through 15-06.
 

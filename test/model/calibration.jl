@@ -12,6 +12,7 @@ include(joinpath(@__DIR__, "..", "fixtures", "abacus", "calibration_target_scali
 include(joinpath(@__DIR__, "..", "fixtures", "abacus", "calibration_combined_scaling_cases.jl"))
 include(joinpath(@__DIR__, "..", "fixtures", "abacus", "lift_test_likelihood_cases.jl"))
 include(joinpath(@__DIR__, "..", "fixtures", "abacus", "cost_per_target_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "abacus", "calibration_integration_cases.jl"))
 
 _calibration_coord_dict(nt) = Dict{String, AbstractVector}(string(k) => collect(v) for (k, v) in pairs(nt))
 
@@ -491,4 +492,52 @@ end
     @test_throws ArgumentError validate_cost_per_target_calibration_payload(
         CostPerTargetCalibrationPayload(Float64[], Float64[], Float64[]),
     )
+end
+
+@testset "calibration integration fixture payloads and log density" begin
+    for case in ABACUS_CALIBRATION_INTEGRATION_CASES
+        channel_transform = matrix -> matrix ./ reshape(case.channel_scale, 1, :)
+        target_transform = matrix -> matrix ./ case.target_scale
+
+        lift_payload = build_lift_test_calibration_payload(
+            channel = case.lift.channel,
+            x = case.lift.x,
+            delta_x = case.lift.delta_x,
+            delta_y = case.lift.delta_y,
+            sigma = case.lift.sigma,
+            channel_columns = case.channel_columns,
+            channel_transform = channel_transform,
+            target_transform = target_transform,
+        )
+        @test lift_payload.channel_index == case.expected_lift_payload.channel_index
+        @test lift_payload.x ≈ case.expected_lift_payload.x
+        @test lift_payload.delta_x ≈ case.expected_lift_payload.delta_x
+        @test lift_payload.delta_y ≈ case.expected_lift_payload.delta_y
+        @test lift_payload.sigma ≈ case.expected_lift_payload.sigma
+
+        lift_log_density = lift_test_payload_log_density(
+            (x_row, lam_row) -> centered_logistic_saturation.(x_row, lam_row),
+            lift_payload,
+            case.lam,
+        )
+        @test lift_log_density ≈ case.expected_lift_log_density atol = 1.0e-8
+
+        cost_payload = build_cost_per_target_calibration_payload(
+            gathered_cpt = case.cost_per_target.gathered_cpt,
+            targets = case.cost_per_target.targets,
+            sigma = case.cost_per_target.sigma,
+            transform = target_transform,
+        )
+        @test cost_payload.gathered_cpt ≈ case.expected_cost_per_target_payload.gathered_cpt
+        @test cost_payload.targets ≈ case.expected_cost_per_target_payload.targets
+        @test cost_payload.sigma ≈ case.expected_cost_per_target_payload.sigma
+
+        cost_log_density = cost_per_target_total_penalty(
+            cost_payload.gathered_cpt,
+            cost_payload.targets,
+            cost_payload.sigma,
+        )
+        @test cost_log_density ≈ case.expected_cost_per_target_log_density atol = 1.0e-8
+        @test lift_log_density + cost_log_density ≈ case.expected_total_log_density atol = 1.0e-8
+    end
 end

@@ -105,3 +105,12 @@ Current Phase 14 generated demo fixtures:
   assessment artifact-key parity, Stage `40` decomposition artifact-key
   parity, Stage `50` diagnostics artifact-key parity, and Stage `60`
   response-curve artifact-key parity.
+
+Phase 15 calibration fixtures cover the bounded `TimeSeriesMMM` MCMC
+calibration path:
+
+- `calibration_integration_cases.jl`: deterministic payload/log-density
+  evidence for the accepted centered-logistic time-series calibration path. The
+  exporter calls Abacus scaling helpers, `add_saturation_observations`, and
+  `add_cost_per_target_potentials`, then writes only Julia literals consumed by
+  `test/model/calibration.jl` and `test/model/builder.jl`.

@@ -5,6 +5,12 @@ using Test
 import Turing
 
 include("sample_models.jl")
+if !isdefined(@__MODULE__, :ABACUS_COST_PER_TARGET_CASES)
+    include(joinpath(@__DIR__, "..", "fixtures", "abacus", "cost_per_target_cases.jl"))
+end
+if !isdefined(@__MODULE__, :ABACUS_CALIBRATION_INTEGRATION_CASES)
+    include(joinpath(@__DIR__, "..", "fixtures", "abacus", "calibration_integration_cases.jl"))
+end
 
 @testset "TimeSeriesMMM" begin
     model = sample_time_series_model()
@@ -1040,6 +1046,91 @@ end
         targets = [1.5],
         sigma = [0.0],
     )
+end
+
+@testset "fixture-backed combined calibration term matches _time_series_mmm_model logjoint" begin
+    model = sample_time_series_model()
+    spec = build_model(model)
+    runtime, controls = Epsilon._turing_runtime(model.config, model.data)
+    events = Epsilon._event_design_matrix(model.config.events, model.data)
+    holidays = Epsilon._holiday_design_matrix(model.config.holidays, model.data)
+    scaled_channels = Epsilon._scale_channels(model.data.channels, spec.channel_scale)
+    scaled_target = model.data.target ./ spec.target_scale
+
+    case = ABACUS_CALIBRATION_INTEGRATION_CASES[1]
+    @test model.config.channel_columns == case.channel_columns
+    @test spec.channel_scale ≈ case.channel_scale
+    @test spec.target_scale ≈ case.target_scale
+
+    lift_test_data = LiftTestCalibrationRows(
+        channel = case.lift.channel,
+        x = case.lift.x,
+        delta_x = case.lift.delta_x,
+        delta_y = case.lift.delta_y,
+        sigma = case.lift.sigma,
+    )
+    cost_per_target_data = CostPerTargetCalibrationRows(
+        gathered_cpt = case.cost_per_target.gathered_cpt,
+        targets = case.cost_per_target.targets,
+        sigma = case.cost_per_target.sigma,
+    )
+    calibration_input = Epsilon._build_calibration_input(
+        [
+            CalibrationStepConfig(method = "add_lift_test_measurements"),
+            CalibrationStepConfig(method = "add_cost_per_target_calibration"),
+        ],
+        lift_test_data,
+        cost_per_target_data,
+    )
+    calibration = Epsilon._resolve_calibration_spec(
+        model.config,
+        calibration_input,
+        spec.channel_scale,
+        spec.target_scale,
+    )
+    @test calibration.lift_test.channel_index == case.expected_lift_payload.channel_index
+    @test calibration.lift_test.x ≈ case.expected_lift_payload.x
+    @test calibration.lift_test.delta_x ≈ case.expected_lift_payload.delta_x
+    @test calibration.lift_test.delta_y ≈ case.expected_lift_payload.delta_y
+    @test calibration.lift_test.sigma ≈ case.expected_lift_payload.sigma
+    @test calibration.cost_per_target.gathered_cpt ≈ case.expected_cost_per_target_payload.gathered_cpt
+    @test calibration.cost_per_target.targets ≈ case.expected_cost_per_target_payload.targets
+    @test calibration.cost_per_target.sigma ≈ case.expected_cost_per_target_payload.sigma
+
+    uncalibrated_model = Epsilon._time_series_mmm_model(
+        scaled_target, scaled_channels, controls, events, holidays, runtime,
+    )
+    calibrated_model = Epsilon._time_series_mmm_model(
+        scaled_target, scaled_channels, controls, events, holidays, runtime;
+        lift_test_payload = calibration.lift_test,
+        cost_per_target_payload = calibration.cost_per_target,
+    )
+
+    fixed_params = (;
+        intercept = 0.1,
+        sigma = 0.5,
+        beta_media = [0.3, 0.4],
+        alpha = [0.2, 0.25],
+        lam = case.lam,
+        beta_controls = [0.05],
+    )
+
+    uncalibrated_conditioned = Turing.DynamicPPL.condition(uncalibrated_model, fixed_params)
+    calibrated_conditioned = Turing.DynamicPPL.condition(calibrated_model, fixed_params)
+
+    _, uncalibrated_vi = Turing.DynamicPPL.evaluate!!(
+        uncalibrated_conditioned, Turing.DynamicPPL.VarInfo(uncalibrated_conditioned),
+    )
+    _, calibrated_vi = Turing.DynamicPPL.evaluate!!(
+        calibrated_conditioned, Turing.DynamicPPL.VarInfo(calibrated_conditioned),
+    )
+
+    uncalibrated_logjoint = Turing.DynamicPPL.getlogjoint(uncalibrated_vi)
+    calibrated_logjoint = Turing.DynamicPPL.getlogjoint(calibrated_vi)
+
+    @test calibrated_logjoint - uncalibrated_logjoint ≈ case.expected_total_log_density atol = 1.0e-8
+    @test case.expected_total_log_density ≈
+        (case.expected_lift_log_density + case.expected_cost_per_target_log_density) atol = 1.0e-12
 end
 
 @testset "fit! with logistic saturation and combined lift-test + cost-per-target calibration is a tiny MCMC smoke test" begin

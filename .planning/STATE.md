@@ -8,31 +8,35 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 15 calibration likelihood integration is partly
-implemented. `TimeSeriesMMM` MCMC now has both lift-test and cost-per-target
-calibration likelihood terms wired into `_time_series_mmm_model`; remaining
-work is fixture-backed integration evidence plus docs/ledger/guardrail
-closure. Panel calibration, VI calibration, pipeline integration, and broader
-YAML support remain out of scope until separate contracts exist.
+**Current focus:** Phase 15 calibration likelihood integration is nearly
+closed. `TimeSeriesMMM` MCMC now has both lift-test and cost-per-target
+calibration likelihood terms wired into `_time_series_mmm_model`, with
+fixture-backed integration evidence for the accepted combined path; remaining
+work is docs/ledger/guardrail closure. Panel calibration, VI calibration,
+pipeline integration, and broader YAML support remain out of scope until
+separate contracts exist.
 
 ## Current Position
 
 **Current Phase:** 15
 **Current Phase Name:** Calibration Likelihood Integration
 **Total Phases:** 15
-**Current Plan:** 15-07
+**Current Plan:** 15-08
 **Total Plans in Phase:** 8 tasks
-**Status:** State saved for pause on 2026-07-01. Phase 15 Tasks 15-01 through
-15-06 are landed and committed. Tasks 15-01 through 15-03 froze the
+**Status:** Phase 15 Tasks 15-01 through 15-07 are landed. Tasks 15-01 through
+15-03 froze the
 `TimeSeriesMMM`-only calibration contract, added typed calibration payloads,
 and threaded raw/resolved calibration payloads through construction, fitting,
 artifact traceability, serialization, and VI rejection. Task 15-04 added pure,
 Turing-independent AD-compatible lift-test log-density helpers. Task 15-05
 wired the lift-test term into `_time_series_mmm_model` via
 `Turing.@addlogprob!`; Task 15-06 wired the cost-per-target soft-penalty term
-into the same model via a second independent `Turing.@addlogprob!` call. The
-remaining Phase 15 work is Task 15-07 fixture-backed integration evidence and
-Task 15-08 docs/ledger/guardrails closure. Phase 13 contract/remediation issues
+into the same model via a second independent `Turing.@addlogprob!` call. Task
+15-07 added fixture-backed integration evidence for the accepted combined
+centered-logistic lift-test plus cost-per-target time-series MCMC path,
+generated from Abacus scaling and graph-helper surfaces and verified against a
+conditioned Turing logjoint. The remaining Phase 15 work is Task 15-08
+docs/ledger/guardrails closure. Phase 13 contract/remediation issues
 are fixed and revalidated; Plan 14-05 remains closed with parity audit
 recorded. Release preparation remains paused pending final release-prep
 decisions. The project has reset its
@@ -72,19 +76,24 @@ every scenario. The non-UI scenario planner surface is now started with typed
 current/manual/fixed-budget scenario specs and `scenario_plan(result)`
 comparison tables over solved optimization results.
 Calibration/lift-test parity is still a `scaffolded` ledger row pending Task
-15-07 and Task 15-08, but `TimeSeriesMMM` MCMC model-side likelihood wiring is
-now landed for both accepted calibration terms.
-**Last Activity:** 2026-07-01
-**Last Activity Description:** Saved handoff after Phase 15 Task 15-06. HEAD
-`797fc54` integrates cost-per-target soft penalties into
-`_time_series_mmm_model`, following Task 15-05's lift-test `@addlogprob!`
-wiring. The latest full suite result from Task 15-06 was clean: `Pass 3943,
-Total 3943, 0 failed, 0 errored` in 22m11.1s. The next task is Task 15-07:
-fixture-backed integration evidence. Local `AGENTS.md` verification guidance
-now defaults routine work to targeted tests and reserves full `make test` for
-phase-closing checkpoints, shared-namespace/export risk, broad contract
-changes, or final pre-merge/release confirmation.
-**Progress:** 96%
+15-08, but `TimeSeriesMMM` MCMC model-side likelihood wiring and
+fixture-backed integration evidence are now landed for both accepted
+calibration terms.
+**Last Activity:** 2026-07-05
+**Last Activity Description:** Phase 15 Task 15-07 landed fixture-backed
+integration evidence. `scripts/export_abacus_fixtures.py` now emits
+`test/fixtures/abacus/calibration_integration_cases.jl` from Abacus
+`scale_lift_measurements`, `add_saturation_observations`, and
+`add_cost_per_target_potentials`; `test/model/calibration.jl` verifies
+payload/log-density semantics against the fixture, and `test/model/builder.jl`
+verifies that `_time_series_mmm_model` changes the conditioned Turing logjoint
+by the fixture's combined calibration term. `make test-model` passed with
+`Pass 897, Total 897` in 8m14.5s. The exporter command completed, but because
+the local Abacus checkout is dirty for unrelated files it restamped old fixture
+provenance headers; those header-only changes were reverted as unrelated
+churn. The next task is Task 15-08: docs, changelog, ledger status decision,
+and guardrail closure.
+**Progress:** 98%
 **Paused At:** `.planning/phases/15-calibration-likelihood-integration/.continue-here.md`
 
 ## Performance Metrics
@@ -111,7 +120,7 @@ changes, or final pre-merge/release confirmation.
 | 12 | 4/4 | Completed | scaling/model-space parity, Stage 60 curve parity, Stage 70 verification, coherent holiday/design contract, and final revalidation/release reconciliation landed |
 | 13 | 6/6 | Completed | fitted trend/holiday prediction-state repair, media-domain validation, pipeline YAML contract hardening, and final release-gate revalidation landed |
 | 14 | 5/5 | Plan complete | Abacus parity recovery across `timeseries`, `geo_panel`, and `geo_brand_panel` demo-style acceptance targets |
-| 15 | 6/8 | In progress | `TimeSeriesMMM` MCMC calibration likelihood wiring landed for lift-test and cost-per-target terms; fixture-backed integration evidence and docs/ledger closure remain |
+| 15 | 7/8 | In progress | `TimeSeriesMMM` MCMC calibration likelihood wiring and fixture-backed integration evidence landed for lift-test and cost-per-target terms; docs/ledger closure remains |
 
 **Recent Trend:**
 - Last 5 completed plans: `14-01`, `14-02`, `14-03`, `14-04`, `14-05`
@@ -181,9 +190,8 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 - Expand the scenario planner only behind concrete non-UI planning contracts,
   such as manual-allocation response evaluation or saved scenario-store
   artifacts. Automatic scenario refits remain outside the current surface.
-- Complete Phase 15 Task 15-07 fixture-backed integration evidence, then Task
-  15-08 docs/ledger/guardrail closure. Keep the calibration row `scaffolded`
-  until those are done.
+- Complete Phase 15 Task 15-08 docs/ledger/guardrail closure. Keep the
+  calibration row `scaffolded` until that closure decision is made.
 - Keep Stage `35` panel holdout validation deferred unless a concrete
   methodological requirement and fixture-backed contract are added.
 - Do not force free channel-by-panel allocation, panel-total bounds, fairness
@@ -220,13 +228,15 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 
 ## Session
 
-**Last Date:** 2026-07-01 00:00
-**Stopped At:** State saved after Phase 15 Task 15-06. Tasks 15-01 through
-15-06 are landed: contract freeze, typed payloads, config/spec threading, pure
-AD-compatible lift-test log-density helpers, lift-test `Turing.@addlogprob!`
-wiring, and cost-per-target `Turing.@addlogprob!` wiring. The accepted scope is
-still `TimeSeriesMMM` MCMC only and centered-logistic lift-test calibration
-only. Panel calibration, VI calibration, pipeline integration, broader YAML
-expansion, scenario refits, Dash/UI, and AI advisor functionality remain out of
-scope. Resume with Task 15-07 fixture-backed integration evidence.
+**Last Date:** 2026-07-05
+**Stopped At:** Phase 15 Task 15-07 fixture-backed integration evidence is
+landed. Tasks 15-01 through 15-07 are landed: contract freeze, typed payloads,
+config/spec threading, pure AD-compatible lift-test log-density helpers,
+lift-test `Turing.@addlogprob!` wiring, cost-per-target `Turing.@addlogprob!`
+wiring, and fixture-backed combined calibration integration evidence. The
+accepted scope is still `TimeSeriesMMM` MCMC only and centered-logistic
+lift-test calibration only. Panel calibration, VI calibration, pipeline
+integration, broader YAML expansion, scenario refits, Dash/UI, and AI advisor
+functionality remain out of scope. Resume with Task 15-08 docs/ledger/guardrail
+closure.
 **Resume File:** `.planning/phases/15-calibration-likelihood-integration/.continue-here.md`

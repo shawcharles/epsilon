@@ -710,6 +710,30 @@ def _build_cost_per_target_cases():
     ]
 
 
+def _build_calibration_integration_cases():
+    return [
+        {
+            "name": "timeseries_logistic_lift_and_cost_per_target",
+            "channel_columns": ["tv", "search"],
+            "channel_scale": [4.0, 3.0],
+            "target_scale": 11.5,
+            "lam": [0.6, 0.7],
+            "lift": {
+                "channel": ["tv", "search"],
+                "x": [1.0, 0.5],
+                "delta_x": [0.5, 0.25],
+                "delta_y": [0.3, 0.15],
+                "sigma": [0.1, 0.05],
+            },
+            "cost_per_target": {
+                "gathered_cpt": [0.5, 0.8],
+                "targets": [0.45, 0.7],
+                "sigma": [0.1, 0.2],
+            },
+        },
+    ]
+
+
 def _julia_int_vector_literal(values) -> str:
     body = ", ".join(str(int(value)) for value in values)
     return f"[{body}]"
@@ -2021,6 +2045,108 @@ def _cost_per_target_rows():
     return rows
 
 
+def _abacus_lift_log_density(scaled_lift: "pd.DataFrame", channel_columns, lam: np.ndarray) -> float:
+    with pm.Model(coords={"channel": list(channel_columns)}) as model:
+        pm.Data("lam", lam, dims="channel")
+        add_saturation_observations(
+            scaled_lift,
+            {"lam": "lam"},
+            lambda x, lam: logistic_saturation(x, lam=lam),
+            model=model,
+        )
+        return float(model.compile_logp(sum=True)(model.initial_point()))
+
+
+def _abacus_cost_per_target_log_density(
+    scaled_cost_per_target: dict[str, np.ndarray],
+    channel_columns,
+) -> float:
+    gathered = np.asarray(scaled_cost_per_target["gathered_cpt"], dtype=float)
+    channel_data = np.repeat(gathered.reshape(1, -1), repeats=3, axis=0)
+    calibration_df = pd.DataFrame(
+        {
+            "channel": list(channel_columns),
+            "cost_per_target": np.asarray(scaled_cost_per_target["targets"], dtype=float),
+            "sigma": np.asarray(scaled_cost_per_target["sigma"], dtype=float),
+        }
+    )
+    with pm.Model(coords={"date": [1, 2, 3], "channel": list(channel_columns)}) as model:
+        cpt_value = pm.Data("channel_data", channel_data, dims=("date", "channel"))
+        add_cost_per_target_potentials(
+            calibration_df,
+            model=model,
+            cpt_value=cpt_value,
+        )
+        return float(model.compile_logp(sum=True)(model.initial_point()))
+
+
+def _calibration_integration_rows():
+    rows: list[str] = []
+    for case in _build_calibration_integration_cases():
+        channel_columns = list(case["channel_columns"])
+        channel_scale = np.asarray(case["channel_scale"], dtype=float)
+        target_scale = float(case["target_scale"])
+        lam = np.asarray(case["lam"], dtype=float)
+
+        lift_df = pd.DataFrame(case["lift"])
+        scaled_lift = scale_lift_measurements(
+            df_lift_test=lift_df,
+            channel_col="channel",
+            channel_columns=channel_columns,
+            channel_transform=lambda matrix: matrix / channel_scale,
+            target_transform=lambda matrix: matrix / target_scale,
+        )
+        lift_log_density = _abacus_lift_log_density(scaled_lift, channel_columns, lam)
+
+        cost_case = case["cost_per_target"]
+        scaled_cost_per_target = {
+            key: scale_target_for_lift_measurements(
+                target=pd.Series(value, dtype=float),
+                transform=lambda matrix: matrix / target_scale,
+            ).to_numpy(dtype=float)
+            for key, value in cost_case.items()
+        }
+        cost_per_target_log_density = _abacus_cost_per_target_log_density(
+            scaled_cost_per_target,
+            channel_columns,
+        )
+        total_log_density = lift_log_density + cost_per_target_log_density
+
+        channel_index = [
+            channel_columns.index(channel) + 1
+            for channel in scaled_lift["channel"].tolist()
+        ]
+        rows.extend(
+            [
+                "    (",
+                f'        name = "{case["name"]}",',
+                f"        channel_columns = {_julia_string_vector_literal(channel_columns)},",
+                f"        channel_scale = {_julia_array_literal(channel_scale)},",
+                f"        target_scale = {_julia_float_literal(target_scale)},",
+                f"        lam = {_julia_array_literal(lam)},",
+                f"        lift = {_julia_namedtuple_literal(case['lift'])},",
+                f"        cost_per_target = {_julia_namedtuple_literal(cost_case)},",
+                "        expected_lift_payload = (",
+                f"            channel_index = {_julia_int_vector_literal(channel_index)},",
+                f"            x = {_julia_array_literal(np.asarray(scaled_lift['x'].to_numpy(), dtype=float))},",
+                f"            delta_x = {_julia_array_literal(np.asarray(scaled_lift['delta_x'].to_numpy(), dtype=float))},",
+                f"            delta_y = {_julia_array_literal(np.asarray(scaled_lift['delta_y'].to_numpy(), dtype=float))},",
+                f"            sigma = {_julia_array_literal(np.asarray(scaled_lift['sigma'].to_numpy(), dtype=float))},",
+                "        ),",
+                "        expected_cost_per_target_payload = (",
+                f"            gathered_cpt = {_julia_array_literal(scaled_cost_per_target['gathered_cpt'])},",
+                f"            targets = {_julia_array_literal(scaled_cost_per_target['targets'])},",
+                f"            sigma = {_julia_array_literal(scaled_cost_per_target['sigma'])},",
+                "        ),",
+                f"        expected_lift_log_density = {_julia_float_literal(lift_log_density)},",
+                f"        expected_cost_per_target_log_density = {_julia_float_literal(cost_per_target_log_density)},",
+                f"        expected_total_log_density = {_julia_float_literal(total_log_density)},",
+                "    ),",
+            ]
+        )
+    return rows
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
 
@@ -2134,6 +2260,11 @@ def main() -> None:
         default="test/fixtures/abacus/cost_per_target_cases.jl",
         help="Destination Julia cost-per-target penalty fixture file.",
     )
+    parser.add_argument(
+        "--calibration-integration-output",
+        default="test/fixtures/abacus/calibration_integration_cases.jl",
+        help="Destination Julia calibration model-integration fixture file.",
+    )
     args = parser.parse_args()
     abacus_root = Path(args.abacus_root).resolve()
 
@@ -2157,6 +2288,8 @@ def main() -> None:
     global scale_channel_lift_measurements
     global scale_target_for_lift_measurements
     global scale_lift_measurements
+    global add_saturation_observations
+    global add_cost_per_target_potentials
     from abacus.mmm.transforms.convolution import ConvMode, batched_convolution
     from abacus.mmm.transforms.adstock import (
         WeibullType,
@@ -2178,6 +2311,10 @@ def main() -> None:
         scale_channel_lift_measurements,
         scale_target_for_lift_measurements,
         scale_lift_measurements,
+    )
+    from abacus.mmm.calibration.graph import (
+        add_saturation_observations,
+        add_cost_per_target_potentials,
     )
     abacus_revision = _describe_abacus_revision(abacus_root)
 
@@ -2319,6 +2456,13 @@ def main() -> None:
         "ABACUS_COST_PER_TARGET_CASES",
         _cost_per_target_rows(),
         Path(args.cost_per_target_output),
+        abacus_root=abacus_root,
+        abacus_revision=abacus_revision,
+    )
+    _write_fixture_file(
+        "ABACUS_CALIBRATION_INTEGRATION_CASES",
+        _calibration_integration_rows(),
+        Path(args.calibration_integration_output),
         abacus_root=abacus_root,
         abacus_revision=abacus_revision,
     )
