@@ -127,10 +127,12 @@ Current repository state on 2026-05-18:
 - `PanelCoordinate`, `panel_coordinates`, and `panel_coordinate` now make the
   deterministic flat panel-cell axis explicit for one-dimensional and
   multidimensional `PanelMMM` result surfaces without changing model numerics
-- Phase 15 is now planned, but not implemented: it will integrate the
-  fixture-backed calibration/lift-test helper surface into `TimeSeriesMMM` MCMC
-  sampling only, leaving panel calibration, VI calibration, pipeline parity,
-  and UI workflows out of scope until separate contracts exist
+- Phase 15 is now closed: the fixture-backed calibration/lift-test helper
+  surface is wired into `TimeSeriesMMM` MCMC sampling for the bounded
+  centered-logistic lift-test and cost-per-target slice, with docs, changelog,
+  and ledger guardrails keeping panel calibration, VI calibration, pipeline/YAML
+  ingestion, broader saturation-family calibration, Dash/UI workflows, and
+  AI-advisor behaviour out of scope until separate contracts exist
 
 ## Phases
 
@@ -166,14 +168,15 @@ Current repository state on 2026-05-18:
 - [x] **Phase 13: Prediction-State and Contract Remediation** - Repair fitted
       trend/holiday prediction-state behavior and harden invalid input/config
       contracts before release preparation resumes.
-- [ ] **Phase 14: Abacus Parity Recovery** - Revalidate the Abacus statistical
+- [x] **Phase 14: Abacus Parity Recovery** - Revalidate the Abacus statistical
       core through the `timeseries`, `geo_panel`, and `geo_brand_panel`
       demo-style acceptance targets tracked in
       `.planning/ABACUS-PARITY-LEDGER.md`.
-- [ ] **Phase 15: Calibration Likelihood Integration** - Wire the scaffolded
+- [x] **Phase 15: Calibration Likelihood Integration** - Wire the scaffolded
       calibration/lift-test helper layer into `TimeSeriesMMM` MCMC sampling
-      with fixture-backed log-density evidence, while keeping panel and VI
-      calibration explicitly out of scope.
+      with fixture-backed log-density evidence and explicit guardrails keeping
+      panel, VI, pipeline/YAML, broader saturation-family, Dash/UI, and
+      AI-advisor calibration out of scope.
 
 ## Phase Details
 

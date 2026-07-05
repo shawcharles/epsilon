@@ -76,6 +76,13 @@ All notable project changes are recorded here. Epsilon is still on the
   budget optimization results. The surface mirrors Abacus's reusable business
   planning store shape without Dash UI, background jobs, automatic scenario
   refits, or free channel-by-panel allocation.
+- Added bounded `TimeSeriesMMM` MCMC calibration likelihood support for
+  centered-logistic lift-test measurements and cost-per-target soft penalties.
+  The two calibration terms are optional and additive, resolve into scaled
+  model space, and are fixture-backed against comparable Abacus preprocessing
+  and log-density helpers. `PanelMMM` calibration, VI calibration, pipeline/YAML
+  ingestion, broader saturation-family calibration, Dash/UI workflows, and
+  AI-advisor behaviour remain unsupported.
 
 ### Changed
 

@@ -7,8 +7,9 @@ calibration payloads), Task 15-03 (config/spec threading), Task 15-04
 (pure model-space calibration log-density helpers), Task 15-05
 (lift-test likelihood wired into `_time_series_mmm_model`), and Task 15-06
 (cost-per-target soft penalties wired into `_time_series_mmm_model`), and
-Task 15-07 (fixture-backed integration evidence) are landed. Task 15-08
-(documentation, ledger, changelog, and guardrail closure) remains.
+Task 15-07 (fixture-backed integration evidence) and Task 15-08
+(documentation, ledger, changelog, and guardrail closure) are landed. Phase 15
+is complete.
 
 
 
@@ -651,20 +652,36 @@ calibration path.
 
 ### Task 15-08: Documentation, Ledger, And Guardrails
 
+**Status: Landed (2026-07-05).** User-facing docs now describe the exact
+bounded calibration support matrix: `TimeSeriesMMM` MCMC only, centered-logistic
+lift-test calibration only, and cost-per-target soft penalties as optional
+additive scaled-space terms. The docs also explicitly list unsupported paths:
+`PanelMMM` calibration, VI calibration, pipeline/YAML calibration ingestion,
+non-logistic lift-test saturation families, Dash/UI workflows, and AI-advisor
+behaviour. `CHANGELOG.md` records the new bounded capability without claiming
+broader Abacus calibration parity. The parity ledger row deliberately remains
+`scaffolded`, because this row covers a wider Abacus calibration surface than
+the implemented bounded time-series MCMC slice. `make docs` passed; the
+phase-closing `make check-full` gate also passed with `Pkg.test()` reporting
+`Pass 3969, Total 3969` in 23m42.2s, followed by a successful docs build.
+Documenter still reports the known `index.html` size warning above the warning
+threshold but below the hard limit, and deployment is skipped outside a
+detected deployment environment.
+
 **Description:** Update user-facing docs and planning state after the
 time-series sampling integration is implemented and verified.
 
 **Acceptance criteria:**
-- [ ] Docs explain that calibration integration is available for
+- [x] Docs explain that calibration integration is available for
       `TimeSeriesMMM` MCMC only.
-- [ ] Docs explain unsupported `PanelMMM` and VI calibration paths.
-- [ ] `.planning/ABACUS-PARITY-LEDGER.md` moves the calibration row only as far
+- [x] Docs explain unsupported `PanelMMM` and VI calibration paths.
+- [x] `.planning/ABACUS-PARITY-LEDGER.md` moves the calibration row only as far
       as the evidence justifies.
-- [ ] `CHANGELOG.md` records the user-facing model capability.
+- [x] `CHANGELOG.md` records the user-facing model capability.
 
 **Verification:**
-- [ ] `make docs` passes.
-- [ ] Ledger language does not imply panel, VI, pipeline, or UI parity.
+- [x] `make docs` passes.
+- [x] Ledger language does not imply panel, VI, pipeline, or UI parity.
 
 **Dependencies:** Tasks 15-05 through 15-07.
 
@@ -713,13 +730,16 @@ and 0 errored.
 
 ### Checkpoint C: Evidence And Docs
 
-After Tasks 15-07 and 15-08:
+After Tasks 15-07 and 15-08: **COMPLETE (2026-07-05).**
 
-- [ ] Abacus fixtures regenerate deterministically.
-- [ ] Docs and ledger state match implemented scope exactly.
-- [ ] `make docs` passes.
-- [ ] Broader test gate has either passed or any unrelated gate failure is
-      documented precisely.
+- [x] Abacus fixtures regenerate deterministically. Existing-fixture
+      provenance-header churn from the dirty local Abacus checkout was
+      observed and reverted as unrelated churn during Task 15-07.
+- [x] Docs and ledger state match implemented scope exactly.
+- [x] `make docs` passes.
+- [x] Broader test gate has either passed or any unrelated gate failure is
+      documented precisely. `make check-full` passed with `Pass 3969, Total
+      3969` in 23m42.2s, then docs passed.
 
 ## Risks And Mitigations
 
@@ -733,21 +753,17 @@ After Tasks 15-07 and 15-08:
 | Artifact spec changes break old saved models | Medium | Version or isolate calibration metadata and add save/load compatibility tests. |
 | The plan widens into pipeline parity | Medium | Keep pipeline integration out of Phase 15 unless time-series model integration is already landed and separately planned. |
 
-## Open Questions
+## Resolved Questions
 
-- Should calibration rows enter through `ModelConfig.extras`, a new
-  `ModelConfig.calibration` field, or a companion constructor argument? Default
-  recommendation: add an explicit typed field only if YAML ingestion is in
-  scope for this phase; otherwise use a companion internal payload first and
-  promote the API after the model semantics are proven.
-- Should cost-per-target calibration use model-implied current response or an
-  explicit gathered value from Abacus-style inputs? Default recommendation:
-  start with Abacus's explicit gathered/target/sigma soft-penalty semantics and
-  do not infer values from optimization artifacts.
-- Which saturation combinations must be supported in the first integration
-  slice? Default recommendation: support the current centered logistic path
-  first if fixture evidence is available, then expand only with deterministic
-  tests.
+- Calibration rows enter through a companion internal `TimeSeriesMMM`
+  constructor payload. They are not a new `ModelConfig` field, and broader
+  YAML/pipeline ingestion is deferred.
+- Cost-per-target calibration uses Abacus's explicit gathered/target/sigma
+  soft-penalty semantics. It does not infer values from optimization or
+  posterior-predictive artifacts.
+- The first lift-test integration slice supports only the current
+  centered-logistic path. Other saturation families require separate
+  fixture-backed contracts before they can be accepted.
 
 ## Verification Commands
 

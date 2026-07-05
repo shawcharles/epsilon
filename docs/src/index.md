@@ -144,6 +144,13 @@ remediation pass on the bounded reference time-series story:
   `scenario_plan(result)` tables over solved budget optimization results; it
   mirrors Abacus's reusable business-planning store semantics without Dash UI,
   background jobs, automatic scenario refits, or free panel allocation
+- the bounded calibration surface now supports `TimeSeriesMMM` MCMC
+  calibration likelihood terms for centered-logistic lift-test measurements and
+  cost-per-target soft penalties. Calibration terms are optional, additive,
+  scaled into model space, and fixture-backed against comparable Abacus helper
+  semantics. `PanelMMM` calibration, VI calibration, pipeline/YAML calibration
+  ingestion, non-logistic lift-test saturation families, Dash/UI workflows, and
+  AI-advisor behaviour remain unsupported.
 - HSGP is deferred from the supported surface
 
 ## Release Gate
