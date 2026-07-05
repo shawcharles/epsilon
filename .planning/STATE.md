@@ -8,21 +8,34 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 20 public API docstring guard is complete. The current
-loaded-module export surface is inventoried in user docs with support bands and
+**Current focus:** Phase 21 public API export triage is complete. The current
+loaded-module export surface is inventoried in user docs with support bands,
 guarded by focused `api_exports` checks for exact inventory membership,
-non-empty rendered docstrings, and Documenter `@docs` membership. Package
-identity/public exports remain `scaffolded`; breaking export cleanup and
-stronger Abacus API compatibility claims remain future work.
+non-empty rendered docstrings, Documenter `@docs` membership, and lifecycle
+triage alignment. Package identity/public exports remain `scaffolded`;
+breaking export cleanup and stronger Abacus API compatibility claims remain
+future work.
 
 ## Current Position
 
-**Current Phase:** 20
-**Current Phase Name:** Public API Docstring Guard
-**Total Phases:** 20
-**Current Plan:** Phase 20 complete; choose the next bounded release-prep slice
-**Total Plans in Phase:** 4 tasks
-**Status:** Phase 20 is complete at
+**Current Phase:** 21
+**Current Phase Name:** Public API Export Triage
+**Total Phases:** 21
+**Current Plan:** Phase 21 complete; choose the next bounded release-prep slice
+**Total Plans in Phase:** 5 tasks
+**Status:** Phase 21 is complete at
+`.planning/phases/21-public-api-export-triage/PLAN.md`. The public API
+lifecycle register at `.planning/API-EXPORT-TRIAGE.md` contains one row for
+every current loaded export, copying `Domain` and `Support` from
+`docs/src/api.md` and classifying conservatively as `keep-public`,
+`keep-bounded`, `compatibility`, or `review-before-v1`. There are no
+`deprecation-candidate` rows because no concrete reviewed migration path is
+known. The focused `api_exports` lane now validates the triage table markers,
+six-column header, duplicate/missing/stale symbols, inventory membership,
+Domain/Support matches, controlled lifecycle values, non-empty rationales, and
+non-`n/a` migration notes for any future `deprecation-candidate` rows. This is
+governance hygiene only; no exports, runtime deprecation warnings, modelling
+semantics, or Abacus API parity claims changed. Phase 20 is complete at
 `.planning/phases/20-public-api-docstring-guard/PLAN.md`. The focused
 `api_exports` test layer now keeps the Phase 19 inventory/export exact-match
 checks and also treats doc lookup failures, `nothing`, and empty rendered docs
@@ -150,23 +163,23 @@ evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
 are landed for both accepted calibration terms, but the wider Abacus
 calibration surface is not complete.
 **Last Activity:** 2026-07-05
-**Last Activity Description:** Phase 20 added the public API docstring and
-Documenter membership guard without editing `src/Epsilon.jl` or changing
-modelling semantics. `test/api_exports.jl` now keeps the existing inventory and
-loaded-export exact-match checks, treats doc lookup/rendering failures,
-`nothing`, and empty rendered docs as missing, and requires exact
-`Epsilon.<symbol>` lines inside fenced `@docs` blocks under `docs/src`.
-`test/basic.jl` no longer maintains a curated public API docstring smoke list.
-Scoped verification passed with
+**Last Activity Description:** Phase 21 added
+`.planning/API-EXPORT-TRIAGE.md` and extended `test/api_exports.jl` so the
+current loaded export surface has a guarded lifecycle row aligned to
+`docs/src/api.md`. Classifications are conservative: `core` maps to
+`keep-public`, `bounded` to `keep-bounded`, `compatibility` to `compatibility`,
+and `scaffolded` to `review-before-v1`; no deprecation candidates were invented
+without concrete migration notes. Docs, changelog, roadmap, and the parity
+ledger describe this as governance hygiene only. Scoped verification passed
+with
 `JULIA_PKG_SERVER_REGISTRY_PREFERENCE=eager julia --project=. -e 'using Pkg; Pkg.test(; test_args=["api_exports", "basic"])'`
-reporting `Pass 1827, Total 1827`; targeted Runic on `test/api_exports.jl`
-and `test/basic.jl`; `make docs` with the known non-fatal `index.html` size
-warning and deployment skipped outside CI; and `git diff --check`.
-The phase-closing `make check-full` gate also passed with full `Pkg.test()`
-reporting `Pass 5862, Total 5862` in 20m30.2s followed by a successful docs
-build.
+reporting `Pass 3048, Total 3048`; targeted Runic on `test/api_exports.jl`;
+`make docs` with the known non-fatal `index.html` size warning and deployment
+skipped outside CI; and `git diff --check`. The phase-closing
+`make check-full` gate also passed with full `Pkg.test()` reporting
+`Pass 7083, Total 7083` in 20m56.1s followed by a successful docs build.
 **Progress:** 100%
-**Paused At:** `.planning/phases/20-public-api-docstring-guard/PLAN.md`
+**Paused At:** `.planning/phases/21-public-api-export-triage/PLAN.md`
 
 ## Performance Metrics
 
@@ -198,6 +211,7 @@ build.
 | 18 | 4/4 | Completed | local scenario-store artifacts for existing `ScenarioPlanResult` tables, CSV inspection sidecars, compatibility guardrails, and docs/changelog/ledger closure landed |
 | 19 | 4/4 | Completed | public API support inventory, docs navigation, focused export guardrail, and conservative changelog/planning/ledger closure landed |
 | 20 | 4/4 | Completed | public API docstring and Documenter `@docs` coverage guard landed as documentation hygiene only |
+| 21 | 5/5 | Completed | public API lifecycle triage register and focused guard landed as governance hygiene only |
 
 **Recent Trend:**
 - Last 5 completed plans: `14-01`, `14-02`, `14-03`, `14-04`, `14-05`

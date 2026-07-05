@@ -45,7 +45,7 @@ Each target should pass these gates before it is counted as ported:
 
 | Abacus Area | Abacus Source | Epsilon Target | Status | Next Work |
 |---|---|---|---|---|
-| Package identity and public exports | `abacus/__init__.py`, `abacus/version.py` | `src/Epsilon.jl`, `docs/src/api.md`, `test/api_exports.jl` | scaffolded | Current exports are inventoried and support-classified in user docs, with guard tests preventing silent inventory drift and requiring non-empty rendered docstrings plus exact Documenter `@docs` membership for every inventoried/exported symbol. This is documentation hygiene only; breaking export cleanup, deprecation, and stronger Abacus API compatibility claims remain future work. |
+| Package identity and public exports | `abacus/__init__.py`, `abacus/version.py` | `src/Epsilon.jl`, `docs/src/api.md`, `test/api_exports.jl`, `.planning/API-EXPORT-TRIAGE.md` | scaffolded | Current exports are inventoried, documented, and lifecycle-triaged in a guarded planning register. Guard tests prevent silent inventory drift, require non-empty rendered docstrings plus exact Documenter `@docs` membership, and keep lifecycle triage aligned with the inventory. This is governance hygiene only, not Abacus behavioural evidence; export removals/deprecations and stronger Abacus API compatibility claims remain future work. |
 | YAML/public builder | `abacus/mmm/builders/*.py`, `abacus/pipeline/config.py` | `src/model/config.jl`, `src/model/builder.jl`, `src/pipeline/config.jl` | scaffolded | Build config-normalization fixtures from Abacus demo configs and compare the resolved typed spec. |
 | Data validation and preprocessing | `abacus/mmm/preprocessing.py`, `abacus/mmm/validating.py`, `abacus/mmm/models/panel_data.py` | `src/model/types.jl`, `src/model/builder.jl`, `src/mmm/media.jl`, `src/mmm/panel.jl` | scaffolded | `PanelAxis`, `PanelCoordinate`, `panel_axis`, and `panel_coordinates` expose deterministic flat `panel_cell` reconstruction for one-dimensional and multidimensional panels, with declared coordinate columns kept in model order. `ntime`, `npanels`, and `npanel_observations` make panel observation semantics explicit while `nobs(::PanelMMMData)` remains the compatibility flat panel-cell count. Add remaining fixtures for date ordering, channel/control columns, missingness, panel keys, and holdout splits. |
 | Scaling | `abacus/mmm/scaling.py`, `abacus/mmm/preprocessing.py` | `src/transforms/scaling.jl`, `src/mmm/controls.jl` | ported | Keep parity tests tied to Abacus fixture exports; extend to panel-scaled tensors. |
@@ -617,6 +617,23 @@ As of 2026-05-10:
     Runic on touched Julia files, `make docs`, `git diff --check`, and the
     phase-closing `make check-full` gate with full `Pkg.test()` reporting
     `Pass 5862, Total 5862` in 20m30.2s followed by a successful docs build.
+38. Phase 21 landed public API governance hygiene for the same
+    package-identity/public-exports row without changing row status. The
+    lifecycle triage register at `.planning/API-EXPORT-TRIAGE.md` records one
+    row for each of the 200 current loaded exports, copying `Domain` and
+    `Support` from `docs/src/api.md` and classifying conservatively as
+    `keep-public`, `keep-bounded`, `compatibility`, or `review-before-v1`.
+    There are no `deprecation-candidate` rows because no concrete reviewed
+    migration path is known. The focused `api_exports` guard now validates the
+    triage markers, exact six-column header, duplicate/missing/stale symbols,
+    inventory membership, Domain/Support alignment, controlled lifecycle
+    values, non-empty rationales, and concrete migration notes for any future
+    `deprecation-candidate` rows. This is not Abacus behavioural evidence and
+    does not support broader package/API parity claims. Verification passed
+    with focused `api_exports` plus `basic` tests (`Pass 3048, Total 3048`),
+    Runic on `test/api_exports.jl`, `make docs`, `git diff --check`, and the
+    phase-closing `make check-full` gate with full `Pkg.test()` reporting
+    `Pass 7083, Total 7083` in 20m56.1s followed by a successful docs build.
 
 
 ## Plan 14-05 Parity Audit

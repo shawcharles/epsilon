@@ -13,6 +13,11 @@ Support bands:
 - `scaffolded`: public because implementation exists, but broader support or
   Abacus parity evidence is incomplete.
 
+Support status is the current documented scope. Lifecycle triage is tracked
+separately in `.planning/API-EXPORT-TRIAGE.md`; it records whether an export is
+an intended public candidate, bounded surface, compatibility surface, or
+pre-v1 review item, and it is not a v1 API freeze.
+
 ## Inventory
 
 The table between the markers below is checked by the test suite. Every current

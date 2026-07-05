@@ -162,6 +162,11 @@ Current repository state on 2026-05-18:
   exact `Epsilon.<symbol>` entry in a fenced Documenter `@docs` block under
   `docs/src`. This is documentation hygiene only; the package identity/public
   exports ledger row remains `scaffolded`
+- Phase 21 is closed: `.planning/API-EXPORT-TRIAGE.md` now records a guarded
+  lifecycle action for every current loaded export, and the focused
+  `api_exports` lane validates the triage table against the public API
+  inventory. This is governance hygiene only; no exports, runtime warnings, or
+  Abacus API parity claims changed
 
 ## Phases
 
@@ -226,6 +231,9 @@ Current repository state on 2026-05-18:
       Documenter `@docs` coverage for every current inventoried/exported public
       symbol, without changing exports, model semantics, or Abacus parity
       claims.
+- [x] **Phase 21: Public API Export Triage** - Add a guarded lifecycle triage
+      register for every current loaded export, without changing exports,
+      runtime behaviour, or Abacus parity claims.
 
 ## Phase Details
 

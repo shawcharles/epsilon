@@ -120,6 +120,11 @@ All notable project changes are recorded here. Epsilon is still on the
   layer. The guard now requires every inventoried/exported symbol to have a
   non-empty rendered docstring and an exact `Epsilon.<symbol>` entry in a
   Documenter `@docs` block under `docs/src`, including bang-suffixed names.
+- Added a guarded public API lifecycle triage register at
+  `.planning/API-EXPORT-TRIAGE.md`, plus focused `api_exports` checks that keep
+  every current export's triage row aligned with the documented inventory. This
+  is pre-v1 governance hygiene only, not an export cleanup or Abacus API parity
+  claim.
 - Documented the bounded calibration YAML/pipeline surface with the supported
   top-level `calibration` shape and explicit unsupported paths for panel
   calibration, VI calibration, non-logistic lift-test calibration, Dash/UI
