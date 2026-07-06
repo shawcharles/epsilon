@@ -182,6 +182,11 @@ Current repository state on 2026-05-18:
   loaders, and calibration payload builders call warning-free `_validate_*`
   helpers. Exports and API inventory rows remain unchanged, and this does not
   change Abacus parity claims or v1 API stability.
+- Phase 25 is closed: focused package-test file selectors now allow a single
+  file under `test/` to run through `Pkg.test` with test-only dependencies
+  available, and `make test-file FILE=...` provides the local helper. This is
+  verification ergonomics only; no model/runtime semantics or Abacus parity
+  claims change.
 
 ## Phases
 
@@ -261,6 +266,10 @@ Current repository state on 2026-05-18:
       deprecation wrappers for the six Phase 22 validation-helper candidates,
       keeping constructors, loaders, and payload builders warning-free and
       leaving exports, inventory rows, and Abacus parity claims unchanged.
+- [x] **Phase 25: Focused Test File Harness** - Add bounded `Pkg.test`
+      file selectors and a `make test-file FILE=...` helper so routine
+      verification can run one focused test file with test-only dependencies
+      available, without widening to a full-suite run.
 
 ## Phase Details
 

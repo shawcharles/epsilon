@@ -2,7 +2,7 @@ JULIA ?= julia
 RUNIC ?= $(JULIA) --project=@runic -m Runic
 export JULIA_PKG_SERVER_REGISTRY_PREFERENCE ?= eager
 
-.PHONY: instantiate test test-full test-model test-optimization test-validation \
+.PHONY: instantiate test test-full test-file test-model test-optimization test-validation \
 	format format-check format-check-touched docs check check-optimization \
 	check-validation check-full check-release quality parity-check
 
@@ -13,6 +13,10 @@ test: test-full
 
 test-full:
 	$(JULIA) --project=. -e 'using Pkg; Pkg.test()'
+
+test-file:
+	@test -n "$(FILE)" || (echo "Usage: make test-file FILE=test/model/calibration.jl"; exit 2)
+	FILE="$(FILE)" $(JULIA) --project=. -e 'using Pkg; Pkg.test(; test_args=[ENV["FILE"]], julia_args=["--depwarn=yes"])'
 
 test-model:
 	$(JULIA) --project=. -e 'using Pkg; Pkg.test(; test_args=["model"])'

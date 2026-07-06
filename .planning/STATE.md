@@ -8,23 +8,29 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 24 runtime deprecation wrappers are complete. The current
-loaded-module export surface is inventoried in user docs with support bands,
-guarded by focused `api_exports` checks for exact inventory membership,
-non-empty rendered docstrings, Documenter `@docs` membership, lifecycle triage
-alignment, candidate-only cleanup RFC/register consistency, and Phase 24
-runtime warning coverage for the six validation-helper candidates. Package
-identity/public exports remain `scaffolded`; export cleanup and stronger
-Abacus API compatibility claims remain future work.
+**Current focus:** Phase 25 focused test-file harness is complete. Maintainers
+can now run a single test file through `Pkg.test` with test-only dependencies
+available via commands such as `make test-file FILE=test/model/calibration.jl`
+or `Pkg.test(; test_args=["test/model/calibration.jl"],
+julia_args=["--depwarn=yes"])`. This is local verification ergonomics only;
+model/runtime semantics, exports, and Abacus parity claims did not change.
 
 ## Current Position
 
-**Current Phase:** 24
-**Current Phase Name:** Runtime Deprecation Wrappers
-**Total Phases:** 24
-**Current Plan:** Phase 24 complete; choose the next bounded release-prep slice
-**Total Plans in Phase:** 5 tasks
-**Status:** Phase 24 is complete at
+**Current Phase:** 25
+**Current Phase Name:** Focused Test File Harness
+**Total Phases:** 25
+**Current Plan:** Phase 25 complete; choose the next bounded release-prep slice
+**Total Plans in Phase:** 4 tasks
+**Status:** Phase 25 is complete at
+`.planning/phases/25-focused-test-file-harness/PLAN.md`. `test/runtests.jl`
+now accepts exact layer selectors as before or bounded file selectors under
+`test/`, with explicit rejection for unknown selectors, directories,
+`test/runtests.jl`, parent traversal, absolute paths outside `test/`, missing
+files, and mixed layer/file mode. `make test-file FILE=...` runs the selected
+file inside the package test environment with `--depwarn=yes`. No runtime
+source files, model semantics, exports, or Abacus parity claims changed. Phase
+24 is complete at
 `.planning/phases/24-runtime-deprecation-wrappers/PLAN.md`. The six Phase 22
 validation-helper candidates now use public `Base.depwarn` wrappers around
 warning-free `_validate_*` helpers. Direct public calls warn and preserve valid
@@ -191,17 +197,16 @@ evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
 are landed for both accepted calibration terms, but the wider Abacus
 calibration surface is not complete.
 **Last Activity:** 2026-07-06
-**Last Activity Description:** Phase 24 implemented the Phase 23 runtime
-deprecation wrapper contract for the six Phase 22 validation-helper
-candidates. The public validators now emit `Base.depwarn` on direct calls and
-delegate to warning-free `_validate_*` helpers; constructors, loaders, and
-calibration payload builders use the helpers directly. Tests cover valid
-direct-call warnings, invalid direct-call `ArgumentError.msg` preservation, and
-silent replacement workflows where feasible. Exports, API inventory rows,
-modelling semantics, validation predicates, and Abacus parity claims did not
-change. Implementation review is complete and cleared.
+**Last Activity Description:** Phase 25 added focused package-test file
+selectors to `test/runtests.jl` and `make test-file FILE=...`, allowing routine
+single-file verification to run in the package test environment without moving
+test-only dependencies into runtime `[deps]` or widening to the full suite.
+Selector guards reject missing files, directories, recursive `test/runtests.jl`
+selection, parent traversal, absolute outside paths, and mixed layer/file mode.
+No model/runtime semantics, exports, validation predicates, or Abacus parity
+claims changed. Implementation review is complete and cleared.
 **Progress:** 100%
-**Paused At:** `.planning/phases/24-runtime-deprecation-wrappers/PLAN.md`
+**Paused At:** `.planning/phases/25-focused-test-file-harness/PLAN.md`
 
 ## Performance Metrics
 
@@ -237,6 +242,7 @@ change. Implementation review is complete and cleared.
 | 22 | 5/5 | Completed | candidate-only public API cleanup RFC and focused RFC/register guard landed; no runtime or export changes |
 | 23 | 4/4 | Completed | runtime deprecation design contract landed for the six Phase 22 validation-helper candidates; no runtime or export changes |
 | 24 | 5/5 | Completed | runtime deprecation wrappers landed for the six validation-helper candidates; constructors/loaders/builders stay warning-free; no export or parity-status changes |
+| 25 | 4/4 | Completed | focused package-test file selectors and `make test-file FILE=...` landed for single-file local verification with test-only dependencies available |
 
 **Recent Trend:**
 - Last 5 completed plans: `14-01`, `14-02`, `14-03`, `14-04`, `14-05`
@@ -303,6 +309,9 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 
 ## Pending Todos
 
+- Phase 25 is complete; prefer `make test-file FILE=...` or
+  `Pkg.test(; test_args=[...], julia_args=["--depwarn=yes"])` for focused
+  single-file verification when files use test-only dependencies.
 - Phase 24 is complete; direct calls to the six validation-helper candidates
   now warn, but the `deprecation-candidate` rows are still not export removals
   or stable v1 API decisions.
@@ -352,7 +361,7 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 ## Session
 
 **Last Date:** 2026-07-06
-**Stopped At:** Phase 24 is complete. Runtime deprecation wrappers are
-implemented for the six validation-helper candidates; export removal remains
-future work.
-**Resume File:** `.planning/phases/24-runtime-deprecation-wrappers/PLAN.md`
+**Stopped At:** Phase 25 is complete. Focused package-test file selectors and
+`make test-file FILE=...` are implemented; use them for routine local
+single-file verification instead of direct root-project test-file execution.
+**Resume File:** `.planning/phases/25-focused-test-file-harness/PLAN.md`

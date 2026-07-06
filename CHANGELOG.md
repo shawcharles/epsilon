@@ -136,6 +136,12 @@ All notable project changes are recorded here. Epsilon is still on the
   candidates. It records the future wrapper/internal-helper split, warning
   text, tests, and rollback criteria needed before any runtime warning can
   safely land; it does not change exports or runtime behaviour.
+- Added focused package-test file selectors to `test/runtests.jl`, so commands
+  such as `Pkg.test(; test_args=["test/model/calibration.jl"],
+  julia_args=["--depwarn=yes"])` run one test file inside the package test
+  environment with test-only dependencies available.
+- Added `make test-file FILE=...` as the local helper for focused package-test
+  file execution.
 - Documented the bounded calibration YAML/pipeline surface with the supported
   top-level `calibration` shape and explicit unsupported paths for panel
   calibration, VI calibration, non-logistic lift-test calibration, Dash/UI
