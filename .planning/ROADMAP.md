@@ -194,6 +194,12 @@ Current repository state on 2026-05-18:
   exports, the triage register, the Phase 22 RFC, and the Phase 23/24
   runtime-deprecation design. This is governance consistency only; the helpers
   remain exported and not ready to unexport.
+- Phase 27 is closed:
+  release-facing docs, planning state, and the focused `api_exports` lane now
+  make MCMC/Turing the only v1-supported inference backend. `VariationalConfig`
+  and `approximate_fit!` remain scaffolded pre-v1 review exports, but
+  variational inference, dashboard/UI parity, and AI advisor behaviour are
+  explicitly out of scope for v1.
 
 ## Phases
 
@@ -393,7 +399,9 @@ Plans:
 
 ### Phase 6: Inference
 **Goal:** Harden the current fitting workflow into a truthful inference layer
-with a canonical grouped artifact contract and a bounded explicit VI path.
+with a canonical grouped artifact contract. Phase 6 also landed an explicit VI
+implementation, but Phase 27 reclassifies that surface as scaffolded pre-v1
+review rather than v1 release support.
 **Depends on:** Phase 5
 **Requirements:** [INFER-01, INFER-02, INFER-03]
 **Success Criteria** (what must be TRUE):
@@ -401,8 +409,9 @@ with a canonical grouped artifact contract and a bounded explicit VI path.
      with reproducible settings and explicit warning/failure behavior.
   2. Users can inspect and persist grouped inference artifacts through one
      canonical Julia-native `InferenceResults` surface.
-  3. Users can run one bounded variational-inference path through the explicit
-     `approximate_fit!` API where it is documented as supported.
+  3. The historical variational-inference implementation remains visible as
+     `approximate_fit!` / `VariationalConfig` scaffolded export surface, while
+     Phase 27 keeps v1 release support MCMC-only.
   4. The inference support matrix is documented honestly before Phase 7 begins,
      and Phase 7 consumes that frozen artifact contract rather than redefining
      it.
@@ -411,7 +420,9 @@ with a canonical grouped artifact contract and a bounded explicit VI path.
 Plans:
 - [x] 06-01: Harden the current MCMC workflow, warning policy, and execution contract.
 - [x] 06-02: Implement the canonical `InferenceResults` grouped export and predictive grouping surface.
-- [x] 06-03: Implement `approximate_fit!`, `VariationalConfig`, and the bounded first variational-inference path.
+- [x] 06-03: Implement `approximate_fit!`, `VariationalConfig`, and the first
+      variational-inference implementation, now treated as scaffolded
+      pre-v1-review history after Phase 27.
 - [x] 06-04: Freeze the truthful inference support matrix and close the phase.
 
 ### Phase 7: Post-Modeling
@@ -633,7 +644,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 14
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 27
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -642,7 +653,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 14
 | 3. Priors and Distributions | 3/3 | Completed | prior schema, distribution mapping, config deserialization, special-prior compatibility, custom distributions, shrinkage recipes |
 | 4. Model Core | 5/5 | Completed | typed model/config/data structs, runnable Turing-backed MMMs, predictive paths, save/load, diagnostics, warnings |
 | 5. MMM Features | 4/4 | Completed | frozen TimeSeriesMMM / PanelMMM feature-bundle matrix and explicit unsupported combinations |
-| 6. Inference | 4/4 | Completed | hardened MCMC path, canonical `InferenceResults`, bounded explicit VI API, frozen support matrix |
+| 6. Inference | 4/4 | Completed | hardened MCMC path, canonical `InferenceResults`, historical VI implementation now classified as scaffolded after Phase 27, frozen support matrix |
 | 7. Post-Modeling | 3/3 | Completed | deterministic replay, typed post-model outputs, summary tables, Abacus parity coverage, frozen post-model matrix |
 | 8. Budget Optimization | 3/3 | Completed | bounded fixed-budget optimizer, parity fixtures, comparison/audit outputs |
 | 9. Pipeline | 4/4 | Completed | bounded time-series-first MCMC runner, CLI, and full Stage `00`-`70` contract |
@@ -651,3 +662,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 14
 | 12. Parity Remediation | 4/4 | Completed | scaling/model-space parity, Stage 60 curve parity, Stage 70 verification, coherent holiday/design contract, and final revalidation/release reconciliation landed |
 | 13. Prediction-State and Contract Remediation | 6/6 | Completed | fitted trend/holiday prediction-state repair, media input contract hardening, pipeline YAML contract hardening, and final release-gate revalidation landed |
 | 14. Abacus Parity Recovery | 5/5 | Plan complete | `timeseries`, `geo_panel`, and `geo_brand_panel` demo-backed evidence spine; `timeseries` pipeline Stage `00`-`70` artifact-key parity; `geo_panel` and `geo_brand_panel` pipeline Stage `00`, Stage `20`, Stage `30`, Stage `40`, Stage `50`, Stage `60`, and explicitly enabled Stage `70` historical-share optimization coverage, with panel Stage `35` deferred |
+| 27. Scope Boundary Reconciliation | 4/4 | Completed | MCMC-only v1 inference boundary, VI/dashboard/AI out-of-scope table, release-doc and planning guardrails |

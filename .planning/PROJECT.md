@@ -50,10 +50,21 @@ where a direct copy would be less coherent.
 
 ### Deferred
 
+- Variational inference - `VariationalConfig` and `approximate_fit!` remain
+  scaffolded exports for pre-v1 review, but VI is not a v1-supported inference
+  backend.
 - AI advisor functionality - useful product assistance, but not central to the
   statistical or methodological port.
 - Plotly Dash / hosted dashboard parity - Epsilon is a Julia package and CLI
   with Julia-native plots and artifacts, not a clone of the Abacus product UI.
+
+<!-- BEGIN V1 OUT OF SCOPE -->
+| Surface | Status | Rationale |
+|---|---|---|
+| variational_inference | out-of-scope-v1 | MCMC/Turing is the supported v1 inference path; existing VI exports remain scaffolded pre-v1 review surfaces. |
+| dashboard_ui | out-of-scope-v1 | Epsilon v1 is a Julia library and artifact-producing workflow, not a Plotly Dash or hosted dashboard clone. |
+| ai_advisor | out-of-scope-v1 | Advisor behaviour is product assistance outside the statistical and methodological v1 evidence spine. |
+<!-- END V1 OUT OF SCOPE -->
 
 ### Out of Scope
 
@@ -93,9 +104,9 @@ stable artifacts before Epsilon makes broad release claims.
 - **Reference scope**: Abacus remains the main external reference for validated
   statistical ideas, methodological behavior, fixtures, and regression checks;
   Epsilon should only claim parity where semantics truly match. Apart from AI
-  advisor and Dash/dashboard parity, Abacus statistical and methodological
-  functionality should be treated as in scope unless a ledger row explicitly
-  says otherwise.
+  advisor, Dash/dashboard parity, and variational inference v1 support, Abacus
+  statistical and methodological functionality should be treated as in scope
+  unless a ledger row explicitly says otherwise.
 - **Engineering quality**: Docs, tests, compat bounds, and local quality checks must evolve with
   code - the package cannot grow as an unverified research prototype.
 - **Architecture**: Autodiff-safe, composable building blocks are required -
@@ -115,6 +126,7 @@ stable artifacts before Epsilon makes broad release claims.
 | Reopen the roadmap if the methodology audit invalidates a release claim | Release readiness is subordinate to truthful methodology and documentation | Good |
 | Add Phase 13 before release prep to close external code-review findings | Prediction/replay state and config-validation bugs can invalidate release behavior even after methodology claims are reconciled | Pending |
 | Use the Abacus parity ledger as the release roadmap | Module presence is not enough; release claims need fixture-backed or demo-backed evidence | Pending |
+| Keep v1 inference support MCMC-only after Phase 27 | Existing VI exports are scaffolded pre-v1 review surfaces, not release-supported backends | Good |
 
 ---
-*Last updated: 2026-05-19 after centered-logistic API cleanup*
+*Last updated: 2026-07-06 after Phase 27 scope-boundary reconciliation*

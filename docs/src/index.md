@@ -25,17 +25,19 @@ remediation pass on the bounded reference time-series story:
   preserve posterior draws, optional prior draws, predictive draws, sampler
   statistics, observed data, and coordinate metadata without redefining the
   flatter `ModelResults` convenience surface
-- Phase 6 is now closed: `fit!` is the canonical MCMC path,
-  `InferenceResults` is the canonical grouped artifact surface, and
-  `approximate_fit!(model, VariationalConfig(...))` is the bounded explicit VI
-  path on `TimeSeriesMMM`
+- Phase 6 is now closed historically: `fit!` is the canonical MCMC path and
+  `InferenceResults` is the canonical grouped artifact surface. Phase 6 also
+  landed `approximate_fit!(model, VariationalConfig(...))`, but Phase 27
+  supersedes that as a v1 release-support claim; the exports remain scaffolded
+  pre-v1 review surfaces.
 - Phase 7 is now closed: grouped time-series `InferenceResults` can now
   produce `contribution_results`, `decomposition_results`,
-  `response_curve_results`, `metric_results`, and `summary_table` on both
-  supported MCMC and supported VI rows through deterministic replay of the
-  frozen Phase 5 additive model contract; response curves use total-spend
-  grids in original units and preserve the observed temporal spend shape for
-  the selected channel
+  `response_curve_results`, `metric_results`, and `summary_table` on the
+  v1-supported MCMC row through deterministic replay of the frozen Phase 5
+  additive model contract; earlier VI artefact consumers remain scaffolded
+  implementation history, not v1 release support. Response curves use
+  total-spend grids in original units and preserve the observed temporal spend
+  shape for the selected channel
 - Phase 8 is now closed for time-series optimization, and Phase 14 adds a
   bounded panel extension: `optimize_budget(results; ...)` is the canonical
   fixed-budget optimization entry point on supported grouped `InferenceResults`,
@@ -92,8 +94,9 @@ remediation pass on the bounded reference time-series story:
   `ContributionResults`, `DecompositionResults`, and `ResponseCurveResults`
   through `contribution_plot`, `contribution_area_plot`, `decomposition_plot`,
   and `response_curve_plot`. The current bounded row remains time-series first,
-  and those figures work on both supported MCMC and supported VI post-model
-  artifacts where the underlying typed Phase 7 surface exists. Panel
+  and those figures work on the v1-supported MCMC post-model artifacts where
+  the underlying typed Phase 7 surface exists. Earlier VI plotting consumers
+  remain scaffolded implementation history, not v1 release support. Panel
   post-model plotting remains explicitly unsupported
 - Phase 10 `10-03` is now landed and closes Phase 10: optimization plotting
   now renders directly from `BudgetOptimizationResult` through
@@ -199,7 +202,6 @@ proof of end-to-end Abacus parity on the holiday-bearing row.
 | ID | Model | Backend | Contributions / Decomposition | Response / Metrics | `summary_table` | Notes |
 |---|---|---|---|---|---|---|
 | `POST-TS-MCMC` | `TimeSeriesMMM` | Turing / NUTS | Supported | Supported | Supported | Consumes canonical grouped `InferenceResults` through deterministic replay |
-| `POST-TS-VI` | `TimeSeriesMMM` | AdvancedVI mean-field Gaussian ADVI | Supported | Supported | Supported | Bounded to the explicit VI row frozen in Phase 6 |
 | `POST-P-MCMC` | `PanelMMM` | Turing / NUTS | Supported | Supported with explicit `delta_grid` | Supported | Bounded panel replay covered by `geo_panel` and `geo_brand_panel` validation gates; panels use a fixed flat `panel_cell` axis plus declared coordinate columns in contribution, curve, and metric summaries |
 
 ### Post-Model Axis Contracts
@@ -226,6 +228,7 @@ channel-by-panel allocation.
 |---|---|---|---|
 | `POST-U2` | Flat `ModelResults` as the canonical post-model input | Unsupported | Phase 7 consumes grouped `InferenceResults` directly |
 | `POST-U3` | Post-model outputs without grouped posterior/spec/observed-data state | Unsupported | Deterministic replay requires the frozen grouped artifact contract |
+| `POST-U4` | VI-backed post-model outputs as v1 release-supported rows | Unsupported | Historical implementation artefacts remain scaffolded; v1 post-model support is MCMC-only |
 
 ## Phase 8 Optimization Matrix
 
@@ -234,7 +237,6 @@ channel-by-panel allocation.
 | ID | Model | Backend | Entry Point | Comparison / Audit Outputs | Notes |
 |---|---|---|---|---|---|
 | `OPT-TS-MCMC` | `TimeSeriesMMM` | Turing / NUTS | `optimize_budget(results; ...)` | Supported | Fixed-budget equality plus absolute and reference-relative bounds on grouped MCMC `InferenceResults` |
-| `OPT-TS-VI` | `TimeSeriesMMM` | AdvancedVI mean-field Gaussian ADVI | `optimize_budget(results; ...)` | Supported | Same bounded optimization contract on grouped VI `InferenceResults` |
 | `OPT-P-MCMC` | `PanelMMM` | Turing / NUTS | `optimize_budget(results; panel_allocation_mode = :historical_shares, ...)` | Supported | Optimizes channel totals, reuses panel response curves through shared channel deltas, and preserves historical within-channel panel-cell spend shares |
 
 ### Explicitly unsupported in Phase 8
@@ -244,6 +246,7 @@ channel-by-panel allocation.
 | `OPT-U2` | Objectives other than `:total_response` | Unsupported | Phase 8 freezes one posterior-mean total-response objective |
 | `OPT-U3` | Constraint families beyond total-budget equality, absolute bounds, and reference-relative guardrails | Unsupported | Pairwise ratios, pacing, and multi-objective trade-offs are deferred |
 | `OPT-U4` | Free channel-by-panel allocation or panel-total bounds | Unsupported | Panel response curves are valid for shared within-channel historical deltas; arbitrary panel allocation needs a separate validity contract |
+| `OPT-U5` | VI-backed optimisation as a v1 release-supported row | Unsupported | Historical implementation artefacts remain scaffolded; v1 optimisation support is MCMC-only |
 
 ## Supported Phase 5 Matrix
 
@@ -307,9 +310,6 @@ dimensions varying more slowly. For example, `("geo", "brand")` with geos
 |---|---|---|---|---|---|---|---|---|---|
 | `INF-TS-MCMC` | `TimeSeriesMMM` | Turing / NUTS | `fit!` | Supported | Supported | Supported | Supported | Supported | Canonical MCMC path; YAML `fit` remains mapped here |
 | `INF-P-MCMC` | `PanelMMM` | Turing / NUTS | `fit!` | Supported | Supported | Supported | Supported | Supported | Bounded panel slice only; seasonality/trend/events/richer controls still excluded |
-| `INF-TS-VI` | `TimeSeriesMMM` | AdvancedVI mean-field Gaussian ADVI | `approximate_fit!` | Supported | Supported* | Unsupported | Supported | Unsupported | `InferenceResults` is the canonical artifact for VI-backed fits |
-
-\* Direct `prior_predict(model)` remains a backend-agnostic helper and uses `SamplerConfig.draws` and `SamplerConfig.chains`. VI-backed grouped prior draws and prior predictive groups inside `InferenceResults` use `VariationalConfig.draws` and are materialized as a single chain to match the VI posterior artifact.
 
 ### Explicitly unsupported in Phase 6
 
@@ -319,6 +319,7 @@ dimensions varying more slowly. For example, `("geo", "brand")` with geos
 | `INF-U2` | YAML-driven VI or mixed-backend `fit!` semantics | Unsupported | YAML `fit` and `SamplerConfig` remain MCMC-only |
 | `INF-U3` | VI-backed `model_results`, `model_diagnostics`, `sampler_diagnostics`, `convergence_report`, `convergence_warnings` | Unsupported | These remain MCMC/Turing-only surfaces |
 | `INF-U4` | NetCDF / ArviZ-native grouped export | Unsupported | Deferred from Phase 6; `InferenceResults` is the canonical grouped artifact |
+| `INF-U5` | `approximate_fit!` / `VariationalConfig` as a v1 release-supported backend | Unsupported | The exports remain scaffolded pre-v1 review surfaces, but Phase 27 keeps v1 inference support MCMC-only |
 
 ## Working Principles
 

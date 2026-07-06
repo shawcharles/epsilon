@@ -11,6 +11,16 @@ const API_EXPORTS_RUNTIME_DEPRECATION_DESIGN_PATH = joinpath(
     ".planning",
     "API-RUNTIME-DEPRECATION-DESIGN.md",
 )
+const API_EXPORTS_PROJECT_PATH = joinpath(@__DIR__, "..", ".planning", "PROJECT.md")
+const API_EXPORTS_V1_SCOPE_GUARD_PATHS = [
+    joinpath(@__DIR__, "..", "README.md"),
+    joinpath(@__DIR__, "..", "docs", "src", "index.md"),
+    joinpath(@__DIR__, "..", "docs", "src", "release.md"),
+    joinpath(@__DIR__, "..", ".planning", "PROJECT.md"),
+    joinpath(@__DIR__, "..", ".planning", "ROADMAP.md"),
+    joinpath(@__DIR__, "..", ".planning", "STATE.md"),
+    joinpath(@__DIR__, "..", ".planning", "ABACUS-PARITY-LEDGER.md"),
+]
 const API_EXPORTS_INVENTORY_BEGIN = "<!-- BEGIN PUBLIC API INVENTORY -->"
 const API_EXPORTS_INVENTORY_END = "<!-- END PUBLIC API INVENTORY -->"
 const API_EXPORTS_TRIAGE_BEGIN = "<!-- BEGIN PUBLIC API TRIAGE -->"
@@ -19,10 +29,47 @@ const API_EXPORTS_CLEANUP_RFC_BEGIN = "<!-- BEGIN PUBLIC API CLEANUP CANDIDATES 
 const API_EXPORTS_CLEANUP_RFC_END = "<!-- END PUBLIC API CLEANUP CANDIDATES -->"
 const API_EXPORTS_DEPRECATION_AUDIT_BEGIN = "<!-- BEGIN PUBLIC API DEPRECATION MIGRATION AUDIT -->"
 const API_EXPORTS_DEPRECATION_AUDIT_END = "<!-- END PUBLIC API DEPRECATION MIGRATION AUDIT -->"
+const API_EXPORTS_V1_OUT_OF_SCOPE_BEGIN = "<!-- BEGIN V1 OUT OF SCOPE -->"
+const API_EXPORTS_V1_OUT_OF_SCOPE_END = "<!-- END V1 OUT OF SCOPE -->"
 const API_EXPORTS_CLEANUP_RFC_DECISION = "Candidate only; no runtime or export change in Phase 22."
 const API_EXPORTS_DEPRECATION_AUDIT_RUNTIME_WARNING = "landed"
 const API_EXPORTS_DEPRECATION_AUDIT_REPLACEMENT_STATUS = "guarded"
 const API_EXPORTS_DEPRECATION_AUDIT_READY_TO_UNEXPORT = "no"
+const API_EXPORTS_V1_OUT_OF_SCOPE_SURFACES = [
+    "variational_inference",
+    "dashboard_ui",
+    "ai_advisor",
+]
+const API_EXPORTS_V1_OUT_OF_SCOPE_STATUS = "out-of-scope-v1"
+const API_EXPORTS_LEGACY_VI_ROW_IDS = [
+    "INF-TS-VI",
+    "POST-TS-VI",
+    "OPT-TS-VI",
+]
+const API_EXPORTS_ACTIVE_VI_SUPPORT_PATTERNS = Regex[
+    r"\bsupported\s+vi\b"i,
+    r"\bsupported\s+mcmc\s+and\s+vi\b"i,
+    r"\bsupported\s+mcmc\s+and\s+supported\s+vi\b"i,
+    r"\bbounded\s+explicit\s+vi\s+path\b"i,
+    r"\bbounded\s+vi\s+support\b"i,
+    r"\bvi\s+is\s+(?:a\s+)?(?:release-)?supported\b"i,
+    r"\bvi\s+is\s+supported\s+for\s+v1\b"i,
+    r"\badvi\s+is\s+(?:a\s+)?supported\s+backend\b"i,
+    r"\badvi\s+is\s+supported\s+for\s+v1\b"i,
+    r"\bvariational\s+inference\s+is\s+(?:a\s+)?(?:release-)?supported\b"i,
+    r"\bvariational\s+inference\s+is\s+supported\s+for\s+v1\b"i,
+]
+const API_EXPORTS_ALLOWED_VI_CONTEXT_PATTERNS = Regex[
+    r"\bunsupported\b"i,
+    r"\bout[- ]of[- ]scope\b"i,
+    r"\bnot\s+(?:a\s+)?v1[- ]supported\b"i,
+    r"\bnot\s+(?:release-)?supported\b"i,
+    r"\bnot\s+part\s+of\s+v1\b"i,
+    r"\bscaffolded\b"i,
+    r"\bpre-v1\s+review\b"i,
+    r"\bhistorical\b"i,
+    r"\bsuperseded\b"i,
+]
 const API_EXPORTS_DEPRECATED_VALIDATION_HELPERS = Set(
     [
         :validate_calibration_step_config,
@@ -76,6 +123,10 @@ end
 
 function _api_exports_marked_deprecation_audit_table(text::AbstractString)
     return _api_exports_marked_table(text, API_EXPORTS_DEPRECATION_AUDIT_BEGIN, API_EXPORTS_DEPRECATION_AUDIT_END)
+end
+
+function _api_exports_marked_v1_out_of_scope_table(text::AbstractString)
+    return _api_exports_marked_table(text, API_EXPORTS_V1_OUT_OF_SCOPE_BEGIN, API_EXPORTS_V1_OUT_OF_SCOPE_END)
 end
 
 function _api_exports_section_table(text::AbstractString, heading::AbstractString)
@@ -282,6 +333,36 @@ function _api_exports_parse_runtime_deprecation_source_rows(table_text::Abstract
     return parsed
 end
 
+function _api_exports_parse_v1_out_of_scope_rows(table_text::AbstractString)
+    rows = split(table_text, '\n')
+    nonempty_rows = filter(row -> !isempty(strip(row)), rows)
+
+    @test length(nonempty_rows) >= 2
+    @test strip(nonempty_rows[1]) == "| Surface | Status | Rationale |"
+    @test strip(nonempty_rows[2]) == "|---|---|---|"
+
+    parsed = NamedTuple{(:surface, :status, :rationale), Tuple{String, String, String}}[]
+    for row in nonempty_rows[3:end]
+        match_result = match(r"^\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|$", row)
+        @test !isnothing(match_result)
+        isnothing(match_result) && continue
+
+        surface = strip(match_result.captures[1])
+        status = strip(match_result.captures[2])
+        rationale = strip(match_result.captures[3])
+        @test !isempty(rationale)
+
+        push!(parsed, (surface = surface, status = status, rationale = rationale))
+    end
+
+    return parsed
+end
+
+function _api_exports_v1_out_of_scope_rows()
+    table_text = _api_exports_marked_v1_out_of_scope_table(read(API_EXPORTS_PROJECT_PATH, String))
+    return _api_exports_parse_v1_out_of_scope_rows(table_text)
+end
+
 function _api_exports_countmap(values)
     counts = Dict{Symbol, Int}()
     for value in values
@@ -388,6 +469,30 @@ function _api_exports_documenter_docs_entries()
         end
     end
     return entries
+end
+
+function _api_exports_has_allowed_vi_context(line::AbstractString)
+    return any(pattern -> occursin(pattern, line), API_EXPORTS_ALLOWED_VI_CONTEXT_PATTERNS)
+end
+
+function _api_exports_has_active_vi_release_claim(line::AbstractString)
+    any(row_id -> occursin(row_id, line), API_EXPORTS_LEGACY_VI_ROW_IDS) && return true
+    _api_exports_has_allowed_vi_context(line) && return false
+    return any(pattern -> occursin(pattern, line), API_EXPORTS_ACTIVE_VI_SUPPORT_PATTERNS)
+end
+
+function _api_exports_legacy_vi_release_claims()
+    claims = String[]
+    repo_root = normpath(joinpath(@__DIR__, ".."))
+
+    for path in API_EXPORTS_V1_SCOPE_GUARD_PATHS
+        for (line_number, line) in enumerate(eachline(path))
+            _api_exports_has_active_vi_release_claim(line) || continue
+            push!(claims, "$(relpath(path, repo_root)):$(line_number):$(strip(line))")
+        end
+    end
+
+    return sort(claims)
 end
 
 @testset "public API inventory matches exports" begin
@@ -644,4 +749,32 @@ end
     @test replacement_status_mismatched_symbols == Symbol[]
     @test unexport_readiness_mismatched_symbols == Symbol[]
     @test empty_evidence_symbols == Symbol[]
+end
+
+@testset "v1 release scope excludes unsupported VI surface" begin
+    out_of_scope_rows = _api_exports_v1_out_of_scope_rows()
+    surfaces = [row.surface for row in out_of_scope_rows]
+    statuses = [row.status for row in out_of_scope_rows]
+    allowed_vi_lines = [
+        "YAML-driven VI explicitly unsupported.",
+        "VI exports remain scaffolded, Julia-only pre-v1 review surfaces and are not part of v1 release support.",
+        "Existing Julia exports remain scaffolded pre-v1 review implementation surfaces, not supported release backends.",
+        "Historical VI validation scaffolding is superseded by Phase 27's v1 boundary.",
+    ]
+    rejected_vi_lines = [
+        "supported MCMC and VI rows can produce post-model outputs.",
+        "bounded VI support is part of the release gate.",
+        "VI is supported for v1.",
+        "VI is release-supported.",
+        "ADVI is a supported backend.",
+        "Variational inference is supported for v1.",
+    ]
+    legacy_vi_claims = _api_exports_legacy_vi_release_claims()
+
+    @test surfaces == API_EXPORTS_V1_OUT_OF_SCOPE_SURFACES
+    @test statuses == fill(API_EXPORTS_V1_OUT_OF_SCOPE_STATUS, length(API_EXPORTS_V1_OUT_OF_SCOPE_SURFACES))
+    @test length(out_of_scope_rows) == length(API_EXPORTS_V1_OUT_OF_SCOPE_SURFACES)
+    @test [_api_exports_has_active_vi_release_claim(line) for line in allowed_vi_lines] == fill(false, length(allowed_vi_lines))
+    @test [_api_exports_has_active_vi_release_claim(line) for line in rejected_vi_lines] == fill(true, length(rejected_vi_lines))
+    @test legacy_vi_claims == String[]
 end

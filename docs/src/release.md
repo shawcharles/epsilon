@@ -25,8 +25,6 @@ The canonical entry points for the closed v1 surface are:
 
 - direct modeling and inference:
   - `fit!(model)` with sampler settings carried on the typed model
-  - `approximate_fit!(model, VariationalConfig(...))` on the bounded
-    `TimeSeriesMMM` VI row
   - `predict(model)`, `prior_predict(model)`, and `inference_results(model)`
 - post-model analysis:
   - `contribution_results(results)`
@@ -60,9 +58,9 @@ The canonical entry points for the closed v1 surface are:
 | Surface | Supported Rows | Notes |
 |---|---|---|
 | MMM feature bundles | `TS-00` through `TS-05`, `P-00` | Frozen at Phase 5 closeout |
-| Inference | `INF-TS-MCMC`, `INF-P-MCMC`, `INF-TS-VI` | VI is explicit and bounded to `TimeSeriesMMM` |
-| Post-model | `POST-TS-MCMC`, `POST-TS-VI`, `POST-P-MCMC` | Deterministic replay from grouped `InferenceResults`; post-model result arrays have validated axis-order contracts, and panel response/metric curves are panel-cell/channel artifacts with explicit `delta_grid` historical-scaling semantics |
-| Optimization | `OPT-TS-MCMC`, `OPT-TS-VI`, `OPT-P-MCMC` | Fixed-budget `:total_response` only; panel optimization allocates channel totals and preserves historical within-channel panel-cell spend shares |
+| Inference | `INF-TS-MCMC`, `INF-P-MCMC` | V1 inference support is MCMC-only; `approximate_fit!` and `VariationalConfig` remain scaffolded pre-v1 review exports |
+| Post-model | `POST-TS-MCMC`, `POST-P-MCMC` | Deterministic replay from grouped MCMC `InferenceResults`; post-model result arrays have validated axis-order contracts, and panel response/metric curves are panel-cell/channel artifacts with explicit `delta_grid` historical-scaling semantics |
+| Optimization | `OPT-TS-MCMC`, `OPT-P-MCMC` | Fixed-budget `:total_response` only; panel optimization allocates channel totals and preserves historical within-channel panel-cell spend shares |
 | Scenario planner | solved time-series and bounded panel optimization results; evaluated time-series manual allocations; local scenario-store artifacts | Non-UI comparison tables over existing optimizer outputs and existing time-series response surfaces; typed current, manual-allocation, and fixed-budget optimized scenario specs are supported. Compatible evaluated manual scenarios can be compared with one solved optimization result, and existing `ScenarioPlanResult` tables can be written to a local typed `scenario_store.jls` payload with CSV inspection sidecars. The store artifact is Epsilon/Julia-version-bound and should not be treated as a portable or untrusted interchange format. Panel manual allocation, automatic scenario refits, future-path simulation, pipeline scenario-store emission, hosted/background stores, and Dash workflows remain deferred |
 | Pipeline | bounded time-series MCMC Stage `00`-`70` path, including optional Stage `05` prior-sensitivity planning; panel Stage `00` metadata, optional Stage `05` prior-sensitivity planning, Stage `20` fit, Stage `30` assessment, Stage `40` decomposition, Stage `50` diagnostics, Stage `60` response-curve path, and explicitly enabled Stage `70` historical-share optimization | `run_pipeline(config)` and `epsilon run config.yml`, with stage-local plot artifacts; Phase 14 validates Abacus-compatible Stage `00` through Stage `70` artifact keys against an exported Abacus `timeseries` pipeline contract, and validates `geo_panel` / `geo_brand_panel` Stage `00`-`60` keys plus `geo_panel` and `geo_brand_panel` Stage `70` historical-share optimization artifacts against exported Abacus panel contracts where semantics match. Stage `05` writes resolved prior-sensitivity scenario configs and human/LLM-safe manifests; it does not refit every scenario automatically. Julia-native serialized artifacts are used where Abacus uses PyMC/NetCDF-specific files |
 | Plotting | grouped diagnostics, time-series post-model, channel-level time-series and panel optimization, deterministic plot bundle | Direct plots return Makie `Figure` objects; `write_plot_bundle(run)` is the optional curated export |
@@ -74,6 +72,8 @@ The release gate keeps the unsupported surface explicit:
 - `seasonality.type = "hsgp"`
 - panel seasonality, trend, events, and richer controls
 - `PanelMMM` + `approximate_fit!`
+- `approximate_fit!` / `VariationalConfig` as a v1 release-supported inference
+  backend
 - YAML-driven VI
 - VI-backed `model_results`, sampler diagnostics, convergence reports, and
   convergence warnings
@@ -139,14 +139,13 @@ than false Abacus parity claims:
 - `VAL-TS-04-MCMC`
 - `VAL-P-00-MCMC`
 - `VAL-PIPE-TS-00-MCMC`
-- bounded VI support
 - bounded plotting support
 
 The release-gate harness exercises `VAL-TS-04-MCMC` through the repaired
 automatic-holiday grouped inference / post-model / optimization contract,
-the bounded VI row through `approximate_fit!(...)` plus grouped post-model /
-optimization consumers, and the bounded plotting row through
-`write_plot_bundle(run)` on a successful pipeline run.
+and the bounded plotting row through `write_plot_bundle(run)` on a successful
+pipeline run. Historical VI harness work remains scaffolded implementation
+evidence only and is not part of the v1 release gate after Phase 27.
 
 ### Maintainer Commands
 
@@ -183,8 +182,9 @@ from a clean tagged worktree for the final release artifact.
 
 - [x] The frozen Phase 5 feature matrix is documented with supported and
   unsupported rows.
-- [x] The Phase 6 inference matrix is documented, including bounded VI support
-  and explicit unsupported rows.
+- [x] The Phase 6 inference matrix is documented; Phase 27 supersedes the
+  earlier VI row as release support and keeps v1 inference MCMC-only with
+  explicit unsupported rows.
 - [x] The Phase 7 post-model contract is closed on grouped `InferenceResults`.
 - [x] The Phase 8 fixed-budget optimization surface is documented with explicit
   unsupported constraint/objective families.
@@ -243,7 +243,8 @@ full Abacus scope:
   within-channel panel shares; arbitrary channel-by-panel allocation is not
   implied. Panel Stage `35` holdout validation is deferred for v1 rather than
   added for parity theater.
-- VI remains explicit, Julia-only, and narrower than the MCMC surface.
+- VI exports remain scaffolded, Julia-only pre-v1 review surfaces and are not
+  part of v1 release support.
 - The pipeline remains time-series-first and MCMC-only.
 - Plotting is static and Makie-based rather than a replicated Dash product
   layer; Dash/dashboard parity remains explicitly deferred.

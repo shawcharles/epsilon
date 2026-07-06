@@ -8,21 +8,32 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 26 deprecated validation-helper migration audit is
-complete. The six Phase 22 validation-helper candidates now have a marked
-migration-readiness audit guarded by the focused `api_exports` lane against
-current filtered exports, the triage register, the Phase 22 RFC, and the Phase
-23/24 runtime-deprecation design. This is governance consistency only; exports,
-runtime behaviour, model semantics, and Abacus parity claims did not change.
+**Current focus:** Phase 27 scope-boundary reconciliation is complete. The v1
+release boundary is now MCMC/Turing-only for supported inference, while
+`VariationalConfig` and `approximate_fit!` remain scaffolded pre-v1 review
+exports. Variational inference, dashboard/UI parity, and AI advisor behaviour
+are explicitly out of scope for v1 and guarded by the focused `api_exports`
+lane.
 
 ## Current Position
 
-**Current Phase:** 26
-**Current Phase Name:** Deprecated Validation Helper Migration Audit
-**Total Phases:** 26
-**Current Plan:** Phase 26 complete; choose the next bounded release-prep slice
+**Current Phase:** 27
+**Current Phase Name:** Scope Boundary Reconciliation
+**Total Phases:** 27
+**Current Plan:** Phase 27 complete; choose the next bounded release-prep slice
 **Total Plans in Phase:** 4 tasks
-**Status:** Phase 26 is complete at
+**Status:** Phase 27 is complete at
+`.planning/phases/27-scope-boundary-reconciliation/PLAN.md`. Release-facing
+docs and planning state now stop presenting VI as a v1-supported backend.
+`.planning/PROJECT.md` contains a marked v1 out-of-scope table for
+`variational_inference`, `dashboard_ui`, and `ai_advisor`, each with
+`out-of-scope-v1` status. `test/api_exports.jl` guards that table and rejects
+legacy active VI support row IDs and phrases across release-facing docs and
+planning files while allowing unsupported, out-of-scope, historical-superseded,
+and export-existence contexts. `VariationalConfig` and `approximate_fit!`
+remain exported scaffolded surfaces; no source files, dependency files,
+runtime warnings, model semantics, or API cleanup candidates changed. Phase 26
+is complete at
 `.planning/phases/26-deprecated-validation-helper-migration-audit/PLAN.md`.
 `.planning/API-EXPORT-CLEANUP-RFC.md` now treats Phase 22 as historical
 candidate governance and records the current post-Phase-24 state in a marked
@@ -207,16 +218,16 @@ evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
 are landed for both accepted calibration terms, but the wider Abacus
 calibration surface is not complete.
 **Last Activity:** 2026-07-06
-**Last Activity Description:** Phase 26 added and guarded a migration-readiness
-audit for the six deprecated validation-helper
-exports. The audit records runtime warnings as landed, replacement workflows as
-guarded, and every candidate as not ready to unexport yet. Focused
-`api_exports` checks now align the audit with current filtered exports, the
-triage register, the Phase 22 RFC, and the Phase 23/24 runtime-deprecation
-design. No source/runtime files, exports, validation predicates, model
-semantics, or Abacus parity claims changed. Implementation review cleared.
+**Last Activity Description:** Phase 27 reconciled the v1 scope boundary:
+MCMC/Turing is the only v1-supported inference path; VI, dashboard/UI parity,
+and AI advisor behaviour are out of scope for v1; and VI exports remain
+scaffolded pre-v1 review surfaces rather than release-supported backends.
+Focused `api_exports` checks now guard the marked out-of-scope table and reject
+legacy active VI support claims across release-facing and planning docs. No
+source/runtime files, dependency files, exports, runtime warnings, validation
+predicates, model semantics, or Abacus parity claims changed.
 **Progress:** 100%
-**Paused At:** `.planning/phases/26-deprecated-validation-helper-migration-audit/PLAN.md`
+**Paused At:** `.planning/phases/27-scope-boundary-reconciliation/PLAN.md`
 
 ## Performance Metrics
 
@@ -254,6 +265,7 @@ semantics, or Abacus parity claims changed. Implementation review cleared.
 | 24 | 5/5 | Completed | runtime deprecation wrappers landed for the six validation-helper candidates; constructors/loaders/builders stay warning-free; no export or parity-status changes |
 | 25 | 4/4 | Completed | focused package-test file selectors and `make test-file FILE=...` landed for single-file local verification with test-only dependencies available |
 | 26 | 4/4 | Completed | migration-readiness audit and focused guard landed for the six deprecated validation-helper exports; no export or runtime changes |
+| 27 | 4/4 | Completed | MCMC-only v1 inference boundary, explicit VI/dashboard/AI out-of-scope table, release-doc and planning guardrails |
 
 **Recent Trend:**
 - Last 5 completed plans: `14-01`, `14-02`, `14-03`, `14-04`, `14-05`
@@ -298,7 +310,7 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 | 5 | Use `PanelMMM` plus centered panel intercept offsets as the first supported panel slice | Lands a real panel/hierarchical path without overloading `TimeSeriesMMM` or pretending broader panel feature support already exists |
 | 5 | Freeze Phase 5 as a supported feature-bundle matrix rather than an implied combinatorial surface | Keeps the package contract honest and makes closeout testable without inventing unsupported combinations |
 | 6 | Fix the canonical grouped inference artifact contract as Julia-native `InferenceResults` and defer NetCDF / ArviZ-native interchange from Phase 6 | Removes implementation-time ambiguity before grouped export, VI, and Phase 7 consumers depend on the artifact surface |
-| 6 | Keep VI as an explicit Julia-only API via `approximate_fit!` and `VariationalConfig`, with the YAML `fit` block remaining MCMC-only | Prevents the existing MCMC config surface from becoming a hidden mixed-backend contract during Phase 6 |
+| 6 | Historical decision: keep VI visible via `approximate_fit!` and `VariationalConfig`, with the YAML `fit` block remaining MCMC-only | Superseded by Phase 27 for v1 release support: those exports remain scaffolded pre-v1 review surfaces, while MCMC/Turing is the only supported v1 inference path |
 | 6 | Freeze the inference support matrix explicitly instead of leaving backend availability implicit in docs and tests | Makes the Phase 6 contract truthful before Phase 7 consumes it |
 | 7 | Keep Phase 7 post-modeling time-series first and consume canonical `InferenceResults` directly | Avoids reopening inference contracts or inventing premature panel decomposition/response semantics |
 | 7 | Carry resolved standardized-control replay state inside `MMMModelSpec.controls` instead of widening `InferenceResults` | Keeps deterministic replay faithful for grouped `new_data` artifacts while preserving the frozen grouped-artifact contract |
@@ -310,6 +322,7 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 | 12 | Reopen the roadmap for methodology remediation before any release branch or tag | The methodology audit found a structural model-space divergence from Abacus, so release preparation must pause until the bounded methodology and reference claims are repaired truthfully |
 | 13 | Reopen planning for prediction-state and config-contract remediation before release prep | The external code review found concrete risks in trend/holiday holdout replay, media-domain validation, and pipeline YAML parsing that can mislead users or invalidate release behavior |
 | 14 | Reset release readiness around the Abacus parity ledger | Demo-backed parity is required before broad release claims; historical phase completion is not sufficient evidence |
+| 27 | Keep v1 inference support MCMC-only and mark VI, dashboard/UI parity, and AI advisor behaviour out of scope for v1 | Removes the contradiction between historical VI implementation work and the current release boundary without removing exports or changing runtime behaviour |
 | 14 | Defer only AI advisor and Dash/dashboard parity by default | Epsilon is a Julia port of Abacus statistical and methodological functionality; other Abacus surfaces remain in scope unless the parity ledger explicitly says otherwise |
 | 14 | Promote one-dimensional `geo_panel` replay to accepted deterministic gate | Panel contribution/decomposition replay now reconstructs original-scale panel artifacts from controlled posterior fixtures, but multidimensional panel and downstream response/optimization parity remain separate slices |
 | 14 | Flatten multidimensional panel cells while retaining declared panel dimensions in metadata | Epsilon keeps the bounded sampler and replay internals on one panel-cell axis, but `geo_brand_panel` metadata preserves Abacus `("geo", "brand")` ordering and coordinate values for honest artifact schemas |
@@ -336,8 +349,9 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
   future spend paths, pipeline store emission, Dash/UI, or panel manual
   allocation without a separate methodological contract.
 - Phase 15 calibration likelihood integration is closed; keep the calibration
-  row `scaffolded` until a separate contract implements panel, VI,
-  broader saturation-family, or UI calibration paths.
+  row `scaffolded` until a separate contract implements panel,
+  broader saturation-family, or UI calibration paths. VI calibration remains
+  outside v1 because variational inference itself is out of scope for v1.
 - Keep Stage `35` panel holdout validation deferred unless a concrete
   methodological requirement and fixture-backed contract are added.
 - Do not force free channel-by-panel allocation, panel-total bounds, fairness

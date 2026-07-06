@@ -26,16 +26,15 @@ The current implementation should be read with these labels:
 - `missing`: Abacus behavior is not implemented yet, but remains in scope
   unless explicitly deferred
 - `deferred`: intentionally not part of the current statistical/methodological
-  port scope. Current explicit deferrals are AI advisor and Dash/dashboard
-  parity.
+  port scope. Current explicit deferrals are variational inference, AI advisor,
+  and Dash/dashboard parity for v1.
 
 The active implementation plan is tracked in
 [`ABACUS-PARITY-LEDGER.md`](.planning/ABACUS-PARITY-LEDGER.md). The first
 release-quality target is not full Abacus product parity; it is the statistical
 MMM core on the bundled `timeseries`, `geo_panel`, and `geo_brand_panel`
-demo-style paths. Beyond AI advisor and Dash/dashboard parity, Abacus
-statistical and methodological functionality should be treated as in scope for
-the Julia port.
+demo-style paths. Beyond explicitly deferred surfaces, Abacus statistical and
+methodological functionality should be treated as in scope for the Julia port.
 
 Current high-confidence parity is strongest in the lowest layers: convolution,
 scaling, and selected adstock/transform behavior remain `ported` against
@@ -48,11 +47,12 @@ artifact-key parity (where each stage is enabled) all pass the fixture/demo
 gates recorded in
 [`ABACUS-PARITY-LEDGER.md`](.planning/ABACUS-PARITY-LEDGER.md). This is not
 full Abacus product parity: HSGP/time-varying parameters, Mundlak/correlated
-random effects, calibration/lift tests, panel holdout validation, and free
-channel-by-panel optimization remain `missing` or `deferred` and are not
-implied by the above. Any surface not listed in the ledger as `ported` or
-covered by a closed Phase 14 gate should still be treated as `scaffolded`
-until it has its own fixture or demo acceptance test.
+random effects, calibration/lift tests, variational inference release support,
+panel holdout validation, and free channel-by-panel optimization remain
+`missing`, `scaffolded`, or `deferred` and are not implied by the above. Any
+surface not listed in the ledger as `ported` or covered by a closed Phase 14
+gate should still be treated as `scaffolded` until it has its own fixture or
+demo acceptance test.
 
 Historical phase notes below describe implemented Epsilon surfaces and past
 methodology work. They are not, by themselves, Abacus parity claims.
@@ -74,17 +74,19 @@ code needs to distinguish shared time rows from flattened panel-cell
 observations; `nobs(::PanelMMMData)` remains the compatibility panel-cell count.
 
 Phase 7 is now closed for the time-series surface: grouped time-series
-`InferenceResults` from the supported MCMC and VI rows can produce
+`InferenceResults` from the v1-supported MCMC row can produce
 `contribution_results`, `decomposition_results`, `response_curve_results`,
 `saturation_curve_results`, `adstock_curve_results`, `metric_results`, and
 `summary_table` through deterministic replay of the frozen additive model
-terms. Stage 60 keeps three bounded curve families on the time-series path:
-forward-pass response curves in target units, saturation-only curves in target
-units, and adstock-only carryover curves in original
-channel-spend-equivalent units. Phase 14 has additionally landed bounded panel
-contribution/decomposition replay for the `geo_panel` and `geo_brand_panel`
-gates, with `geo_brand_panel` preserving Abacus `("geo", "brand")` dimension
-ordering on a deterministic flattened panel-cell axis. Panel response,
+terms. Earlier phase work also left scaffolded VI artefact consumers in the
+codebase, but Phase 27 supersedes that as a v1 release-support claim. Stage 60
+keeps three bounded curve families on the time-series path: forward-pass
+response curves in target units, saturation-only curves in target units, and
+adstock-only carryover curves in original channel-spend-equivalent units. Phase
+14 has additionally landed bounded panel contribution/decomposition replay for
+the `geo_panel` and `geo_brand_panel` gates, with `geo_brand_panel` preserving
+Abacus `("geo", "brand")` dimension ordering on a deterministic flattened
+panel-cell axis. Panel response,
 saturation, adstock, and marketing-metric surfaces are now available as
 panel-cell/channel artifacts: panel curves require an explicit `delta_grid`
 and use Abacus-style historical-scaling semantics rather than an implicit
@@ -98,10 +100,10 @@ fixed-budget optimization entry point on supported grouped time-series
 `InferenceResults`, backed by the frozen posterior-mean response surface,
 `JuMP.jl + Ipopt.jl`, typed `BudgetOptimizationResult` outputs,
 `budget_impact_table(result)`, and `budget_audit_table(result)`. The
-supported optimization rows are `TimeSeriesMMM` + MCMC and `TimeSeriesMMM` +
-bounded VI, with retained Abacus-backed parity fixtures covering the bounded
-allocation surface. Phase 14 extends this to bounded `PanelMMM` historical-share
-optimization for `geo_panel` and `geo_brand_panel`.
+v1-supported optimization rows are MCMC-backed: `TimeSeriesMMM` + MCMC and the
+bounded `PanelMMM` historical-share policy for `geo_panel` and
+`geo_brand_panel`. Earlier VI optimisation wiring remains scaffolded
+implementation history, not a v1 release-support row.
 
 The bounded non-UI scenario planner now supports typed current, manual
 allocation, and fixed-budget optimized scenario specs. `evaluate_manual_scenario`
@@ -160,8 +162,9 @@ post-model/optimization plotting is not yet supported on the current bounded
 slice.
 
 Phase 11 landed the release-gate infrastructure: the harness distinguishes
-Abacus-reference time-series MCMC rows from bounded Epsilon-only VI, panel,
-pipeline, and plotting rows. The compact final validation fixtures provide one
+Abacus-reference time-series MCMC rows from bounded Epsilon-only panel,
+pipeline, and plotting rows. Historical VI validation scaffolding is superseded
+by Phase 27's v1 boundary. The compact final validation fixtures provide one
 explicit maintainer-facing harness over the closed surface, the retained
 Phase 7/8 comparison fixtures remain the hard numeric gate for detailed
 post-model and optimization cross-checks where semantics actually match, and
@@ -242,9 +245,6 @@ Current key-level contract:
 |---|---|---|---|---|---|---|---|---|---|
 | `INF-TS-MCMC` | `TimeSeriesMMM` | Turing / NUTS | `fit!` | Supported | Supported | Supported | Supported | Supported | Canonical MCMC path; YAML `fit` remains mapped here |
 | `INF-P-MCMC` | `PanelMMM` | Turing / NUTS | `fit!` | Supported | Supported | Supported | Supported | Supported | Bounded panel slice only; seasonality/trend/events/richer controls still excluded |
-| `INF-TS-VI` | `TimeSeriesMMM` | AdvancedVI mean-field Gaussian ADVI | `approximate_fit!` | Supported | Supported* | Unsupported | Supported | Unsupported | `InferenceResults` is the canonical artifact for VI-backed fits |
-
-\* Direct `prior_predict(model)` remains a backend-agnostic helper and uses `SamplerConfig.draws` and `SamplerConfig.chains`. VI-backed grouped prior draws and prior predictive groups inside `InferenceResults` use `VariationalConfig.draws` and are materialized as a single chain to match the VI posterior artifact.
 
 ### Explicitly unsupported in Phase 6
 
@@ -253,6 +253,7 @@ Current key-level contract:
 | `INF-U1` | `PanelMMM` + `approximate_fit!` | Unsupported | Panel VI is not implemented in the bounded Phase 6 surface |
 | `INF-U2` | YAML-driven VI or mixed-backend `fit!` semantics | Unsupported | YAML `fit` and `SamplerConfig` remain MCMC-only |
 | `INF-U3` | VI-backed `model_results`, `model_diagnostics`, `sampler_diagnostics`, `convergence_report`, `convergence_warnings` | Unsupported | These remain MCMC/Turing-only surfaces |
+| `INF-U5` | `approximate_fit!` / `VariationalConfig` as a v1 release-supported backend | Unsupported | The exports remain scaffolded pre-v1 review surfaces, but Phase 27 keeps v1 inference support MCMC-only |
 | `INF-U4` | NetCDF / ArviZ-native grouped export | Unsupported | Deferred from Phase 6; `InferenceResults` is the canonical grouped artifact |
 
 ## Phase 7 Post-Model Matrix
@@ -262,7 +263,6 @@ Current key-level contract:
 | ID | Model | Backend | Contributions / Decomposition | Response / Metrics | `summary_table` | Notes |
 |---|---|---|---|---|---|---|
 | `POST-TS-MCMC` | `TimeSeriesMMM` | Turing / NUTS | Supported | Supported | Supported | Consumes canonical grouped `InferenceResults` through deterministic replay |
-| `POST-TS-VI` | `TimeSeriesMMM` | AdvancedVI mean-field Gaussian ADVI | Supported | Supported | Supported | Bounded to the explicit VI row frozen in Phase 6 |
 | `POST-P-MCMC` | `PanelMMM` | Turing / NUTS | Supported | Supported with explicit `delta_grid` | Supported | Bounded panel replay covered by `geo_panel` and `geo_brand_panel` validation gates; panels use a fixed flat `panel_cell` axis plus declared coordinate columns in contribution, curve, and metric summaries |
 
 ### Explicitly unsupported in Phase 7
@@ -271,6 +271,7 @@ Current key-level contract:
 |---|---|---|---|
 | `POST-U2` | Flat `ModelResults` as the canonical post-model input | Unsupported | Phase 7 consumes grouped `InferenceResults` directly |
 | `POST-U3` | Post-model outputs without grouped posterior/spec/observed-data state | Unsupported | Deterministic replay requires the frozen grouped artifact contract |
+| `POST-U4` | VI-backed post-model outputs as v1 release-supported rows | Unsupported | Historical implementation artefacts remain scaffolded; v1 post-model support is MCMC-only |
 
 ## Phase 8 Optimization Matrix
 
@@ -279,15 +280,15 @@ Current key-level contract:
 | ID | Model | Backend | Entry Point | Comparison / Audit Outputs | Notes |
 |---|---|---|---|---|---|
 | `OPT-TS-MCMC` | `TimeSeriesMMM` | Turing / NUTS | `optimize_budget(results; ...)` | Supported | Fixed-budget equality plus absolute and reference-relative bounds on grouped MCMC `InferenceResults` |
-| `OPT-TS-VI` | `TimeSeriesMMM` | AdvancedVI mean-field Gaussian ADVI | `optimize_budget(results; ...)` | Supported | Same bounded optimization contract on grouped VI `InferenceResults` |
+| `OPT-P-MCMC` | `PanelMMM` | Turing / NUTS | `optimize_budget(results; panel_allocation_mode = :historical_shares, ...)` | Supported | Optimizes channel totals, reuses panel response curves through shared channel deltas, and preserves historical within-channel panel-cell spend shares |
 
 ### Explicitly unsupported in Phase 8
 
 | ID | Combination | Status | Reason |
 |---|---|---|---|
-| `OPT-U1` | `PanelMMM` optimization | Unsupported | Panel optimization is not yet implemented beyond the closed Phase 8 surface |
 | `OPT-U2` | Objectives other than `:total_response` | Unsupported | Phase 8 freezes one posterior-mean total-response objective |
 | `OPT-U3` | Constraint families beyond total-budget equality, absolute bounds, and reference-relative guardrails | Unsupported | Pairwise ratios, pacing, and multi-objective trade-offs are not yet implemented |
+| `OPT-U4` | VI-backed optimisation as a v1 release-supported row | Unsupported | Historical implementation artefacts remain scaffolded; v1 optimisation support is MCMC-only |
 
 ## Why Julia?
 
@@ -298,7 +299,7 @@ Current key-level contract:
 | Autodiff | PyTensor graph-mode | Native (ForwardDiff.jl / ReverseDiff.jl) |
 | Tensor Operations | PyTensor / NumPy | Native arrays + LinearAlgebra stdlib |
 | Performance | Interpreted + JIT (JAX path) | JIT-compiled (LLVM) |
-| Variational Inference | PyMC ADVI | AdvancedVI.jl |
+| Variational Inference | PyMC ADVI | AdvancedVI.jl scaffold exists; out of scope for v1 support |
 | Gaussian Processes | PyMC GP / HSGP | AbstractGPs.jl / KernelFunctions.jl |
 | Diagnostics | ArviZ | MCMCChains.jl / MCMCDiagnosticTools.jl |
 | Optimization | scipy.optimize | Optim.jl / JuMP.jl |

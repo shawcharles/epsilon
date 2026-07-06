@@ -155,6 +155,12 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Changed
 
+- Reconciled the v1 release boundary after Phase 27: release-facing docs and
+  planning state now make MCMC/Turing the only v1-supported inference path,
+  with variational inference, dashboard/UI parity, and AI advisor behaviour
+  explicitly out of scope for v1. `VariationalConfig` and `approximate_fit!`
+  remain scaffolded pre-v1 review exports; this change does not remove exports,
+  add runtime warnings, or change model semantics.
 - Deprecated the six exported validation-helper candidates at runtime while
   preserving exports and validation semantics. Direct public calls to
   `validate_calibration_step_config`,
