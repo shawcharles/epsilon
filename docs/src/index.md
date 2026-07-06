@@ -176,6 +176,20 @@ defines the Phase 11 infrastructure and the now-closed Phase 12 reconciliation:
 Benchmark methodology and published reference-machine results live in
 [Benchmarks](benchmarks.md).
 
+## Toy MCMC Smoke Demo
+
+The fastest supported-path smoke check is the synthetic toy model:
+
+```bash
+julia --project=. examples/toy_mmm/run_toy_mmm.jl --draws 8 --tune 8 --output-dir "$(mktemp -d)"
+```
+
+This fits a tiny `TimeSeriesMMM` through the supported Turing/NUTS MCMC path,
+extracts grouped inference results without prior or predictive groups, and
+writes compact contribution and metric summaries when an output directory is
+provided. It is not release evidence, not a benchmark, not an Abacus parity
+claim, and not a broader support expansion.
+
 ## Demo Data And Runner
 
 The repo also ships a bounded demo/comparison surface under

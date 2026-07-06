@@ -182,6 +182,20 @@ Release docs:
 - benchmark methodology and published reference-machine results:
   [`docs/src/benchmarks.md`](docs/src/benchmarks.md)
 
+## Toy MCMC Smoke Demo
+
+For the fastest supported-path check, run the synthetic toy model:
+
+```bash
+julia --project=. examples/toy_mmm/run_toy_mmm.jl --draws 8 --tune 8 --output-dir "$(mktemp -d)"
+```
+
+The toy fits a tiny `TimeSeriesMMM` through the supported Turing/NUTS MCMC
+path, builds grouped inference results without prior or predictive groups, and
+writes compact contribution and metric summaries when an output directory is
+provided. It is a local smoke demo only: not release evidence, not a benchmark,
+not an Abacus parity claim, and not a broader support expansion.
+
 ## Demo Data And Runner
 
 The repo now ships a bounded demo/comparison surface under

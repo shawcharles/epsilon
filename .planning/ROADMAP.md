@@ -200,6 +200,12 @@ Current repository state on 2026-05-18:
   and `approximate_fit!` remain scaffolded pre-v1 review exports, but
   variational inference, dashboard/UI parity, and AI advisor behaviour are
   explicitly out of scope for v1.
+- Phase 28 is closed: a tiny synthetic
+  `TimeSeriesMMM` toy MCMC smoke demo now lives under `examples/toy_mmm/`,
+  exposes `run_toy_mmm`, writes compact summaries only when an output directory
+  is supplied, and is covered by `test/examples/toy_mcmc_smoke.jl`. This is a
+  supported-path smoke demo, not release evidence, not a benchmark, not an
+  Abacus parity claim, and not a broader support expansion.
 
 ## Phases
 
@@ -287,6 +293,14 @@ Current repository state on 2026-05-18:
       guard the current migration-readiness state for the six deprecated
       validation-helper exports without removing exports, changing runtime
       behaviour, or making Abacus parity or stable-v1 API claims.
+- [x] **Phase 27: Scope Boundary Reconciliation** - Keep v1 inference support
+      MCMC-only while retaining VI exports as scaffolded pre-v1 review
+      surfaces and documenting dashboard/UI and AI advisor behaviour as out of
+      scope for v1.
+- [x] **Phase 28: Toy MCMC Smoke Demo** - Add a tiny synthetic `TimeSeriesMMM`
+      MCMC smoke demo plus focused test coverage, without treating it as
+      release evidence, benchmark work, Abacus parity, or broader support
+      expansion.
 
 ## Phase Details
 
@@ -644,7 +658,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 27
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 28
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -663,3 +677,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 27
 | 13. Prediction-State and Contract Remediation | 6/6 | Completed | fitted trend/holiday prediction-state repair, media input contract hardening, pipeline YAML contract hardening, and final release-gate revalidation landed |
 | 14. Abacus Parity Recovery | 5/5 | Plan complete | `timeseries`, `geo_panel`, and `geo_brand_panel` demo-backed evidence spine; `timeseries` pipeline Stage `00`-`70` artifact-key parity; `geo_panel` and `geo_brand_panel` pipeline Stage `00`, Stage `20`, Stage `30`, Stage `40`, Stage `50`, Stage `60`, and explicitly enabled Stage `70` historical-share optimization coverage, with panel Stage `35` deferred |
 | 27. Scope Boundary Reconciliation | 4/4 | Completed | MCMC-only v1 inference boundary, VI/dashboard/AI out-of-scope table, release-doc and planning guardrails |
+| 28. Toy MCMC Smoke Demo | 4/4 | Completed | tiny synthetic `TimeSeriesMMM` MCMC smoke demo, callable toy entry point, optional compact summaries, and focused example test landed |

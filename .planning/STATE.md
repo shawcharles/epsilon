@@ -8,23 +8,30 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 27 scope-boundary reconciliation is complete. The v1
-release boundary is now MCMC/Turing-only for supported inference, while
+**Current focus:** Phase 28 toy MCMC smoke demo is complete. The v1 release
+boundary remains MCMC/Turing-only for supported inference, while
 `VariationalConfig` and `approximate_fit!` remain scaffolded pre-v1 review
 exports. Variational inference, dashboard/UI parity, and AI advisor behaviour
-are explicitly out of scope for v1 and guarded by the focused `api_exports`
-lane.
+remain explicitly out of scope for v1.
 
 ## Current Position
 
-**Current Phase:** 27
-**Current Phase Name:** Scope Boundary Reconciliation
-**Total Phases:** 27
-**Current Plan:** Phase 27 complete; choose the next bounded release-prep slice
+**Current Phase:** 28
+**Current Phase Name:** Toy MCMC Smoke Demo
+**Total Phases:** 28
+**Current Plan:** Phase 28 complete; choose the next bounded supported-path
+slice
 **Total Plans in Phase:** 4 tasks
-**Status:** Phase 27 is complete at
+**Status:** Phase 28 is complete at
+`.planning/phases/28-toy-mcmc-smoke-demo/PLAN.md`. The implementation adds a
+tiny synthetic `TimeSeriesMMM` toy MCMC smoke demo under `examples/toy_mmm/`,
+with a callable `run_toy_mmm` entry point, optional compact CSV/text summary
+outputs, and focused coverage in `test/examples/toy_mcmc_smoke.jl`. The toy
+uses the supported Turing/NUTS MCMC path only and is documented as a smoke demo,
+not release evidence, not a benchmark, not an Abacus parity claim, and not a
+broader support expansion. Phase 27 is complete at
 `.planning/phases/27-scope-boundary-reconciliation/PLAN.md`. Release-facing
-docs and planning state now stop presenting VI as a v1-supported backend.
+docs and planning state stop presenting VI as a v1-supported backend.
 `.planning/PROJECT.md` contains a marked v1 out-of-scope table for
 `variational_inference`, `dashboard_ui`, and `ai_advisor`, each with
 `out-of-scope-v1` status. `test/api_exports.jl` guards that table and rejects
@@ -218,16 +225,17 @@ evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
 are landed for both accepted calibration terms, but the wider Abacus
 calibration surface is not complete.
 **Last Activity:** 2026-07-06
-**Last Activity Description:** Phase 27 reconciled the v1 scope boundary:
-MCMC/Turing is the only v1-supported inference path; VI, dashboard/UI parity,
-and AI advisor behaviour are out of scope for v1; and VI exports remain
-scaffolded pre-v1 review surfaces rather than release-supported backends.
-Focused `api_exports` checks now guard the marked out-of-scope table and reject
-legacy active VI support claims across release-facing and planning docs. No
-source/runtime files, dependency files, exports, runtime warnings, validation
-predicates, model semantics, or Abacus parity claims changed.
+**Last Activity Description:** Phase 28 added the toy `TimeSeriesMMM` MCMC
+smoke demo, focused example test, and narrow README/docs/changelog/planning
+updates. Three Man Team review cleared after strengthening the focused test to
+assert grouped posterior shape, parameter presence, observed-data identity, and
+disabled prior/predictive groups. Targeted verification passed for the toy CLI,
+focused package test, Runic check, diff whitespace check, and source/dependency
+no-touch guard. No source/runtime files, dependency files, exports, runtime
+warnings, validation predicates, model semantics, or Abacus parity claims
+changed.
 **Progress:** 100%
-**Paused At:** `.planning/phases/27-scope-boundary-reconciliation/PLAN.md`
+**Paused At:** `.planning/phases/28-toy-mcmc-smoke-demo/PLAN.md`
 
 ## Performance Metrics
 
@@ -266,6 +274,7 @@ predicates, model semantics, or Abacus parity claims changed.
 | 25 | 4/4 | Completed | focused package-test file selectors and `make test-file FILE=...` landed for single-file local verification with test-only dependencies available |
 | 26 | 4/4 | Completed | migration-readiness audit and focused guard landed for the six deprecated validation-helper exports; no export or runtime changes |
 | 27 | 4/4 | Completed | MCMC-only v1 inference boundary, explicit VI/dashboard/AI out-of-scope table, release-doc and planning guardrails |
+| 28 | 4/4 | Completed | toy `TimeSeriesMMM` MCMC smoke demo and focused example test landed; no source/runtime or dependency changes |
 
 **Recent Trend:**
 - Last 5 completed plans: `14-01`, `14-02`, `14-03`, `14-04`, `14-05`
@@ -336,6 +345,8 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 - Phase 26 is complete; the six deprecated validation-helper exports remain
   exported and not ready to unexport, with migration-audit consistency guarded
   by `test/api_exports.jl`.
+- Phase 28 is complete; do not treat the toy smoke demo as release evidence,
+  benchmark evidence, Abacus parity evidence, or a broader support expansion.
 - Phase 25 is complete; prefer `make test-file FILE=...` or
   `Pkg.test(; test_args=[...], julia_args=["--depwarn=yes"])` for focused
   single-file verification when files use test-only dependencies.

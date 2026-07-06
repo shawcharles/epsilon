@@ -148,6 +148,12 @@ All notable project changes are recorded here. Epsilon is still on the
   environment with test-only dependencies available.
 - Added `make test-file FILE=...` as the local helper for focused package-test
   file execution.
+- Added `examples/toy_mmm/run_toy_mmm.jl`, a tiny synthetic `TimeSeriesMMM`
+  Turing/NUTS MCMC smoke demo with a callable `run_toy_mmm` entry point,
+  compact optional CSV/text summaries, and focused test coverage under
+  `test/examples/toy_mcmc_smoke.jl`. This is a supported-path smoke demo only,
+  not release evidence, not a benchmark, not an Abacus parity claim, and not a
+  broader support expansion.
 - Documented the bounded calibration YAML/pipeline surface with the supported
   top-level `calibration` shape and explicit unsupported paths for panel
   calibration, VI calibration, non-logistic lift-test calibration, Dash/UI
