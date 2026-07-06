@@ -1,17 +1,41 @@
 using Epsilon
 using Test
 
+const _SAMPLER_CONFIG_DEPRECATION =
+    "Epsilon.validate_sampler_config is deprecated as a public API; use SamplerConfig construction or load_sampler_config instead. The function remains exported for this release and may be unexported before v1."
+const _MODEL_CONFIG_DEPRECATION =
+    "Epsilon.validate_model_config is deprecated as a public API; use ModelConfig construction or load_model_config instead. The function remains exported for this release and may be unexported before v1."
+const _MMM_DATA_DEPRECATION =
+    "Epsilon.validate_mmm_data is deprecated as a public API; use MMMData construction before building TimeSeriesMMM instead. The function remains exported for this release and may be unexported before v1."
+
+function _deprecated_argument_error_message(warning::AbstractString, thunk::Function)
+    err = @test_logs (:warn, warning) try
+        thunk()
+    catch caught
+        caught
+    end
+    @test err isa ArgumentError
+    return err.msg
+end
+
 @testset "SamplerConfig" begin
-    config = SamplerConfig(; draws = 1500, tune = 500, chains = 2, cores = 1, target_accept = 0.9, random_seed = 42)
+    config = @test_logs SamplerConfig(; draws = 1500, tune = 500, chains = 2, cores = 1, target_accept = 0.9, random_seed = 42)
     @test config.draws == 1500
     @test config.random_seed == 42
+    @test (@test_logs (:warn, _SAMPLER_CONFIG_DEPRECATION) validate_sampler_config(config)) === nothing
+
+    invalid = SamplerConfig(0, 1000, 4, 4, 0.8, nothing, true, true)
+    @test _deprecated_argument_error_message(
+        _SAMPLER_CONFIG_DEPRECATION,
+        () -> validate_sampler_config(invalid),
+    ) == "draws must be positive"
 
     @test_throws ArgumentError SamplerConfig(; draws = 0)
     @test_throws ArgumentError SamplerConfig(; target_accept = 1.0)
 end
 
 @testset "ModelConfig" begin
-    config = ModelConfig(
+    config = @test_logs ModelConfig(
         date_column = "date",
         target_column = "revenue",
         target_type = "revenue",
@@ -32,14 +56,37 @@ end
     @test config.events["columns"] == ["promo", "holiday"]
     @test haskey(config.extras, "validation")
     @test config.target_type == "revenue"
+    @test (@test_logs (:warn, _MODEL_CONFIG_DEPRECATION) validate_model_config(config)) === nothing
 
-    conversion = ModelConfig(
+    conversion = @test_logs ModelConfig(
         date_column = "date",
         target_column = "orders",
         target_type = "Conversion",
         channel_columns = ["tv"],
     )
     @test conversion.target_type == "conversion"
+
+    invalid = ModelConfig(
+        "",
+        "revenue",
+        "revenue",
+        ["tv"],
+        String[],
+        (),
+        Dict{String, Any}(),
+        Dict{String, Any}(),
+        Dict{String, Any}(),
+        Dict{String, Any}(),
+        Dict{String, Any}(),
+        Dict{String, Any}(),
+        Dict{String, Any}(),
+        Dict{String, Any}(),
+        Dict{String, Any}(),
+    )
+    @test _deprecated_argument_error_message(
+        _MODEL_CONFIG_DEPRECATION,
+        () -> validate_model_config(invalid),
+    ) == "date_column must not be empty"
 
     @test_throws ArgumentError ModelConfig(
         date_column = "date",
@@ -84,7 +131,7 @@ end
 end
 
 @testset "MMMData" begin
-    data = MMMData(
+    data = @test_logs MMMData(
         dates = 1:3,
         target = [10.0, 12.0, 14.0],
         channels = [1.0 2.0; 3.0 4.0; 5.0 6.0],
@@ -99,6 +146,22 @@ end
     @test ntime(data) == 3
     @test data.channel_names == ["tv", "search"]
     @test data.event_names == ["promo", "holiday"]
+    @test (@test_logs (:warn, _MMM_DATA_DEPRECATION) validate_mmm_data(data)) === nothing
+
+    invalid = MMMData(
+        1:3,
+        [1.0, 2.0],
+        [1.0; 2.0; 3.0][:, :],
+        nothing,
+        nothing,
+        ["tv"],
+        String[],
+        String[],
+    )
+    @test _deprecated_argument_error_message(
+        _MMM_DATA_DEPRECATION,
+        () -> validate_mmm_data(invalid),
+    ) == "dates and target must have matching length"
 
     @test_throws ArgumentError MMMData(
         dates = 1:3,
@@ -178,6 +241,36 @@ end
         channels = [1.0; 2.0][:, :],
         channel_names = "tv",
     )
+end
+
+@testset "Config loaders do not warn for replacement workflows" begin
+    mktempdir() do dir
+        path = joinpath(dir, "config.yml")
+        write(
+            path,
+            """
+            data:
+              date_column: date
+            target:
+              column: revenue
+              type: revenue
+            media:
+              channels:
+                - tv
+                - search
+            fit:
+              draws: 1500
+              tune: 500
+              chains: 2
+              cores: 1
+              target_accept: 0.9
+              random_seed: 42
+            """,
+        )
+
+        @test (@test_logs load_model_config(path)) isa ModelConfig
+        @test (@test_logs load_sampler_config(path)) isa SamplerConfig
+    end
 end
 
 @testset "PanelMMMData" begin

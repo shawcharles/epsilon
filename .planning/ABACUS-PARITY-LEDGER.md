@@ -45,7 +45,7 @@ Each target should pass these gates before it is counted as ported:
 
 | Abacus Area | Abacus Source | Epsilon Target | Status | Next Work |
 |---|---|---|---|---|
-| Package identity and public exports | `abacus/__init__.py`, `abacus/version.py` | `src/Epsilon.jl`, `docs/src/api.md`, `test/api_exports.jl`, `.planning/API-EXPORT-TRIAGE.md`, `.planning/API-EXPORT-CLEANUP-RFC.md` | scaffolded | Current exports are inventoried, documented, lifecycle-triaged, and now backed by a small candidate-only cleanup RFC for selected validation helpers. Guard tests prevent silent inventory drift, require non-empty rendered docstrings plus exact Documenter `@docs` membership, keep lifecycle triage aligned with the inventory, and keep `deprecation-candidate` rows matched to RFC migration text. This is governance/RFC hygiene only, not runtime deprecation and not Abacus behavioural evidence; export removals, runtime warnings, and stronger Abacus API compatibility claims remain future work. |
+| Package identity and public exports | `abacus/__init__.py`, `abacus/version.py` | `src/Epsilon.jl`, `docs/src/api.md`, `test/api_exports.jl`, `.planning/API-EXPORT-TRIAGE.md`, `.planning/API-EXPORT-CLEANUP-RFC.md` | scaffolded | Current exports are inventoried, documented, lifecycle-triaged, and backed by a small candidate-only cleanup RFC for selected validation helpers. Six validation-helper candidates now emit runtime deprecation warnings on direct public calls while constructors, loaders, and payload builders use warning-free helpers. Guard tests prevent silent inventory drift, require non-empty rendered docstrings plus exact Documenter `@docs` membership, keep lifecycle triage aligned with the inventory, and keep `deprecation-candidate` rows matched to RFC migration text. This is governance/runtime-warning hygiene only, not export removal and not Abacus behavioural evidence; export removals and stronger Abacus API compatibility claims remain future work. |
 | YAML/public builder | `abacus/mmm/builders/*.py`, `abacus/pipeline/config.py` | `src/model/config.jl`, `src/model/builder.jl`, `src/pipeline/config.jl` | scaffolded | Build config-normalization fixtures from Abacus demo configs and compare the resolved typed spec. |
 | Data validation and preprocessing | `abacus/mmm/preprocessing.py`, `abacus/mmm/validating.py`, `abacus/mmm/models/panel_data.py` | `src/model/types.jl`, `src/model/builder.jl`, `src/mmm/media.jl`, `src/mmm/panel.jl` | scaffolded | `PanelAxis`, `PanelCoordinate`, `panel_axis`, and `panel_coordinates` expose deterministic flat `panel_cell` reconstruction for one-dimensional and multidimensional panels, with declared coordinate columns kept in model order. `ntime`, `npanels`, and `npanel_observations` make panel observation semantics explicit while `nobs(::PanelMMMData)` remains the compatibility flat panel-cell count. Add remaining fixtures for date ordering, channel/control columns, missingness, panel keys, and holdout splits. |
 | Scaling | `abacus/mmm/scaling.py`, `abacus/mmm/preprocessing.py` | `src/transforms/scaling.jl`, `src/mmm/controls.jl` | ported | Keep parity tests tied to Abacus fixture exports; extend to panel-scaled tensors. |
@@ -650,6 +650,13 @@ As of 2026-05-10:
     `git diff --check`, and the phase-closing `make check-full` gate with full
     `Pkg.test()` reporting `Pass 7724, Total 7724` in 19m53.1s followed by a
     successful docs build.
+40. Phase 24 adds runtime deprecation wrappers for the same
+    package-identity/public-exports row without changing row status. Direct
+    public calls to the six Phase 22 validation-helper candidates now emit
+    `Base.depwarn`, while the supported constructors, loaders, and calibration
+    payload builders call warning-free `_validate_*` helpers. This is runtime
+    warning hygiene only: `src/Epsilon.jl`, export inventory rows, validation
+    predicates, modelling semantics, and Abacus parity evidence are unchanged.
 
 
 ## Plan 14-05 Parity Audit

@@ -177,6 +177,11 @@ Current repository state on 2026-05-18:
   validation-helper candidates, including the required public-wrapper/internal-
   helper split. This is design hygiene only; no exports, runtime warnings,
   behaviour, tests, user-facing docs, or Abacus parity claims change
+- Phase 24 is closed: the six Phase 22 validation-helper candidates now warn
+  on direct public calls through `Base.depwarn` wrappers, while constructors,
+  loaders, and calibration payload builders call warning-free `_validate_*`
+  helpers. Exports and API inventory rows remain unchanged, and this does not
+  change Abacus parity claims or v1 API stability.
 
 ## Phases
 
@@ -252,6 +257,10 @@ Current repository state on 2026-05-18:
       runtime-deprecation implementation contract for the six Phase 22
       validation-helper candidates, without changing exports, runtime
       behaviour, tests, user-facing docs, or Abacus parity claims.
+- [x] **Phase 24: Runtime Deprecation Wrappers** - Implement runtime
+      deprecation wrappers for the six Phase 22 validation-helper candidates,
+      keeping constructors, loaders, and payload builders warning-free and
+      leaving exports, inventory rows, and Abacus parity claims unchanged.
 
 ## Phase Details
 

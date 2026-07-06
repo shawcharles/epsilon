@@ -16,12 +16,30 @@ include(joinpath(@__DIR__, "..", "fixtures", "abacus", "calibration_integration_
 
 _calibration_coord_dict(nt) = Dict{String, AbstractVector}(string(k) => collect(v) for (k, v) in pairs(nt))
 
+const _CALIBRATION_STEP_DEPRECATION =
+    "Epsilon.validate_calibration_step_config is deprecated as a public API; use CalibrationStepConfig construction or load_public_config calibration parsing instead. The function remains exported for this release and may be unexported before v1."
+const _LIFT_PAYLOAD_DEPRECATION =
+    "Epsilon.validate_lift_test_calibration_payload is deprecated as a public API; use build_lift_test_calibration_payload instead. The function remains exported for this release and may be unexported before v1."
+const _COST_PAYLOAD_DEPRECATION =
+    "Epsilon.validate_cost_per_target_calibration_payload is deprecated as a public API; use build_cost_per_target_calibration_payload instead. The function remains exported for this release and may be unexported before v1."
+
+function _calibration_deprecated_argument_error_message(warning::AbstractString, thunk::Function)
+    err = @test_logs (:warn, warning) try
+        thunk()
+    catch caught
+        caught
+    end
+    @test err isa ArgumentError
+    return err.msg
+end
+
 @testset "CalibrationStepConfig validation" begin
-    config = CalibrationStepConfig(method = "add_lift_test_measurements")
+    config = @test_logs CalibrationStepConfig(method = "add_lift_test_measurements")
     @test config.method == "add_lift_test_measurements"
     @test config.params == Dict{String, Any}()
+    @test (@test_logs (:warn, _CALIBRATION_STEP_DEPRECATION) validate_calibration_step_config(config)) === nothing
 
-    with_params = CalibrationStepConfig(
+    with_params = @test_logs CalibrationStepConfig(
         method = "add_cost_per_target_calibration",
         params = Dict("name" => "cpt"),
     )
@@ -30,6 +48,12 @@ _calibration_coord_dict(nt) = Dict{String, AbstractVector}(string(k) => collect(
         method = "add_cost_per_target_calibration",
         params = Dict("name" => "cpt"),
     )
+
+    invalid = CalibrationStepConfig("", Dict{String, Any}())
+    @test _calibration_deprecated_argument_error_message(
+        _CALIBRATION_STEP_DEPRECATION,
+        () -> validate_calibration_step_config(invalid),
+    ) == "calibration step method must not be empty"
 
     @test_throws ArgumentError CalibrationStepConfig(method = "")
     @test_throws ArgumentError CalibrationStepConfig(method = "unsupported_method")
@@ -381,7 +405,17 @@ end
     @test payload.delta_x ≈ [0.5 * scale[2], 1.0 * scale[1]]
     @test payload.delta_y ≈ [1.0 / target_scale, 2.0 / target_scale]
     @test payload.sigma ≈ [0.1 / target_scale, 0.2 / target_scale]
-    @test validate_lift_test_calibration_payload(payload) === nothing
+    @test (@test_logs (:warn, _LIFT_PAYLOAD_DEPRECATION) validate_lift_test_calibration_payload(payload)) === nothing
+    @test_logs build_lift_test_calibration_payload(
+        channel = ["paid", "organic"],
+        x = [1.0, 2.0],
+        delta_x = [0.5, 1.0],
+        delta_y = [1.0, 2.0],
+        sigma = [0.1, 0.2],
+        channel_columns = channel_columns,
+        channel_transform = channel_transform,
+        target_transform = target_transform,
+    )
     @test payload == LiftTestCalibrationPayload(
         payload.channel_index,
         payload.x,
@@ -428,21 +462,36 @@ end
 
     # Direct struct validation: mismatched lengths, non-positive channel_index,
     # and non-finite/non-positive fields must all be rejected.
-    @test_throws ArgumentError validate_lift_test_calibration_payload(
-        LiftTestCalibrationPayload([1, 2], [1.0], [1.0, 1.0], [1.0, 1.0], [0.1, 0.1]),
-    )
-    @test_throws ArgumentError validate_lift_test_calibration_payload(
-        LiftTestCalibrationPayload([0], [1.0], [1.0], [1.0], [0.1]),
-    )
-    @test_throws ArgumentError validate_lift_test_calibration_payload(
-        LiftTestCalibrationPayload([1], [Inf], [1.0], [1.0], [0.1]),
-    )
-    @test_throws ArgumentError validate_lift_test_calibration_payload(
-        LiftTestCalibrationPayload([1], [1.0], [1.0], [1.0], [-0.1]),
-    )
-    @test_throws ArgumentError validate_lift_test_calibration_payload(
-        LiftTestCalibrationPayload(Int[], Float64[], Float64[], Float64[], Float64[]),
-    )
+    @test _calibration_deprecated_argument_error_message(
+        _LIFT_PAYLOAD_DEPRECATION,
+        () -> validate_lift_test_calibration_payload(
+            LiftTestCalibrationPayload([1, 2], [1.0], [1.0, 1.0], [1.0, 1.0], [0.1, 0.1]),
+        ),
+    ) == "lift-test calibration payload x length must match channel_index length"
+    @test _calibration_deprecated_argument_error_message(
+        _LIFT_PAYLOAD_DEPRECATION,
+        () -> validate_lift_test_calibration_payload(
+            LiftTestCalibrationPayload([0], [1.0], [1.0], [1.0], [0.1]),
+        ),
+    ) == "lift-test calibration payload channel_index must contain only positive (1-based) indices"
+    @test _calibration_deprecated_argument_error_message(
+        _LIFT_PAYLOAD_DEPRECATION,
+        () -> validate_lift_test_calibration_payload(
+            LiftTestCalibrationPayload([1], [Inf], [1.0], [1.0], [0.1]),
+        ),
+    ) == "lift-test calibration payload x must contain only finite values"
+    @test _calibration_deprecated_argument_error_message(
+        _LIFT_PAYLOAD_DEPRECATION,
+        () -> validate_lift_test_calibration_payload(
+            LiftTestCalibrationPayload([1], [1.0], [1.0], [1.0], [-0.1]),
+        ),
+    ) == "lift-test calibration payload sigma must contain only positive finite values"
+    @test _calibration_deprecated_argument_error_message(
+        _LIFT_PAYLOAD_DEPRECATION,
+        () -> validate_lift_test_calibration_payload(
+            LiftTestCalibrationPayload(Int[], Float64[], Float64[], Float64[], Float64[]),
+        ),
+    ) == "lift-test calibration payload must contain at least one row"
 end
 
 @testset "CostPerTargetCalibrationPayload construction and validation" begin
@@ -460,7 +509,13 @@ end
     @test payload.gathered_cpt ≈ [1.0, 2.0] ./ target_scale
     @test payload.targets ≈ [1.5, 1.8] ./ target_scale
     @test payload.sigma ≈ [0.2, 0.4] ./ target_scale
-    @test validate_cost_per_target_calibration_payload(payload) === nothing
+    @test (@test_logs (:warn, _COST_PAYLOAD_DEPRECATION) validate_cost_per_target_calibration_payload(payload)) === nothing
+    @test_logs build_cost_per_target_calibration_payload(
+        gathered_cpt = [1.0, 2.0],
+        targets = [1.5, 1.8],
+        sigma = [0.2, 0.4],
+        transform = transform,
+    )
     @test payload == CostPerTargetCalibrationPayload(
         payload.gathered_cpt,
         payload.targets,
@@ -480,18 +535,30 @@ end
         transform = transform,
     )
 
-    @test_throws ArgumentError validate_cost_per_target_calibration_payload(
-        CostPerTargetCalibrationPayload([1.0, 2.0], [1.0], [0.1, 0.1]),
-    )
-    @test_throws ArgumentError validate_cost_per_target_calibration_payload(
-        CostPerTargetCalibrationPayload([Inf], [1.0], [0.1]),
-    )
-    @test_throws ArgumentError validate_cost_per_target_calibration_payload(
-        CostPerTargetCalibrationPayload([1.0], [1.0], [-0.1]),
-    )
-    @test_throws ArgumentError validate_cost_per_target_calibration_payload(
-        CostPerTargetCalibrationPayload(Float64[], Float64[], Float64[]),
-    )
+    @test _calibration_deprecated_argument_error_message(
+        _COST_PAYLOAD_DEPRECATION,
+        () -> validate_cost_per_target_calibration_payload(
+            CostPerTargetCalibrationPayload([1.0, 2.0], [1.0], [0.1, 0.1]),
+        ),
+    ) == "cost-per-target calibration payload targets length must match gathered_cpt length"
+    @test _calibration_deprecated_argument_error_message(
+        _COST_PAYLOAD_DEPRECATION,
+        () -> validate_cost_per_target_calibration_payload(
+            CostPerTargetCalibrationPayload([Inf], [1.0], [0.1]),
+        ),
+    ) == "cost-per-target calibration payload gathered_cpt must contain only finite values"
+    @test _calibration_deprecated_argument_error_message(
+        _COST_PAYLOAD_DEPRECATION,
+        () -> validate_cost_per_target_calibration_payload(
+            CostPerTargetCalibrationPayload([1.0], [1.0], [-0.1]),
+        ),
+    ) == "cost-per-target calibration payload sigma must contain only positive finite values"
+    @test _calibration_deprecated_argument_error_message(
+        _COST_PAYLOAD_DEPRECATION,
+        () -> validate_cost_per_target_calibration_payload(
+            CostPerTargetCalibrationPayload(Float64[], Float64[], Float64[]),
+        ),
+    ) == "cost-per-target calibration payload must contain at least one row"
 end
 
 @testset "calibration integration fixture payloads and log density" begin

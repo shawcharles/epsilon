@@ -143,6 +143,14 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Changed
 
+- Deprecated the six exported validation-helper candidates at runtime while
+  preserving exports and validation semantics. Direct public calls to
+  `validate_calibration_step_config`,
+  `validate_lift_test_calibration_payload`,
+  `validate_cost_per_target_calibration_payload`, `validate_sampler_config`,
+  `validate_model_config`, and `validate_mmm_data` now emit `Base.depwarn`;
+  supported constructors, loaders, and payload builders use warning-free
+  internal helpers.
 - Fixed Phase 13 remediation issues: fitted time-series trend and automatic
   holiday date-basis state is now serialized in model specs and reused for
   prediction/replay, unfitted time-series prior prediction resolves scale and

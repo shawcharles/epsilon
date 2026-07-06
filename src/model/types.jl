@@ -68,7 +68,7 @@ function SamplerConfig(;
         progressbar,
         compute_convergence_checks,
     )
-    validate_sampler_config(config)
+    _validate_sampler_config(config)
     return config
 end
 
@@ -193,7 +193,7 @@ function ModelConfig(;
         _string_key_dict(priors),
         _string_key_dict(extras),
     )
-    validate_model_config(config)
+    _validate_model_config(config)
     return config
 end
 
@@ -248,7 +248,7 @@ function MMMData(;
         _string_vector(control_names),
         _string_vector(event_names),
     )
-    validate_mmm_data(data)
+    _validate_mmm_data(data)
     return data
 end
 
@@ -346,9 +346,20 @@ npanel_observations(data::PanelMMMData) = ntime(data) * npanels(data)
 """
     validate_sampler_config(config)
 
-Validate one sampler configuration.
+Deprecated public validation wrapper for one sampler configuration.
+
+Use `SamplerConfig` construction or `load_sampler_config` instead. Direct
+calls emit a deprecation warning, then validate sampler settings.
 """
 function validate_sampler_config(config::SamplerConfig)
+    Base.depwarn(
+        "Epsilon.validate_sampler_config is deprecated as a public API; use SamplerConfig construction or load_sampler_config instead. The function remains exported for this release and may be unexported before v1.",
+        :validate_sampler_config,
+    )
+    return _validate_sampler_config(config)
+end
+
+function _validate_sampler_config(config::SamplerConfig)
     config.draws > 0 || throw(ArgumentError("draws must be positive"))
     config.tune >= 0 || throw(ArgumentError("tune must be nonnegative"))
     config.chains > 0 || throw(ArgumentError("chains must be positive"))
@@ -373,9 +384,20 @@ end
 """
     validate_model_config(config)
 
-Validate one model configuration object.
+Deprecated public validation wrapper for one model configuration object.
+
+Use `ModelConfig` construction or `load_model_config` instead. Direct calls
+emit a deprecation warning, then validate the typed model configuration.
 """
 function validate_model_config(config::ModelConfig)
+    Base.depwarn(
+        "Epsilon.validate_model_config is deprecated as a public API; use ModelConfig construction or load_model_config instead. The function remains exported for this release and may be unexported before v1.",
+        :validate_model_config,
+    )
+    return _validate_model_config(config)
+end
+
+function _validate_model_config(config::ModelConfig)
     !isempty(config.date_column) || throw(ArgumentError("date_column must not be empty"))
     !isempty(config.target_column) || throw(ArgumentError("target_column must not be empty"))
     config.target_type in _SUPPORTED_TARGET_TYPES ||
@@ -429,9 +451,20 @@ end
 """
     validate_mmm_data(data)
 
-Validate an `MMMData` container.
+Deprecated public validation wrapper for an `MMMData` container.
+
+Use `MMMData` construction before building `TimeSeriesMMM` instead. Direct
+calls emit a deprecation warning, then validate the typed data container.
 """
 function validate_mmm_data(data::MMMData)
+    Base.depwarn(
+        "Epsilon.validate_mmm_data is deprecated as a public API; use MMMData construction before building TimeSeriesMMM instead. The function remains exported for this release and may be unexported before v1.",
+        :validate_mmm_data,
+    )
+    return _validate_mmm_data(data)
+end
+
+function _validate_mmm_data(data::MMMData)
     n = length(data.target)
     n > 0 || throw(ArgumentError("target must contain at least one observation"))
     length(data.dates) == n || throw(ArgumentError("dates and target must have matching length"))

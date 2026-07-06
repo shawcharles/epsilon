@@ -99,18 +99,29 @@ end
 
 function CalibrationStepConfig(; method, params = Dict{String, Any}())
     config = CalibrationStepConfig(String(method), _string_key_dict(params))
-    validate_calibration_step_config(config)
+    _validate_calibration_step_config(config)
     return config
 end
 
 """
     validate_calibration_step_config(config)
 
-Validate one `CalibrationStepConfig`: `method` must be non-empty and one of
-the currently supported calibration methods, and `params` must not configure
-a custom `dist`.
+Deprecated public validation wrapper for one `CalibrationStepConfig`.
+
+Use `CalibrationStepConfig` construction or `load_public_config` calibration
+parsing instead. Direct calls emit a deprecation warning, then validate that
+`method` is non-empty and one of the currently supported calibration methods,
+and that `params` does not configure a custom `dist`.
 """
 function validate_calibration_step_config(config::CalibrationStepConfig)
+    Base.depwarn(
+        "Epsilon.validate_calibration_step_config is deprecated as a public API; use CalibrationStepConfig construction or load_public_config calibration parsing instead. The function remains exported for this release and may be unexported before v1.",
+        :validate_calibration_step_config,
+    )
+    return _validate_calibration_step_config(config)
+end
+
+function _validate_calibration_step_config(config::CalibrationStepConfig)
     !isempty(config.method) || throw(ArgumentError("calibration step method must not be empty"))
     config.method in _SUPPORTED_CALIBRATION_METHODS ||
         throw(
@@ -582,12 +593,23 @@ end
 """
     validate_lift_test_calibration_payload(payload)
 
-Validate one [`LiftTestCalibrationPayload`](@ref): all fields must have
-matching, nonzero length; `channel_index` must be strictly positive (1-based);
-`x`, `delta_x`, and `delta_y` must be finite; and `sigma` must be strictly
-positive and finite.
+Deprecated public validation wrapper for one
+[`LiftTestCalibrationPayload`](@ref).
+
+Use [`build_lift_test_calibration_payload`](@ref) instead. Direct calls emit a
+deprecation warning, then validate that all fields have matching, nonzero
+length; `channel_index` is strictly positive (1-based); `x`, `delta_x`, and
+`delta_y` are finite; and `sigma` is strictly positive and finite.
 """
 function validate_lift_test_calibration_payload(payload::LiftTestCalibrationPayload)
+    Base.depwarn(
+        "Epsilon.validate_lift_test_calibration_payload is deprecated as a public API; use build_lift_test_calibration_payload instead. The function remains exported for this release and may be unexported before v1.",
+        :validate_lift_test_calibration_payload,
+    )
+    return _validate_lift_test_calibration_payload(payload)
+end
+
+function _validate_lift_test_calibration_payload(payload::LiftTestCalibrationPayload)
     n = length(payload.channel_index)
     n > 0 || throw(ArgumentError("lift-test calibration payload must contain at least one row"))
     length(payload.x) == n ||
@@ -650,7 +672,7 @@ function build_lift_test_calibration_payload(;
         scaled.delta_y,
         scaled.sigma,
     )
-    validate_lift_test_calibration_payload(payload)
+    _validate_lift_test_calibration_payload(payload)
     return payload
 end
 
@@ -724,11 +746,23 @@ end
 """
     validate_cost_per_target_calibration_payload(payload)
 
-Validate one [`CostPerTargetCalibrationPayload`](@ref): all fields must have
-matching, nonzero length; `gathered_cpt` and `targets` must be finite; and
-`sigma` must be strictly positive and finite.
+Deprecated public validation wrapper for one
+[`CostPerTargetCalibrationPayload`](@ref).
+
+Use [`build_cost_per_target_calibration_payload`](@ref) instead. Direct calls
+emit a deprecation warning, then validate that all fields have matching,
+nonzero length; `gathered_cpt` and `targets` are finite; and `sigma` is
+strictly positive and finite.
 """
 function validate_cost_per_target_calibration_payload(payload::CostPerTargetCalibrationPayload)
+    Base.depwarn(
+        "Epsilon.validate_cost_per_target_calibration_payload is deprecated as a public API; use build_cost_per_target_calibration_payload instead. The function remains exported for this release and may be unexported before v1.",
+        :validate_cost_per_target_calibration_payload,
+    )
+    return _validate_cost_per_target_calibration_payload(payload)
+end
+
+function _validate_cost_per_target_calibration_payload(payload::CostPerTargetCalibrationPayload)
     n = length(payload.gathered_cpt)
     n > 0 || throw(ArgumentError("cost-per-target calibration payload must contain at least one row"))
     length(payload.targets) == n ||
@@ -764,7 +798,7 @@ function build_cost_per_target_calibration_payload(;
     sigma_scaled = scale_target_for_lift_measurements(sigma, transform)
 
     payload = CostPerTargetCalibrationPayload(gathered_scaled, targets_scaled, sigma_scaled)
-    validate_cost_per_target_calibration_payload(payload)
+    _validate_cost_per_target_calibration_payload(payload)
     return payload
 end
 

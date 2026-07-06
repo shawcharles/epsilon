@@ -8,25 +8,31 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 23 runtime deprecation design is complete. The current
+**Current focus:** Phase 24 runtime deprecation wrappers are complete. The current
 loaded-module export surface is inventoried in user docs with support bands,
 guarded by focused `api_exports` checks for exact inventory membership,
 non-empty rendered docstrings, Documenter `@docs` membership, lifecycle triage
-alignment, and candidate-only cleanup RFC/register consistency. Phase 23 adds a
-design-only runtime-deprecation contract for the six validation-helper
-candidates, including the required wrapper/internal-helper split before any
-warning can safely land. Package identity/public exports remain `scaffolded`;
-runtime deprecation warnings, export cleanup, and stronger Abacus API
-compatibility claims remain future work.
+alignment, candidate-only cleanup RFC/register consistency, and Phase 24
+runtime warning coverage for the six validation-helper candidates. Package
+identity/public exports remain `scaffolded`; export cleanup and stronger
+Abacus API compatibility claims remain future work.
 
 ## Current Position
 
-**Current Phase:** 23
-**Current Phase Name:** Runtime Deprecation Design
-**Total Phases:** 23
-**Current Plan:** Phase 23 complete; choose the next bounded release-prep slice
-**Total Plans in Phase:** 4 tasks
-**Status:** Phase 23 is complete at
+**Current Phase:** 24
+**Current Phase Name:** Runtime Deprecation Wrappers
+**Total Phases:** 24
+**Current Plan:** Phase 24 complete; choose the next bounded release-prep slice
+**Total Plans in Phase:** 5 tasks
+**Status:** Phase 24 is complete at
+`.planning/phases/24-runtime-deprecation-wrappers/PLAN.md`. The six Phase 22
+validation-helper candidates now use public `Base.depwarn` wrappers around
+warning-free `_validate_*` helpers. Direct public calls warn and preserve valid
+`nothing` returns plus exact invalid `ArgumentError` messages; supported
+constructors, loaders, and calibration payload builders remain warning-free.
+Exports, `src/Epsilon.jl`, `docs/src/api.md` inventory rows, validation
+predicates, modelling semantics, and Abacus parity claims did not change.
+Phase 23 is complete at
 `.planning/phases/23-runtime-deprecation-design/PLAN.md`. The design document
 at `.planning/API-RUNTIME-DEPRECATION-DESIGN.md` records the future
 runtime-deprecation implementation contract for the six Phase 22
@@ -184,19 +190,18 @@ Calibration/lift-test parity remains a `scaffolded` ledger row after Phase 17:
 evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
 are landed for both accepted calibration terms, but the wider Abacus
 calibration surface is not complete.
-**Last Activity:** 2026-07-05
-**Last Activity Description:** Phase 23 added
-`.planning/API-RUNTIME-DEPRECATION-DESIGN.md`, reviewed the plan with a
-subagent before implementation, and recorded the future runtime-deprecation
-contract for the six Phase 22 validation-helper candidates. The document pins
-the public wrapper/internal-helper split, future warning texts, targeted tests,
-documentation timing, and rollback criteria. This is design hygiene only; no
-exports, runtime deprecation warnings, source files, tests, user-facing docs,
-modelling semantics, or Abacus API parity claims changed. Scoped verification
-was limited to `git diff --check` because the final diff is planning/changelog
-only.
+**Last Activity:** 2026-07-06
+**Last Activity Description:** Phase 24 implemented the Phase 23 runtime
+deprecation wrapper contract for the six Phase 22 validation-helper
+candidates. The public validators now emit `Base.depwarn` on direct calls and
+delegate to warning-free `_validate_*` helpers; constructors, loaders, and
+calibration payload builders use the helpers directly. Tests cover valid
+direct-call warnings, invalid direct-call `ArgumentError.msg` preservation, and
+silent replacement workflows where feasible. Exports, API inventory rows,
+modelling semantics, validation predicates, and Abacus parity claims did not
+change. Implementation review is complete and cleared.
 **Progress:** 100%
-**Paused At:** `.planning/phases/23-runtime-deprecation-design/PLAN.md`
+**Paused At:** `.planning/phases/24-runtime-deprecation-wrappers/PLAN.md`
 
 ## Performance Metrics
 
@@ -231,6 +236,7 @@ only.
 | 21 | 5/5 | Completed | public API lifecycle triage register and focused guard landed as governance hygiene only |
 | 22 | 5/5 | Completed | candidate-only public API cleanup RFC and focused RFC/register guard landed; no runtime or export changes |
 | 23 | 4/4 | Completed | runtime deprecation design contract landed for the six Phase 22 validation-helper candidates; no runtime or export changes |
+| 24 | 5/5 | Completed | runtime deprecation wrappers landed for the six validation-helper candidates; constructors/loaders/builders stay warning-free; no export or parity-status changes |
 
 **Recent Trend:**
 - Last 5 completed plans: `14-01`, `14-02`, `14-03`, `14-04`, `14-05`
@@ -297,10 +303,11 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 
 ## Pending Todos
 
-- Phase 23 is complete; do not treat the runtime deprecation design as an
-  implemented warning, export removal, or stable v1 API decision.
-- Phase 22 remains candidate-only; the `deprecation-candidate` rows are not
-  runtime deprecations or export removals.
+- Phase 24 is complete; direct calls to the six validation-helper candidates
+  now warn, but the `deprecation-candidate` rows are still not export removals
+  or stable v1 API decisions.
+- Phase 22 remains candidate-only for export cleanup; no unexport/removal phase
+  has landed.
 - Choose the next bounded release-prep slice; do not
   extend scenario planning into hosted/background stores, automatic refits,
   future spend paths, pipeline store emission, Dash/UI, or panel manual
@@ -344,7 +351,8 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 
 ## Session
 
-**Last Date:** 2026-07-05
-**Stopped At:** Phase 23 is complete. Runtime deprecation warnings are designed
-but not implemented.
-**Resume File:** `.planning/phases/23-runtime-deprecation-design/PLAN.md`
+**Last Date:** 2026-07-06
+**Stopped At:** Phase 24 is complete. Runtime deprecation wrappers are
+implemented for the six validation-helper candidates; export removal remains
+future work.
+**Resume File:** `.planning/phases/24-runtime-deprecation-wrappers/PLAN.md`
