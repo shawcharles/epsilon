@@ -5,13 +5,34 @@ const API_EXPORTS_DOC_PATH = joinpath(@__DIR__, "..", "docs", "src", "api.md")
 const API_EXPORTS_DOCS_SRC_PATH = joinpath(@__DIR__, "..", "docs", "src")
 const API_EXPORTS_TRIAGE_PATH = joinpath(@__DIR__, "..", ".planning", "API-EXPORT-TRIAGE.md")
 const API_EXPORTS_CLEANUP_RFC_PATH = joinpath(@__DIR__, "..", ".planning", "API-EXPORT-CLEANUP-RFC.md")
+const API_EXPORTS_RUNTIME_DEPRECATION_DESIGN_PATH = joinpath(
+    @__DIR__,
+    "..",
+    ".planning",
+    "API-RUNTIME-DEPRECATION-DESIGN.md",
+)
 const API_EXPORTS_INVENTORY_BEGIN = "<!-- BEGIN PUBLIC API INVENTORY -->"
 const API_EXPORTS_INVENTORY_END = "<!-- END PUBLIC API INVENTORY -->"
 const API_EXPORTS_TRIAGE_BEGIN = "<!-- BEGIN PUBLIC API TRIAGE -->"
 const API_EXPORTS_TRIAGE_END = "<!-- END PUBLIC API TRIAGE -->"
 const API_EXPORTS_CLEANUP_RFC_BEGIN = "<!-- BEGIN PUBLIC API CLEANUP CANDIDATES -->"
 const API_EXPORTS_CLEANUP_RFC_END = "<!-- END PUBLIC API CLEANUP CANDIDATES -->"
+const API_EXPORTS_DEPRECATION_AUDIT_BEGIN = "<!-- BEGIN PUBLIC API DEPRECATION MIGRATION AUDIT -->"
+const API_EXPORTS_DEPRECATION_AUDIT_END = "<!-- END PUBLIC API DEPRECATION MIGRATION AUDIT -->"
 const API_EXPORTS_CLEANUP_RFC_DECISION = "Candidate only; no runtime or export change in Phase 22."
+const API_EXPORTS_DEPRECATION_AUDIT_RUNTIME_WARNING = "landed"
+const API_EXPORTS_DEPRECATION_AUDIT_REPLACEMENT_STATUS = "guarded"
+const API_EXPORTS_DEPRECATION_AUDIT_READY_TO_UNEXPORT = "no"
+const API_EXPORTS_DEPRECATED_VALIDATION_HELPERS = Set(
+    [
+        :validate_calibration_step_config,
+        :validate_cost_per_target_calibration_payload,
+        :validate_lift_test_calibration_payload,
+        :validate_mmm_data,
+        :validate_model_config,
+        :validate_sampler_config,
+    ]
+)
 const API_EXPORTS_TRIAGE_LIFECYCLES = Set(
     [
         "keep-public",
@@ -51,6 +72,30 @@ end
 
 function _api_exports_marked_cleanup_rfc_table(text::AbstractString)
     return _api_exports_marked_table(text, API_EXPORTS_CLEANUP_RFC_BEGIN, API_EXPORTS_CLEANUP_RFC_END)
+end
+
+function _api_exports_marked_deprecation_audit_table(text::AbstractString)
+    return _api_exports_marked_table(text, API_EXPORTS_DEPRECATION_AUDIT_BEGIN, API_EXPORTS_DEPRECATION_AUDIT_END)
+end
+
+function _api_exports_section_table(text::AbstractString, heading::AbstractString)
+    lines = split(text, '\n')
+    heading_indices = findall(line -> strip(line) == heading, lines)
+
+    @test length(heading_indices) == 1
+    isempty(heading_indices) && return ""
+
+    table_lines = String[]
+    for line in lines[(only(heading_indices) + 1):end]
+        stripped = strip(line)
+        startswith(stripped, "## ") && break
+        isempty(stripped) && isempty(table_lines) && continue
+        isempty(stripped) && !isempty(table_lines) && break
+        startswith(stripped, "|") || continue
+        push!(table_lines, line)
+    end
+
+    return join(table_lines, "\n")
 end
 
 function _api_exports_parse_inventory_rows(table_text::AbstractString)
@@ -168,6 +213,75 @@ function _api_exports_parse_cleanup_rfc_candidate_rows(table_text::AbstractStrin
     return parsed
 end
 
+function _api_exports_parse_deprecation_audit_rows(table_text::AbstractString)
+    rows = split(table_text, '\n')
+    nonempty_rows = filter(row -> !isempty(strip(row)), rows)
+
+    @test length(nonempty_rows) >= 2
+    @test strip(nonempty_rows[1]) ==
+        "| Symbol | Runtime Warning | Migration Path | Replacement Warning-Free | Ready To Unexport | Evidence |"
+    @test strip(nonempty_rows[2]) == "|---|---|---|---|---|---|"
+
+    parsed = NamedTuple{
+        (:symbol, :runtime_warning, :migration, :replacement_warning_free, :ready_to_unexport, :evidence),
+        Tuple{Symbol, String, String, String, String, String},
+    }[]
+    for row in nonempty_rows[3:end]
+        match_result = match(
+            r"^\|\s*`([^`]+)`\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|$",
+            row,
+        )
+        @test !isnothing(match_result)
+        isnothing(match_result) && continue
+
+        runtime_warning = strip(match_result.captures[2])
+        migration = strip(match_result.captures[3])
+        replacement_warning_free = strip(match_result.captures[4])
+        ready_to_unexport = strip(match_result.captures[5])
+        evidence = strip(match_result.captures[6])
+
+        push!(
+            parsed,
+            (
+                symbol = Symbol(match_result.captures[1]),
+                runtime_warning = runtime_warning,
+                migration = migration,
+                replacement_warning_free = replacement_warning_free,
+                ready_to_unexport = ready_to_unexport,
+                evidence = evidence,
+            ),
+        )
+    end
+
+    return parsed
+end
+
+function _api_exports_parse_runtime_deprecation_source_rows(table_text::AbstractString)
+    rows = split(table_text, '\n')
+    nonempty_rows = filter(row -> !isempty(strip(row)), rows)
+
+    @test length(nonempty_rows) >= 2
+    @test strip(nonempty_rows[1]) == "| Symbol | Future Migration Target |"
+    @test strip(nonempty_rows[2]) == "|---|---|"
+
+    parsed = NamedTuple{(:symbol, :migration), Tuple{Symbol, String}}[]
+    for row in nonempty_rows[3:end]
+        match_result = match(r"^\|\s*`([^`]+)`\s*\|\s*([^|]+?)\s*\|$", row)
+        @test !isnothing(match_result)
+        isnothing(match_result) && continue
+
+        push!(
+            parsed,
+            (
+                symbol = Symbol(match_result.captures[1]),
+                migration = strip(match_result.captures[2]),
+            ),
+        )
+    end
+
+    return parsed
+end
+
 function _api_exports_countmap(values)
     counts = Dict{Symbol, Int}()
     for value in values
@@ -195,6 +309,19 @@ end
 function _api_exports_cleanup_rfc_candidate_rows()
     table_text = _api_exports_marked_cleanup_rfc_table(read(API_EXPORTS_CLEANUP_RFC_PATH, String))
     return _api_exports_parse_cleanup_rfc_candidate_rows(table_text)
+end
+
+function _api_exports_deprecation_audit_rows()
+    table_text = _api_exports_marked_deprecation_audit_table(read(API_EXPORTS_CLEANUP_RFC_PATH, String))
+    return _api_exports_parse_deprecation_audit_rows(table_text)
+end
+
+function _api_exports_runtime_deprecation_source_rows()
+    table_text = _api_exports_section_table(
+        read(API_EXPORTS_RUNTIME_DEPRECATION_DESIGN_PATH, String),
+        "## Source Candidate Set",
+    )
+    return _api_exports_parse_runtime_deprecation_source_rows(table_text)
 end
 
 function _api_exports_public_symbols()
@@ -413,4 +540,108 @@ end
     @test missing_rfc_for_triage_symbols == Symbol[]
     @test stale_rfc_deprecation_symbols == Symbol[]
     @test migration_mismatched_symbols == Symbol[]
+end
+
+@testset "deprecated validation helper migration audit is coherent" begin
+    exported_symbols = _api_exports_current_symbols()
+    triage_rows = _api_exports_triage_rows()
+    rfc_rows = _api_exports_cleanup_rfc_candidate_rows()
+    audit_rows = _api_exports_deprecation_audit_rows()
+    runtime_design_rows = _api_exports_runtime_deprecation_source_rows()
+
+    triage_by_symbol = Dict(row.symbol => row for row in triage_rows)
+    rfc_by_symbol = Dict(row.symbol => row for row in rfc_rows)
+    audit_by_symbol = Dict(row.symbol => row for row in audit_rows)
+    runtime_design_by_symbol = Dict(row.symbol => row for row in runtime_design_rows)
+
+    filtered_export_symbols = Set(intersect(exported_symbols, API_EXPORTS_DEPRECATED_VALIDATION_HELPERS))
+    triage_deprecation_symbols = Set(row.symbol for row in triage_rows if row.lifecycle == "deprecation-candidate")
+    rfc_candidate_symbols = Set(row.symbol for row in rfc_rows)
+    audit_symbols = [row.symbol for row in audit_rows]
+    runtime_design_symbols = [row.symbol for row in runtime_design_rows]
+    expected_symbols = API_EXPORTS_DEPRECATED_VALIDATION_HELPERS
+
+    duplicate_audit_symbols = sort([symbol for (symbol, count) in pairs(_api_exports_countmap(audit_symbols)) if count > 1])
+    duplicate_runtime_design_symbols = sort(
+        [symbol for (symbol, count) in pairs(_api_exports_countmap(runtime_design_symbols)) if count > 1],
+    )
+    missing_helper_exports = sort(collect(setdiff(expected_symbols, filtered_export_symbols)))
+    stale_filtered_helper_exports = sort(collect(setdiff(filtered_export_symbols, expected_symbols)))
+    audit_mismatched_symbols = sort(collect(setdiff(union(Set(audit_symbols), expected_symbols), intersect(Set(audit_symbols), expected_symbols))))
+    runtime_design_mismatched_symbols = sort(
+        collect(
+            setdiff(
+                union(Set(runtime_design_symbols), expected_symbols),
+                intersect(Set(runtime_design_symbols), expected_symbols),
+            ),
+        ),
+    )
+    triage_set_mismatch = sort(
+        collect(setdiff(union(triage_deprecation_symbols, expected_symbols), intersect(triage_deprecation_symbols, expected_symbols))),
+    )
+    rfc_set_mismatch = sort(
+        collect(setdiff(union(rfc_candidate_symbols, expected_symbols), intersect(rfc_candidate_symbols, expected_symbols))),
+    )
+    export_set_mismatch = sort(
+        collect(setdiff(union(filtered_export_symbols, expected_symbols), intersect(filtered_export_symbols, expected_symbols))),
+    )
+
+    migration_mismatched_symbols = sort(
+        [
+            symbol for symbol in expected_symbols if haskey(triage_by_symbol, symbol) &&
+                haskey(rfc_by_symbol, symbol) &&
+                haskey(audit_by_symbol, symbol) &&
+                haskey(runtime_design_by_symbol, symbol) &&
+                length(
+                    Set(
+                        [
+                            triage_by_symbol[symbol].migration,
+                            rfc_by_symbol[symbol].migration,
+                            audit_by_symbol[symbol].migration,
+                            runtime_design_by_symbol[symbol].migration,
+                        ],
+                    ),
+                ) != 1
+        ],
+    )
+    runtime_warning_mismatched_symbols = sort(
+        unique(
+            [
+                row.symbol for row in audit_rows if row.runtime_warning != API_EXPORTS_DEPRECATION_AUDIT_RUNTIME_WARNING
+            ],
+        ),
+    )
+    replacement_status_mismatched_symbols = sort(
+        unique(
+            [
+                row.symbol for row in audit_rows if row.replacement_warning_free !=
+                    API_EXPORTS_DEPRECATION_AUDIT_REPLACEMENT_STATUS
+            ],
+        ),
+    )
+    unexport_readiness_mismatched_symbols = sort(
+        unique(
+            [
+                row.symbol for row in audit_rows if row.ready_to_unexport !=
+                    API_EXPORTS_DEPRECATION_AUDIT_READY_TO_UNEXPORT
+            ],
+        ),
+    )
+    empty_evidence_symbols = sort(unique([row.symbol for row in audit_rows if isempty(strip(row.evidence))]))
+
+    @test length(audit_rows) == 6
+    @test duplicate_audit_symbols == Symbol[]
+    @test duplicate_runtime_design_symbols == Symbol[]
+    @test missing_helper_exports == Symbol[]
+    @test stale_filtered_helper_exports == Symbol[]
+    @test audit_mismatched_symbols == Symbol[]
+    @test runtime_design_mismatched_symbols == Symbol[]
+    @test triage_set_mismatch == Symbol[]
+    @test rfc_set_mismatch == Symbol[]
+    @test export_set_mismatch == Symbol[]
+    @test migration_mismatched_symbols == Symbol[]
+    @test runtime_warning_mismatched_symbols == Symbol[]
+    @test replacement_status_mismatched_symbols == Symbol[]
+    @test unexport_readiness_mismatched_symbols == Symbol[]
+    @test empty_evidence_symbols == Symbol[]
 end

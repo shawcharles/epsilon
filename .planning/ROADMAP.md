@@ -187,6 +187,13 @@ Current repository state on 2026-05-18:
   available, and `make test-file FILE=...` provides the local helper. This is
   verification ergonomics only; no model/runtime semantics or Abacus parity
   claims change.
+- Phase 26 is closed:
+  `.planning/API-EXPORT-CLEANUP-RFC.md` now records a marked
+  migration-readiness audit for the six deprecated validation-helper exports,
+  and the focused `api_exports` lane guards that audit against current filtered
+  exports, the triage register, the Phase 22 RFC, and the Phase 23/24
+  runtime-deprecation design. This is governance consistency only; the helpers
+  remain exported and not ready to unexport.
 
 ## Phases
 
@@ -270,6 +277,10 @@ Current repository state on 2026-05-18:
       file selectors and a `make test-file FILE=...` helper so routine
       verification can run one focused test file with test-only dependencies
       available, without widening to a full-suite run.
+- [x] **Phase 26: Deprecated Validation Helper Migration Audit** - Record and
+      guard the current migration-readiness state for the six deprecated
+      validation-helper exports without removing exports, changing runtime
+      behaviour, or making Abacus parity or stable-v1 API claims.
 
 ## Phase Details
 

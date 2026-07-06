@@ -8,21 +8,31 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 25 focused test-file harness is complete. Maintainers
-can now run a single test file through `Pkg.test` with test-only dependencies
-available via commands such as `make test-file FILE=test/model/calibration.jl`
-or `Pkg.test(; test_args=["test/model/calibration.jl"],
-julia_args=["--depwarn=yes"])`. This is local verification ergonomics only;
-model/runtime semantics, exports, and Abacus parity claims did not change.
+**Current focus:** Phase 26 deprecated validation-helper migration audit is
+complete. The six Phase 22 validation-helper candidates now have a marked
+migration-readiness audit guarded by the focused `api_exports` lane against
+current filtered exports, the triage register, the Phase 22 RFC, and the Phase
+23/24 runtime-deprecation design. This is governance consistency only; exports,
+runtime behaviour, model semantics, and Abacus parity claims did not change.
 
 ## Current Position
 
-**Current Phase:** 25
-**Current Phase Name:** Focused Test File Harness
-**Total Phases:** 25
-**Current Plan:** Phase 25 complete; choose the next bounded release-prep slice
+**Current Phase:** 26
+**Current Phase Name:** Deprecated Validation Helper Migration Audit
+**Total Phases:** 26
+**Current Plan:** Phase 26 complete; choose the next bounded release-prep slice
 **Total Plans in Phase:** 4 tasks
-**Status:** Phase 25 is complete at
+**Status:** Phase 26 is complete at
+`.planning/phases/26-deprecated-validation-helper-migration-audit/PLAN.md`.
+`.planning/API-EXPORT-CLEANUP-RFC.md` now treats Phase 22 as historical
+candidate governance and records the current post-Phase-24 state in a marked
+migration audit table. `test/api_exports.jl` parses and guards that table:
+unique markers, exact header, exactly six rows, no duplicate symbols, all six
+helpers still exported, exact symbol-set and migration-text agreement across
+filtered helper exports, triage candidates, RFC candidates, runtime-design
+source candidates, and audit rows, `Runtime Warning = landed`,
+`Replacement Warning-Free = guarded`, `Ready To Unexport = no`, and non-empty
+evidence. The implementation review cleared with no Must Fix items. Phase 25 is complete at
 `.planning/phases/25-focused-test-file-harness/PLAN.md`. `test/runtests.jl`
 now accepts exact layer selectors as before or bounded file selectors under
 `test/`, with explicit rejection for unknown selectors, directories,
@@ -197,16 +207,16 @@ evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
 are landed for both accepted calibration terms, but the wider Abacus
 calibration surface is not complete.
 **Last Activity:** 2026-07-06
-**Last Activity Description:** Phase 25 added focused package-test file
-selectors to `test/runtests.jl` and `make test-file FILE=...`, allowing routine
-single-file verification to run in the package test environment without moving
-test-only dependencies into runtime `[deps]` or widening to the full suite.
-Selector guards reject missing files, directories, recursive `test/runtests.jl`
-selection, parent traversal, absolute outside paths, and mixed layer/file mode.
-No model/runtime semantics, exports, validation predicates, or Abacus parity
-claims changed. Implementation review is complete and cleared.
+**Last Activity Description:** Phase 26 added and guarded a migration-readiness
+audit for the six deprecated validation-helper
+exports. The audit records runtime warnings as landed, replacement workflows as
+guarded, and every candidate as not ready to unexport yet. Focused
+`api_exports` checks now align the audit with current filtered exports, the
+triage register, the Phase 22 RFC, and the Phase 23/24 runtime-deprecation
+design. No source/runtime files, exports, validation predicates, model
+semantics, or Abacus parity claims changed. Implementation review cleared.
 **Progress:** 100%
-**Paused At:** `.planning/phases/25-focused-test-file-harness/PLAN.md`
+**Paused At:** `.planning/phases/26-deprecated-validation-helper-migration-audit/PLAN.md`
 
 ## Performance Metrics
 
@@ -243,6 +253,7 @@ claims changed. Implementation review is complete and cleared.
 | 23 | 4/4 | Completed | runtime deprecation design contract landed for the six Phase 22 validation-helper candidates; no runtime or export changes |
 | 24 | 5/5 | Completed | runtime deprecation wrappers landed for the six validation-helper candidates; constructors/loaders/builders stay warning-free; no export or parity-status changes |
 | 25 | 4/4 | Completed | focused package-test file selectors and `make test-file FILE=...` landed for single-file local verification with test-only dependencies available |
+| 26 | 4/4 | Completed | migration-readiness audit and focused guard landed for the six deprecated validation-helper exports; no export or runtime changes |
 
 **Recent Trend:**
 - Last 5 completed plans: `14-01`, `14-02`, `14-03`, `14-04`, `14-05`
@@ -309,6 +320,9 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 
 ## Pending Todos
 
+- Phase 26 is complete; the six deprecated validation-helper exports remain
+  exported and not ready to unexport, with migration-audit consistency guarded
+  by `test/api_exports.jl`.
 - Phase 25 is complete; prefer `make test-file FILE=...` or
   `Pkg.test(; test_args=[...], julia_args=["--depwarn=yes"])` for focused
   single-file verification when files use test-only dependencies.
@@ -361,7 +375,7 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 ## Session
 
 **Last Date:** 2026-07-06
-**Stopped At:** Phase 25 is complete. Focused package-test file selectors and
-`make test-file FILE=...` are implemented; use them for routine local
-single-file verification instead of direct root-project test-file execution.
-**Resume File:** `.planning/phases/25-focused-test-file-harness/PLAN.md`
+**Stopped At:** Phase 26 is complete. The deprecated validation-helper
+migration audit is recorded and guarded; choose the next bounded release-prep
+slice before making export removals or broader v1 API claims.
+**Resume File:** `.planning/phases/26-deprecated-validation-helper-migration-audit/PLAN.md`

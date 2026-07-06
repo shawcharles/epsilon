@@ -131,6 +131,12 @@ All notable project changes are recorded here. Epsilon is still on the
   concrete migration paths and focused RFC/register consistency checks. This
   does not remove exports, add runtime deprecation warnings, or change Abacus
   behavioural evidence.
+- Added a marked migration-readiness audit for those six deprecated validation
+  helpers, plus focused `api_exports` checks that keep the audit aligned with
+  current exports, the triage register, the Phase 22 RFC, and the Phase 23/24
+  runtime-deprecation design. The audit records runtime warnings and
+  warning-free replacements as guarded while keeping every helper not ready to
+  unexport.
 - Added a design-only runtime deprecation plan at
   `.planning/API-RUNTIME-DEPRECATION-DESIGN.md` for those six validation-helper
   candidates. It records the future wrapper/internal-helper split, warning

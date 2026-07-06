@@ -2,13 +2,19 @@
 
 Phase 22 records candidate-only public API cleanup decisions for a small slice
 of the current loaded `Epsilon` export surface. It does not remove exports,
-add runtime deprecation warnings, rename symbols, or change behaviour.
+rename symbols, or change behaviour.
+
+That Phase 22 statement is historical. Phase 24 has since landed runtime
+`Base.depwarn` wrappers for the same six validation helpers while preserving
+exports and warning-free replacement workflows. The cleanup table below remains
+the source record for the candidate decision and migration text; the migration
+audit table records the current post-Phase-24 readiness state.
 
 The candidates below are limited to exported validation helpers whose checks are
 already reached through higher-level public constructors or builder workflows.
-They remain exported in Phase 22. A later breaking/deprecation phase would need
-separate approval before any `Base.depwarn`, `@deprecate`, export removal, or
-runtime behaviour change.
+They remained exported in Phase 22 and remain exported after Phase 24. A later
+breaking/removal phase still needs separate approval before any `@deprecate`,
+export removal, or behaviour change beyond the landed runtime warning wrappers.
 
 <!-- BEGIN PUBLIC API CLEANUP CANDIDATES -->
 | Symbol | Current Lifecycle | Proposed Lifecycle | Migration | Rationale | Risk | Decision |
@@ -20,6 +26,24 @@ runtime behaviour change.
 | `validate_model_config` | review-before-v1 | deprecation-candidate | Use `ModelConfig` construction or `load_model_config`. | Public validation helper duplicates constructor and config-loader validation paths. | medium | Candidate only; no runtime or export change in Phase 22. |
 | `validate_sampler_config` | review-before-v1 | deprecation-candidate | Use `SamplerConfig` construction or `load_sampler_config`. | Public validation helper duplicates constructor and sampler-loader validation paths. | medium | Candidate only; no runtime or export change in Phase 22. |
 <!-- END PUBLIC API CLEANUP CANDIDATES -->
+
+## Migration Readiness Audit
+
+The current state is deliberately not "ready to unexport". Runtime warnings and
+warning-free replacements are now guarded, but the project has not completed a
+deprecation period, changed docs inventory rows, or made a stable-v1 API
+decision.
+
+<!-- BEGIN PUBLIC API DEPRECATION MIGRATION AUDIT -->
+| Symbol | Runtime Warning | Migration Path | Replacement Warning-Free | Ready To Unexport | Evidence |
+|---|---|---|---|---|---|
+| `validate_calibration_step_config` | landed | Use `CalibrationStepConfig` construction or `load_public_config` calibration parsing. | guarded | no | Phase 24 runtime wrapper; test/model/calibration.jl replacement-path coverage; Phase 26 api_exports audit guard. |
+| `validate_cost_per_target_calibration_payload` | landed | Use `build_cost_per_target_calibration_payload`. | guarded | no | Phase 24 runtime wrapper; test/model/calibration.jl replacement-path coverage; Phase 26 api_exports audit guard. |
+| `validate_lift_test_calibration_payload` | landed | Use `build_lift_test_calibration_payload`. | guarded | no | Phase 24 runtime wrapper; test/model/calibration.jl replacement-path coverage; Phase 26 api_exports audit guard. |
+| `validate_mmm_data` | landed | Use `MMMData` construction before building `TimeSeriesMMM`. | guarded | no | Phase 24 runtime wrapper; test/model/types.jl replacement-path coverage; Phase 26 api_exports audit guard. |
+| `validate_model_config` | landed | Use `ModelConfig` construction or `load_model_config`. | guarded | no | Phase 24 runtime wrapper; test/model/types.jl replacement-path coverage; Phase 26 api_exports audit guard. |
+| `validate_sampler_config` | landed | Use `SamplerConfig` construction or `load_sampler_config`. | guarded | no | Phase 24 runtime wrapper; test/model/types.jl replacement-path coverage; Phase 26 api_exports audit guard. |
+<!-- END PUBLIC API DEPRECATION MIGRATION AUDIT -->
 
 ## Migration Target Notes
 
