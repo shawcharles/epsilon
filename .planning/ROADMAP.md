@@ -217,6 +217,12 @@ Current repository state on 2026-05-18:
   include safety, compact outputs, and focused tests. It does not add a package
   ingestion API or change source, dependencies, pipeline semantics, benchmarks,
   release evidence, or Abacus parity claims.
+- Phase 31 implementation is complete and awaiting its one final
+  shared-namespace checkpoint: an internal `Date` cadence-index primitive is
+  fixture-backed against Abacus `infer_time_index`, including forward/backward,
+  leap-boundary, and off-cadence cases. This is foundation work only: HSGP/TVP
+  configuration, basis construction, priors, Turing wiring, prediction, and
+  replay remain unimplemented.
 
 ## Phases
 
@@ -319,6 +325,9 @@ Current repository state on 2026-05-18:
       `date,sales,tv,search` `TimeSeriesMMM` MCMC quickstart with strict
       CSV/data-boundary guards and focused evidence, without adding a package
       ingestion API, pipeline support, source changes, or parity claims.
+- [ ] **Phase 31: HSGP Time-Index Foundation** - Add a private,
+      fixture-backed cadence-index primitive without claiming HSGP/TVP support
+      or widening model/config behaviour.
 
 ## Phase Details
 
@@ -697,3 +706,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 29
 | 27. Scope Boundary Reconciliation | 4/4 | Completed | MCMC-only v1 inference boundary, VI/dashboard/AI out-of-scope table, release-doc and planning guardrails |
 | 28. Toy MCMC Smoke Demo | 4/4 | Completed | tiny synthetic `TimeSeriesMMM` MCMC smoke demo, callable toy entry point, optional compact summaries, and focused example test landed |
 | 29. Toy MCMC Path Hardening | 4/4 | Completed | CLI malformed-integer errors, `-h`/`--help`, include-safety evidence, focused docs, and toy test hardening landed |
+| 30. CSV Time-Series MCMC Quickstart | 4/4 | Completed | fixed-schema CSV time-series MCMC quickstart, strict input guards, and scoped review/verification landed |
+| 31. HSGP Time-Index Foundation | 2/3 | In verification | private fixture-backed signed cadence-index helper; HSGP/TVP model support remains missing |

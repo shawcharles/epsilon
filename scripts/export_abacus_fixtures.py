@@ -569,6 +569,87 @@ def _build_hill_function_cases():
     ]
 
 
+def _build_hsgp_time_index_cases():
+    daily_training_dates = [date(2022, 1, day) for day in range(1, 6)]
+    weekly_training_dates = [date(2022, 1, day) for day in (1, 8, 15, 22, 29)]
+
+    return [
+        {
+            "name": "daily_in_sample",
+            "new_dates": daily_training_dates,
+            "training_dates": daily_training_dates,
+            "time_resolution": 1,
+        },
+        {
+            "name": "daily_forward",
+            "new_dates": [date(2022, 1, day) for day in range(6, 11)],
+            "training_dates": daily_training_dates,
+            "time_resolution": 1,
+        },
+        {
+            "name": "daily_backward",
+            "new_dates": [date(2021, 12, day) for day in range(27, 32)],
+            "training_dates": daily_training_dates,
+            "time_resolution": 1,
+        },
+        {
+            "name": "weekly_in_sample",
+            "new_dates": weekly_training_dates,
+            "training_dates": weekly_training_dates,
+            "time_resolution": 7,
+        },
+        {
+            "name": "weekly_forward",
+            "new_dates": [
+                date(2022, 2, 5),
+                date(2022, 2, 12),
+                date(2022, 2, 19),
+                date(2022, 2, 26),
+                date(2022, 3, 5),
+            ],
+            "training_dates": weekly_training_dates,
+            "time_resolution": 7,
+        },
+        {
+            "name": "weekly_backward",
+            "new_dates": [
+                date(2021, 11, 27),
+                date(2021, 12, 4),
+                date(2021, 12, 11),
+                date(2021, 12, 18),
+                date(2021, 12, 25),
+            ],
+            "training_dates": weekly_training_dates,
+            "time_resolution": 7,
+        },
+        {
+            "name": "weekly_leap_boundary",
+            "new_dates": [
+                date(2024, 2, 17),
+                date(2024, 2, 24),
+                date(2024, 3, 2),
+                date(2024, 3, 9),
+            ],
+            "training_dates": [date(2024, 2, 24), date(2024, 3, 2), date(2024, 3, 9)],
+            "time_resolution": 7,
+        },
+        {
+            "name": "weekly_off_cadence_forward",
+            "new_dates": [date(2022, 1, 10)],
+            "training_dates": [date(2022, 1, 1), date(2022, 1, 8)],
+            "time_resolution": 7,
+            "expected_error": "off_cadence",
+        },
+        {
+            "name": "weekly_off_cadence_backward",
+            "new_dates": [date(2021, 12, 30)],
+            "training_dates": [date(2022, 1, 1), date(2022, 1, 8)],
+            "time_resolution": 7,
+            "expected_error": "off_cadence",
+        },
+    ]
+
+
 def _build_calibration_alignment_cases():
     return [
         {
@@ -737,6 +818,14 @@ def _build_calibration_integration_cases():
 def _julia_int_vector_literal(values) -> str:
     body = ", ".join(str(int(value)) for value in values)
     return f"[{body}]"
+
+
+def _julia_date_literal(value: date) -> str:
+    return f"Date({value.year}, {value.month}, {value.day})"
+
+
+def _julia_date_vector_literal(values) -> str:
+    return "Date[" + ", ".join(_julia_date_literal(value) for value in values) + "]"
 
 
 def _julia_value_vector_literal(values) -> str:
@@ -1838,6 +1927,55 @@ def _hill_function_rows():
     return rows
 
 
+def _hsgp_time_index_rows():
+    rows: list[str] = []
+    for case in _build_hsgp_time_index_cases():
+        new_dates = pd.Series(case["new_dates"])
+        training_dates = pd.Series(case["training_dates"])
+        expected_error = case.get("expected_error")
+
+        try:
+            expected = infer_time_index(
+                new_dates,
+                training_dates,
+                case["time_resolution"],
+            )
+        except ValueError as err:
+            if expected_error != "off_cadence":
+                raise
+            error_message = str(err)
+            if not error_message.startswith(
+                "Prediction dates must align to the fitted cadence."
+            ):
+                raise RuntimeError(
+                    f"Unexpected Abacus infer_time_index failure for {case['name']!r}: "
+                    f"{error_message}"
+                ) from err
+            expected_literal = "nothing"
+            error_literal = _julia_string_literal(error_message)
+        else:
+            if expected_error is not None:
+                raise RuntimeError(
+                    f"Expected Abacus infer_time_index to reject {case['name']!r}"
+                )
+            expected_literal = "Int[" + ", ".join(str(int(value)) for value in expected) + "]"
+            error_literal = "nothing"
+
+        rows.extend(
+            [
+                "    (",
+                f'        name = "{case["name"]}",',
+                f"        new_dates = {_julia_date_vector_literal(case['new_dates'])},",
+                f"        training_dates = {_julia_date_vector_literal(case['training_dates'])},",
+                f"        time_resolution = {case['time_resolution']},",
+                f"        expected = {expected_literal},",
+                f"        expected_error = {error_literal},",
+                "    ),",
+            ]
+        )
+    return rows
+
+
 def _calibration_alignment_rows():
     rows: list[str] = []
     for case in _build_calibration_alignment_cases():
@@ -2201,6 +2339,11 @@ def main() -> None:
         help="Destination Julia Hill-function fixture file.",
     )
     parser.add_argument(
+        "--hsgp-time-index-output",
+        default="test/fixtures/abacus/hsgp_time_index_cases.jl",
+        help="Destination Julia HSGP time-index fixture file.",
+    )
+    parser.add_argument(
         "--timeseries-output",
         default="test/fixtures/abacus/timeseries/config_data.jl",
         help="Destination Julia Abacus timeseries config/data fixture file.",
@@ -2279,6 +2422,7 @@ def main() -> None:
     global logistic_saturation
     global michaelis_menten
     global hill_function
+    global infer_time_index
     global tanh_saturation
     global weibull_adstock
     global pm
@@ -2304,6 +2448,7 @@ def main() -> None:
         michaelis_menten,
         tanh_saturation,
     )
+    from abacus.mmm.tvp import infer_time_index
     import pymc as pm
     import pandas as pd
     from abacus.mmm.calibration.alignment import exact_row_indices, UnalignedValuesError
@@ -2379,6 +2524,13 @@ def main() -> None:
         "ABACUS_HILL_FUNCTION_CASES",
         _hill_function_rows(),
         Path(args.hill_output),
+        abacus_root=abacus_root,
+        abacus_revision=abacus_revision,
+    )
+    _write_fixture_file(
+        "ABACUS_HSGP_TIME_INDEX_CASES",
+        _hsgp_time_index_rows(),
+        Path(args.hsgp_time_index_output),
         abacus_root=abacus_root,
         abacus_revision=abacus_revision,
     )

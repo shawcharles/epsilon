@@ -7,6 +7,10 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Added
 
+- Added an internal, fixture-backed HSGP time-index foundation that maps
+  `Date` inputs onto signed cadence indices using Abacus-compatible first-date
+  origin and off-cadence rejection. This does not add supported HSGP/TVP
+  modelling, HSGP configuration, public exports, or time-varying coefficients.
 - Added `examples/csv_mmm/`, a fixed-schema `date,sales,tv,search`
   `TimeSeriesMMM` Turing/NUTS quickstart with strict ISO-date and finite-numeric
   validation, chronological sorting, duplicate-date rejection, optional compact

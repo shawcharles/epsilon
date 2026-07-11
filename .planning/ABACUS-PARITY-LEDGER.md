@@ -56,7 +56,7 @@ Each target should pass these gates before it is counted as ported:
 | Prior schema and distribution mapping | `abacus/prior.py`, `abacus/model_config.py` | `src/distributions/priors.jl` | scaffolded | Compare parsed prior configs, defaults, dimensions, and parameter names from demo configs. |
 | Special priors | `abacus/special_priors/*.py` | `src/distributions/special.jl`, `src/distributions/masked.jl`, `src/distributions/shrinkage.jl` | scaffolded | Prove log-density and coefficient-helper parity or document Julia-native replacements. |
 | Fourier seasonality | `abacus/mmm/fourier.py` | `src/mmm/seasonality.jl` | scaffolded | Add basis-matrix fixtures with dates from demo data. |
-| HSGP and time-varying parameters | `abacus/mmm/hsgp.py`, `abacus/mmm/tvp.py` | future `src/mmm/hsgp.jl` / `src/mmm/tvp.jl` | missing | Port basis construction and time-varying parameter semantics after `geo_brand_panel` parity is stable. |
+| HSGP and time-varying parameters | `abacus/mmm/hsgp.py`, `abacus/mmm/tvp.py` | `src/mmm/hsgp.jl`; future `src/mmm/tvp.jl` | missing | Phase 31 adds only fixture-backed cadence index inference; port basis construction and time-varying parameter semantics separately. |
 | Linear and changepoint trend | `abacus/mmm/linear_trend.py` | `src/mmm/trend.jl` | scaffolded | Compare trend design matrices and fitted prediction-state replay. |
 | Events and holiday basis effects | `abacus/mmm/events.py`, `abacus/mmm/builders/holidays.py` | `src/mmm/events.jl`, `src/mmm/holidays.jl` | scaffolded/native | Separate Abacus-compatible event basis from Epsilon-native pooled holiday behavior. |
 | Additive effects | `abacus/mmm/additive_effect.py`, `abacus/mmm/models/panel_build.py` | `src/mmm/model.jl`, `src/postmodel/replay.jl` | scaffolded | Lock contribution-term naming and additive replay state. |
@@ -659,6 +659,15 @@ As of 2026-05-10:
     payload builders call warning-free `_validate_*` helpers. This is runtime
     warning hygiene only: `src/Epsilon.jl`, export inventory rows, validation
     predicates, modelling semantics, and Abacus parity evidence are unchanged.
+41. Phase 31 adds only the deterministic date-index foundation used before
+    Abacus constructs a time-varying HSGP multiplier. The internal
+    `_infer_hsgp_time_index` helper is fixture-backed against Abacus
+    `infer_time_index` for daily/weekly, forward/backward, leap-boundary, and
+    off-cadence cases, while Epsilon deliberately hardens empty training dates
+    with `ArgumentError`. It is not exported; HSGP configuration remains
+    rejected, and no basis, prior, Turing, prediction, replay, or TVP behaviour
+    is implemented. The HSGP/time-varying ledger row therefore remains
+    `missing`.
 
 
 ## Plan 14-05 Parity Audit
