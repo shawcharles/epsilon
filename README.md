@@ -196,6 +196,23 @@ writes compact contribution and metric summaries when an output directory is
 provided. It is a local smoke demo only: not release evidence, not a benchmark,
 not an Abacus parity claim, and not a broader support expansion.
 
+## CSV Time-Series MCMC Quickstart
+
+For a direct fixed-schema CSV example, run:
+
+```bash
+julia --project=. examples/csv_mmm/run_csv_mmm.jl --draws 8 --tune 8 --output-dir "$(mktemp -d)"
+```
+
+[`examples/csv_mmm/`](examples/csv_mmm/README.md) documents the exact
+`date,sales,tv,search` schema, strict ISO-date and finite-numeric validation,
+chronological sorting, duplicate-date rejection, and `--data PATH` override.
+This example uses the same small supported Turing/NUTS path as the toy demo,
+but it remains a fixed-schema teaching path only: not general CSV ingestion,
+pipeline support, benchmark evidence, release evidence, or an Abacus parity
+claim. The synthetic toy command above remains the faster supported-path smoke
+check.
+
 ## Demo Data And Runner
 
 The repo now ships a bounded demo/comparison surface under

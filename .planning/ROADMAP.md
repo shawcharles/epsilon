@@ -211,6 +211,12 @@ Current repository state on 2026-05-18:
   without touching source runtime semantics, dependencies, exports, Abacus
   parity claims, benchmarks, release evidence, VI, dashboard/UI, or AI advisor
   surfaces.
+- Phase 30 is closed: `examples/csv_mmm/` provides a fixed-schema
+  `date,sales,tv,search` time-series Turing/NUTS quickstart with strict typed
+  validation, chronological sorting, duplicate-date rejection, direct CLI and
+  include safety, compact outputs, and focused tests. It does not add a package
+  ingestion API or change source, dependencies, pipeline semantics, benchmarks,
+  release evidence, or Abacus parity claims.
 
 ## Phases
 
@@ -309,6 +315,10 @@ Current repository state on 2026-05-18:
 - [x] **Phase 29: Toy MCMC Path Hardening** - Harden the toy smoke demo's CLI,
       help, include-safety, and focused tests without changing model semantics,
       dependencies, exports, release evidence, or Abacus parity claims.
+- [x] **Phase 30: CSV Time-Series MCMC Quickstart** - Add a fixed-schema
+      `date,sales,tv,search` `TimeSeriesMMM` MCMC quickstart with strict
+      CSV/data-boundary guards and focused evidence, without adding a package
+      ingestion API, pipeline support, source changes, or parity claims.
 
 ## Phase Details
 

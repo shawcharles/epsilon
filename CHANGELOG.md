@@ -7,6 +7,12 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Added
 
+- Added `examples/csv_mmm/`, a fixed-schema `date,sales,tv,search`
+  `TimeSeriesMMM` Turing/NUTS quickstart with strict ISO-date and finite-numeric
+  validation, chronological sorting, duplicate-date rejection, optional compact
+  output summaries, and focused example coverage. This is a teaching example
+  only, not a general ingestion API, pipeline feature, benchmark, release
+  claim, or Abacus parity evidence.
 - Added `centered_logistic_saturation(x, lam)` as the explicit public name for
   Epsilon's zero-baselined logistic-family saturation curve,
   `tanh(lam * x / 2)`.

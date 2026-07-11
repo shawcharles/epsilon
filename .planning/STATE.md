@@ -8,21 +8,27 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 29 toy MCMC path hardening is complete. The v1 release
-boundary remains MCMC/Turing-only for supported inference, while
+**Current focus:** Phase 30 CSV time-series quickstart is complete. The v1
+release boundary remains MCMC/Turing-only for supported inference, while
 `VariationalConfig` and `approximate_fit!` remain scaffolded pre-v1 review
 exports. Variational inference, dashboard/UI parity, and AI advisor behaviour
 remain explicitly out of scope for v1.
 
 ## Current Position
 
-**Current Phase:** 29
-**Current Phase Name:** Toy MCMC Path Hardening
-**Total Phases:** 29
-**Current Plan:** Phase 29 complete; choose the next bounded supported-path
+**Current Phase:** 30
+**Current Phase Name:** CSV Time-Series MCMC Quickstart
+**Total Phases:** 30
+**Current Plan:** Phase 30 complete; choose the next bounded supported-path
 slice
 **Total Plans in Phase:** 4 tasks
-**Status:** Phase 29 is complete at
+**Status:** Phase 30 is complete at
+`.planning/phases/30-csv-timeseries-quickstart/PLAN.md`. It adds the standalone
+`examples/csv_mmm/` four-column CSV quickstart, fixed strict parsing and
+chronological input guards, one tiny Turing/NUTS path, compact optional output,
+and focused tests. This is not a package ingestion API, pipeline feature,
+benchmark, release claim, or Abacus parity evidence; it does not touch source,
+dependencies, exports, or model semantics. Phase 29 is complete at
 `.planning/phases/29-toy-mcmc-path-hardening/PLAN.md`. The phase is bounded to
 toy-example ergonomics: CLI malformed-integer error clarity, help/include
 non-MCMC evidence, focused test coverage, and toy README/state updates. It
@@ -231,19 +237,17 @@ evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
 are landed for both accepted calibration terms, but the wider Abacus
 calibration surface is not complete.
 **Last Activity:** 2026-07-11
-**Last Activity Description:** Phase 29 hardened the toy `TimeSeriesMMM` MCMC
-smoke path. The CLI now wraps malformed and overflowing integer values for
-`--draws`, `--tune`, and `--seed` into option-specific `ArgumentError`
-messages without chaining `OverflowError` in direct CLI stderr. Focused tests
-now guard default parsing, `-h`/`--help`, missing
-values, malformed and overflowing integers, unknown arguments, help output
-without sampler execution, include-safety without output files, and the
-existing tiny happy-path MCMC run. Three Man Team plan and implementation
-reviews cleared after resolving the overflow Must Fix. Scoped verification
-passed; no source/runtime files, dependency files, exports, runtime warnings,
-validation predicates, model semantics, or Abacus parity claims changed.
+**Last Activity Description:** Phase 30 added a fixed-schema CSV
+`TimeSeriesMMM` quickstart under `examples/csv_mmm/`. The internal example
+loader requires `date,sales,tv,search`, parses ISO dates strictly, rejects
+missing/malformed/non-finite values and duplicate dates with column-specific
+errors, sorts accepted rows chronologically, and uses the existing bounded
+Turing/NUTS MCMC path. Focused coverage includes the loader contract, CLI/help,
+include safety, optional compact output files, and a tiny MCMC smoke run. No
+source/runtime files, dependency files, exports, pipeline semantics, benchmarks,
+release claims, or Abacus parity claims changed.
 **Progress:** 100%
-**Paused At:** `.planning/phases/29-toy-mcmc-path-hardening/PLAN.md`
+**Paused At:** `.planning/phases/30-csv-timeseries-quickstart/PLAN.md`
 
 ## Performance Metrics
 
@@ -283,6 +287,8 @@ validation predicates, model semantics, or Abacus parity claims changed.
 | 26 | 4/4 | Completed | migration-readiness audit and focused guard landed for the six deprecated validation-helper exports; no export or runtime changes |
 | 27 | 4/4 | Completed | MCMC-only v1 inference boundary, explicit VI/dashboard/AI out-of-scope table, release-doc and planning guardrails |
 | 28 | 4/4 | Completed | toy `TimeSeriesMMM` MCMC smoke demo and focused example test landed; no source/runtime or dependency changes |
+| 29 | 4/4 | Completed | toy CLI/input hardening, help/include safety, and focused regression coverage landed |
+| 30 | 4/4 | Completed | fixed-schema CSV time-series MCMC quickstart, strict input guards, and scoped review/verification landed |
 
 **Recent Trend:**
 - Last 5 completed plans: `14-01`, `14-02`, `14-03`, `14-04`, `14-05`
