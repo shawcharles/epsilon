@@ -8,7 +8,8 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 31 HSGP time-index foundation is complete. The v1
+**Current focus:** Phase 32 HSGP linearised geometry is planned and reviewed;
+implementation has not started. The v1
 release boundary remains MCMC/Turing-only for supported inference, while
 `VariationalConfig` and `approximate_fit!` remain scaffolded pre-v1 review
 exports. Variational inference, dashboard/UI parity, and AI advisor behaviour
@@ -16,13 +17,19 @@ remain explicitly out of scope for v1.
 
 ## Current Position
 
-**Current Phase:** 31
-**Current Phase Name:** HSGP Time-Index Foundation
-**Total Phases:** 31
-**Current Plan:** Phase 31 complete; choose the next separately planned HSGP
-or other bounded core-parity slice
+**Current Phase:** 32
+**Current Phase Name:** HSGP Linearised Geometry Foundation
+**Total Phases:** 32
+**Current Plan:** Phase 32 plan is independently reviewed and ready for
+Three Man Team implementation
 **Total Plans in Phase:** 3 tasks
-**Status:** Phase 31 is complete at
+**Status:** Phase 32 is planned at
+`.planning/phases/32-hsgp-linearized-geometry-foundation/PLAN.md`. It confines
+the next slice to private deterministic HSGP basis/PSD geometry and
+recommendation helpers, fixture-backed against Abacus/PyMC. It explicitly
+excludes graph construction, Turing, config acceptance, public exports,
+prediction, replay, panels, and TVP behaviour; the HSGP/time-varying ledger row
+remains `missing`. Phase 31 is complete at
 `.planning/phases/31-hsgp-time-index-foundation/PLAN.md`. It adds only the
 private, fixture-backed `_infer_hsgp_time_index` cadence primitive: signed
 daily offsets from the first supplied training date, explicit off-cadence and
@@ -244,7 +251,12 @@ evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
 are landed for both accepted calibration terms, but the wider Abacus
 calibration surface is not complete.
 **Last Activity:** 2026-07-11
-**Last Activity Description:** Phase 31 added a fixture-backed internal
+**Last Activity Description:** Phase 32 received an independently reviewed
+implementation plan for private fixture-backed HSGP linearised geometry:
+frequencies, fixed training basis, square-root PSD weights, and Abacus
+recommendation heuristics only. Review tightened the exact covariance formulas,
+heuristic constants/defaults, input contracts, fixture discrimination, and AD
+boundary. No implementation or HSGP/TVP support claim has been made. Phase 31 added a fixture-backed internal
 `Date` cadence-index primitive matched to Abacus `infer_time_index` for daily,
 weekly, forward/backward, leap-boundary, and off-cadence cases. It preserves the
 first supplied training date as origin, returns signed `Vector{Int}` indices,
@@ -260,7 +272,7 @@ include safety, optional compact output files, and a tiny MCMC smoke run. No
 source/runtime files, dependency files, exports, pipeline semantics, benchmarks,
 release claims, or Abacus parity claims changed.
 **Progress:** 100%
-**Paused At:** `.planning/phases/31-hsgp-time-index-foundation/PLAN.md`
+**Paused At:** `.planning/phases/32-hsgp-linearized-geometry-foundation/PLAN.md`
 
 ## Performance Metrics
 
@@ -388,6 +400,8 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 - Phase 31 is complete. The next HSGP/TVP slice must start with a separate
   methodological contract for basis construction and parameter semantics; do
   not infer HSGP support from the private cadence-index helper.
+- Phase 32 is planned and independently reviewed. Keep implementation private
+  and numerical only; do not accept HSGP config or add graph/model semantics.
 - Phase 15 calibration likelihood integration is closed; keep the calibration
   row `scaffolded` until a separate contract implements panel,
   broader saturation-family, or UI calibration paths. VI calibration remains

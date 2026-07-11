@@ -327,6 +327,9 @@ Current repository state on 2026-05-18:
 - [x] **Phase 31: HSGP Time-Index Foundation** - Add a private,
       fixture-backed cadence-index primitive without claiming HSGP/TVP support
       or widening model/config behaviour.
+- [ ] **Phase 32: HSGP Linearised Geometry Foundation** - Add private,
+      fixture-backed HSGP basis/PSD geometry and recommendation primitives
+      without graph construction, configuration acceptance, or model support.
 
 ## Phase Details
 
@@ -707,3 +710,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 29
 | 29. Toy MCMC Path Hardening | 4/4 | Completed | CLI malformed-integer errors, `-h`/`--help`, include-safety evidence, focused docs, and toy test hardening landed |
 | 30. CSV Time-Series MCMC Quickstart | 4/4 | Completed | fixed-schema CSV time-series MCMC quickstart, strict input guards, and scoped review/verification landed |
 | 31. HSGP Time-Index Foundation | 3/3 | Completed | private fixture-backed signed cadence-index helper; HSGP/TVP model support remains missing |
+| 32. HSGP Linearised Geometry Foundation | 0/3 | Planned | reviewed deterministic basis/PSD and recommendation contract; HSGP/TVP model support remains missing |
