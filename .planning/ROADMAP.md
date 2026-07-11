@@ -206,6 +206,11 @@ Current repository state on 2026-05-18:
   is supplied, and is covered by `test/examples/toy_mcmc_smoke.jl`. This is a
   supported-path smoke demo, not release evidence, not a benchmark, not an
   Abacus parity claim, and not a broader support expansion.
+- Phase 29 is closed: the toy MCMC smoke path is hardened around CLI error
+  clarity, help/include-safety evidence, and focused docs/tests,
+  without touching source runtime semantics, dependencies, exports, Abacus
+  parity claims, benchmarks, release evidence, VI, dashboard/UI, or AI advisor
+  surfaces.
 
 ## Phases
 
@@ -301,6 +306,9 @@ Current repository state on 2026-05-18:
       MCMC smoke demo plus focused test coverage, without treating it as
       release evidence, benchmark work, Abacus parity, or broader support
       expansion.
+- [x] **Phase 29: Toy MCMC Path Hardening** - Harden the toy smoke demo's CLI,
+      help, include-safety, and focused tests without changing model semantics,
+      dependencies, exports, release evidence, or Abacus parity claims.
 
 ## Phase Details
 
@@ -658,7 +666,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 28
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 29
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -678,3 +686,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 28
 | 14. Abacus Parity Recovery | 5/5 | Plan complete | `timeseries`, `geo_panel`, and `geo_brand_panel` demo-backed evidence spine; `timeseries` pipeline Stage `00`-`70` artifact-key parity; `geo_panel` and `geo_brand_panel` pipeline Stage `00`, Stage `20`, Stage `30`, Stage `40`, Stage `50`, Stage `60`, and explicitly enabled Stage `70` historical-share optimization coverage, with panel Stage `35` deferred |
 | 27. Scope Boundary Reconciliation | 4/4 | Completed | MCMC-only v1 inference boundary, VI/dashboard/AI out-of-scope table, release-doc and planning guardrails |
 | 28. Toy MCMC Smoke Demo | 4/4 | Completed | tiny synthetic `TimeSeriesMMM` MCMC smoke demo, callable toy entry point, optional compact summaries, and focused example test landed |
+| 29. Toy MCMC Path Hardening | 4/4 | Completed | CLI malformed-integer errors, `-h`/`--help`, include-safety evidence, focused docs, and toy test hardening landed |

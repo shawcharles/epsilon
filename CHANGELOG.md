@@ -161,6 +161,10 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Changed
 
+- Hardened the toy MCMC smoke demo CLI: malformed integer values for `--draws`,
+  `--tune`, and `--seed` now fail with option-specific `ArgumentError`
+  messages, the help/include-safe paths are covered without running MCMC, and
+  the toy README documents the expected success output and failure boundary.
 - Reconciled the v1 release boundary after Phase 27: release-facing docs and
   planning state now make MCMC/Turing the only v1-supported inference path,
   with variational inference, dashboard/UI parity, and AI advisor behaviour

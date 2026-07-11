@@ -13,5 +13,11 @@ then builds grouped inference results, contribution summaries, and one `tv`
 metric summary on the deterministic spend grid `[0.0, observed_total / 2,
 observed_total]`.
 
+Successful runs print `status=fit`, `backend=turing`, the sampler settings,
+and compact row counts. When `--output-dir` is supplied, the script writes
+`contribution_summary.csv`, `metric_summary.csv`, and `run_summary.txt` there.
+`--help` prints usage without fitting a model, and malformed CLI values fail
+with `ArgumentError` messages that name the rejected option.
+
 This is a fast supported MCMC smoke demo only. It is not release evidence, not
 a benchmark, not an Abacus parity claim, and not a broader support expansion.

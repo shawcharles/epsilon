@@ -164,6 +164,12 @@ function run_toy_mmm(;
     )
 end
 
+function _parse_toy_integer_option(option::AbstractString, value::AbstractString)
+    parsed = tryparse(Int, value)
+    isnothing(parsed) && throw(ArgumentError("$(option) requires an integer value, got $(repr(value))"))
+    return parsed
+end
+
 function _parse_toy_cli(args::Vector{String})
     options = Dict{String, Any}(
         "draws" => _TOY_DEFAULT_DRAWS,
@@ -178,15 +184,15 @@ function _parse_toy_cli(args::Vector{String})
         if arg == "--draws"
             index += 1
             index <= lastindex(args) || throw(ArgumentError("--draws requires a value"))
-            options["draws"] = parse(Int, args[index])
+            options["draws"] = _parse_toy_integer_option("--draws", args[index])
         elseif arg == "--tune"
             index += 1
             index <= lastindex(args) || throw(ArgumentError("--tune requires a value"))
-            options["tune"] = parse(Int, args[index])
+            options["tune"] = _parse_toy_integer_option("--tune", args[index])
         elseif arg == "--seed"
             index += 1
             index <= lastindex(args) || throw(ArgumentError("--seed requires a value"))
-            options["seed"] = parse(Int, args[index])
+            options["seed"] = _parse_toy_integer_option("--seed", args[index])
         elseif arg == "--output-dir"
             index += 1
             index <= lastindex(args) || throw(ArgumentError("--output-dir requires a value"))

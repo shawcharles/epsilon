@@ -8,7 +8,7 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 28 toy MCMC smoke demo is complete. The v1 release
+**Current focus:** Phase 29 toy MCMC path hardening is complete. The v1 release
 boundary remains MCMC/Turing-only for supported inference, while
 `VariationalConfig` and `approximate_fit!` remain scaffolded pre-v1 review
 exports. Variational inference, dashboard/UI parity, and AI advisor behaviour
@@ -16,13 +16,19 @@ remain explicitly out of scope for v1.
 
 ## Current Position
 
-**Current Phase:** 28
-**Current Phase Name:** Toy MCMC Smoke Demo
-**Total Phases:** 28
-**Current Plan:** Phase 28 complete; choose the next bounded supported-path
+**Current Phase:** 29
+**Current Phase Name:** Toy MCMC Path Hardening
+**Total Phases:** 29
+**Current Plan:** Phase 29 complete; choose the next bounded supported-path
 slice
 **Total Plans in Phase:** 4 tasks
-**Status:** Phase 28 is complete at
+**Status:** Phase 29 is complete at
+`.planning/phases/29-toy-mcmc-path-hardening/PLAN.md`. The phase is bounded to
+toy-example ergonomics: CLI malformed-integer error clarity, help/include
+non-MCMC evidence, focused test coverage, and toy README/state updates. It
+does not touch source runtime semantics, dependency files, exports, Abacus
+parity claims, release evidence, benchmarks, VI, dashboard/UI, or AI advisor
+surfaces. Phase 28 is complete at
 `.planning/phases/28-toy-mcmc-smoke-demo/PLAN.md`. The implementation adds a
 tiny synthetic `TimeSeriesMMM` toy MCMC smoke demo under `examples/toy_mmm/`,
 with a callable `run_toy_mmm` entry point, optional compact CSV/text summary
@@ -224,18 +230,20 @@ Calibration/lift-test parity remains a `scaffolded` ledger row after Phase 17:
 evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
 are landed for both accepted calibration terms, but the wider Abacus
 calibration surface is not complete.
-**Last Activity:** 2026-07-06
-**Last Activity Description:** Phase 28 added the toy `TimeSeriesMMM` MCMC
-smoke demo, focused example test, and narrow README/docs/changelog/planning
-updates. Three Man Team review cleared after strengthening the focused test to
-assert grouped posterior shape, parameter presence, observed-data identity, and
-disabled prior/predictive groups. Targeted verification passed for the toy CLI,
-focused package test, Runic check, diff whitespace check, and source/dependency
-no-touch guard. No source/runtime files, dependency files, exports, runtime
-warnings, validation predicates, model semantics, or Abacus parity claims
-changed.
+**Last Activity:** 2026-07-11
+**Last Activity Description:** Phase 29 hardened the toy `TimeSeriesMMM` MCMC
+smoke path. The CLI now wraps malformed and overflowing integer values for
+`--draws`, `--tune`, and `--seed` into option-specific `ArgumentError`
+messages without chaining `OverflowError` in direct CLI stderr. Focused tests
+now guard default parsing, `-h`/`--help`, missing
+values, malformed and overflowing integers, unknown arguments, help output
+without sampler execution, include-safety without output files, and the
+existing tiny happy-path MCMC run. Three Man Team plan and implementation
+reviews cleared after resolving the overflow Must Fix. Scoped verification
+passed; no source/runtime files, dependency files, exports, runtime warnings,
+validation predicates, model semantics, or Abacus parity claims changed.
 **Progress:** 100%
-**Paused At:** `.planning/phases/28-toy-mcmc-smoke-demo/PLAN.md`
+**Paused At:** `.planning/phases/29-toy-mcmc-path-hardening/PLAN.md`
 
 ## Performance Metrics
 
@@ -347,6 +355,9 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
   by `test/api_exports.jl`.
 - Phase 28 is complete; do not treat the toy smoke demo as release evidence,
   benchmark evidence, Abacus parity evidence, or a broader support expansion.
+- Phase 29 is complete; keep the toy path a smoke demo only, not release
+  evidence, benchmark evidence, Abacus parity evidence, or a broader support
+  expansion.
 - Phase 25 is complete; prefer `make test-file FILE=...` or
   `Pkg.test(; test_args=[...], julia_args=["--depwarn=yes"])` for focused
   single-file verification when files use test-only dependencies.
