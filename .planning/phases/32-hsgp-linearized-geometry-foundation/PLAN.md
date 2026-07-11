@@ -2,8 +2,7 @@
 
 ## Status
 
-Reviewed and ready for Three Man Team implementation. No implementation has
-started.
+Closed. Implementation, review, and final shared-namespace checkpoint passed.
 
 ## Objective
 
@@ -108,46 +107,46 @@ hardening, not error-message parity.
 
 ### Task 32-01: Contract And Fixture Design
 
-- [ ] Record the architect brief and this plan.
-- [ ] Independently review the plan against Abacus and PyMC's
+- [x] Record the architect brief and this plan.
+- [x] Independently review the plan against Abacus and PyMC's
       `prior_linearized` source before implementation.
-- [ ] Extend `scripts/export_abacus_fixtures.py` with deterministic fixed
+- [x] Extend `scripts/export_abacus_fixtures.py` with deterministic fixed
       cases for all three covariance families, a discriminating asymmetric
       input `[0.0, 1.0, 10.0]` whose range midpoint differs from its mean,
       `drop_first`, `demeaned_basis`, and at least one non-unit `eta` case.
-- [ ] Export heuristic `(m, c)` and `(m, L)` expectations by calling real
+- [x] Export heuristic `(m, c)` and `(m, L)` expectations by calling real
       Abacus helpers; export `phi` and `sqrt_psd` using the real PyMC primitive
       that Abacus calls.
-- [ ] Create `test/fixtures/abacus/hsgp_linearized_cases.jl` with provenance
+- [x] Create `test/fixtures/abacus/hsgp_linearized_cases.jl` with provenance
       headers and only Julia literals.
 
 ### Task 32-02: Pure Julia Geometry
 
-- [ ] Add private `_hsgp_frequencies`, `_hsgp_basis_matrix`, and
+- [x] Add private `_hsgp_frequencies`, `_hsgp_basis_matrix`, and
       `_hsgp_sqrt_psd` helpers to `src/mmm/hsgp.jl`.
-- [ ] Add private `_approx_hsgp_hyperparams` and `_recommend_hsgp_basis`
+- [x] Add private `_approx_hsgp_hyperparams` and `_recommend_hsgp_basis`
       helpers with documented Epsilon hardening.
-- [ ] Preserve `drop_first` then demeaned-basis ordering, training-range
+- [x] Preserve `drop_first` then demeaned-basis ordering, training-range
       midpoint centring, covariance mode order, and AD-compatible hyperparameter
       arithmetic.
-- [ ] Do not modify `src/Epsilon.jl`, config/seasonality validation, model
+- [x] Do not modify `src/Epsilon.jl`, config/seasonality validation, model
       builders, inference, serialization, or public exports.
 
 ### Task 32-03: Fixture Evidence And Closure
 
-- [ ] Add `test/model/hsgp_linearized.jl` and register it in model runtests.
-- [ ] Assert fixture parity with numerical tolerances, basis/PSD alignment,
+- [x] Add `test/model/hsgp_linearized.jl` and register it in model runtests.
+- [x] Assert fixture parity with numerical tolerances, basis/PSD alignment,
       column demeaning, first-mode removal, and recommendation values.
-- [ ] Assert that `m = 1, drop_first = true` yields a valid `n x 0` basis and
+- [x] Assert that `m = 1, drop_first = true` yields a valid `n x 0` basis and
       zero-length aligned PSD vector.
-- [ ] Assert pure-helper `ArgumentError`s for empty/non-finite input, invalid
+- [x] Assert pure-helper `ArgumentError`s for empty/non-finite input, invalid
       `m`/`L`, and invalid `eta`/`lengthscale`, in addition to recommendation
       input hardening.
-- [ ] Add invalid-input and `ForwardDiff` gradient smoke coverage.
-- [ ] Assert all helpers remain private and HSGP config remains rejected.
-- [ ] Document the fixture workflow and update ledger/changelog/roadmap/state
+- [x] Add invalid-input and `ForwardDiff` gradient smoke coverage.
+- [x] Assert all helpers remain private and HSGP config remains rejected.
+- [x] Document the fixture workflow and update ledger/changelog/roadmap/state
       without changing HSGP/TVP status from `missing`.
-- [ ] At phase closure only, run one full-suite shared-namespace checkpoint
+- [x] At phase closure only, run one full-suite shared-namespace checkpoint
       because test registration changes; do not use it during normal iteration.
 
 ## Acceptance Criteria
@@ -197,3 +196,10 @@ make test
 - The reviewer also required explicit finite-domain `ArgumentError` contracts
   for each pure helper. All findings were incorporated and the plan was
   approved on re-review.
+- Implementation review found and resolved numerical overflow/representation
+  defects in extreme finite domains. The pure helpers now fail closed before
+  invalid trigonometry, use stable frequency and basis coordinates, evaluate
+  PSD weights in log space, and reject unrepresentable recommendations. Focused
+  verification passed `86 / 86` assertions.
+- Final verification passed with `make test`: `8,574 / 8,574` tests in
+  `20m59.8s` (exit status `0`).

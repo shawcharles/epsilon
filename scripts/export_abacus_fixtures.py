@@ -650,6 +650,96 @@ def _build_hsgp_time_index_cases():
     ]
 
 
+def _build_hsgp_linearized_geometry_cases():
+    return [
+        {
+            "name": "expquad_asymmetric_nonunit_eta",
+            "x": np.array([0.0, 1.0, 10.0], dtype=float),
+            "m": 4,
+            "L": 12.0,
+            "covariance": "expquad",
+            "eta": 1.7,
+            "lengthscale": 2.5,
+            "drop_first": False,
+            "demeaned_basis": False,
+        },
+        {
+            "name": "matern32_drop_first",
+            "x": np.array([-3.0, 0.0, 2.0, 7.0], dtype=float),
+            "m": 5,
+            "L": 10.0,
+            "covariance": "matern32",
+            "eta": 0.8,
+            "lengthscale": 1.4,
+            "drop_first": True,
+            "demeaned_basis": False,
+        },
+        {
+            "name": "matern52_drop_first_demeaned",
+            "x": np.array([0.0, 1.0, 10.0], dtype=float),
+            "m": 5,
+            "L": 12.0,
+            "covariance": "matern52",
+            "eta": 1.2,
+            "lengthscale": 3.1,
+            "drop_first": True,
+            "demeaned_basis": True,
+        },
+        {
+            "name": "expquad_zero_retained_modes",
+            "x": np.array([0.0, 1.0, 10.0], dtype=float),
+            "m": 1,
+            "L": 12.0,
+            "covariance": "expquad",
+            "eta": 1.0,
+            "lengthscale": 2.5,
+            "drop_first": True,
+            "demeaned_basis": True,
+        },
+    ]
+
+
+def _build_hsgp_recommendation_cases():
+    return [
+        {
+            "name": "expquad_custom_bounds",
+            "x": np.array([0.0, 1.0, 10.0], dtype=float),
+            "x_center": 5.0,
+            "x_mid": 5.0,
+            "lengthscale_lower": 1.5,
+            "lengthscale_upper": 7.0,
+            "covariance": "expquad",
+        },
+        {
+            "name": "matern52_custom_bounds",
+            "x": np.array([1.0, 3.0, 9.0, 11.0], dtype=float),
+            "x_center": 6.0,
+            "x_mid": 6.0,
+            "lengthscale_lower": 1.0,
+            "lengthscale_upper": 8.0,
+            "covariance": "matern52",
+        },
+        {
+            "name": "matern32_default_upper",
+            "x": np.array([1.0, 4.0, 8.0, 13.0], dtype=float),
+            "x_center": 7.0,
+            "x_mid": 7.0,
+            "lengthscale_lower": 1.25,
+            "lengthscale_upper": None,
+            "covariance": "matern32",
+        },
+        {
+            "name": "expquad_distinct_centre_and_mid",
+            "x": np.array([0.0, 1.0, 10.0], dtype=float),
+            "x_center": 2.0,
+            "x_mid": 5.0,
+            "lengthscale_lower": 1.5,
+            "lengthscale_upper": 7.0,
+            "covariance": "expquad",
+        },
+    ]
+
+
 def _build_calibration_alignment_cases():
     return [
         {
@@ -1976,6 +2066,105 @@ def _hsgp_time_index_rows():
     return rows
 
 
+def _hsgp_linearized_fixture_body() -> str:
+    geometry_rows: list[str] = []
+    covariance_classes = {
+        "expquad": pm.gp.cov.ExpQuad,
+        "matern32": pm.gp.cov.Matern32,
+        "matern52": pm.gp.cov.Matern52,
+    }
+    for case in _build_hsgp_linearized_geometry_cases():
+        covariance = case["covariance"]
+        # PyMC 5.28 fails while compiling the valid m=1/drop_first=true
+        # zero-column graph. Obtain its one-mode primitive output and apply the
+        # same post-construction first-mode slice to the concrete arrays.
+        evaluate_drop_first = case["drop_first"] and case["m"] > 1
+        covariance_function = case["eta"] ** 2 * covariance_classes[covariance](
+            input_dim=1,
+            ls=case["lengthscale"],
+        )
+        gp = pm.gp.HSGP(
+            m=[case["m"]],
+            L=[case["L"]],
+            cov_func=covariance_function,
+            drop_first=evaluate_drop_first,
+        )
+        phi, sqrt_psd = gp.prior_linearized(case["x"][:, None])
+        phi_values = np.asarray(phi.eval(), dtype=float)
+        sqrt_psd_values = np.asarray(sqrt_psd.eval(), dtype=float)
+        if case["drop_first"] and not evaluate_drop_first:
+            phi_values = phi_values[:, 1:]
+            sqrt_psd_values = sqrt_psd_values[1:]
+        if case["demeaned_basis"]:
+            phi_values = phi_values - phi_values.mean(axis=0, keepdims=True)
+        geometry_rows.extend(
+            [
+                "        (",
+                f'            name = "{case["name"]}",',
+                f"            x = {_julia_array_literal(case['x'])},",
+                f"            m = {case['m']},",
+                f"            L = {_julia_float_literal(case['L'])},",
+                f"            covariance = :{covariance},",
+                f"            eta = {_julia_float_literal(case['eta'])},",
+                f"            lengthscale = {_julia_float_literal(case['lengthscale'])},",
+                f"            drop_first = {'true' if case['drop_first'] else 'false'},",
+                f"            demeaned_basis = {'true' if case['demeaned_basis'] else 'false'},",
+                f"            expected_phi = {_julia_array_literal(phi_values)},",
+                f"            expected_sqrt_psd = {_julia_array_literal(sqrt_psd_values)},",
+                "        ),",
+            ]
+        )
+
+    recommendation_rows: list[str] = []
+    for case in _build_hsgp_recommendation_cases():
+        resolved_upper = case["lengthscale_upper"]
+        if resolved_upper is None:
+            resolved_upper = 2 * case["x_mid"]
+        approximation_m, approximation_c = approx_hsgp_hyperparams(
+            case["x"],
+            case["x_center"],
+            lengthscale_range=(case["lengthscale_lower"], resolved_upper),
+            cov_func=case["covariance"],
+        )
+        recommendation_m, recommendation_L = create_m_and_L_recommendations(
+            case["x"],
+            case["x_mid"],
+            ls_lower=case["lengthscale_lower"],
+            ls_upper=case["lengthscale_upper"],
+            cov_func=CovFunc(case["covariance"]),
+        )
+        upper_literal = (
+            "nothing"
+            if case["lengthscale_upper"] is None
+            else _julia_float_literal(case["lengthscale_upper"])
+        )
+        recommendation_rows.extend(
+            [
+                "        (",
+                f'            name = "{case["name"]}",',
+                f"            x = {_julia_array_literal(case['x'])},",
+                f"            x_center = {_julia_float_literal(case['x_center'])},",
+                f"            x_mid = {_julia_float_literal(case['x_mid'])},",
+                f"            lengthscale_lower = {_julia_float_literal(case['lengthscale_lower'])},",
+                f"            lengthscale_upper = {upper_literal},",
+                f"            resolved_lengthscale_upper = {_julia_float_literal(resolved_upper)},",
+                f"            covariance = :{case['covariance']},",
+                f"            expected_approx_m = {int(approximation_m)},",
+                f"            expected_approx_c = {_julia_float_literal(approximation_c)},",
+                f"            expected_recommendation_m = {int(recommendation_m)},",
+                f"            expected_recommendation_L = {_julia_float_literal(recommendation_L)},",
+                "        ),",
+            ]
+        )
+
+    lines = ["(", "    geometry_cases = ["]
+    lines.extend(geometry_rows)
+    lines.extend(["    ],", "    recommendation_cases = ["])
+    lines.extend(recommendation_rows)
+    lines.extend(["    ],", ")"])
+    return "\n".join(lines)
+
+
 def _calibration_alignment_rows():
     rows: list[str] = []
     for case in _build_calibration_alignment_cases():
@@ -2344,6 +2533,11 @@ def main() -> None:
         help="Destination Julia HSGP time-index fixture file.",
     )
     parser.add_argument(
+        "--hsgp-linearized-output",
+        default="test/fixtures/abacus/hsgp_linearized_cases.jl",
+        help="Destination Julia HSGP linearised-geometry fixture file.",
+    )
+    parser.add_argument(
         "--timeseries-output",
         default="test/fixtures/abacus/timeseries/config_data.jl",
         help="Destination Julia Abacus timeseries config/data fixture file.",
@@ -2422,6 +2616,9 @@ def main() -> None:
     global logistic_saturation
     global michaelis_menten
     global hill_function
+    global CovFunc
+    global approx_hsgp_hyperparams
+    global create_m_and_L_recommendations
     global infer_time_index
     global tanh_saturation
     global weibull_adstock
@@ -2449,6 +2646,11 @@ def main() -> None:
         tanh_saturation,
     )
     from abacus.mmm.tvp import infer_time_index
+    from abacus.mmm.hsgp import (
+        CovFunc,
+        approx_hsgp_hyperparams,
+        create_m_and_L_recommendations,
+    )
     import pymc as pm
     import pandas as pd
     from abacus.mmm.calibration.alignment import exact_row_indices, UnalignedValuesError
@@ -2531,6 +2733,13 @@ def main() -> None:
         "ABACUS_HSGP_TIME_INDEX_CASES",
         _hsgp_time_index_rows(),
         Path(args.hsgp_time_index_output),
+        abacus_root=abacus_root,
+        abacus_revision=abacus_revision,
+    )
+    _write_single_fixture_file(
+        "ABACUS_HSGP_LINEARIZED_FIXTURES",
+        _hsgp_linearized_fixture_body(),
+        Path(args.hsgp_linearized_output),
         abacus_root=abacus_root,
         abacus_revision=abacus_revision,
     )

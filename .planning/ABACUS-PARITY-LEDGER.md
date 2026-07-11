@@ -56,7 +56,7 @@ Each target should pass these gates before it is counted as ported:
 | Prior schema and distribution mapping | `abacus/prior.py`, `abacus/model_config.py` | `src/distributions/priors.jl` | scaffolded | Compare parsed prior configs, defaults, dimensions, and parameter names from demo configs. |
 | Special priors | `abacus/special_priors/*.py` | `src/distributions/special.jl`, `src/distributions/masked.jl`, `src/distributions/shrinkage.jl` | scaffolded | Prove log-density and coefficient-helper parity or document Julia-native replacements. |
 | Fourier seasonality | `abacus/mmm/fourier.py` | `src/mmm/seasonality.jl` | scaffolded | Add basis-matrix fixtures with dates from demo data. |
-| HSGP and time-varying parameters | `abacus/mmm/hsgp.py`, `abacus/mmm/tvp.py` | `src/mmm/hsgp.jl`; future `src/mmm/tvp.jl` | missing | Phase 31 adds only fixture-backed cadence index inference; port basis construction and time-varying parameter semantics separately. |
+| HSGP and time-varying parameters | `abacus/mmm/hsgp.py`, `abacus/mmm/tvp.py` | `src/mmm/hsgp.jl`; future `src/mmm/tvp.jl` | missing | Phases 31-32 add private fixture-backed cadence, basis, PSD, and recommendation foundations; port graph/model and time-varying parameter semantics separately. |
 | Linear and changepoint trend | `abacus/mmm/linear_trend.py` | `src/mmm/trend.jl` | scaffolded | Compare trend design matrices and fitted prediction-state replay. |
 | Events and holiday basis effects | `abacus/mmm/events.py`, `abacus/mmm/builders/holidays.py` | `src/mmm/events.jl`, `src/mmm/holidays.jl` | scaffolded/native | Separate Abacus-compatible event basis from Epsilon-native pooled holiday behavior. |
 | Additive effects | `abacus/mmm/additive_effect.py`, `abacus/mmm/models/panel_build.py` | `src/mmm/model.jl`, `src/postmodel/replay.jl` | scaffolded | Lock contribution-term naming and additive replay state. |
@@ -669,6 +669,18 @@ As of 2026-05-10:
     is implemented. The HSGP/time-varying ledger row therefore remains
     `missing`. Final verification passed with `make test`: `8,488 / 8,488`
     tests in `20m44.6s`.
+42. Phase 32 implements the private deterministic one-dimensional HSGP
+    geometry foundation: retained Laplacian frequencies, training-range-centred
+    fixed bases, ExpQuad/Matern-3/2/Matern-5/2 square-root PSD weights, and
+    Abacus-compatible `m`/`c` plus `m`/`L` recommendation heuristics. The
+    fixture exporter calls real Abacus helpers and PyMC `prior_linearized`; the
+    one-mode/drop-first empty case applies PyMC's equivalent post-construction
+    slice because the local PyMC version cannot compile its zero-column graph.
+    Extreme finite domains are hardened with explicit `ArgumentError`s and
+    focused tests pass `86 / 86`. The helpers remain private, HSGP config stays
+    rejected, and no graph, Turing, TVP, prediction, replay, or panel behaviour
+    is implemented; the ledger row remains `missing`. Final verification passed
+    with `make test`: `8,574 / 8,574` tests in `20m59.8s`.
 
 
 ## Plan 14-05 Parity Audit

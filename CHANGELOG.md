@@ -7,6 +7,11 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Added
 
+- Added private, fixture-backed one-dimensional HSGP numerical foundations:
+  Laplacian frequencies, fixed training bases, ExpQuad/Matern square-root PSD
+  weights, and Abacus-compatible basis recommendations. This does not add HSGP
+  configuration, graph construction, Turing inference, time-varying effects,
+  public exports, prediction, replay, or panel support.
 - Added an internal, fixture-backed HSGP time-index foundation that maps
   `Date` inputs onto signed cadence indices using Abacus-compatible first-date
   origin and off-cadence rejection. This does not add supported HSGP/TVP
