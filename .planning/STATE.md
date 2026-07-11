@@ -8,8 +8,7 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 31 HSGP time-index foundation implementation is
-complete and awaiting its final shared-namespace checkpoint. The v1
+**Current focus:** Phase 31 HSGP time-index foundation is complete. The v1
 release boundary remains MCMC/Turing-only for supported inference, while
 `VariationalConfig` and `approximate_fit!` remain scaffolded pre-v1 review
 exports. Variational inference, dashboard/UI parity, and AI advisor behaviour
@@ -20,10 +19,10 @@ remain explicitly out of scope for v1.
 **Current Phase:** 31
 **Current Phase Name:** HSGP Time-Index Foundation
 **Total Phases:** 31
-**Current Plan:** Phase 31 final verification; do not start the next HSGP or
-other core-parity slice until the checkpoint closes
+**Current Plan:** Phase 31 complete; choose the next separately planned HSGP
+or other bounded core-parity slice
 **Total Plans in Phase:** 3 tasks
-**Status:** Phase 31 implementation is complete at
+**Status:** Phase 31 is complete at
 `.planning/phases/31-hsgp-time-index-foundation/PLAN.md`. It adds only the
 private, fixture-backed `_infer_hsgp_time_index` cadence primitive: signed
 daily offsets from the first supplied training date, explicit off-cadence and
@@ -260,7 +259,7 @@ Turing/NUTS MCMC path. Focused coverage includes the loader contract, CLI/help,
 include safety, optional compact output files, and a tiny MCMC smoke run. No
 source/runtime files, dependency files, exports, pipeline semantics, benchmarks,
 release claims, or Abacus parity claims changed.
-**Progress:** 95%
+**Progress:** 100%
 **Paused At:** `.planning/phases/31-hsgp-time-index-foundation/PLAN.md`
 
 ## Performance Metrics
@@ -386,10 +385,9 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
   or stable v1 API decisions.
 - Phase 22 remains candidate-only for export cleanup; no unexport/removal phase
   has landed.
-- Phase 31 is awaiting its one final shared-namespace checkpoint. The next
-  HSGP/TVP slice must start with a separate methodological contract for basis
-  construction and parameter semantics; do not infer HSGP support from the
-  private cadence-index helper.
+- Phase 31 is complete. The next HSGP/TVP slice must start with a separate
+  methodological contract for basis construction and parameter semantics; do
+  not infer HSGP support from the private cadence-index helper.
 - Phase 15 calibration likelihood integration is closed; keep the calibration
   row `scaffolded` until a separate contract implements panel,
   broader saturation-family, or UI calibration paths. VI calibration remains

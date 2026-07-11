@@ -667,7 +667,8 @@ As of 2026-05-10:
     with `ArgumentError`. It is not exported; HSGP configuration remains
     rejected, and no basis, prior, Turing, prediction, replay, or TVP behaviour
     is implemented. The HSGP/time-varying ledger row therefore remains
-    `missing`.
+    `missing`. Final verification passed with `make test`: `8,488 / 8,488`
+    tests in `20m44.6s`.
 
 
 ## Plan 14-05 Parity Audit

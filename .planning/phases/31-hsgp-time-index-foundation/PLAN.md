@@ -2,7 +2,7 @@
 
 ## Status
 
-Implemented; final shared-namespace checkpoint pending before closure.
+Closed. Implementation and final shared-namespace checkpoint passed.
 
 ## Objective
 
@@ -89,7 +89,7 @@ failure.
 - [x] Update ledger evidence without moving the HSGP/TVP core row from
       `missing`.
 - [x] Update changelog, roadmap, state, phase plan, and local handoff logs.
-- [ ] Run the one final full-suite shared-namespace checkpoint, then mark the
+- [x] Run the one final full-suite shared-namespace checkpoint, then mark the
       phase closed.
 
 ## Acceptance Criteria
@@ -139,3 +139,5 @@ make test
 - The reviewer also required one final full-suite run because the phase changes
   `src/Epsilon.jl` and `test/model/runtests.jl`. This is a one-time closing
   checkpoint under the local verification policy, not an iterative test rule.
+- Final verification passed with `make test`: `8,488 / 8,488` tests in
+  `20m44.6s` (exit status `0`).
