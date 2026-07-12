@@ -100,7 +100,7 @@ Lifecycle values:
 | `StandardizeControls` | Transforms | core | keep-public | n/a | Documented core surface with strongest current Epsilon support. |
 | `TimeSeriesCalibrationInput` | Calibration | scaffolded | review-before-v1 | n/a | Implemented and exported today, but final public disposition needs review before v1. |
 | `TimeSeriesMMM` | Model core | bounded | keep-bounded | n/a | Supported for the documented bounded slice; broader semantics remain out of scope. |
-| `TimeVaryingMediaConfig` | Configuration | scaffolded | review-before-v1 | n/a | Programmatic configuration and immutable state boundary are public; HSGP runtime support remains unavailable pending a separate task. |
+| `TimeVaryingMediaConfig` | Configuration | bounded | keep-bounded | n/a | Programmatic-only TimeSeriesMMM MCMC shared-media HSGP configuration with immutable replay state; YAML/pipeline, panels, VI, calibration, broader HSGP/TVP, and HSGP postmodel calculations remain unsupported. |
 | `UnalignedValuesError` | Calibration | scaffolded | review-before-v1 | n/a | Implemented and exported today, but final public disposition needs review before v1. |
 | `VariationalConfig` | Inference | scaffolded | review-before-v1 | n/a | Implemented and exported today, but final public disposition needs review before v1. |
 | `WeibullType` | Transforms | core | keep-public | n/a | Documented core surface with strongest current Epsilon support. |

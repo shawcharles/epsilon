@@ -1,4 +1,5 @@
 using Epsilon
+using Dates
 using Serialization
 using Test
 
@@ -145,6 +146,8 @@ end
     @test saved_path == path
 
     payload = open(deserialize, path)
+    @test payload.schema_version == 1
+    @test !haskey(payload, :model_payload_schema_version)
     @test payload.metadata isa ModelArtifactMetadata
     @test payload.spec isa MMMModelSpec
     @test payload.coordinate_metadata isa Epsilon.ModelCoordinateMetadata
@@ -207,5 +210,37 @@ end
     open(path, "w") do io
         serialize(io, (; payload..., metadata = bad_metadata))
     end
+    @test_throws ArgumentError load_inference_results(path)
+end
+
+@testset "load_inference_results rejects malformed embedded HSGP state" begin
+    config = ModelConfig(
+        date_column = "date",
+        target_column = "revenue",
+        channel_columns = ["tv"],
+        time_varying_media = TimeVaryingMediaConfig(
+            m = 2,
+            L = 6.0,
+            time_resolution = 7,
+            eta_prior = EpsilonPrior("Exponential"; lam = 1.5),
+            lengthscale_prior = EpsilonPrior("LogNormal"; mu = 0.0, sigma = 0.4),
+        ),
+    )
+    data = MMMData(
+        dates = Date[Date(2024, 1, 1), Date(2024, 1, 8)],
+        target = [10.0, 11.0],
+        channels = reshape([1.0, 2.0], :, 1),
+        channel_names = ["tv"],
+    )
+    spec = build_model(TimeSeriesMMM(config, SamplerConfig(draws = 1, tune = 0, chains = 1, cores = 1), data))
+    spec.priors["_hsgp_media_spec_state"] = :corrupt
+    grouped = InferenceResults(
+        Epsilon._artifact_metadata("TimeSeriesMMM"),
+        spec;
+        posterior = nothing,
+        observed_data = data,
+    )
+    path = tempname()
+    save_inference_results(path, grouped)
     @test_throws ArgumentError load_inference_results(path)
 end

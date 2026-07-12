@@ -56,7 +56,7 @@ Each target should pass these gates before it is counted as ported:
 | Prior schema and distribution mapping | `abacus/prior.py`, `abacus/model_config.py` | `src/distributions/priors.jl` | scaffolded | Compare parsed prior configs, defaults, dimensions, and parameter names from demo configs. |
 | Special priors | `abacus/special_priors/*.py` | `src/distributions/special.jl`, `src/distributions/masked.jl`, `src/distributions/shrinkage.jl` | scaffolded | Prove log-density and coefficient-helper parity or document Julia-native replacements. |
 | Fourier seasonality | `abacus/mmm/fourier.py` | `src/mmm/seasonality.jl` | scaffolded | Add basis-matrix fixtures with dates from demo data. |
-| HSGP and time-varying parameters | `abacus/mmm/hsgp.py`, `abacus/mmm/tvp.py` | `src/mmm/hsgp.jl`; future `src/mmm/tvp.jl` | missing | Phases 31-32 add private fixture-backed cadence, basis, PSD, and recommendation foundations; port graph/model and time-varying parameter semantics separately. |
+| HSGP and time-varying parameters | `abacus/mmm/hsgp.py`, `abacus/mmm/tvp.py` | `src/mmm/hsgp.jl`; future `src/mmm/tvp.jl` | missing | Phase 36 adds only a bounded programmatic TimeSeriesMMM MCMC shared media multiplier. Abacus evidence is explicitly enabled PanelMMM boolean-path placement only; Epsilon separately covers its own runtime, likelihood, retained-grid replay, and trusted-local serialisation state. Generic HSGP, TVP, panels, YAML/pipeline, and HSGP postmodel calculations remain separate work. |
 | Linear and changepoint trend | `abacus/mmm/linear_trend.py` | `src/mmm/trend.jl` | scaffolded | Compare trend design matrices and fitted prediction-state replay. |
 | Events and holiday basis effects | `abacus/mmm/events.py`, `abacus/mmm/builders/holidays.py` | `src/mmm/events.jl`, `src/mmm/holidays.jl` | scaffolded/native | Separate Abacus-compatible event basis from Epsilon-native pooled holiday behavior. |
 | Additive effects | `abacus/mmm/additive_effect.py`, `abacus/mmm/models/panel_build.py` | `src/mmm/model.jl`, `src/postmodel/replay.jl` | scaffolded | Lock contribution-term naming and additive replay state. |
@@ -713,6 +713,18 @@ As of 2026-05-10:
     Michaelis-Menten, calibration, and YAML. It is planning only: no runtime
     behaviour or parity status changed, and the HSGP/time-varying row remains
     `missing` until Phase 36 implementation evidence lands.
+46. Phase 36 implements the bounded programmatic TimeSeriesMMM MCMC shared
+    media multiplier only. Its immutable scalar-prior and retained
+    date/cadence/geometry state is sampled and replayed in Epsilon's own
+    runtime, likelihood, and prediction paths; model envelopes now use a
+    discriminator-only v2 validation layer after trusted-local Julia
+    deserialisation, while shared result/inference schemas remain v1. The
+    explicit Abacus evidence is limited to enabled PanelMMM boolean-path
+    placement, not an aggregate joint or generic product-parity claim. YAML,
+    pipeline, panels, VI, calibration, Michaelis-Menten,
+    channel-specific/intercept/multidimensional/periodic HSGP, TVP, and HSGP
+    postmodel calculation routes remain unsupported, so the combined HSGP/TVP
+    ledger row remains `missing`.
 
 
 ## Plan 14-05 Parity Audit

@@ -160,7 +160,12 @@ remediation pass on the bounded reference time-series story:
   path can now carry those calibration terms into model construction.
   `PanelMMM` calibration, VI calibration, non-logistic lift-test saturation
   families, Dash/UI workflows, and AI-advisor behaviour remain unsupported.
-- HSGP is deferred from the supported surface
+- a bounded, programmatic-only `TimeSeriesMMM` MCMC shared-media HSGP
+  multiplier is available with retained date/cadence replay state and
+  trusted-local Julia serialisation validation. YAML/pipeline configuration,
+  panels, VI, calibration, Michaelis-Menten, channel-specific/intercept/
+  multidimensional/periodic HSGP, TVP, and HSGP postmodel calculation routes
+  remain unsupported.
 
 ## Release Gate
 

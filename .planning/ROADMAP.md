@@ -343,10 +343,12 @@ Current repository state on 2026-05-18:
       TimeSeriesMMM-only shared-media multiplier placement, temporal units,
       prior, prediction-state, and exclusion decisions before any Turing
       integration or public configuration is implemented.
-- [ ] **Phase 36: Time-Series HSGP Shared Media Multiplier** - Implement the
+- [x] **Phase 36: Time-Series HSGP Shared Media Multiplier** - Implement the
       reviewed TimeSeriesMMM-only non-centred shared positive multiplier with
       typed programmatic configuration, retained prediction state, schema-v2
-      serialisation, and strict rejection of wider surfaces.
+      serialisation, and strict rejection of wider surfaces. Closed with
+      independent review and the single `make check-full` closure gate; the
+      combined HSGP/TVP ledger row remains `missing`.
 
 ## Phase Details
 

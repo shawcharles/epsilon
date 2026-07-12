@@ -243,6 +243,7 @@ function load_inference_results(path::AbstractString)
             "serialized inference-results coordinate metadata must match the stored MMMModelSpec",
         ),
     )
+    _validate_embedded_hsgp_media_spec(spec)
 
     sample_stats = get(payload, :sample_stats, nothing)
     sample_stats isa InferenceSampleStats ||

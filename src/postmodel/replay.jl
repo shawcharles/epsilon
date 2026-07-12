@@ -8,6 +8,7 @@ function _require_postmodel_time_series_results(
             "$action currently supports only time-series grouped inference artifacts; panel post-modeling is not supported in the current Phase 7 surface",
         ),
     )
+    _reject_hsgp_media_postmodel_reporting(results.spec, action)
     isnothing(results.posterior) &&
         throw(
         ArgumentError(
@@ -21,6 +22,15 @@ function _require_postmodel_time_series_results(
         ),
     )
     return results.observed_data
+end
+
+function _reject_hsgp_media_postmodel_reporting(spec::MMMModelSpec, action::AbstractString)
+    haskey(spec.priors, _HSGP_MEDIA_SPEC_STATE_KEY) || return nothing
+    throw(
+        ArgumentError(
+            "$action does not support HSGP media postmodel reporting; HSGP media postmodel reporting is deferred",
+        ),
+    )
 end
 
 function _require_postmodel_panel_results(

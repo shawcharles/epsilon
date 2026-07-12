@@ -60,6 +60,7 @@ Compute draw-level ROAS, mROAS, CPA, and mCPA from a canonical
 `ResponseCurveResults` surface.
 """
 function metric_results(curves::ResponseCurveResults)
+    _reject_hsgp_media_postmodel_reporting(curves.spec, "metric_results")
     _validate_postmodel_axes(curves)
     metric_names = ["roas", "mroas", "cpa", "mcpa"]
 

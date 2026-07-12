@@ -128,9 +128,11 @@ cadence-index units, while `time_resolution` is measured in days. Only scalar,
 dimensionless `Exponential`, `Gamma`, `HalfNormal`, and `LogNormal`
 [`EpsilonPrior`](@ref) values are accepted for the positive HSGP priors.
 
-This type establishes configuration and immutable model-spec state only. HSGP
-media fitting and predictive execution remain unavailable until their dedicated
-runtime task lands.
+This bounded configuration enables a shared, strictly positive, mean-one HSGP
+multiplier for programmatic `TimeSeriesMMM` MCMC fitting and prediction only.
+YAML/pipeline configuration, panels, VI, calibration, Michaelis-Menten,
+channel-specific, intercept, multidimensional, periodic HSGP, TVP, and HSGP
+postmodel calculation routes remain unsupported.
 """
 struct TimeVaryingMediaConfig
     m::Int

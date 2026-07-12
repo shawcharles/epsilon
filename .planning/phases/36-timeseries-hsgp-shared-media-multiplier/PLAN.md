@@ -2,8 +2,8 @@
 
 ## Status
 
-Tasks 36-01 through 36-03 are landed and independently reviewed on 2026-07-12.
-Task 36-04 remains before Phase 36 closure.
+Phase 36 closed on 2026-07-12 after independent plan and implementation review
+plus the single `make check-full` checkpoint.
 
 ## Objective
 
@@ -313,22 +313,137 @@ does not close serialisation, postmodel, documentation, or the phase checkpoint.
 
 ### Task 36-04: Model Payload Compatibility And Closure
 
-- Add model-payload-v2 writing/loading and the central post-deserialisation
-  state-matrix validator without changing shared result/inference schemas.
-- Test v1 no-HSGP payload loading, v2 HSGP round trip, malformed/missing HSGP
-  state rejection, all configured/built/fitted state-matrix cases, mutation
-  immunity, and pre/post-save fixed-chain new-date prediction equality.
-- Invoke the same validator from result and inference-result loaders; test that
-  malformed embedded HSGP state is rejected there as well.
-- Add and test the central HSGP postmodel guard across contribution,
-  decomposition, response, saturation, and metric public routes.
-- Update docs with the programmatic-only configuration and every explicit
-  limitation. Do not document YAML support.
-- Update changelog, state, roadmap, and parity ledger without promoting the
-  HSGP/TVP row above missing.
-- Run focused tests during iteration. Run exactly one full suite at phase
-  closure because exports, model test registration, and serialized-model
-  behaviour change.
+**Status:** Landed on 2026-07-12. Independent implementation review cleared
+the loader/postmodel/docs closure; `make check-full` then completed the full
+suite, Aqua/doctest, and docs checkpoint.
+
+#### Model Envelope And Loader Contract
+
+1. Keep `_MODEL_IO_SCHEMA_VERSION == 1` and `ModelArtifactMetadata` unchanged.
+   Add a `model_payload_schema_version = 2` discriminator only to newly written
+   `TimeSeriesMMM` and `PanelMMM` model envelopes in `src/model/io.jl`.
+   `ModelResults` and `InferenceResults` retain their existing outer payload
+   schemas and receive only embedded-spec validation.
+2. Treat an absent model-payload discriminator as legacy v1. Accept v1 only
+   when neither typed HSGP configuration nor the reserved private HSGP key is
+   present anywhere in the model lifecycle. Reject unknown discriminator values
+   and v1 payloads that claim HSGP state.
+3. Add private model-IO validation helpers which run after Julia
+   `deserialize` and metadata validation but before a loaded model receives
+   `built_model`, `fit_state`, or calibration. This is trusted-local structural
+   validation, not untrusted-file security: Julia deserialisation has already
+   executed by this point.
+4. Validate the v2 state matrix:
+   - ordinary TimeSeries/Panel models: no HSGP config or reserved state;
+   - configured HSGP TimeSeries model: typed configuration, no built/fit state;
+   - built HSGP model: valid private state in `built_model`;
+   - fitted HSGP model: valid private state in both `built_model` and artifact
+     spec, with structurally identical retained HSGP state.
+   Reject missing, wrong-type, malformed, or lifecycle-inconsistent state.
+   Validation must canonicalise and check every private prior snapshot
+   discriminator, parameter name/value, and instantiated distribution; every
+   retained geometry field; and the complete equality of built/artifact state.
+   For model envelopes, it must also bind the retained origin, cadence indices,
+   and centre back to `model.data.dates`. “Matching” means this valid lifecycle
+   pairing and equal immutable retained-state fields, not equality with mutable
+   public `EpsilonPrior.parameters`: the snapshot remains the replay authority
+   after public-prior mutation.
+5. Restore `built_model`, fit state, and calibration into locals, run the
+   central validator and `_reject_hsgp_media_calibration` against those locals,
+   then assign them to the loaded `TimeSeriesMMM`. This closes the current
+   constructor-bypass path where calibration is assigned only after model
+   construction.
+6. Add the shared private embedded-spec validator to `load_results` and
+   `load_inference_results` after their existing type/coordinate checks and
+   before construction. Do not add the model-envelope discriminator to those
+   formats or alter their public structs.
+
+#### Postmodel Capability Guard
+
+1. Add one private helper in `src/postmodel/replay.jl` that recognises a
+   time-series spec carrying `_HSGP_MEDIA_SPEC_STATE_KEY` and throws an
+   action-specific `ArgumentError` that HSGP media postmodel reporting is
+   deferred.
+2. Invoke it in `_require_postmodel_time_series_results` after model-kind
+   validation. This blocks contribution/decomposition plus response,
+   saturation, adstock, and metric routes that otherwise replay stationary
+   media effects without HSGP draw parameters.
+3. Invoke the same helper from `metric_results(::ResponseCurveResults)`, which
+   bypasses the `InferenceResults` guard. Do not change panel paths or public
+   postmodel signatures. Summary/plotting over manually constructed result
+   structs remains outside this bounded calculation-route guard.
+
+#### Test Plan
+
+1. Extend `test/model/io.jl` with v1 ordinary-load acceptance; v1 HSGP
+   rejection; v2 ordinary TimeSeries/Panel acceptance; configured, built, and
+   fitted HSGP state-matrix acceptance; unknown-v2 and malformed/missing state
+   rejection; retained-state mismatch/data-bound/corrupt-prior-snapshot
+   rejection; HSGP-plus-calibration load rejection; public-prior mutation
+   immunity; and reseeded fixed-chain new-date posterior prediction equality
+   before and after save/load.
+2. Extend `test/model/results.jl` and `test/inference/results.jl` with corrupt
+   embedded HSGP spec rejection while preserving their schema-v1 envelopes.
+3. Add self-contained `test/postmodel/hsgp_guard.jl`, register it in
+   `test/postmodel/runtests.jl`, and assert clear rejection from contribution,
+   decomposition, response, saturation, adstock, metric-from-inference, and
+   metric-from-response-curve entry points. Use `import`, never `using`, for
+   test-only modules to preserve the shared `Main` namespace.
+4. Preserve current ordinary time-series and panel postmodel regression
+   coverage. Do not use `test/postmodel/contributions.jl` as an isolated
+   `test-file` lane: it depends on aggregate model-layer helpers. The new HSGP
+   guard test must be directly runnable by itself.
+
+#### Documentation And Closure
+
+1. Correct the exported `TimeVaryingMediaConfig` docstring in
+   `src/model/types.jl` and the `save_model`/`load_model` docstrings in
+   `src/model/io.jl`, the API inventory/support row in `docs/src/api.md`,
+   the API triage row, and the user-facing HSGP bullet in `docs/src/index.md`.
+   State only the bounded programmatic `TimeSeriesMMM` MCMC shared multiplier;
+   explicitly retain YAML/pipeline, panels, VI, calibration,
+   Michaelis-Menten, channel-specific/intercept/multidimensional/periodic
+   HSGP, TVP, and HSGP supported postmodel calculation entry points as
+   unsupported. State that Julia serialisation artifacts are trusted-local only
+   and HSGP state is validated after deserialisation.
+2. Update `CHANGELOG.md`, `.planning/STATE.md`, `.planning/ROADMAP.md`, and
+   `.planning/ABACUS-PARITY-LEDGER.md`. Mark Phase 36 complete only after the
+   final gate passes. Keep the combined HSGP/TVP ledger row `missing`; describe
+   Abacus evidence solely as explicitly enabled PanelMMM placement evidence and
+   Epsilon runtime/likelihood/replay evidence separately.
+
+#### File Ownership
+
+This task may modify only `src/model/io.jl`, `src/model/results.jl`,
+`src/inference/results.jl`, `src/postmodel/replay.jl`,
+`src/postmodel/metrics.jl`, `src/model/types.jl`, `test/model/io.jl`,
+`test/model/results.jl`, `test/inference/results.jl`,
+`test/postmodel/runtests.jl`, new `test/postmodel/hsgp_guard.jl`,
+`docs/src/api.md`, `docs/src/index.md`, `CHANGELOG.md`, relevant planning
+   state/ledger files, this plan, and ignored Three Man Team handoffs. Do not
+modify dependency files, `MMMModelSpec`/results public struct layouts, Turing
+model code, PanelMMM runtime/model behaviour, pipeline code, or exports.
+
+#### Verification
+
+During implementation run only the changed focused lanes:
+
+```bash
+make test-file FILE=test/model/time_varying_media.jl
+make test-file FILE=test/model/io.jl
+make test-file FILE=test/model/results.jl
+make test-file FILE=test/inference/results.jl
+make test-file FILE=test/postmodel/hsgp_guard.jl
+make test-file FILE=test/api_exports.jl
+julia --project=@runic -m Runic --check --diff <all-touched-julia-files>
+git diff --check
+test -z "$(git diff --name-only -- Project.toml Manifest.toml)"
+```
+
+Do not regenerate Abacus fixtures: this task does not change fixture export or
+fixture-backed numerical evidence. After an independent implementation review,
+run exactly one `make check-full` for the Phase 36 closing commit; it is the
+only required full suite, Aqua/doctest/docs gate for this phase.
 
 ## Acceptance Criteria
 
@@ -346,27 +461,16 @@ does not close serialisation, postmodel, documentation, or the phase checkpoint.
 - Every fixture/backed claim distinguishes Abacus PanelMMM placement evidence
   from Epsilon TimeSeriesMMM model evidence.
 - HSGP result postmodel reporting rejects rather than silently omitting the
-  multiplier.
+  multiplier at supported calculation entry points.
 - No change to dependency files, panels, pipeline, VI semantics, public
   postmodel signatures, or broader serialization formats.
 
 ## Verification
 
-    PYTHONNOUSERSITE=1 python scripts/export_abacus_fixtures.py
-    python -m py_compile scripts/export_abacus_fixtures.py
-    make test-file FILE=test/model/time_varying_media.jl
-    make test-file FILE=test/model/config.jl
-    make test-file FILE=test/model/io.jl
-    make test-file FILE=test/model/results.jl
-    make test-file FILE=test/inference/results.jl
-    make test-file FILE=test/postmodel/contributions.jl
-    make test-file FILE=test/postmodel/response_curves.jl
-    make test-file FILE=test/api_exports.jl
-    julia --project=@runic -m Runic --check --diff <all-touched-julia-files>
-    git diff --check
-    test -z "$(git diff --name-only -- Project.toml Manifest.toml)"
-    # Final checkpoint only after implementation review:
-    make test
+Task 36-04's scoped checks and its single final `make check-full` command are
+the authoritative Phase 36 closure verification. Do not regenerate fixtures,
+run isolated legacy postmodel files with aggregate-only helpers, or run an
+additional `make test` before the final gate.
 
 ## Risks
 

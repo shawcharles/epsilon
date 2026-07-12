@@ -158,6 +158,7 @@ function load_results(path::AbstractString)
     spec = get(payload, :spec, nothing)
     spec isa MMMModelSpec ||
         throw(ArgumentError("serialized results payload must include MMMModelSpec"))
+    _validate_embedded_hsgp_media_spec(spec)
     chain = get(payload, :chain, nothing)
     return ModelResults(
         metadata,

@@ -8,8 +8,8 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 35 Time-Series HSGP media methodology is complete.
-Phase 36 is the separately planned implementation step. The v1
+**Current focus:** Phase 36 Time-Series HSGP shared-media implementation is
+complete. The v1
 release boundary remains MCMC/Turing-only for supported inference, while
 `VariationalConfig` and `approximate_fit!` remain scaffolded pre-v1 review
 exports. Variational inference, dashboard/UI parity, and AI advisor behaviour
@@ -20,28 +20,30 @@ remain explicitly out of scope for v1.
 **Current Phase:** 36
 **Current Phase Name:** Time-Series HSGP Shared Media Multiplier
 **Total Phases:** 36
-**Current Plan:** Phase 36 implementation plan independently reviewed; builder
-may begin only against the approved contract
+**Current Plan:** Phase 36 closed; select the next bounded roadmap slice
 **Total Plans in Phase:** 4 tasks
-**Status:** Phase 36 is architected and independently approved at
+**Status:** Tasks 36-01 through 36-04 are implemented against the independently
+approved contract at
 `.planning/phases/36-timeseries-hsgp-shared-media-multiplier/PLAN.md`. It
 defines the first model-facing HSGP capability as a TimeSeriesMMM-only shared,
 strictly positive, mean-one media multiplier and requires typed programmatic
 configuration, immutable scalar-prior snapshots, retained date/cadence state,
 named non-centred Turing variables, explicit rejection of unsupported model and
 postmodel surfaces, trusted-local model serialization validation, and focused
-fixture/conditioned-DynamicPPL evidence. It remains planning only: no Turing
-integration, source/runtime code, tests, exports, YAML acceptance, dependencies,
-or HSGP/TVP ledger status changed. Both numerical/Turing and API/IO/security
-reviewers approved the final plan on 2026-07-12. Phase 35 is complete at
+fixture/conditioned-DynamicPPL evidence. The implementation adds the bounded
+programmatic MCMC path and model-envelope v2 validation only; it keeps YAML,
+pipeline, panels, VI, calibration, Michaelis-Menten, broader HSGP/TVP, and HSGP
+postmodel calculations unsupported, and the HSGP/TVP ledger row `missing`.
+Independent implementation review and the one `make check-full` checkpoint
+passed before Phase 36 closed. Phase 35 is complete at
 `.planning/phases/35-timeseries-hsgp-media-methodology-contract/PLAN.md`. It
 freezes the reviewed Phase 36 contract for a TimeSeriesMMM-only shared HSGP
 media multiplier: explicit cadence/unit/prior rules, fixed geometry switches,
 named non-centred Turing variables, retained training origin/index state,
 schema-v2 migration, and strict wider-surface rejection. It is planning only:
 no runtime source, tests, exports, YAML acceptance, dependencies, or HSGP/TVP
-ledger status changed. Phase 36 must still be planned and independently
-reviewed before implementation. Phase 34 is complete at
+ledger status changed. Phase 36 subsequently implemented that contract and
+closed without promoting the HSGP/TVP ledger row. Phase 34 is complete at
 `.planning/phases/34-hsgp-fitted-positive-multiplier-replay/PLAN.md`. It adds
 only a private, immutable concrete-draw replay state that preserves the HSGP
 training centre, optional training basis offset, and training raw-softplus

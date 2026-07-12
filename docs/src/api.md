@@ -100,7 +100,7 @@ export must appear exactly once.
 | `StandardizeControls` | Transforms | core |
 | `TimeSeriesCalibrationInput` | Calibration | scaffolded |
 | `TimeSeriesMMM` | Model core | bounded |
-| `TimeVaryingMediaConfig` | Configuration | scaffolded |
+| `TimeVaryingMediaConfig` | Configuration | bounded |
 | `UnalignedValuesError` | Calibration | scaffolded |
 | `VariationalConfig` | Inference | scaffolded |
 | `WeibullType` | Transforms | core |

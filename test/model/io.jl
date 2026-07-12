@@ -1,6 +1,8 @@
 using Epsilon
 using Test
 using Serialization
+using Dates
+using Random
 
 function sample_persisted_model(; compute_convergence_checks = false, chains = 1)
     config = ModelConfig(
@@ -36,6 +38,55 @@ function sample_persisted_model(; compute_convergence_checks = false, chains = 1
     return model
 end
 
+function _hsgp_io_config()
+    return TimeVaryingMediaConfig(
+        m = 2,
+        L = 6.0,
+        time_resolution = 7,
+        covariance = :expquad,
+        eta_prior = EpsilonPrior("Exponential"; lam = 1.5),
+        lengthscale_prior = EpsilonPrior("LogNormal"; mu = 0.0, sigma = 0.4),
+    )
+end
+
+function _hsgp_io_data(; dates = Date[Date(2024, 1, 1), Date(2024, 1, 8), Date(2024, 1, 15)])
+    n = length(dates)
+    return MMMData(
+        dates = dates,
+        target = collect(10.0:(9.0 + n)),
+        channels = reshape(collect(1.0:n), :, 1),
+        channel_names = ["tv"],
+    )
+end
+
+function _hsgp_io_model(; fitted = false)
+    config = ModelConfig(
+        date_column = "date",
+        target_column = "revenue",
+        channel_columns = ["tv"],
+        time_varying_media = _hsgp_io_config(),
+    )
+    sampler = SamplerConfig(
+        draws = 2,
+        tune = 0,
+        chains = 1,
+        cores = 1,
+        random_seed = 734,
+        progressbar = false,
+        compute_convergence_checks = false,
+    )
+    model = TimeSeriesMMM(config, sampler, _hsgp_io_data())
+    fitted ? fit!(model) : build_model(model)
+    return model
+end
+
+function _write_model_payload(path, payload)
+    open(path, "w") do io
+        serialize(io, payload)
+    end
+    return path
+end
+
 @testset "save_model/load_model" begin
     model = sample_persisted_model()
     path = tempname()
@@ -43,6 +94,7 @@ end
     saved_path = save_model(path, model)
     @test saved_path == path
     payload = open(deserialize, path)
+    @test payload.model_payload_schema_version == 2
     @test payload.metadata isa ModelArtifactMetadata
     @test payload.metadata.schema_version == 1
     @test payload.metadata.model_type == "TimeSeriesMMM"
@@ -68,6 +120,136 @@ end
 
     predictive = Epsilon.predict(loaded)
     @test size(predictive, 1) == loaded.sampler_config.draws
+end
+
+@testset "model payload v1 and v2 HSGP lifecycle validation" begin
+    ordinary = sample_persisted_model()
+    ordinary_path = tempname()
+    save_model(ordinary_path, ordinary)
+    ordinary_payload = open(deserialize, ordinary_path)
+    legacy_ordinary = Base.structdiff(
+        ordinary_payload,
+        NamedTuple{(:model_payload_schema_version,)},
+    )
+    @test load_model(_write_model_payload(tempname(), legacy_ordinary)) isa TimeSeriesMMM
+    @test_throws ArgumentError load_model(
+        _write_model_payload(tempname(), (; ordinary_payload..., model_payload_schema_version = 99)),
+    )
+
+    configured = TimeSeriesMMM(
+        ModelConfig(
+            date_column = "date",
+            target_column = "revenue",
+            channel_columns = ["tv"],
+            time_varying_media = _hsgp_io_config(),
+        ),
+        SamplerConfig(draws = 1, tune = 0, chains = 1, cores = 1),
+        _hsgp_io_data(),
+    )
+    configured_path = tempname()
+    save_model(configured_path, configured)
+    configured_payload = open(deserialize, configured_path)
+    @test load_model(configured_path).built_model === nothing
+    @test_throws ArgumentError load_model(
+        _write_model_payload(
+            tempname(),
+            Base.structdiff(configured_payload, NamedTuple{(:model_payload_schema_version,)}),
+        ),
+    )
+
+    built = _hsgp_io_model()
+    built_path = tempname()
+    save_model(built_path, built)
+    built_payload = open(deserialize, built_path)
+    @test load_model(built_path).built_model == built.built_model
+    missing_built_state = Epsilon._build_model_spec(
+        built.built_model,
+        built.data,
+    )
+    delete!(missing_built_state.priors, "_hsgp_media_spec_state")
+    @test_throws ArgumentError load_model(
+        _write_model_payload(tempname(), (; built_payload..., built_model = missing_built_state)),
+    )
+
+    fitted = _hsgp_io_model(; fitted = true)
+    fitted_path = tempname()
+    save_model(fitted_path, fitted)
+    fitted_payload = open(deserialize, fitted_path)
+    loaded = load_model(fitted_path)
+    @test loaded.fit_state.artifact.spec.priors["_hsgp_media_spec_state"] ==
+        loaded.built_model.priors["_hsgp_media_spec_state"]
+
+    mismatched_state = Epsilon._HSGPMediaSpecState(
+        fitted.built_model.priors["_hsgp_media_spec_state"].config,
+        Epsilon._HSGPTimeSeriesTrainingState(
+            Date(2024, 1, 8),
+            7,
+            (0, 1, 2),
+            1.0,
+            2,
+            6.0,
+            :expquad,
+            false,
+            false,
+        ),
+    )
+    mismatched_spec = Epsilon._build_model_spec(fitted.built_model, fitted.data)
+    mismatched_spec.priors["_hsgp_media_spec_state"] = mismatched_state
+    @test_throws ArgumentError load_model(
+        _write_model_payload(tempname(), (; fitted_payload..., built_model = mismatched_spec)),
+    )
+
+    paired_artifact_spec = Epsilon._build_model_spec(fitted.built_model, fitted.data)
+    paired_state = paired_artifact_spec.priors["_hsgp_media_spec_state"]
+    paired_artifact_spec.priors["_hsgp_media_spec_state"] = Epsilon._HSGPMediaSpecState(
+        Epsilon._HSGPMediaConfigSnapshot(
+            paired_state.config.m,
+            paired_state.config.L,
+            paired_state.config.time_resolution,
+            paired_state.config.covariance,
+            Epsilon._HSGPMediaPriorSnapshot(:Exponential, ((:lam, 2.0),)),
+            paired_state.config.lengthscale_prior,
+        ),
+        paired_state.training,
+    )
+    paired_artifact = (; fitted_payload.fit_state.artifact..., spec = paired_artifact_spec)
+    paired_fit_state = (; fitted_payload.fit_state..., artifact = paired_artifact)
+    @test_throws ArgumentError load_model(
+        _write_model_payload(tempname(), (; fitted_payload..., fit_state = paired_fit_state)),
+    )
+
+    corrupt_prior_state = Epsilon._HSGPMediaSpecState(
+        Epsilon._HSGPMediaConfigSnapshot(
+            2,
+            6.0,
+            7,
+            :expquad,
+            Epsilon._HSGPMediaPriorSnapshot(:Exponential, ((:rate, 1.5),)),
+            fitted.built_model.priors["_hsgp_media_spec_state"].config.lengthscale_prior,
+        ),
+        fitted.built_model.priors["_hsgp_media_spec_state"].training,
+    )
+    corrupt_spec = Epsilon._build_model_spec(fitted.built_model, fitted.data)
+    corrupt_spec.priors["_hsgp_media_spec_state"] = corrupt_prior_state
+    @test_throws ArgumentError load_model(
+        _write_model_payload(tempname(), (; fitted_payload..., built_model = corrupt_spec)),
+    )
+
+    fitted.config.extras["time_varying_media"].eta_prior.parameters[:lam] = 9.0
+    new_data = _hsgp_io_data(; dates = Date[Date(2024, 1, 22), Date(2024, 1, 29)])
+    Random.seed!(981)
+    expected = predict(fitted, new_data)
+    mutated_path = tempname()
+    save_model(mutated_path, fitted)
+    Random.seed!(981)
+    actual = predict(load_model(mutated_path), new_data)
+    @test Array(actual) == Array(expected)
+
+    calibrated = _hsgp_io_model()
+    calibrated.calibration = TimeSeriesCalibrationInput(CalibrationStepConfig[], nothing, nothing)
+    calibrated_path = tempname()
+    save_model(calibrated_path, calibrated)
+    @test_throws ArgumentError load_model(calibrated_path)
 end
 
 @testset "save_model/load_model preserves TimeSeriesMMM calibration" begin
@@ -172,6 +354,7 @@ end
     @test saved_path == path
     payload = open(deserialize, path)
     @test payload.metadata.model_type == "PanelMMM"
+    @test payload.model_payload_schema_version == 2
 
     loaded = load_model(path)
     @test loaded isa PanelMMM
