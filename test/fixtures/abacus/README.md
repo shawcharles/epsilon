@@ -144,3 +144,13 @@ including an outside-boundary prediction coordinate. The zero-retained-mode
 case uses the exact degenerate identity because the local PyMC version cannot
 compile a zero-column HSGP graph. It remains private numerical foundation
 evidence only; it does not establish HSGP or time-varying parameter support.
+
+Phase 36 adds `hsgp_time_varying_media_cases.jl`: one fixed-seed prior draw
+from a real local Abacus `PanelMMM` graph with the boolean
+`time_varying_media=True` path explicitly enabled. Its internal TVP
+configuration is default-derived. It records the graph's per-channel baseline,
+shared temporal multiplier, and final per-channel contribution. This is
+placement evidence only:
+`final_channel_contribution == baseline_channel_contribution .* multiplier`
+with time-row broadcasting. It does not establish PanelMMM parity or imply
+that Epsilon supports HSGP media for panel models.

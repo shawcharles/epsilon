@@ -104,6 +104,101 @@ function _validate_hsgp_media_training_data(config::ModelConfig, data::MMMData)
     return nothing
 end
 
+function _hsgp_media_current_indices(indices)
+    indices isa AbstractVector || throw(
+        ArgumentError("current HSGP indices must be a one-dimensional integer vector"),
+    )
+    isempty(indices) && throw(ArgumentError("current HSGP indices must not be empty"))
+    all(index -> index isa Integer && !(index isa Bool), indices) || throw(
+        ArgumentError("current HSGP indices must contain only integers"),
+    )
+
+    try
+        return Int.(indices)
+    catch err
+        err isa InexactError || rethrow()
+        throw(ArgumentError("current HSGP indices must fit in Int"))
+    end
+end
+
+function _validate_hsgp_media_spec_state(state::_HSGPMediaSpecState)
+    config = state.config
+    training = state.training
+    config.m == training.m || throw(ArgumentError("HSGP media state mode counts must match"))
+    config.L == training.L || throw(ArgumentError("HSGP media state boundaries must match"))
+    config.covariance == training.covariance || throw(
+        ArgumentError("HSGP media state covariances must match"),
+    )
+    config.time_resolution == training.time_resolution || throw(
+        ArgumentError("HSGP media state cadence resolutions must match"),
+    )
+    !training.drop_first || throw(ArgumentError("HSGP media state must retain the first mode"))
+    !training.demeaned_basis || throw(ArgumentError("HSGP media state must use an undemeaned basis"))
+    training.training_indices isa Tuple || throw(
+        ArgumentError("HSGP training indices must be stored as an immutable tuple"),
+    )
+    isempty(training.training_indices) && throw(ArgumentError("HSGP training indices must not be empty"))
+    all(index -> index isa Int, training.training_indices) || throw(
+        ArgumentError("HSGP training indices must contain only Int values"),
+    )
+    _hsgp_finite_scalar(training.training_centre, "training_centre")
+    _hsgp_mode_count(config.m)
+    _hsgp_positive_finite(config.L, "L")
+    _hsgp_covariance_constants(config.covariance)
+    return state
+end
+
+function _hsgp_media_multiplier(
+        state::_HSGPMediaSpecState,
+        current_indices,
+        eta,
+        lengthscale,
+        z,
+    )
+    _validate_hsgp_media_spec_state(state)
+    indices = _hsgp_media_current_indices(current_indices)
+    _hsgp_positive_finite(eta, "eta")
+    _hsgp_positive_finite(lengthscale, "lengthscale")
+    _hsgp_finite_vector(z, "z")
+    length(z) == state.config.m || throw(
+        ArgumentError("z must have one value for each configured HSGP mode"),
+    )
+
+    sqrt_psd = _hsgp_sqrt_psd(
+        state.config.m,
+        state.config.L;
+        covariance = state.config.covariance,
+        eta,
+        lengthscale,
+        drop_first = state.training.drop_first,
+    )
+    training_phi = _hsgp_basis_matrix_at_centre(
+        collect(state.training.training_indices),
+        state.training.training_centre;
+        m = state.training.m,
+        L = state.training.L,
+        drop_first = state.training.drop_first,
+    )
+    current_phi = _hsgp_basis_matrix_at_centre(
+        indices,
+        state.training.training_centre;
+        m = state.training.m,
+        L = state.training.L,
+        drop_first = state.training.drop_first,
+    )
+    training_raw = _hsgp_stable_softplus.(_hsgp_latent(training_phi, sqrt_psd, z))
+    training_raw_mean = mean(training_raw)
+    isfinite(training_raw_mean) && training_raw_mean > zero(training_raw_mean) || throw(
+        ArgumentError("HSGP training softplus mean must be finite and strictly positive"),
+    )
+    multiplier = _hsgp_stable_softplus.(_hsgp_latent(current_phi, sqrt_psd, z)) ./
+        training_raw_mean
+    all(value -> isfinite(value) && value > zero(value), multiplier) || throw(
+        ArgumentError("HSGP media multipliers must be finite and strictly positive"),
+    )
+    return multiplier
+end
+
 function _infer_hsgp_time_index(
         new_dates::AbstractVector{<:Date},
         training_dates::AbstractVector{<:Date};

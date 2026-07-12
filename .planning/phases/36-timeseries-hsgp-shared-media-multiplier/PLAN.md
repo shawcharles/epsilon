@@ -262,8 +262,14 @@ Task 36-03.
 
 ### Task 36-02: Fixture And Pure Runtime Evidence
 
-- Extend the fixture exporter using a real Abacus PanelMMM default
-  time_varying_media graph with a fixed seed. Export baseline per-channel
+**Status:** Landed. The Abacus fixture proves only the explicitly enabled
+PanelMMM boolean-path placement; Epsilon's distinct range-midpoint multiplier
+replay is validated separately against the Phase 34 oracle. No Turing runtime
+has been introduced.
+
+- Extend the fixture exporter using a real Abacus PanelMMM graph with the
+  boolean time_varying_media path explicitly enabled and its internal TVP
+  configuration default-derived, with a fixed seed. Export baseline per-channel
   contribution, shared multiplier, and final channel contribution values as
   placement evidence only.
 - Add pure HSGP runtime helpers that construct the shared multiplier from

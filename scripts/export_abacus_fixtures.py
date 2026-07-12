@@ -2528,6 +2528,58 @@ def _hsgp_fitted_replay_fixture_body() -> str:
     return "\n".join(lines)
 
 
+def _hsgp_time_varying_media_fixture_body() -> str:
+    X = pd.DataFrame(
+        {
+            "date": pd.date_range("2024-01-01", periods=4, freq="W-MON"),
+            "tv": [1.0, 2.0, 1.5, 2.5],
+            "search": [0.5, 1.0, 1.5, 1.0],
+        }
+    )
+    y = np.asarray([4.0, 5.0, 5.5, 6.0], dtype=float)
+    channel_columns = ["tv", "search"]
+    mmm = PanelMMM(
+        date_column="date",
+        channel_columns=channel_columns,
+        target_column="sales",
+        adstock=GeometricAdstock(l_max=1),
+        saturation=LogisticSaturation(),
+        time_varying_media=True,
+    )
+    mmm.build_model(X, y)
+    if mmm.time_varying_media is not True:
+        raise RuntimeError(
+            "The fixture must use the explicitly enabled PanelMMM boolean time_varying_media=True path"
+        )
+
+    with mmm.model:
+        idata = pm.sample_prior_predictive(samples=1, random_seed=817)
+
+    def draw(name: str) -> np.ndarray:
+        return np.asarray(idata.prior[name].isel(chain=0, draw=0), dtype=float)
+
+    baseline = draw("baseline_channel_contribution")
+    multiplier = draw("media_temporal_latent_multiplier")
+    final = draw("channel_contribution")
+    if baseline.shape != final.shape or baseline.shape != (len(X), len(channel_columns)):
+        raise RuntimeError("Unexpected PanelMMM channel contribution fixture shape")
+    if multiplier.shape != (len(X),):
+        raise RuntimeError("Unexpected PanelMMM shared media multiplier fixture shape")
+    if not np.array_equal(final, baseline * multiplier[:, None]):
+        raise RuntimeError("PanelMMM channel contribution is not baseline times the shared multiplier")
+
+    lines = [
+        "(",
+        "    case = (",
+        f"        baseline_channel_contribution = {_julia_array_literal(baseline)},",
+        f"        multiplier = {_julia_array_literal(multiplier)},",
+        f"        final_channel_contribution = {_julia_array_literal(final)},",
+        "    ),",
+        ")",
+    ]
+    return "\n".join(lines)
+
+
 def _calibration_alignment_rows():
     rows: list[str] = []
     for case in _build_calibration_alignment_cases():
@@ -2911,6 +2963,11 @@ def main() -> None:
         help="Destination Julia HSGP fitted replay fixture file.",
     )
     parser.add_argument(
+        "--hsgp-time-varying-media-output",
+        default="test/fixtures/abacus/hsgp_time_varying_media_cases.jl",
+        help="Destination Julia HSGP time-varying media placement fixture file.",
+    )
+    parser.add_argument(
         "--timeseries-output",
         default="test/fixtures/abacus/timeseries/config_data.jl",
         help="Destination Julia Abacus timeseries config/data fixture file.",
@@ -2991,6 +3048,9 @@ def main() -> None:
     global hill_function
     global CovFunc
     global SoftPlusHSGP
+    global PanelMMM
+    global GeometricAdstock
+    global LogisticSaturation
     global approx_hsgp_hyperparams
     global create_m_and_L_recommendations
     global deterministics_to_flat
@@ -3028,6 +3088,8 @@ def main() -> None:
         approx_hsgp_hyperparams,
         create_m_and_L_recommendations,
     )
+    from abacus.mmm import GeometricAdstock, LogisticSaturation
+    from abacus.mmm.panel import PanelMMM
     from abacus.model_graph import deterministics_to_flat
     import pymc as pm
     import pandas as pd
@@ -3133,6 +3195,13 @@ def main() -> None:
         "ABACUS_HSGP_FITTED_REPLAY_FIXTURES",
         _hsgp_fitted_replay_fixture_body(),
         Path(args.hsgp_fitted_replay_output),
+        abacus_root=abacus_root,
+        abacus_revision=abacus_revision,
+    )
+    _write_single_fixture_file(
+        "ABACUS_HSGP_TIME_VARYING_MEDIA_FIXTURES",
+        _hsgp_time_varying_media_fixture_body(),
+        Path(args.hsgp_time_varying_media_output),
         abacus_root=abacus_root,
         abacus_revision=abacus_revision,
     )
