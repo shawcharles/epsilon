@@ -693,6 +693,18 @@ As of 2026-05-10:
     The HSGP/time-varying ledger row therefore remains `missing`. Focused
     verification passed `46 / 46`; the phase-closing `make test` checkpoint
     passed `8,620 / 8,620` in `20m24.2s`.
+44. Phase 34 adds only private fitted-state replay for one concrete HSGP
+    positive-multiplier coefficient draw. It snapshots weighted coefficients,
+    training basis centre, optional training basis de-meaning offset, and the
+    training raw-softplus mean immutably, then reuses those values for finite
+    prediction coordinates rather than prediction-local recentering or
+    renormalisation. Fixtures exercise Abacus SoftPlusHSGP's mutable-data,
+    saved-mean replay path; Epsilon additionally rejects mutable/malformed
+    state and prediction-only softplus underflow. There is still no HSGP prior,
+    graph, Turing, configuration, public API, serialization, model prediction,
+    panel, or TVP support, so the HSGP/time-varying row remains `missing`.
+    Focused verification passed `58 / 58`; the phase-closing `make test`
+    checkpoint passed `8,678 / 8,678` in `20m57.0s`.
 
 
 ## Plan 14-05 Parity Audit

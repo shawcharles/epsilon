@@ -8,9 +8,8 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 33 HSGP latent projection and positive multiplier
-semantics are complete. Select the next separately planned bounded core-parity
-slice. The v1
+**Current focus:** Phase 34 HSGP fitted positive-multiplier replay is complete.
+Select the next separately planned bounded core-parity slice. The v1
 release boundary remains MCMC/Turing-only for supported inference, while
 `VariationalConfig` and `approximate_fit!` remain scaffolded pre-v1 review
 exports. Variational inference, dashboard/UI parity, and AI advisor behaviour
@@ -18,13 +17,22 @@ remain explicitly out of scope for v1.
 
 ## Current Position
 
-**Current Phase:** 33
-**Current Phase Name:** HSGP Latent Projection And Positive Multiplier Semantics
-**Total Phases:** 33
-**Current Plan:** Phase 33 complete; choose the next separately planned HSGP
+**Current Phase:** 34
+**Current Phase Name:** HSGP Fitted Positive Multiplier Replay
+**Total Phases:** 34
+**Current Plan:** Phase 34 complete; choose the next separately planned HSGP
 or other bounded core-parity slice
 **Total Plans in Phase:** 3 tasks
-**Status:** Phase 33 is complete at
+**Status:** Phase 34 is complete at
+`.planning/phases/34-hsgp-fitted-positive-multiplier-replay/PLAN.md`. It adds
+only a private, immutable concrete-draw replay state that preserves the HSGP
+training centre, optional training basis offset, and training raw-softplus
+mean. It excludes priors, graph construction, Turing, config acceptance,
+public exports, prediction APIs, serialization, panels, and TVP behaviour; the
+HSGP/time-varying ledger row remains `missing`. The implementation is reviewed;
+focused verification passed `58 / 58`, and the one phase-closing `make test`
+shared-namespace checkpoint passed `8,678 / 8,678` in `20m57.0s`. Phase 33 is
+complete at
 `.planning/phases/33-hsgp-softplus-positive-multiplier/PLAN.md`. It adds only
 private, fixture-backed latent projection, PyTensor-thresholded softplus, and
 time-axis mean-one positive multiplier helpers for supplied HSGP coefficient

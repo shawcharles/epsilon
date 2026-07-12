@@ -804,6 +804,67 @@ def _build_hsgp_softplus_cases():
     ]
 
 
+def _build_hsgp_fitted_replay_cases():
+    return [
+        {
+            "name": "asymmetric_vector_outside_boundary",
+            "training_x": np.array([0.0, 1.0, 7.0, 10.0], dtype=float),
+            "prediction_x": np.array([9.5, 13.0], dtype=float),
+            "m": 4,
+            "L": 7.0,
+            "covariance": "expquad",
+            "eta": 1.3,
+            "lengthscale": 2.2,
+            "drop_first": False,
+            "demeaned_basis": False,
+            "series_count": 1,
+            "seed": 34101,
+        },
+        {
+            "name": "two_series_matrix",
+            "training_x": np.array([-4.0, -1.0, 2.0, 6.0], dtype=float),
+            "prediction_x": np.array([3.0, 8.0], dtype=float),
+            "m": 5,
+            "L": 8.0,
+            "covariance": "matern32",
+            "eta": 0.9,
+            "lengthscale": 1.6,
+            "drop_first": True,
+            "demeaned_basis": False,
+            "series_count": 2,
+            "seed": 34102,
+        },
+        {
+            "name": "demeaned_basis_replay",
+            "training_x": np.array([0.0, 2.0, 3.0, 9.0], dtype=float),
+            "prediction_x": np.array([4.0, 11.5], dtype=float),
+            "m": 4,
+            "L": 7.0,
+            "covariance": "matern52",
+            "eta": 1.1,
+            "lengthscale": 2.7,
+            "drop_first": False,
+            "demeaned_basis": True,
+            "series_count": 1,
+            "seed": 34103,
+        },
+        {
+            "name": "zero_retained_modes",
+            "training_x": np.array([0.0, 1.0, 10.0], dtype=float),
+            "prediction_x": np.array([-2.0, 13.0], dtype=float),
+            "m": 1,
+            "L": 12.0,
+            "covariance": "expquad",
+            "eta": 1.0,
+            "lengthscale": 2.5,
+            "drop_first": True,
+            "demeaned_basis": True,
+            "series_count": 2,
+            "seed": 34104,
+        },
+    ]
+
+
 def _build_calibration_alignment_cases():
     return [
         {
@@ -2335,6 +2396,138 @@ def _hsgp_positive_multiplier_fixture_body() -> str:
     return "\n".join(lines)
 
 
+def _hsgp_fitted_replay_fixture_body() -> str:
+    covariance_classes = {
+        "expquad": pm.gp.cov.ExpQuad,
+        "matern32": pm.gp.cov.Matern32,
+        "matern52": pm.gp.cov.Matern52,
+    }
+    rows: list[str] = []
+    for case in _build_hsgp_fitted_replay_cases():
+        training_x = np.asarray(case["training_x"], dtype=float)
+        prediction_x = np.asarray(case["prediction_x"], dtype=float)
+        training_centre = training_x.min() / 2 + training_x.max() / 2
+        dims = "date" if case["series_count"] == 1 else ("date", "series")
+        coords = {"date": training_x}
+        if case["series_count"] > 1:
+            coords["series"] = [f"series_{index}" for index in range(case["series_count"])]
+
+        if case["m"] == 1 and case["drop_first"]:
+            # PyMC 5.28 cannot compile the valid zero-column HSGP graph. The
+            # degenerate retained-mode contract is exact: latent zero, softplus
+            # log(2), and an all-one multiplier on both data domains.
+            sqrt_psd = np.empty(0, dtype=float)
+            z = np.empty((0, case["series_count"]), dtype=float)
+            basis_offset = np.empty(0, dtype=float) if case["demeaned_basis"] else None
+            training_raw_mean = np.full(case["series_count"], np.log(2.0), dtype=float)
+            expected_training_multiplier = np.ones(
+                (training_x.size, case["series_count"]),
+                dtype=float,
+            )
+            expected_replay_multiplier = np.ones(
+                (prediction_x.size, case["series_count"]),
+                dtype=float,
+            )
+        else:
+            hsgp = SoftPlusHSGP(
+                m=case["m"],
+                L=case["L"],
+                X_mid=training_centre,
+                dims=dims,
+                ls=case["lengthscale"],
+                eta=case["eta"],
+                cov_func=case["covariance"],
+                drop_first=case["drop_first"],
+                demeaned_basis=case["demeaned_basis"],
+            )
+            with pm.Model(coords=coords) as model:
+                X = pm.Data("X", training_x, dims="date")
+                hsgp.register_data(X).create_variable("f")
+                idata = pm.sample_prior_predictive(samples=1, random_seed=case["seed"])
+
+            idata["posterior"] = idata.prior
+            with deterministics_to_flat(model, names=hsgp.deterministics_to_replace("f")):
+                pm.set_data({"X": prediction_x}, coords={"date": prediction_x})
+                prediction_idata = pm.sample_posterior_predictive(
+                    idata,
+                    var_names=["f"],
+                    random_seed=case["seed"],
+                )
+
+            coefficients = np.asarray(
+                idata.prior["f_raw_hsgp_coefs"].isel(chain=0, draw=0),
+                dtype=float,
+            )
+            if case["series_count"] > 1:
+                coefficients = coefficients.T
+            else:
+                coefficients = coefficients.reshape(-1)
+            basis_case = {
+                "x": training_x - training_centre,
+                "m": case["m"],
+                "L": case["L"],
+                "covariance": case["covariance"],
+                "eta": case["eta"],
+                "lengthscale": case["lengthscale"],
+                "drop_first": case["drop_first"],
+            }
+            phi_training_raw, sqrt_psd = _hsgp_linearized_arrays(
+                basis_case,
+                covariance_classes,
+            )
+            if case["series_count"] == 1:
+                z = coefficients / sqrt_psd
+            else:
+                z = coefficients / sqrt_psd[:, None]
+            basis_offset = (
+                phi_training_raw.mean(axis=0)
+                if case["demeaned_basis"]
+                else None
+            )
+            training_raw_mean = np.atleast_1d(
+                np.asarray(idata.prior["f_f_mean"].isel(chain=0, draw=0), dtype=float),
+            )
+            expected_training_multiplier = np.asarray(
+                idata.prior["f"].isel(chain=0, draw=0),
+                dtype=float,
+            )
+            expected_replay_multiplier = np.asarray(
+                prediction_idata.posterior_predictive["f"].isel(chain=0, draw=0),
+                dtype=float,
+            )
+
+        offset_literal = (
+            "nothing"
+            if basis_offset is None
+            else _julia_array_literal(np.asarray(basis_offset, dtype=float))
+        )
+        rows.extend(
+            [
+                "        (",
+                f'            name = "{case["name"]}",',
+                f"            training_x = {_julia_array_literal(training_x)},",
+                f"            prediction_x = {_julia_array_literal(prediction_x)},",
+                f"            m = {case["m"]},",
+                f"            L = {_julia_float_literal(case["L"])},",
+                f"            drop_first = {str(case["drop_first"]).lower()},",
+                f"            demeaned_basis = {str(case["demeaned_basis"]).lower()},",
+                f"            expected_training_centre = {_julia_float_literal(training_centre)},",
+                f"            expected_basis_offset = {offset_literal},",
+                f"            sqrt_psd = {_julia_array_literal(sqrt_psd)},",
+                f"            z = {_julia_array_literal(z)},",
+                f"            expected_training_raw_mean = {_julia_array_literal(training_raw_mean)},",
+                f"            expected_training_multiplier = {_julia_array_literal(expected_training_multiplier)},",
+                f"            expected_replay_multiplier = {_julia_array_literal(expected_replay_multiplier)},",
+                "        ),",
+            ]
+        )
+
+    lines = ["(", "    cases = ["]
+    lines.extend(rows)
+    lines.extend(["    ],", ")"])
+    return "\n".join(lines)
+
+
 def _calibration_alignment_rows():
     rows: list[str] = []
     for case in _build_calibration_alignment_cases():
@@ -2713,6 +2906,11 @@ def main() -> None:
         help="Destination Julia HSGP positive-multiplier fixture file.",
     )
     parser.add_argument(
+        "--hsgp-fitted-replay-output",
+        default="test/fixtures/abacus/hsgp_fitted_replay_cases.jl",
+        help="Destination Julia HSGP fitted replay fixture file.",
+    )
+    parser.add_argument(
         "--timeseries-output",
         default="test/fixtures/abacus/timeseries/config_data.jl",
         help="Destination Julia Abacus timeseries config/data fixture file.",
@@ -2792,8 +2990,10 @@ def main() -> None:
     global michaelis_menten
     global hill_function
     global CovFunc
+    global SoftPlusHSGP
     global approx_hsgp_hyperparams
     global create_m_and_L_recommendations
+    global deterministics_to_flat
     global infer_time_index
     global pt
     global tanh_saturation
@@ -2824,9 +3024,11 @@ def main() -> None:
     from abacus.mmm.tvp import infer_time_index
     from abacus.mmm.hsgp import (
         CovFunc,
+        SoftPlusHSGP,
         approx_hsgp_hyperparams,
         create_m_and_L_recommendations,
     )
+    from abacus.model_graph import deterministics_to_flat
     import pymc as pm
     import pandas as pd
     import pytensor.tensor as pt
@@ -2924,6 +3126,13 @@ def main() -> None:
         "ABACUS_HSGP_POSITIVE_MULTIPLIER_FIXTURES",
         _hsgp_positive_multiplier_fixture_body(),
         Path(args.hsgp_positive_multiplier_output),
+        abacus_root=abacus_root,
+        abacus_revision=abacus_revision,
+    )
+    _write_single_fixture_file(
+        "ABACUS_HSGP_FITTED_REPLAY_FIXTURES",
+        _hsgp_fitted_replay_fixture_body(),
+        Path(args.hsgp_fitted_replay_output),
         abacus_root=abacus_root,
         abacus_revision=abacus_revision,
     )

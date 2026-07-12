@@ -134,3 +134,13 @@ projection, PyTensor-thresholded softplus, and time-axis mean-one positive
 multiplier evidence for supplied coefficient values. It includes all- and
 partial-underflow rejection cases. It remains private numerical foundation
 evidence only; it does not establish HSGP or time-varying parameter support.
+
+Phase 34 adds `hsgp_fitted_replay_cases.jl`: deterministic fitted positive
+multiplier replay cases generated from mutable-data Abacus `SoftPlusHSGP`
+graphs with their saved `f_mean` deterministic replaced during prediction.
+The cases retain training-centre, optional demeaned-basis offset, and training
+raw-softplus denominator evidence for vector and two-series coefficient draws,
+including an outside-boundary prediction coordinate. The zero-retained-mode
+case uses the exact degenerate identity because the local PyMC version cannot
+compile a zero-column HSGP graph. It remains private numerical foundation
+evidence only; it does not establish HSGP or time-varying parameter support.

@@ -335,6 +335,10 @@ Current repository state on 2026-05-18:
       numerically stable softplus, and mean-one positive multiplier
       normalisation matching Abacus `SoftPlusHSGP`, without Turing coefficient
       priors, configuration acceptance, or model support.
+- [x] **Phase 34: HSGP Fitted Positive Multiplier Replay** - Add private,
+      fixture-backed fitted-state replay that reuses training geometry and the
+      training softplus denominator, without HSGP priors, Turing integration,
+      configuration acceptance, or model support.
 
 ## Phase Details
 

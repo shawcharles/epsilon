@@ -138,6 +138,38 @@ function _hsgp_basis_matrix(
     return phi
 end
 
+function _hsgp_basis_matrix_at_centre(
+        x,
+        centre;
+        m,
+        L,
+        drop_first::Bool = false,
+    )::Matrix{Float64}
+    values = _hsgp_finite_vector(x, "x")
+    _hsgp_finite_scalar(centre, "centre")
+    boundary = Float64(_hsgp_positive_finite(L, "L"))
+    frequencies = _hsgp_frequencies(m, boundary; drop_first = drop_first)
+    numeric_values = Float64.(values)
+    all(isfinite, numeric_values) || throw(
+        ArgumentError("x must be representable as finite Float64 values"),
+    )
+    numeric_centre = Float64(centre)
+    isfinite(numeric_centre) || throw(
+        ArgumentError("centre must be representable as a finite Float64 value"),
+    )
+    scaled_inputs = numeric_values ./ boundary .- numeric_centre / boundary .+ 1
+    all(isfinite, scaled_inputs) || throw(
+        ArgumentError("x, centre, and L produce non-finite scaled HSGP coordinates"),
+    )
+    phi = inv(sqrt(boundary)) .* sin.(
+        scaled_inputs .* permutedims(frequencies .* boundary),
+    )
+    all(isfinite, phi) || throw(
+        ArgumentError("x, centre, and L produce a non-finite HSGP basis"),
+    )
+    return phi
+end
+
 function _hsgp_sqrt_psd(
         m,
         L;
@@ -220,6 +252,237 @@ function _hsgp_positive_multiplier(phi, sqrt_psd, z)
         ArgumentError("HSGP softplus means must be finite and strictly positive"),
     )
     multiplier = raw ./ raw_mean
+    all(value -> isfinite(value) && value > zero(value), multiplier) || throw(
+        ArgumentError("HSGP multipliers must be finite and strictly positive"),
+    )
+    return multiplier
+end
+
+struct _HSGPPositiveMultiplierState{
+        L,
+        C,
+        O,
+        W,
+        M,
+    }
+    m::Int
+    L::L
+    drop_first::Bool
+    demeaned_basis::Bool
+    training_centre::C
+    basis_offset::O
+    weighted_coefficients::W
+    weighted_coefficient_type::Type
+    weighted_coefficient_size::Tuple{Int, Int}
+    weighted_coefficients_are_matrix::Bool
+    training_raw_mean::M
+end
+
+function _hsgp_weighted_coefficients(sqrt_psd, z, retained_modes)
+    weights = _hsgp_nonnegative_weights(sqrt_psd)
+    length(weights) == retained_modes || throw(
+        ArgumentError("sqrt_psd must have one value for each retained HSGP mode"),
+    )
+
+    if z isa AbstractVector
+        all(value -> value isa Real && !(value isa Bool) && isfinite(value), z) || throw(
+            ArgumentError("z must contain only finite real values"),
+        )
+        length(z) == retained_modes || throw(
+            ArgumentError("sqrt_psd and z must have matching retained-mode counts"),
+        )
+        weighted_coefficients = copy(weights .* z)
+        return (
+            Tuple(weighted_coefficients),
+            eltype(weighted_coefficients),
+            (length(weighted_coefficients), 1),
+            false,
+        )
+    elseif z isa AbstractMatrix
+        size(z, 2) >= 1 || throw(ArgumentError("matrix z must have at least one series column"))
+        all(value -> value isa Real && !(value isa Bool) && isfinite(value), z) || throw(
+            ArgumentError("z must contain only finite real values"),
+        )
+        size(z, 1) == retained_modes || throw(
+            ArgumentError("sqrt_psd and z must have matching retained-mode counts"),
+        )
+        weighted_coefficients = copy(weights .* z)
+        return (
+            Tuple(weighted_coefficients),
+            eltype(weighted_coefficients),
+            size(weighted_coefficients),
+            true,
+        )
+    end
+
+    throw(ArgumentError("z must be a numeric vector or matrix"))
+end
+
+function _hsgp_materialize_weighted_coefficients(state::_HSGPPositiveMultiplierState)
+    weighted_coefficients = collect(
+        state.weighted_coefficient_type,
+        state.weighted_coefficients,
+    )
+    if state.weighted_coefficients_are_matrix
+        return reshape(weighted_coefficients, state.weighted_coefficient_size)
+    end
+    return weighted_coefficients
+end
+
+function _hsgp_materialize_training_raw_mean(state::_HSGPPositiveMultiplierState)
+    training_raw_mean = collect(state.training_raw_mean)
+    if state.weighted_coefficients_are_matrix
+        return reshape(training_raw_mean, 1, state.weighted_coefficient_size[2])
+    end
+    return training_raw_mean
+end
+
+function _hsgp_validate_positive_multiplier_state(state::_HSGPPositiveMultiplierState)
+    retained_modes = length(
+        _hsgp_frequencies(state.m, state.L; drop_first = state.drop_first),
+    )
+    _hsgp_finite_scalar(state.training_centre, "training_centre")
+
+    if state.demeaned_basis
+        state.basis_offset isa Tuple || throw(
+            ArgumentError("demeaned HSGP state must store an immutable basis offset tuple"),
+        )
+        length(state.basis_offset) == retained_modes || throw(
+            ArgumentError("HSGP basis offset must match retained-mode count"),
+        )
+        all(value -> value isa Real && !(value isa Bool) && isfinite(value), state.basis_offset) || throw(
+            ArgumentError("HSGP basis offset must contain only finite real values"),
+        )
+    else
+        isnothing(state.basis_offset) || throw(
+            ArgumentError("non-demeaned HSGP state must not store a basis offset"),
+        )
+    end
+
+    coefficients = state.weighted_coefficients
+    coefficients isa Tuple || throw(
+        ArgumentError("HSGP weighted coefficients must be stored as an immutable tuple"),
+    )
+    state.weighted_coefficient_type <: Real && state.weighted_coefficient_type !== Bool || throw(
+        ArgumentError("HSGP weighted coefficient type must be a real numeric type"),
+    )
+    all(value -> value isa state.weighted_coefficient_type, coefficients) || throw(
+        ArgumentError("HSGP weighted coefficient values must match their stored type"),
+    )
+    retained_size, series_count = state.weighted_coefficient_size
+    retained_size == retained_modes || throw(
+        ArgumentError("HSGP weighted coefficients must match retained-mode count"),
+    )
+    series_count >= 1 || throw(
+        ArgumentError("HSGP weighted coefficients must have at least one series column"),
+    )
+    length(coefficients) == retained_size * series_count || throw(
+        ArgumentError("HSGP weighted coefficient data must match its stored size"),
+    )
+    !state.weighted_coefficients_are_matrix && series_count != 1 && throw(
+        ArgumentError("vector HSGP weighted coefficients must have one series column"),
+    )
+    all(value -> value isa Real && !(value isa Bool) && isfinite(value), coefficients) || throw(
+        ArgumentError("HSGP weighted coefficients must contain only finite real values"),
+    )
+
+    denominator = state.training_raw_mean
+    denominator isa Tuple || throw(
+        ArgumentError("HSGP training raw-softplus means must be stored as an immutable tuple"),
+    )
+    expected_denominator_count = state.weighted_coefficients_are_matrix ? series_count : 1
+    length(denominator) == expected_denominator_count || throw(
+        ArgumentError("HSGP training raw-softplus means must match the coefficient series count"),
+    )
+    all(value -> value isa Real && !(value isa Bool) && isfinite(value) && value > zero(value), denominator) || throw(
+        ArgumentError("HSGP training raw-softplus means must be finite and strictly positive"),
+    )
+    return state
+end
+
+function _fit_hsgp_positive_multiplier_state(
+        x_training,
+        sqrt_psd,
+        z;
+        m,
+        L,
+        drop_first::Bool = false,
+        demeaned_basis::Bool = false,
+    )
+    values = _hsgp_finite_vector(x_training, "x_training")
+    boundary = Float64(_hsgp_positive_finite(L, "L"))
+    retained_modes = length(_hsgp_frequencies(m, boundary; drop_first = drop_first))
+    numeric_values = Float64.(values)
+    all(isfinite, numeric_values) || throw(
+        ArgumentError("x_training must be representable as finite Float64 values"),
+    )
+    training_centre = minimum(numeric_values) / 2 + maximum(numeric_values) / 2
+    phi_raw = _hsgp_basis_matrix_at_centre(
+        values,
+        training_centre;
+        m = m,
+        L = boundary,
+        drop_first = drop_first,
+    )
+    basis_offset = demeaned_basis ? copy(vec(mean(phi_raw; dims = 1))) : nothing
+    phi = isnothing(basis_offset) ? phi_raw : phi_raw .- permutedims(basis_offset)
+    weighted_coefficients, weighted_coefficient_type, weighted_coefficient_size, weighted_coefficients_are_matrix =
+        _hsgp_weighted_coefficients(sqrt_psd, z, retained_modes)
+    weighted_coefficients_local = collect(weighted_coefficient_type, weighted_coefficients)
+    if weighted_coefficients_are_matrix
+        weighted_coefficients_local = reshape(
+            weighted_coefficients_local,
+            weighted_coefficient_size,
+        )
+    end
+    latent = phi * weighted_coefficients_local
+    all(isfinite, latent) || throw(ArgumentError("HSGP latent values must be finite"))
+    raw = _hsgp_stable_softplus.(latent)
+    all(value -> isfinite(value) && value > zero(value), raw) || throw(
+        ArgumentError("HSGP softplus values must be finite and strictly positive"),
+    )
+    training_raw_mean = Tuple(copy(mean(raw; dims = 1)))
+    all(value -> isfinite(value) && value > zero(value), training_raw_mean) || throw(
+        ArgumentError("HSGP softplus means must be finite and strictly positive"),
+    )
+
+    state = _HSGPPositiveMultiplierState(
+        _hsgp_mode_count(m),
+        boundary,
+        drop_first,
+        demeaned_basis,
+        training_centre,
+        isnothing(basis_offset) ? nothing : Tuple(basis_offset),
+        weighted_coefficients,
+        weighted_coefficient_type,
+        weighted_coefficient_size,
+        weighted_coefficients_are_matrix,
+        training_raw_mean,
+    )
+    return _hsgp_validate_positive_multiplier_state(state)
+end
+
+function _hsgp_replay_positive_multiplier(x, state::_HSGPPositiveMultiplierState)
+    _hsgp_validate_positive_multiplier_state(state)
+    phi = _hsgp_basis_matrix_at_centre(
+        x,
+        state.training_centre;
+        m = state.m,
+        L = state.L,
+        drop_first = state.drop_first,
+    )
+    if !isnothing(state.basis_offset) && !isempty(state.basis_offset)
+        phi .-= permutedims(collect(state.basis_offset))
+    end
+    weighted_coefficients = _hsgp_materialize_weighted_coefficients(state)
+    training_raw_mean = _hsgp_materialize_training_raw_mean(state)
+    latent = phi * weighted_coefficients
+    all(isfinite, latent) || throw(ArgumentError("HSGP latent values must be finite"))
+    raw = _hsgp_stable_softplus.(latent)
+    all(value -> isfinite(value) && value > zero(value), raw) || throw(
+        ArgumentError("HSGP softplus values must be finite and strictly positive"),
+    )
+    multiplier = raw ./ training_raw_mean
     all(value -> isfinite(value) && value > zero(value), multiplier) || throw(
         ArgumentError("HSGP multipliers must be finite and strictly positive"),
     )
