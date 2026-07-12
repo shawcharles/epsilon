@@ -426,6 +426,14 @@ function _reject_hsgp_media_calibration(
     return nothing
 end
 
+function _validate_hsgp_media_saturation(config::ModelConfig)
+    isnothing(_time_varying_media_config(config)) && return nothing
+    _transform_type(config.saturation, :saturation) !== :michaelis_menten || throw(
+        ArgumentError("time_varying_media does not support michaelis_menten saturation"),
+    )
+    return nothing
+end
+
 function _resolve_time_series_calibration_input(
         config::ModelConfig,
         calibration_steps::Vector{CalibrationStepConfig},
@@ -495,6 +503,7 @@ Resolve one typed MMM object into a backend-agnostic model specification that
 the later Turing model layer can consume.
 """
 function build_model(model::TimeSeriesMMM)
+    _validate_hsgp_media_saturation(model.config)
     spec = _build_model_spec(model.config, model.data)
     model.built_model = spec
     return spec
@@ -512,6 +521,7 @@ function _build_model_spec(
         control_transform_state = nothing,
     )
     _validate_model_data_alignment(config, data)
+    _validate_hsgp_media_saturation(config)
 
     channel_columns = copy(config.channel_columns)
     control_columns = copy(config.control_columns)
@@ -945,17 +955,9 @@ function _add_panel_transform_prior_dims!(
 end
 
 function fit!(model::TimeSeriesMMM)
-    _reject_hsgp_media_runtime(model.config, "fit!")
+    _validate_hsgp_media_saturation(model.config)
+    _reject_hsgp_media_calibration(model.config, model.calibration)
     return _fit_time_series_mmm!(model)
-end
-
-function _reject_hsgp_media_runtime(config::ModelConfig, operation::AbstractString)
-    isnothing(_time_varying_media_config(config)) && return nothing
-    throw(
-        ArgumentError(
-            "time_varying_media $operation is unavailable until Phase 36 Task 36-03 adds the Turing runtime",
-        ),
-    )
 end
 
 function fit!(model::PanelMMM)

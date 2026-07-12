@@ -270,7 +270,6 @@ epsilon_version() = pkgversion(@__MODULE__)
 Generate prior predictive samples for a typed MMM model.
 """
 function prior_predict(model::TimeSeriesMMM, new_data::MMMData = model.data)
-    _reject_hsgp_media_runtime(model.config, "prior_predict")
     return _prior_predict_time_series_mmm(model, new_data)
 end
 

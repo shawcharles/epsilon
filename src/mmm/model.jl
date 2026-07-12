@@ -23,6 +23,43 @@ const _DEFAULT_TREND_DELTA_PRIOR = EpsilonPrior("Laplace"; mu = 0.0, b = 0.25)
 const _DEFAULT_EVENT_BETA_PRIOR = EpsilonPrior("Normal"; mu = 0.0, sigma = 1.0)
 const _DEFAULT_HOLIDAY_BETA_PRIOR = EpsilonPrior("Normal"; mu = 0.0, sigma = 1.0)
 
+function _turing_hsgp_media_runtime(spec::MMMModelSpec, data::MMMData)
+    state = get(spec.priors, _HSGP_MEDIA_SPEC_STATE_KEY, nothing)
+    isnothing(state) && return (
+        enabled = false,
+        state = nothing,
+        current_indices = nothing,
+        mode_count = 0,
+        eta_prior = nothing,
+        lengthscale_prior = nothing,
+    )
+
+    state isa _HSGPMediaSpecState || throw(
+        ArgumentError("$(_HSGP_MEDIA_SPEC_STATE_KEY) must contain _HSGPMediaSpecState"),
+    )
+    _transform_type(spec.saturation, :saturation) !== :michaelis_menten || throw(
+        ArgumentError("time_varying_media does not support michaelis_menten saturation"),
+    )
+    _validate_hsgp_media_spec_state(state)
+    data.dates isa AbstractVector && all(date -> date isa Date, data.dates) || throw(
+        ArgumentError("time_varying_media requires MMMData.dates to contain only Date values"),
+    )
+    current_dates = Date[date for date in data.dates]
+    current_indices = _infer_hsgp_time_index(
+        current_dates,
+        Date[state.training.training_origin];
+        time_resolution = state.training.time_resolution,
+    )
+    return (
+        enabled = true,
+        state,
+        current_indices,
+        mode_count = state.config.m,
+        eta_prior = _instantiate_hsgp_media_prior(state.config.eta_prior),
+        lengthscale_prior = _instantiate_hsgp_media_prior(state.config.lengthscale_prior),
+    )
+end
+
 @model function _time_series_mmm_model(
         target, channels, controls, events, holidays, runtime;
         lift_test_payload = nothing,
@@ -33,6 +70,14 @@ const _DEFAULT_HOLIDAY_BETA_PRIOR = EpsilonPrior("Normal"; mu = 0.0, sigma = 1.0
     beta_media = fill(one(eltype(channels)), runtime.nchannels)
     if runtime.uses_external_media_beta
         beta_media ~ Turing.filldist(runtime.media_beta_prior, runtime.nchannels)
+    end
+    hsgp_media_eta = nothing
+    hsgp_media_lengthscale = nothing
+    hsgp_media_z = nothing
+    if runtime.hsgp_media_enabled
+        hsgp_media_eta ~ runtime.hsgp_media_eta_prior
+        hsgp_media_lengthscale ~ runtime.hsgp_media_lengthscale_prior
+        hsgp_media_z ~ Turing.filldist(Normal(), runtime.hsgp_media_mode_count)
     end
 
     transformed_media = channels
@@ -104,7 +149,29 @@ const _DEFAULT_HOLIDAY_BETA_PRIOR = EpsilonPrior("Normal"; mu = 0.0, sigma = 1.0
         Turing.@addlogprob! cost_per_target_logdensity
     end
 
-    media_effect = _media_effect(transformed_media, beta_media)
+    media_effect = if runtime.hsgp_media_enabled
+        baseline_channel = transformed_media .* reshape(beta_media, 1, :)
+        multiplier = try
+            _hsgp_media_multiplier(
+                runtime.hsgp_media_state,
+                runtime.hsgp_media_current_indices,
+                hsgp_media_eta,
+                hsgp_media_lengthscale,
+                hsgp_media_z,
+            )
+        catch err
+            err isa ArgumentError || rethrow()
+            nothing
+        end
+        if isnothing(multiplier)
+            Turing.@addlogprob! -Inf
+            zero.(vec(sum(baseline_channel; dims = 2)))
+        else
+            vec(sum(baseline_channel .* reshape(multiplier, :, 1); dims = 2))
+        end
+    else
+        _media_effect(transformed_media, beta_media)
+    end
     control_effect = zero.(media_effect)
     event_effect = zero.(media_effect)
     holiday_effect = zero.(media_effect)
@@ -203,15 +270,21 @@ end
 
 function _fit_time_series_mmm!(model::TimeSeriesMMM)
     try
-        runtime, controls = _turing_runtime(model.config, model.data)
+        spec = _build_model_spec(model.config, model.data)
+        runtime, controls = _turing_runtime(spec, model.data)
         spec = _build_model_spec(
-            model.config,
+            spec,
+            model.data;
+            control_transform_state = runtime.control_transform_state,
+        )
+        runtime, controls = _turing_runtime(
+            spec,
             model.data;
             control_transform_state = runtime.control_transform_state,
         )
         model.built_model = spec
-        events = _event_design_matrix(model.config.events, model.data)
-        holidays = _holiday_design_matrix(model.config.holidays, model.data)
+        events = _event_design_matrix(spec.events, model.data)
+        holidays = _holiday_design_matrix(spec.holidays, model.data)
         scaled_channels = _scale_channels(model.data.channels, spec.channel_scale)
         scaled_target = model.data.target ./ spec.target_scale
 
@@ -361,6 +434,9 @@ function _prior_predict_time_series_mmm(
 end
 
 function _turing_runtime(config::ModelConfig, data::MMMData; control_transform_state = nothing)
+    isnothing(_time_varying_media_config(config)) || throw(
+        ArgumentError("time_varying_media Turing runtime requires MMMModelSpec authority"),
+    )
     adstock_type = _transform_type(config.adstock, :adstock)
     saturation_type = _transform_type(config.saturation, :saturation)
     seasonality_type = _seasonality_type(config.seasonality)
@@ -449,6 +525,12 @@ function _turing_runtime(config::ModelConfig, data::MMMData; control_transform_s
             holiday_columns = holiday_columns,
             controls_transform = controls_transform,
             control_transform_state = resolved_control_transform_state,
+            hsgp_media_enabled = false,
+            hsgp_media_state = nothing,
+            hsgp_media_current_indices = nothing,
+            hsgp_media_mode_count = 0,
+            hsgp_media_eta_prior = nothing,
+            hsgp_media_lengthscale_prior = nothing,
         ), controls_matrix
 end
 
@@ -491,6 +573,7 @@ function _turing_runtime(spec::MMMModelSpec, data::MMMData; control_transform_st
         data.controls;
         control_transform_state,
     )
+    hsgp_media = _turing_hsgp_media_runtime(spec, data)
 
     return (
             nchannels = size(data.channels, 2),
@@ -543,6 +626,12 @@ function _turing_runtime(spec::MMMModelSpec, data::MMMData; control_transform_st
             holiday_columns = holiday_columns,
             controls_transform = controls_transform,
             control_transform_state = resolved_control_transform_state,
+            hsgp_media_enabled = hsgp_media.enabled,
+            hsgp_media_state = hsgp_media.state,
+            hsgp_media_current_indices = hsgp_media.current_indices,
+            hsgp_media_mode_count = hsgp_media.mode_count,
+            hsgp_media_eta_prior = hsgp_media.eta_prior,
+            hsgp_media_lengthscale_prior = hsgp_media.lengthscale_prior,
         ), controls_matrix
 end
 

@@ -1,8 +1,11 @@
 using Dates
 using Distributions
 using Epsilon
+import MCMCChains
+using Random
 using Statistics
 using Test
+import Turing
 
 const _FORWARDDIFF_AVAILABLE = !isnothing(Base.find_package("ForwardDiff"))
 _FORWARDDIFF_AVAILABLE && @eval using ForwardDiff
@@ -193,8 +196,6 @@ end
         SamplerConfig(draws = 1, tune = 0, chains = 1, cores = 1),
         _time_varying_media_test_data(),
     )
-    @test_throws ArgumentError fit!(model)
-    @test_throws ArgumentError prior_predict(model)
     @test_throws ArgumentError approximate_fit!(model)
 
     @test_throws ArgumentError TimeSeriesMMM(
@@ -211,6 +212,227 @@ end
         time_varying_media = config,
         saturation = Dict("type" => "michaelis_menten"),
     )
+
+    hsgp_spec = build_model(model)
+    hsgp_spec.saturation["type"] = "michaelis_menten"
+    @test_throws ArgumentError Epsilon._turing_runtime(hsgp_spec, model.data)
+
+    model.config.saturation["type"] = "michaelis_menten"
+    @test_throws ArgumentError build_model(model)
+    @test_throws ArgumentError fit!(model)
+
+    lift_test_data = LiftTestCalibrationRows(
+        channel = ["tv"],
+        x = [1.0],
+        delta_x = [0.5],
+        delta_y = [0.3],
+        sigma = [0.1],
+    )
+    calibrated_model = TimeSeriesMMM(
+        _time_varying_media_test_config(),
+        SamplerConfig(draws = 1, tune = 0, chains = 1, cores = 1),
+        _time_varying_media_test_data();
+        calibration_steps = [CalibrationStepConfig(method = "add_lift_test_measurements")],
+        lift_test_data,
+    )
+    calibrated_model.config.extras["time_varying_media"] = config
+    @test_throws ArgumentError fit!(calibrated_model)
+end
+
+@testset "time-varying media Turing placement and retained-grid replay" begin
+    time_varying_media = TimeVaryingMediaConfig(
+        m = 2,
+        L = 6.0,
+        time_resolution = 7,
+        covariance = :expquad,
+        eta_prior = EpsilonPrior("Exponential"; lam = 1.5),
+        lengthscale_prior = EpsilonPrior("LogNormal"; mu = 0.0, sigma = 0.4),
+    )
+    data = _time_varying_media_test_data()
+    model = TimeSeriesMMM(
+        _time_varying_media_test_config(; time_varying_media),
+        SamplerConfig(draws = 2, tune = 0, chains = 1, cores = 1, random_seed = 12, progressbar = false),
+        data,
+    )
+    spec = build_model(model)
+    runtime, controls = Epsilon._turing_runtime(spec, data)
+    state = spec.priors["_hsgp_media_spec_state"]
+    scaled_target = data.target ./ spec.target_scale
+    scaled_channels = Epsilon._scale_channels(data.channels, spec.channel_scale)
+    turing_model = Epsilon._time_series_mmm_model(
+        scaled_target,
+        scaled_channels,
+        controls,
+        nothing,
+        nothing,
+        runtime,
+    )
+    fixed_parameters = (
+        intercept = 0.2,
+        sigma = 0.5,
+        beta_media = [0.3],
+        hsgp_media_eta = 1.1,
+        hsgp_media_lengthscale = 2.2,
+        hsgp_media_z = [-0.4, 0.2],
+    )
+    conditioned = Turing.DynamicPPL.condition(turing_model, fixed_parameters)
+    returned, varinfo = Turing.DynamicPPL.evaluate!!(
+        conditioned,
+        Turing.DynamicPPL.VarInfo(conditioned),
+    )
+
+    multiplier = Epsilon._hsgp_media_multiplier(
+        state,
+        runtime.hsgp_media_current_indices,
+        fixed_parameters.hsgp_media_eta,
+        fixed_parameters.hsgp_media_lengthscale,
+        fixed_parameters.hsgp_media_z,
+    )
+    baseline_channel = scaled_channels .* reshape(fixed_parameters.beta_media, 1, :)
+    expected_media_effect = vec(
+        sum(baseline_channel .* reshape(multiplier, :, 1); dims = 2),
+    )
+    @test returned.media_effect ≈ expected_media_effect atol = 1.0e-12 rtol = 1.0e-12
+
+    expected_mu = fixed_parameters.intercept .+ expected_media_effect
+    expected_logjoint =
+        logpdf(runtime.intercept_prior, fixed_parameters.intercept) +
+        logpdf(runtime.sigma_prior, fixed_parameters.sigma) +
+        logpdf(runtime.media_beta_prior, only(fixed_parameters.beta_media)) +
+        logpdf(runtime.hsgp_media_eta_prior, fixed_parameters.hsgp_media_eta) +
+        logpdf(runtime.hsgp_media_lengthscale_prior, fixed_parameters.hsgp_media_lengthscale) +
+        sum(logpdf.(Normal(), fixed_parameters.hsgp_media_z)) +
+        sum(logpdf.(Normal.(expected_mu, fixed_parameters.sigma), scaled_target))
+    @test Turing.DynamicPPL.getlogjoint(varinfo) ≈ expected_logjoint atol = 1.0e-10 rtol = 1.0e-10
+
+    new_data = _time_varying_media_test_data(
+        dates = Date[Date(2024, 1, 22), Date(2024, 1, 29)],
+    )
+    new_runtime, new_controls = Epsilon._turing_runtime(spec, new_data)
+    @test new_runtime.hsgp_media_current_indices == Int[3, 4]
+    new_model = Epsilon._time_series_mmm_model(
+        Vector{Union{Missing, Float64}}(missing, nobs(new_data)),
+        Epsilon._scale_channels(new_data.channels, spec.channel_scale),
+        new_controls,
+        nothing,
+        nothing,
+        new_runtime,
+    )
+    new_conditioned = Turing.DynamicPPL.condition(new_model, fixed_parameters)
+    new_returned, _ = Turing.DynamicPPL.evaluate!!(
+        new_conditioned,
+        Turing.DynamicPPL.VarInfo(new_conditioned),
+    )
+    expected_new_multiplier = Epsilon._hsgp_media_multiplier(
+        state,
+        Int[3, 4],
+        fixed_parameters.hsgp_media_eta,
+        fixed_parameters.hsgp_media_lengthscale,
+        fixed_parameters.hsgp_media_z,
+    )
+    expected_new_media_effect = vec(
+        sum(
+            Epsilon._scale_channels(new_data.channels, spec.channel_scale) .* reshape(fixed_parameters.beta_media, 1, :) .* reshape(expected_new_multiplier, :, 1);
+            dims = 2,
+        ),
+    )
+    @test new_returned.media_effect ≈ expected_new_media_effect atol = 1.0e-12 rtol = 1.0e-12
+    @test new_returned.media_effect != returned.media_effect[1:length(new_returned.media_effect)]
+
+    function fixed_hsgp_chain(parameters)
+        values = Turing.DynamicPPL.VarNamedTuple(
+            (
+                Turing.DynamicPPL.@varname(intercept) => parameters.intercept,
+                Turing.DynamicPPL.@varname(sigma) => parameters.sigma,
+                Turing.DynamicPPL.@varname(beta_media) => parameters.beta_media,
+                Turing.DynamicPPL.@varname(hsgp_media_eta) => parameters.hsgp_media_eta,
+                Turing.DynamicPPL.@varname(hsgp_media_lengthscale) => parameters.hsgp_media_lengthscale,
+                Turing.DynamicPPL.@varname(hsgp_media_z) => parameters.hsgp_media_z,
+            ),
+        )
+        return Turing.AbstractMCMC.from_samples(MCMCChains.Chains, reshape([values], 1, 1))
+    end
+
+    training_predictive_model = Epsilon._time_series_mmm_model(
+        Vector{Union{Missing, Float64}}(missing, nobs(data)),
+        scaled_channels,
+        controls,
+        nothing,
+        nothing,
+        runtime,
+    )
+    changed_eta_parameters = merge(
+        fixed_parameters,
+        (; hsgp_media_eta = 0.6),
+    )
+    changed_lengthscale_parameters = merge(
+        fixed_parameters,
+        (; hsgp_media_lengthscale = 1.1),
+    )
+    changed_z_parameters = merge(
+        fixed_parameters,
+        (; hsgp_media_z = [0.6, -0.1]),
+    )
+    fixed_chain = fixed_hsgp_chain(fixed_parameters)
+    changed_eta_chain = fixed_hsgp_chain(changed_eta_parameters)
+    changed_lengthscale_chain = fixed_hsgp_chain(changed_lengthscale_parameters)
+    changed_z_chain = fixed_hsgp_chain(changed_z_parameters)
+
+    # With a fixed RNG stream, any target difference must come from the HSGP
+    # draw consumed by Turing.predict rather than posterior-predictive noise.
+    Random.seed!(91)
+    training_predictive = Turing.predict(training_predictive_model, fixed_chain)
+    Random.seed!(91)
+    changed_eta_training_predictive = Turing.predict(training_predictive_model, changed_eta_chain)
+    Random.seed!(91)
+    changed_lengthscale_training_predictive = Turing.predict(
+        training_predictive_model,
+        changed_lengthscale_chain,
+    )
+    Random.seed!(91)
+    changed_z_training_predictive = Turing.predict(training_predictive_model, changed_z_chain)
+    @test size(Array(training_predictive), 2) == nobs(data)
+    @test Array(training_predictive) != Array(changed_eta_training_predictive)
+    @test Array(training_predictive) != Array(changed_lengthscale_training_predictive)
+    @test Array(training_predictive) != Array(changed_z_training_predictive)
+
+    Random.seed!(91)
+    new_predictive = Turing.predict(new_model, fixed_chain)
+    Random.seed!(91)
+    changed_eta_new_predictive = Turing.predict(new_model, changed_eta_chain)
+    Random.seed!(91)
+    changed_lengthscale_new_predictive = Turing.predict(new_model, changed_lengthscale_chain)
+    Random.seed!(91)
+    changed_z_new_predictive = Turing.predict(new_model, changed_z_chain)
+    @test size(Array(new_predictive), 2) == nobs(new_data)
+    @test Array(new_predictive) != Array(changed_eta_new_predictive)
+    @test Array(new_predictive) != Array(changed_lengthscale_new_predictive)
+    @test Array(new_predictive) != Array(changed_z_new_predictive)
+end
+
+@testset "time-varying media NUTS wiring" begin
+    time_varying_media = TimeVaryingMediaConfig(
+        m = 2,
+        L = 6.0,
+        time_resolution = 7,
+        eta_prior = EpsilonPrior("Exponential"; lam = 1.0),
+        lengthscale_prior = EpsilonPrior("HalfNormal"; sigma = 2.0),
+    )
+    model = TimeSeriesMMM(
+        _time_varying_media_test_config(; time_varying_media),
+        SamplerConfig(draws = 2, tune = 1, chains = 1, cores = 1, random_seed = 24, progressbar = false, compute_convergence_checks = false),
+        _time_varying_media_test_data(),
+    )
+
+    @test !isnothing(prior_predict(model))
+    fit!(model)
+
+    chain_parameters = String.(MCMCChains.names(model.fit_state.artifact.chain, :parameters))
+    @test "hsgp_media_eta" in chain_parameters
+    @test "hsgp_media_lengthscale" in chain_parameters
+    @test all("hsgp_media_z[$index]" in chain_parameters for index in 1:2)
+    @test !isnothing(prior_predict(model))
+    @test !isnothing(predict(model))
 end
 
 @testset "time-varying media Abacus placement fixture" begin

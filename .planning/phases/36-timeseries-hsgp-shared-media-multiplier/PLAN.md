@@ -2,8 +2,8 @@
 
 ## Status
 
-Detailed implementation plan independently reviewed and builder-ready on
-2026-07-12. No implementation has begun.
+Tasks 36-01 through 36-03 are landed and independently reviewed on 2026-07-12.
+Task 36-04 remains before Phase 36 closure.
 
 ## Objective
 
@@ -285,6 +285,13 @@ has been introduced.
   into the model path.
 
 ### Task 36-03: Turing, Fit, And Prediction Threading
+
+**Status:** Landed. The TimeSeries MCMC path now resolves HSGP runtime state
+from the immutable spec, declares the frozen non-centred latent variables, and
+threads them through fit and prediction. Focused evidence covers retained-grid
+new-date replay, fixed-chain `Turing.predict` consumption of eta, lengthscale,
+and z, mutable-config boundary hardening, and a small NUTS wiring smoke. This
+does not close serialisation, postmodel, documentation, or the phase checkpoint.
 
 - Refactor fit to construct the spec before runtime resolution and use the spec
   as runtime authority.
