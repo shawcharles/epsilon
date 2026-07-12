@@ -740,6 +740,70 @@ def _build_hsgp_recommendation_cases():
     ]
 
 
+def _build_hsgp_positive_multiplier_cases():
+    return [
+        {
+            "name": "expquad_vector",
+            "x": np.array([0.0, 1.0, 10.0], dtype=float),
+            "m": 4,
+            "L": 12.0,
+            "covariance": "expquad",
+            "eta": 1.7,
+            "lengthscale": 2.5,
+            "drop_first": False,
+            "z": np.array([-1.0, 0.25, 0.5, -0.75], dtype=float),
+        },
+        {
+            "name": "matern32_matrix",
+            "x": np.array([-3.0, 0.0, 2.0, 7.0], dtype=float),
+            "m": 5,
+            "L": 10.0,
+            "covariance": "matern32",
+            "eta": 0.8,
+            "lengthscale": 1.4,
+            "drop_first": True,
+            "z": np.array(
+                [[-0.75, 0.5], [0.25, -1.0], [0.5, 0.75], [-0.25, 0.125]],
+                dtype=float,
+            ),
+        },
+        {
+            "name": "zero_retained_modes_matrix",
+            "x": np.array([0.0, 1.0, 10.0], dtype=float),
+            "m": 1,
+            "L": 12.0,
+            "covariance": "expquad",
+            "eta": 1.0,
+            "lengthscale": 2.5,
+            "drop_first": True,
+            "z": np.empty((0, 2), dtype=float),
+        },
+        {
+            "name": "all_softplus_underflow",
+            "phi": np.ones((3, 1), dtype=float),
+            "sqrt_psd": np.ones(1, dtype=float),
+            "z": np.array([-1000.0], dtype=float),
+            "expected_error": "nonpositive_raw_mean",
+        },
+        {
+            "name": "partial_softplus_underflow",
+            "phi": np.array([[1.0], [0.0]], dtype=float),
+            "sqrt_psd": np.ones(1, dtype=float),
+            "z": np.array([-1000.0], dtype=float),
+            "expected_error": "nonpositive_raw_entry",
+        },
+    ]
+
+
+def _build_hsgp_softplus_cases():
+    return [
+        {
+            "name": "pytensor_thresholds_and_open_intervals",
+            "values": np.array([-38.0, -37.0, 0.0, 18.0, 20.0, 33.3, 40.0], dtype=float),
+        },
+    ]
+
+
 def _build_calibration_alignment_cases():
     return [
         {
@@ -2165,6 +2229,112 @@ def _hsgp_linearized_fixture_body() -> str:
     return "\n".join(lines)
 
 
+def _hsgp_linearized_arrays(case, covariance_classes):
+    covariance = case["covariance"]
+    # PyMC 5.28 fails while compiling the valid m=1/drop_first=true
+    # zero-column graph. Obtain its one-mode primitive output and apply the
+    # same post-construction first-mode slice to the concrete arrays.
+    evaluate_drop_first = case["drop_first"] and case["m"] > 1
+    covariance_function = case["eta"] ** 2 * covariance_classes[covariance](
+        input_dim=1,
+        ls=case["lengthscale"],
+    )
+    gp = pm.gp.HSGP(
+        m=[case["m"]],
+        L=[case["L"]],
+        cov_func=covariance_function,
+        drop_first=evaluate_drop_first,
+    )
+    phi, sqrt_psd = gp.prior_linearized(case["x"][:, None])
+    phi_values = np.asarray(phi.eval(), dtype=float)
+    sqrt_psd_values = np.asarray(sqrt_psd.eval(), dtype=float)
+    if case["drop_first"] and not evaluate_drop_first:
+        phi_values = phi_values[:, 1:]
+        sqrt_psd_values = sqrt_psd_values[1:]
+    return phi_values, sqrt_psd_values
+
+
+def _hsgp_positive_multiplier_fixture_body() -> str:
+    covariance_classes = {
+        "expquad": pm.gp.cov.ExpQuad,
+        "matern32": pm.gp.cov.Matern32,
+        "matern52": pm.gp.cov.Matern52,
+    }
+    projection_rows: list[str] = []
+    for case in _build_hsgp_positive_multiplier_cases():
+        if "phi" in case:
+            phi_values = np.asarray(case["phi"], dtype=float)
+            sqrt_psd_values = np.asarray(case["sqrt_psd"], dtype=float)
+        else:
+            phi_values, sqrt_psd_values = _hsgp_linearized_arrays(
+                case,
+                covariance_classes,
+            )
+        z_values = np.asarray(case["z"], dtype=float)
+        if z_values.ndim == 1:
+            latent_values = phi_values @ (sqrt_psd_values * z_values)
+            raw_values = np.asarray(pt.softplus(latent_values).eval(), dtype=float)
+            raw_mean = raw_values.mean()
+        else:
+            latent_values = phi_values @ (sqrt_psd_values[:, None] * z_values)
+            raw_values = np.asarray(pt.softplus(latent_values).eval(), dtype=float)
+            raw_mean = raw_values.mean(axis=0, keepdims=True)
+
+        expected_error = case.get("expected_error")
+        if expected_error is None:
+            multiplier_literal = _julia_array_literal(raw_values / raw_mean)
+            error_literal = "nothing"
+        else:
+            if expected_error == "nonpositive_raw_mean" and not np.all(raw_values == 0.0):
+                raise RuntimeError(
+                    f"Expected all PyTensor softplus values to underflow for {case['name']!r}"
+                )
+            if expected_error == "nonpositive_raw_entry" and not (
+                np.any(raw_values == 0.0) and np.any(raw_values > 0.0)
+            ):
+                raise RuntimeError(
+                    f"Expected partial PyTensor softplus underflow for {case['name']!r}"
+                )
+            multiplier_literal = "nothing"
+            error_literal = f":{expected_error}"
+
+        projection_rows.extend(
+            [
+                "        (",
+                f'            name = "{case["name"]}",',
+                f"            phi = {_julia_array_literal(phi_values)},",
+                f"            sqrt_psd = {_julia_array_literal(sqrt_psd_values)},",
+                f"            z = {_julia_array_literal(z_values)},",
+                f"            expected_latent = {_julia_array_literal(latent_values)},",
+                f"            expected_softplus = {_julia_array_literal(raw_values)},",
+                f"            expected_multiplier = {multiplier_literal},",
+                f"            expected_error = {error_literal},",
+                "        ),",
+            ]
+        )
+
+    softplus_rows: list[str] = []
+    for case in _build_hsgp_softplus_cases():
+        values = np.asarray(case["values"], dtype=float)
+        expected = np.asarray(pt.softplus(values).eval(), dtype=float)
+        softplus_rows.extend(
+            [
+                "        (",
+                f'            name = "{case["name"]}",',
+                f"            values = {_julia_array_literal(values)},",
+                f"            expected = {_julia_array_literal(expected)},",
+                "        ),",
+            ]
+        )
+
+    lines = ["(", "    projection_cases = ["]
+    lines.extend(projection_rows)
+    lines.extend(["    ],", "    softplus_cases = ["])
+    lines.extend(softplus_rows)
+    lines.extend(["    ],", ")"])
+    return "\n".join(lines)
+
+
 def _calibration_alignment_rows():
     rows: list[str] = []
     for case in _build_calibration_alignment_cases():
@@ -2538,6 +2708,11 @@ def main() -> None:
         help="Destination Julia HSGP linearised-geometry fixture file.",
     )
     parser.add_argument(
+        "--hsgp-positive-multiplier-output",
+        default="test/fixtures/abacus/hsgp_positive_multiplier_cases.jl",
+        help="Destination Julia HSGP positive-multiplier fixture file.",
+    )
+    parser.add_argument(
         "--timeseries-output",
         default="test/fixtures/abacus/timeseries/config_data.jl",
         help="Destination Julia Abacus timeseries config/data fixture file.",
@@ -2620,6 +2795,7 @@ def main() -> None:
     global approx_hsgp_hyperparams
     global create_m_and_L_recommendations
     global infer_time_index
+    global pt
     global tanh_saturation
     global weibull_adstock
     global pm
@@ -2653,6 +2829,7 @@ def main() -> None:
     )
     import pymc as pm
     import pandas as pd
+    import pytensor.tensor as pt
     from abacus.mmm.calibration.alignment import exact_row_indices, UnalignedValuesError
     from abacus.mmm.calibration.scaling import (
         scale_channel_lift_measurements,
@@ -2740,6 +2917,13 @@ def main() -> None:
         "ABACUS_HSGP_LINEARIZED_FIXTURES",
         _hsgp_linearized_fixture_body(),
         Path(args.hsgp_linearized_output),
+        abacus_root=abacus_root,
+        abacus_revision=abacus_revision,
+    )
+    _write_single_fixture_file(
+        "ABACUS_HSGP_POSITIVE_MULTIPLIER_FIXTURES",
+        _hsgp_positive_multiplier_fixture_body(),
+        Path(args.hsgp_positive_multiplier_output),
         abacus_root=abacus_root,
         abacus_revision=abacus_revision,
     )

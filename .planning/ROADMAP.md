@@ -330,6 +330,11 @@ Current repository state on 2026-05-18:
 - [x] **Phase 32: HSGP Linearised Geometry Foundation** - Add private,
       fixture-backed HSGP basis/PSD geometry and recommendation primitives
       without graph construction, configuration acceptance, or model support.
+- [x] **Phase 33: HSGP Latent Projection And Positive Multiplier Semantics** -
+      Add private, fixture-backed helpers for the HSGP latent projection,
+      numerically stable softplus, and mean-one positive multiplier
+      normalisation matching Abacus `SoftPlusHSGP`, without Turing coefficient
+      priors, configuration acceptance, or model support.
 
 ## Phase Details
 

@@ -8,7 +8,9 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 32 HSGP linearised geometry is complete. The v1
+**Current focus:** Phase 33 HSGP latent projection and positive multiplier
+semantics are complete. Select the next separately planned bounded core-parity
+slice. The v1
 release boundary remains MCMC/Turing-only for supported inference, while
 `VariationalConfig` and `approximate_fit!` remain scaffolded pre-v1 review
 exports. Variational inference, dashboard/UI parity, and AI advisor behaviour
@@ -16,13 +18,22 @@ remain explicitly out of scope for v1.
 
 ## Current Position
 
-**Current Phase:** 32
-**Current Phase Name:** HSGP Linearised Geometry Foundation
-**Total Phases:** 32
-**Current Plan:** Phase 32 complete; choose the next separately planned HSGP
+**Current Phase:** 33
+**Current Phase Name:** HSGP Latent Projection And Positive Multiplier Semantics
+**Total Phases:** 33
+**Current Plan:** Phase 33 complete; choose the next separately planned HSGP
 or other bounded core-parity slice
 **Total Plans in Phase:** 3 tasks
-**Status:** Phase 32 is complete at
+**Status:** Phase 33 is complete at
+`.planning/phases/33-hsgp-softplus-positive-multiplier/PLAN.md`. It adds only
+private, fixture-backed latent projection, PyTensor-thresholded softplus, and
+time-axis mean-one positive multiplier helpers for supplied HSGP coefficient
+values. It explicitly excludes priors, graph construction, Turing, config
+acceptance, public exports, prediction, replay, panels, and TVP behaviour;
+the HSGP/time-varying ledger row remains `missing`. The implementation was
+independently reviewed; focused verification passed `46 / 46`, and the one
+phase-closing `make test` shared-namespace checkpoint passed `8,620 / 8,620`
+in `20m24.2s`. Phase 32 is complete at
 `.planning/phases/32-hsgp-linearized-geometry-foundation/PLAN.md`. It confines
 the slice to private deterministic HSGP basis/PSD geometry and recommendation
 helpers, fixture-backed against Abacus/PyMC. It explicitly excludes graph

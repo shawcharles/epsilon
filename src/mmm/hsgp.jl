@@ -60,6 +60,26 @@ function _hsgp_finite_vector(x, name::AbstractString)
     return x
 end
 
+function _hsgp_finite_matrix(x, name::AbstractString)
+    x isa AbstractMatrix || throw(ArgumentError("$name must be a two-dimensional numeric matrix"))
+    size(x, 1) >= 1 || throw(ArgumentError("$name must have at least one row"))
+    all(value -> value isa Real && !(value isa Bool) && isfinite(value), x) || throw(
+        ArgumentError("$name must contain only finite real values"),
+    )
+    return x
+end
+
+function _hsgp_nonnegative_weights(sqrt_psd)
+    sqrt_psd isa AbstractVector || throw(ArgumentError("sqrt_psd must be a numeric vector"))
+    all(value -> value isa Real && !(value isa Bool) && isfinite(value), sqrt_psd) || throw(
+        ArgumentError("sqrt_psd must contain only finite real values"),
+    )
+    all(value -> value >= zero(value), sqrt_psd) || throw(
+        ArgumentError("sqrt_psd must contain only non-negative values"),
+    )
+    return sqrt_psd
+end
+
 function _hsgp_covariance_constants(covariance)
     covariance === :expquad && return (3.2, 1.75)
     covariance === :matern52 && return (4.1, 2.65)
@@ -146,6 +166,64 @@ function _hsgp_sqrt_psd(
     end
     all(isfinite, weights) || throw(ArgumentError("HSGP PSD weights must be finite"))
     return weights
+end
+
+function _hsgp_latent(phi, sqrt_psd, z)
+    basis = _hsgp_finite_matrix(phi, "phi")
+    weights = _hsgp_nonnegative_weights(sqrt_psd)
+    retained_modes = size(basis, 2)
+    length(weights) == retained_modes || throw(
+        ArgumentError("phi and sqrt_psd must have matching retained-mode counts"),
+    )
+
+    if z isa AbstractVector
+        all(value -> value isa Real && !(value isa Bool) && isfinite(value), z) || throw(
+            ArgumentError("z must contain only finite real values"),
+        )
+        length(z) == retained_modes || throw(
+            ArgumentError("sqrt_psd and z must have matching retained-mode counts"),
+        )
+        latent = basis * (weights .* z)
+    elseif z isa AbstractMatrix
+        size(z, 2) >= 1 || throw(ArgumentError("matrix z must have at least one series column"))
+        all(value -> value isa Real && !(value isa Bool) && isfinite(value), z) || throw(
+            ArgumentError("z must contain only finite real values"),
+        )
+        size(z, 1) == retained_modes || throw(
+            ArgumentError("sqrt_psd and z must have matching retained-mode counts"),
+        )
+        latent = basis * (weights .* z)
+    else
+        throw(ArgumentError("z must be a numeric vector or matrix"))
+    end
+
+    all(isfinite, latent) || throw(ArgumentError("HSGP latent values must be finite"))
+    return latent
+end
+
+function _hsgp_stable_softplus(value)
+    _hsgp_finite_scalar(value, "latent value")
+    value < -37 && return exp(value)
+    value < 18 && return log1p(exp(value))
+    value < 33.3 && return value + exp(-value)
+    return value
+end
+
+function _hsgp_positive_multiplier(phi, sqrt_psd, z)
+    latent = _hsgp_latent(phi, sqrt_psd, z)
+    raw = _hsgp_stable_softplus.(latent)
+    all(value -> isfinite(value) && value > zero(value), raw) || throw(
+        ArgumentError("HSGP softplus values must be finite and strictly positive"),
+    )
+    raw_mean = mean(raw; dims = 1)
+    all(value -> isfinite(value) && value > zero(value), raw_mean) || throw(
+        ArgumentError("HSGP softplus means must be finite and strictly positive"),
+    )
+    multiplier = raw ./ raw_mean
+    all(value -> isfinite(value) && value > zero(value), multiplier) || throw(
+        ArgumentError("HSGP multipliers must be finite and strictly positive"),
+    )
+    return multiplier
 end
 
 function _approx_hsgp_hyperparams(

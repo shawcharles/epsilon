@@ -7,6 +7,11 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Added
 
+- Added private, fixture-backed HSGP latent projection, PyTensor-thresholded
+  stable softplus, and time-axis mean-one positive multiplier helpers for
+  supplied coefficient values. This does not add HSGP configuration, graph
+  construction, Turing inference, time-varying effects, public exports,
+  prediction, replay, or panel support.
 - Added private, fixture-backed one-dimensional HSGP numerical foundations:
   Laplacian frequencies, fixed training bases, ExpQuad/Matern square-root PSD
   weights, and Abacus-compatible basis recommendations. This does not add HSGP

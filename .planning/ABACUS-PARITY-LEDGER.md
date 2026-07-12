@@ -681,6 +681,18 @@ As of 2026-05-10:
     rejected, and no graph, Turing, TVP, prediction, replay, or panel behaviour
     is implemented; the ledger row remains `missing`. Final verification passed
     with `make test`: `8,574 / 8,574` tests in `20m59.8s`.
+43. Phase 33 adds only the deterministic numerical composition used by
+    Abacus `SoftPlusHSGP` after its coefficients are supplied: latent
+    projection `phi * (sqrt_psd .* z)`, the local PyTensor thresholded
+    softplus branches, and time-axis mean-one positive normalisation. It is
+    fixture-backed against PyMC HSGP geometry and PyTensor softplus for vector
+    and matrix coefficients, including exact zero-retained-mode ones and
+    explicit all/partial Float64-underflow rejection before division. The
+    helpers remain private; HSGP configuration stays rejected, and no prior,
+    graph, Turing, TVP, prediction, replay, or panel behaviour is implemented.
+    The HSGP/time-varying ledger row therefore remains `missing`. Focused
+    verification passed `46 / 46`; the phase-closing `make test` checkpoint
+    passed `8,620 / 8,620` in `20m24.2s`.
 
 
 ## Plan 14-05 Parity Audit

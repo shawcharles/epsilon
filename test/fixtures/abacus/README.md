@@ -128,3 +128,9 @@ by `test/model/hsgp_linearized.jl` and covers retained-mode basis matrices,
 square-root PSD weights, centring, first-mode removal, basis demeaning, and
 recommendation heuristics. It is private numerical foundation evidence only;
 it does not establish HSGP or time-varying parameter support.
+
+Phase 33 adds `hsgp_positive_multiplier_cases.jl`: deterministic latent
+projection, PyTensor-thresholded softplus, and time-axis mean-one positive
+multiplier evidence for supplied coefficient values. It includes all- and
+partial-underflow rejection cases. It remains private numerical foundation
+evidence only; it does not establish HSGP or time-varying parameter support.
