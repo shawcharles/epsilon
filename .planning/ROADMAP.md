@@ -339,6 +339,14 @@ Current repository state on 2026-05-18:
       fixture-backed fitted-state replay that reuses training geometry and the
       training softplus denominator, without HSGP priors, Turing integration,
       configuration acceptance, or model support.
+- [x] **Phase 35: Time-Series HSGP Media Methodology Contract** - Freeze the
+      TimeSeriesMMM-only shared-media multiplier placement, temporal units,
+      prior, prediction-state, and exclusion decisions before any Turing
+      integration or public configuration is implemented.
+- [ ] **Phase 36: Time-Series HSGP Shared Media Multiplier** - Implement the
+      reviewed TimeSeriesMMM-only non-centred shared positive multiplier with
+      typed programmatic configuration, retained prediction state, schema-v2
+      serialisation, and strict rejection of wider surfaces.
 
 ## Phase Details
 

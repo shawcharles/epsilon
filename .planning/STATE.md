@@ -8,8 +8,8 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 34 HSGP fitted positive-multiplier replay is complete.
-Select the next separately planned bounded core-parity slice. The v1
+**Current focus:** Phase 35 Time-Series HSGP media methodology is complete.
+Phase 36 is the separately planned implementation step. The v1
 release boundary remains MCMC/Turing-only for supported inference, while
 `VariationalConfig` and `approximate_fit!` remain scaffolded pre-v1 review
 exports. Variational inference, dashboard/UI parity, and AI advisor behaviour
@@ -17,13 +17,21 @@ remain explicitly out of scope for v1.
 
 ## Current Position
 
-**Current Phase:** 34
-**Current Phase Name:** HSGP Fitted Positive Multiplier Replay
-**Total Phases:** 34
-**Current Plan:** Phase 34 complete; choose the next separately planned HSGP
-or other bounded core-parity slice
+**Current Phase:** 35
+**Current Phase Name:** Time-Series HSGP Media Methodology Contract
+**Total Phases:** 36
+**Current Plan:** Phase 35 complete; write and independently review the Phase
+36 implementation plan before code
 **Total Plans in Phase:** 3 tasks
-**Status:** Phase 34 is complete at
+**Status:** Phase 35 is complete at
+`.planning/phases/35-timeseries-hsgp-media-methodology-contract/PLAN.md`. It
+freezes the reviewed Phase 36 contract for a TimeSeriesMMM-only shared HSGP
+media multiplier: explicit cadence/unit/prior rules, fixed geometry switches,
+named non-centred Turing variables, retained training origin/index state,
+schema-v2 migration, and strict wider-surface rejection. It is planning only:
+no runtime source, tests, exports, YAML acceptance, dependencies, or HSGP/TVP
+ledger status changed. Phase 36 must still be planned and independently
+reviewed before implementation. Phase 34 is complete at
 `.planning/phases/34-hsgp-fitted-positive-multiplier-replay/PLAN.md`. It adds
 only a private, immutable concrete-draw replay state that preserves the HSGP
 training centre, optional training basis offset, and training raw-softplus

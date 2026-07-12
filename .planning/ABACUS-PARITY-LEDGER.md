@@ -705,6 +705,14 @@ As of 2026-05-10:
     panel, or TVP support, so the HSGP/time-varying row remains `missing`.
     Focused verification passed `58 / 58`; the phase-closing `make test`
     checkpoint passed `8,678 / 8,678` in `20m57.0s`.
+45. Phase 35 records the independently reviewed methodological contract for a
+    future TimeSeriesMMM-only shared HSGP media multiplier. It fixes multiplier
+    placement, cadence units, scalar positive-prior rules, non-centred Turing
+    variable identity, immutable training date/index state, prediction replay,
+    schema-v2 migration, and explicit rejections for panels, intercepts,
+    Michaelis-Menten, calibration, and YAML. It is planning only: no runtime
+    behaviour or parity status changed, and the HSGP/time-varying row remains
+    `missing` until Phase 36 implementation evidence lands.
 
 
 ## Plan 14-05 Parity Audit
