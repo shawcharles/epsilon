@@ -1,5 +1,6 @@
 using Dates
 using Epsilon
+import MCMCChains
 using Test
 
 function _hsgp_guard_results()
@@ -23,15 +24,29 @@ function _hsgp_guard_results()
     )
     spec = build_model(TimeSeriesMMM(config, SamplerConfig(draws = 1, tune = 0, chains = 1, cores = 1), data))
     metadata = Epsilon._artifact_metadata("TimeSeriesMMM")
-    results = InferenceResults(metadata, spec; posterior = :draws, observed_data = data)
+    parameter_names = Symbol[
+        :intercept,
+        :sigma,
+        Symbol("beta_media[1]"),
+        :hsgp_media_eta,
+        :hsgp_media_lengthscale,
+        Symbol("hsgp_media_z[1]"),
+        Symbol("hsgp_media_z[2]"),
+    ]
+    posterior = MCMCChains.Chains(
+        reshape([0.2, 0.5, 0.3, 1.1, 2.2, -0.4, 0.2], 1, length(parameter_names), 1),
+        parameter_names,
+    )
+    results = InferenceResults(metadata, spec; posterior, observed_data = data)
     return metadata, spec, results
 end
 
 @testset "HSGP media postmodel calculation guard" begin
     metadata, spec, results = _hsgp_guard_results()
+    @test contribution_results(results) isa ContributionResults
+    @test decomposition_results(results) isa DecompositionResults
+
     for action in (
-            () -> contribution_results(results),
-            () -> decomposition_results(results),
             () -> response_curve_results(results; channel = "tv", grid = [0.0, 1.0]),
             () -> saturation_curve_results(results; channel = "tv", grid = [0.0, 1.0]),
             () -> adstock_curve_results(results; channel = "tv", grid = [0.0, 1.0]),

@@ -162,10 +162,14 @@ remediation pass on the bounded reference time-series story:
   families, Dash/UI workflows, and AI-advisor behaviour remain unsupported.
 - a bounded, programmatic-only `TimeSeriesMMM` MCMC shared-media HSGP
   multiplier is available with retained date/cadence replay state and
-  trusted-local Julia serialisation validation. YAML/pipeline configuration,
-  panels, VI, calibration, Michaelis-Menten, channel-specific/intercept/
-  multidimensional/periodic HSGP, TVP, and HSGP postmodel calculation routes
-  remain unsupported.
+  trusted-local Julia serialisation validation. On the exact retained training
+  grid, grouped posterior `contribution_results` and `decomposition_results`
+  report posterior-conditional HSGP-adjusted model allocations; they are not
+  causal effects, realised-target decompositions, or forecast attribution.
+  Existing summary and contribution/decomposition plots consume those result
+  objects. YAML/pipeline configuration, panels, VI, calibration,
+  Michaelis-Menten, channel-specific/intercept/multidimensional/periodic HSGP,
+  TVP, curves, saturation/adstock diagnostics, and metrics remain unsupported.
 
 ## Release Gate
 

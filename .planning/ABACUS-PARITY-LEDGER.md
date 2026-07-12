@@ -56,7 +56,7 @@ Each target should pass these gates before it is counted as ported:
 | Prior schema and distribution mapping | `abacus/prior.py`, `abacus/model_config.py` | `src/distributions/priors.jl` | scaffolded | Compare parsed prior configs, defaults, dimensions, and parameter names from demo configs. |
 | Special priors | `abacus/special_priors/*.py` | `src/distributions/special.jl`, `src/distributions/masked.jl`, `src/distributions/shrinkage.jl` | scaffolded | Prove log-density and coefficient-helper parity or document Julia-native replacements. |
 | Fourier seasonality | `abacus/mmm/fourier.py` | `src/mmm/seasonality.jl` | scaffolded | Add basis-matrix fixtures with dates from demo data. |
-| HSGP and time-varying parameters | `abacus/mmm/hsgp.py`, `abacus/mmm/tvp.py` | `src/mmm/hsgp.jl`; future `src/mmm/tvp.jl` | missing | Phase 36 adds only a bounded programmatic TimeSeriesMMM MCMC shared media multiplier. Abacus evidence is explicitly enabled PanelMMM boolean-path placement only; Epsilon separately covers its own runtime, likelihood, retained-grid replay, and trusted-local serialisation state. Generic HSGP, TVP, panels, YAML/pipeline, and HSGP postmodel calculations remain separate work. |
+| HSGP and time-varying parameters | `abacus/mmm/hsgp.py`, `abacus/mmm/tvp.py` | `src/mmm/hsgp.jl`; future `src/mmm/tvp.jl` | missing | Phases 36-37 add only a bounded programmatic TimeSeriesMMM MCMC shared media multiplier and exact-training-grid grouped-posterior contribution/decomposition replay. Abacus evidence is explicitly enabled PanelMMM boolean-path placement only; Epsilon separately covers its own runtime, likelihood, retained-grid replay, trusted-local serialisation state, and fixed-draw allocation replay. Generic HSGP, TVP, panels, YAML/pipeline, curves, diagnostics, and metrics remain separate work. |
 | Linear and changepoint trend | `abacus/mmm/linear_trend.py` | `src/mmm/trend.jl` | scaffolded | Compare trend design matrices and fitted prediction-state replay. |
 | Events and holiday basis effects | `abacus/mmm/events.py`, `abacus/mmm/builders/holidays.py` | `src/mmm/events.jl`, `src/mmm/holidays.jl` | scaffolded/native | Separate Abacus-compatible event basis from Epsilon-native pooled holiday behavior. |
 | Additive effects | `abacus/mmm/additive_effect.py`, `abacus/mmm/models/panel_build.py` | `src/mmm/model.jl`, `src/postmodel/replay.jl` | scaffolded | Lock contribution-term naming and additive replay state. |
@@ -725,6 +725,16 @@ As of 2026-05-10:
     channel-specific/intercept/multidimensional/periodic HSGP, TVP, and HSGP
     postmodel calculation routes remain unsupported, so the combined HSGP/TVP
     ledger row remains `missing`.
+47. Phase 37 adds only grouped-posterior TimeSeriesMMM contribution and
+    decomposition replay on the exact retained HSGP training grid. Every draw
+    reconstructs the existing shared multiplier after each beta-weighted media
+    path and before target unscaling; non-media components remain unchanged.
+    Fixed-draw tests cover two media channels, a control, conditioned model
+    means, decomposition totals, incomplete HSGP draws, malformed state, and
+    invalid observed-date sequences. This is Epsilon replay evidence, not
+    additional Abacus parity evidence. Curves, diagnostics, metrics, panels,
+    YAML/pipeline, generic HSGP, and TVP remain unsupported, and the combined
+    HSGP/TVP row remains `missing`.
 
 
 ## Plan 14-05 Parity Audit

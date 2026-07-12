@@ -10,10 +10,13 @@ All notable project changes are recorded here. Epsilon is still on the
 - Added the bounded programmatic `TimeSeriesMMM` MCMC shared-media HSGP
   multiplier, including immutable date/cadence/prior snapshots, retained-grid
   posterior replay, model-envelope v2 validation after trusted-local Julia
-  deserialisation, and explicit postmodel calculation rejection. YAML/pipeline
-  configuration, panels, VI, calibration, Michaelis-Menten, channel-specific,
-  intercept, multidimensional, periodic HSGP, TVP, and HSGP postmodel support
-  remain unsupported.
+  deserialisation, and fitted-period posterior contribution/decomposition
+  allocations. HSGP media components replay the shared multiplier on exact
+  retained training indices; these reports are model allocations, not causal or
+  forecast attribution. YAML/pipeline configuration, panels, VI, calibration,
+  Michaelis-Menten, channel-specific, intercept, multidimensional, periodic
+  HSGP, TVP, curves, saturation/adstock diagnostics, and metrics remain
+  unsupported.
 - Added a private, fixture-backed fitted HSGP positive-multiplier replay state
   that retains immutable concrete-draw coefficients, training basis geometry,
   optional training de-meaning offsets, and training softplus means for

@@ -349,6 +349,12 @@ Current repository state on 2026-05-18:
       serialisation, and strict rejection of wider surfaces. Closed with
       independent review and the single `make check-full` closure gate; the
       combined HSGP/TVP ledger row remains `missing`.
+- [x] **Phase 37: HSGP Time-Series Contribution Replay** - Bounded
+      posterior-only fitted-period contribution and decomposition replay is
+      implemented for the Phase 36 shared media multiplier. Closed with
+      independent review and the single `make check-full` closure gate; HSGP
+      curves, metrics, panels, YAML/pipeline, optimisation, and TVP remain
+      unsupported.
 
 ## Phase Details
 

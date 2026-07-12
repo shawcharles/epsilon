@@ -8,8 +8,8 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 36 Time-Series HSGP shared-media implementation is
-complete. The v1
+**Current focus:** Phase 37 HSGP Time-Series Contribution Replay is complete.
+The v1
 release boundary remains MCMC/Turing-only for supported inference, while
 `VariationalConfig` and `approximate_fit!` remain scaffolded pre-v1 review
 exports. Variational inference, dashboard/UI parity, and AI advisor behaviour
@@ -17,25 +17,24 @@ remain explicitly out of scope for v1.
 
 ## Current Position
 
-**Current Phase:** 36
-**Current Phase Name:** Time-Series HSGP Shared Media Multiplier
-**Total Phases:** 36
-**Current Plan:** Phase 36 closed; select the next bounded roadmap slice
-**Total Plans in Phase:** 4 tasks
-**Status:** Tasks 36-01 through 36-04 are implemented against the independently
-approved contract at
-`.planning/phases/36-timeseries-hsgp-shared-media-multiplier/PLAN.md`. It
-defines the first model-facing HSGP capability as a TimeSeriesMMM-only shared,
-strictly positive, mean-one media multiplier and requires typed programmatic
-configuration, immutable scalar-prior snapshots, retained date/cadence state,
-named non-centred Turing variables, explicit rejection of unsupported model and
-postmodel surfaces, trusted-local model serialization validation, and focused
-fixture/conditioned-DynamicPPL evidence. The implementation adds the bounded
-programmatic MCMC path and model-envelope v2 validation only; it keeps YAML,
-pipeline, panels, VI, calibration, Michaelis-Menten, broader HSGP/TVP, and HSGP
-postmodel calculations unsupported, and the HSGP/TVP ledger row `missing`.
-Independent implementation review and the one `make check-full` checkpoint
-passed before Phase 36 closed. Phase 35 is complete at
+**Current Phase:** 37
+**Current Phase Name:** HSGP Time-Series Contribution Replay
+**Total Phases:** 37
+**Current Plan:** `.planning/phases/37-hsgp-timeseries-contribution-replay/PLAN.md`
+**Total Plans in Phase:** 1 bounded replay slice
+**Status:** Phase 37 permits grouped-posterior `contribution_results` and
+`decomposition_results` only for the exact retained TimeSeriesMMM HSGP training
+grid. Each draw rebuilds the shared multiplier from immutable spec state and
+the named HSGP posterior parameters after beta weighting and before target
+unscaling. Non-media terms remain unchanged. The implementation rejects missing
+HSGP draws and nonmatching observed-date sequences, including cadence-aligned
+unseen, reordered, and duplicate dates. Curves, metrics, panels, YAML/pipeline,
+optimisation, calibration, VI, generic HSGP, and TVP remain unsupported; the
+HSGP/TVP ledger row remains `missing`. Independent implementation review found
+no Must Fix or Should Fix items. The three focused tests passed, followed by
+the one phase-closing `make check-full` gate: `10,055 / 10,055` tests in
+`23m12.7s` and a successful docs build. Phase 36 is complete at
+`.planning/phases/36-timeseries-hsgp-shared-media-multiplier/PLAN.md`. Phase 35 is complete at
 `.planning/phases/35-timeseries-hsgp-media-methodology-contract/PLAN.md`. It
 freezes the reviewed Phase 36 contract for a TimeSeriesMMM-only shared HSGP
 media multiplier: explicit cadence/unit/prior rules, fixed geometry switches,

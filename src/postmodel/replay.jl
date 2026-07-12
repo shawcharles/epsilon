@@ -26,10 +26,51 @@ end
 
 function _reject_hsgp_media_postmodel_reporting(spec::MMMModelSpec, action::AbstractString)
     haskey(spec.priors, _HSGP_MEDIA_SPEC_STATE_KEY) || return nothing
+    action in ("contribution_results", "decomposition_results") && return nothing
     throw(
         ArgumentError(
             "$action does not support HSGP media postmodel reporting; HSGP media postmodel reporting is deferred",
         ),
+    )
+end
+
+function _hsgp_media_multiplier_for_postmodel_draw(
+        spec::MMMModelSpec,
+        data::MMMData,
+        draw_values::AbstractVector,
+        parameter_index::Dict{Symbol, Int},
+    )
+    haskey(spec.priors, _HSGP_MEDIA_SPEC_STATE_KEY) || return nothing
+
+    state = _validate_hsgp_media_state_for_model_data(
+        spec,
+        data,
+        "contribution_results",
+    )
+    runtime = _turing_hsgp_media_runtime(spec, data)
+    Tuple(runtime.current_indices) == state.training.training_indices || throw(
+        ArgumentError(
+            "contribution_results requires observed dates to match retained HSGP training indices exactly",
+        ),
+    )
+    eta = _required_draw_parameter(draw_values, parameter_index, :hsgp_media_eta)
+    lengthscale = _required_draw_parameter(
+        draw_values,
+        parameter_index,
+        :hsgp_media_lengthscale,
+    )
+    z = _required_draw_parameter_vector(
+        draw_values,
+        parameter_index,
+        "hsgp_media_z",
+        runtime.mode_count,
+    )
+    return _hsgp_media_multiplier(
+        state,
+        runtime.current_indices,
+        eta,
+        lengthscale,
+        z,
     )
 end
 
@@ -744,6 +785,12 @@ function _replayed_contribution_values(results::InferenceResults)
 
     for draw in 1:ndraws
         draw_values = vec(draw_matrix[draw, :])
+        hsgp_multiplier = _hsgp_media_multiplier_for_postmodel_draw(
+            spec,
+            data,
+            draw_values,
+            parameter_index,
+        )
         # Intercept is in scaled target space; unscale to original
         values[draw, :, layout.intercept_index] .= _required_draw_parameter(
             draw_values,
@@ -753,13 +800,15 @@ function _replayed_contribution_values(results::InferenceResults)
 
         for (local_index, component_index) in enumerate(layout.media_range)
             # Channel contribution is in scaled space; unscale to original
-            values[draw, :, component_index] .= _channel_contribution_path_for_draw(
+            media_path = _channel_contribution_path_for_draw(
                 view(channels, :, local_index),
                 runtime,
                 draw_values,
                 parameter_index,
                 local_index,
-            ) .* target_scale
+            )
+            !isnothing(hsgp_multiplier) && (media_path .*= hsgp_multiplier)
+            values[draw, :, component_index] .= media_path .* target_scale
         end
 
         if !isnothing(layout.control_range)
