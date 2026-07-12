@@ -516,6 +516,15 @@ end
     @test missing_doc_symbols == Symbol[]
 end
 
+@testset "time-varying media configuration is intentionally public" begin
+    inventory_rows = _api_exports_inventory_rows()
+    triage_rows = _api_exports_triage_rows()
+
+    @test :TimeVaryingMediaConfig in _api_exports_current_symbols()
+    @test any(row -> row.symbol == :TimeVaryingMediaConfig, inventory_rows)
+    @test any(row -> row.symbol == :TimeVaryingMediaConfig, triage_rows)
+end
+
 @testset "public API exports appear in Documenter docs blocks" begin
     public_symbols = _api_exports_public_symbols()
     docs_entries = _api_exports_documenter_docs_entries()

@@ -20,6 +20,9 @@ Base abstract type for marketing mix models in Epsilon.
 abstract type AbstractMMMModel <: AbstractRegressionModel end
 
 const _SUPPORTED_TARGET_TYPES = Set(("revenue", "conversion"))
+const _HSGP_MEDIA_SPEC_STATE_KEY = "_hsgp_media_spec_state"
+const _HSGP_MEDIA_COVARIANCES = Set((:expquad, :matern32, :matern52))
+const _HSGP_MEDIA_PRIOR_DISTRIBUTIONS = Set(("Exponential", "Gamma", "HalfNormal", "LogNormal"))
 
 """
     SamplerConfig(; draws=1000, tune=1000, chains=4, cores=chains, target_accept=0.8, random_seed=nothing, progressbar=true, compute_convergence_checks=true)
@@ -117,6 +120,63 @@ function VariationalConfig(;
 end
 
 """
+    TimeVaryingMediaConfig(; m, L, time_resolution, covariance=:expquad, eta_prior, lengthscale_prior)
+
+Programmatic-only configuration for the bounded time-series shared media HSGP
+multiplier. `m`, `L`, and `lengthscale_prior` are measured in integer
+cadence-index units, while `time_resolution` is measured in days. Only scalar,
+dimensionless `Exponential`, `Gamma`, `HalfNormal`, and `LogNormal`
+[`EpsilonPrior`](@ref) values are accepted for the positive HSGP priors.
+
+This type establishes configuration and immutable model-spec state only. HSGP
+media fitting and predictive execution remain unavailable until their dedicated
+runtime task lands.
+"""
+struct TimeVaryingMediaConfig
+    m::Int
+    L::Float64
+    time_resolution::Int
+    covariance::Symbol
+    eta_prior::EpsilonPrior
+    lengthscale_prior::EpsilonPrior
+end
+
+function Base.:(==)(lhs::TimeVaryingMediaConfig, rhs::TimeVaryingMediaConfig)
+    return lhs.m == rhs.m &&
+        lhs.L == rhs.L &&
+        lhs.time_resolution == rhs.time_resolution &&
+        lhs.covariance == rhs.covariance &&
+        lhs.eta_prior == rhs.eta_prior &&
+        lhs.lengthscale_prior == rhs.lengthscale_prior
+end
+
+function TimeVaryingMediaConfig(;
+        m,
+        L,
+        time_resolution,
+        covariance::Symbol = :expquad,
+        eta_prior,
+        lengthscale_prior,
+    )
+    mode_count = _hsgp_media_int(m, "m")
+    resolution = _hsgp_media_int(time_resolution, "time_resolution")
+    boundary = _hsgp_media_float64(L, "L"; positive = true)
+    covariance in _HSGP_MEDIA_COVARIANCES ||
+        throw(ArgumentError("covariance must be one of :expquad, :matern32, or :matern52"))
+    _validate_hsgp_media_prior(eta_prior, "eta_prior")
+    _validate_hsgp_media_prior(lengthscale_prior, "lengthscale_prior")
+
+    return TimeVaryingMediaConfig(
+        mode_count,
+        boundary,
+        resolution,
+        covariance,
+        eta_prior,
+        lengthscale_prior,
+    )
+end
+
+"""
     ModelConfig(; ...)
 
 Typed MMM model configuration assembled from dict or YAML input.
@@ -175,7 +235,14 @@ function ModelConfig(;
         controls = Dict{String, Any}(),
         priors = Dict{String, Any}(),
         extras = Dict{String, Any}(),
+        time_varying_media::Union{Nothing, TimeVaryingMediaConfig} = nothing,
     )
+    normalized_extras = _string_key_dict(extras)
+    !isnothing(time_varying_media) && haskey(normalized_extras, "time_varying_media") &&
+        throw(ArgumentError("time_varying_media cannot be supplied through both extras and the ModelConfig keyword"))
+    if !isnothing(time_varying_media)
+        normalized_extras["time_varying_media"] = time_varying_media
+    end
     config = ModelConfig(
         String(date_column),
         String(target_column),
@@ -191,7 +258,7 @@ function ModelConfig(;
         _string_key_dict(holidays),
         _string_key_dict(controls),
         _string_key_dict(priors),
-        _string_key_dict(extras),
+        normalized_extras,
     )
     _validate_model_config(config)
     return config
@@ -435,8 +502,11 @@ function _validate_model_config(config::ModelConfig)
             "top-level priors.beta_control is not supported in the current model path; use controls.priors.beta instead",
         ),
     )
+    !haskey(config.priors, _HSGP_MEDIA_SPEC_STATE_KEY) ||
+        throw(ArgumentError("$(_HSGP_MEDIA_SPEC_STATE_KEY) is reserved for private model-spec state"))
     _validate_adstock_config(config.adstock)
     _validate_saturation_config(config.saturation)
+    _validate_hsgp_media_config_compatibility(config)
     _validate_seasonality_config(config.seasonality)
     _validate_trend_config(config.trend)
     _validate_events_config(config.events)
@@ -445,6 +515,97 @@ function _validate_model_config(config::ModelConfig)
     _validate_controls_config(config.controls)
     !isempty(config.controls) && isempty(config.control_columns) &&
         throw(ArgumentError("controls block requires control columns via media.controls"))
+    return nothing
+end
+
+function _validate_hsgp_media_prior(prior, name::AbstractString)
+    prior isa EpsilonPrior || throw(ArgumentError("$name must be an EpsilonPrior"))
+    prior.distribution in _HSGP_MEDIA_PRIOR_DISTRIBUTIONS || throw(
+        ArgumentError("$name must use Exponential, Gamma, HalfNormal, or LogNormal"),
+    )
+    isnothing(prior.dims) || throw(ArgumentError("$name must be scalar and dimensionless"))
+    prior.centered || throw(ArgumentError("$name must use the default centred prior representation"))
+    isnothing(prior.transform) || throw(ArgumentError("$name must not define a transform"))
+
+    expected = if prior.distribution == "Exponential"
+        _hsgp_media_required_parameter_set(prior.parameters, name, (), (:lam, :lambda, :rate))
+    elseif prior.distribution == "Gamma"
+        _hsgp_media_required_parameter_set(prior.parameters, name, (:alpha,), (:beta, :rate))
+    elseif prior.distribution == "HalfNormal"
+        _hsgp_media_required_parameter_set(prior.parameters, name, (:sigma,))
+    else
+        _hsgp_media_required_parameter_set(prior.parameters, name, (:sigma,), (:mu,); optional = true)
+    end
+
+    for parameter in expected
+        value = prior.parameters[parameter]
+        value isa Real && !(value isa Bool) && isfinite(value) ||
+            throw(ArgumentError("$name.$parameter must be a finite scalar real number"))
+        _hsgp_media_float64(value, "$name.$parameter"; positive = parameter !== :mu)
+    end
+    return nothing
+end
+
+function _hsgp_media_int(value, name::AbstractString)
+    value isa Integer && !(value isa Bool) && value >= 1 ||
+        throw(ArgumentError("$name must be a positive integer"))
+    value <= typemax(Int) || throw(ArgumentError("$name must be representable as Int"))
+    return Int(value)
+end
+
+function _hsgp_media_float64(value, name::AbstractString; positive::Bool)
+    value isa Real && !(value isa Bool) && isfinite(value) ||
+        throw(ArgumentError("$name must be a finite scalar real number"))
+    !positive || value > zero(value) || throw(ArgumentError("$name must be positive"))
+    converted = Float64(value)
+    isfinite(converted) || throw(ArgumentError("$name must be representable as a finite Float64"))
+    return converted
+end
+
+function _hsgp_media_required_parameter_set(
+        parameters::Dict{Symbol, Any},
+        name::AbstractString,
+        required::Tuple,
+        alternatives::Tuple = (),
+        ;
+        optional::Bool = false,
+    )
+    parameter_keys = Set(keys(parameters))
+    expected = Set{Symbol}(required)
+    if !isempty(alternatives)
+        present = intersect(parameter_keys, Set(alternatives))
+        optional || length(present) == 1 || throw(
+            ArgumentError("$name must define exactly one of $(join(string.(alternatives), ", "))"),
+        )
+        length(present) <= 1 || throw(
+            ArgumentError("$name must define at most one of $(join(string.(alternatives), ", "))"),
+        )
+        union!(expected, present)
+    end
+    parameter_keys == expected || throw(
+        ArgumentError("$name has unsupported or missing prior parameters"),
+    )
+    return Tuple(sort!(collect(expected); by = String))
+end
+
+function _time_varying_media_config(config::ModelConfig)
+    value = get(config.extras, "time_varying_media", nothing)
+    isnothing(value) && return nothing
+    value isa TimeVaryingMediaConfig ||
+        throw(ArgumentError("ModelConfig.extras[\"time_varying_media\"] must be a TimeVaryingMediaConfig"))
+    return value
+end
+
+function _validate_hsgp_media_config_compatibility(config::ModelConfig)
+    time_varying_media = _time_varying_media_config(config)
+    isnothing(time_varying_media) && return nothing
+    _validate_hsgp_media_prior(time_varying_media.eta_prior, "eta_prior")
+    _validate_hsgp_media_prior(time_varying_media.lengthscale_prior, "lengthscale_prior")
+    saturation_type = get(config.saturation, "type", "none")
+    saturation_type isa AbstractString || return nothing
+    lowercase(strip(saturation_type)) == "michaelis_menten" && throw(
+        ArgumentError("time_varying_media does not support Michaelis-Menten saturation"),
+    )
     return nothing
 end
 

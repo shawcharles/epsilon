@@ -724,3 +724,48 @@ end
         ),
     )
 end
+
+@testset "time-varying media configuration remains programmatic-only" begin
+    time_varying_media = TimeVaryingMediaConfig(
+        m = 3,
+        L = 6.0,
+        time_resolution = 7,
+        eta_prior = EpsilonPrior("Exponential"; lam = 1.0),
+        lengthscale_prior = EpsilonPrior("HalfNormal"; sigma = 2.0),
+    )
+    typed_extras = Dict{String, Any}("time_varying_media" => time_varying_media)
+    config = ModelConfig(
+        date_column = "date",
+        target_column = "revenue",
+        channel_columns = ["tv"],
+        extras = typed_extras,
+    )
+    @test config.extras["time_varying_media"] === time_varying_media
+    @test_throws ArgumentError ModelConfig(
+        date_column = "date",
+        target_column = "revenue",
+        channel_columns = ["tv"],
+        extras = typed_extras,
+        time_varying_media = time_varying_media,
+    )
+
+    base = Dict(
+        "data" => Dict("date_column" => "date"),
+        "target" => Dict("column" => "revenue"),
+        "media" => Dict("channels" => ["tv"]),
+    )
+    @test_throws ModelConfigError model_config_from_dict(
+        merge(copy(base), Dict("time_varying_media" => Dict("m" => 3))),
+    )
+    @test_throws ModelConfigError model_config_from_dict(
+        merge(copy(base), Dict("media" => Dict("channels" => ["tv"], "time_varying_media" => Dict("m" => 3)))),
+    )
+    @test_throws ModelConfigError model_config_from_dict(
+        base;
+        defaults = Dict("time_varying_media" => Dict("m" => 3)),
+    )
+    @test_throws ModelConfigError model_config_from_dict(
+        base;
+        overrides = Dict("media" => Dict("time_varying_media" => Dict("m" => 3))),
+    )
+end

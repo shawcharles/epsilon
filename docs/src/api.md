@@ -100,6 +100,7 @@ export must appear exactly once.
 | `StandardizeControls` | Transforms | core |
 | `TimeSeriesCalibrationInput` | Calibration | scaffolded |
 | `TimeSeriesMMM` | Model core | bounded |
+| `TimeVaryingMediaConfig` | Configuration | scaffolded |
 | `UnalignedValuesError` | Calibration | scaffolded |
 | `VariationalConfig` | Inference | scaffolded |
 | `WeibullType` | Transforms | core |
@@ -238,3 +239,9 @@ The strongest parity evidence is concentrated in lower-level transforms and in
 the bounded post-model result surfaces already tracked in the parity ledger.
 Panel, calibration, scenario-planner, pipeline, optimization, inference, and
 configuration entries should be read with their documented scope limits.
+
+## Time-Varying Media Configuration
+
+```@docs
+Epsilon.TimeVaryingMediaConfig
+```

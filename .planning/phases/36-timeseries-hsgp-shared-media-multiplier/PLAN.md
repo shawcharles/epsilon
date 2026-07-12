@@ -241,6 +241,10 @@ result/inference schemas.
 
 ### Task 36-01: Typed Configuration And State Boundary
 
+**Status:** Landed. This establishes the public configuration, immutable
+private state, and rejection boundary only; no Turing HSGP runtime exists until
+Task 36-03.
+
 - Add TimeVaryingMediaConfig with docstring, validation, equality, scalar-prior
   whitelist, and intentional export. Add its API inventory/triage row, an
   `@docs` entry on the existing API page, and export/doc tests.

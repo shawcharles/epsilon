@@ -17,6 +17,7 @@ function model_config_from_dict(
     merged = _resolve_model_relative_paths(merged; base_path)
 
     merged = _normalize_abacus_config_surface(merged)
+    _reject_time_varying_media_yaml(merged)
 
     data_cfg = _required_mapping(merged, :data)
     target_cfg = _required_mapping(merged, :target)
@@ -61,6 +62,17 @@ function model_config_from_dict(
         err isa ArgumentError || rethrow()
         throw(ModelConfigError(sprint(showerror, err)))
     end
+end
+
+function _reject_time_varying_media_yaml(config::AbstractDict)
+    haskey(config, "time_varying_media") && throw(
+        ModelConfigError("time_varying_media is programmatic-only and cannot be set in YAML"),
+    )
+    media = get(config, "media", nothing)
+    media isa AbstractDict && haskey(media, "time_varying_media") && throw(
+        ModelConfigError("media.time_varying_media is programmatic-only and cannot be set in YAML"),
+    )
+    return nothing
 end
 
 function _normalize_abacus_config_surface(config::Dict{String, Any})

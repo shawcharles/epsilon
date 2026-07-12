@@ -1,6 +1,109 @@
 using Dates
 using Statistics
 
+struct _HSGPMediaPriorSnapshot
+    distribution::Symbol
+    parameters::Tuple{Vararg{Tuple{Symbol, Float64}}}
+end
+
+struct _HSGPMediaConfigSnapshot
+    m::Int
+    L::Float64
+    time_resolution::Int
+    covariance::Symbol
+    eta_prior::_HSGPMediaPriorSnapshot
+    lengthscale_prior::_HSGPMediaPriorSnapshot
+end
+
+struct _HSGPTimeSeriesTrainingState
+    training_origin::Date
+    time_resolution::Int
+    training_indices::Tuple{Vararg{Int}}
+    training_centre::Float64
+    m::Int
+    L::Float64
+    covariance::Symbol
+    drop_first::Bool
+    demeaned_basis::Bool
+end
+
+struct _HSGPMediaSpecState
+    config::_HSGPMediaConfigSnapshot
+    training::_HSGPTimeSeriesTrainingState
+end
+
+function _hsgp_media_prior_snapshot(prior::EpsilonPrior, name::AbstractString)
+    _validate_hsgp_media_prior(prior, name)
+    parameters = if prior.distribution == "Exponential"
+        value = only(prior.parameters[key] for key in (:lam, :lambda, :rate) if haskey(prior.parameters, key))
+        ((:lam, Float64(value)),)
+    elseif prior.distribution == "Gamma"
+        beta_key = haskey(prior.parameters, :beta) ? :beta : :rate
+        ((:alpha, Float64(prior.parameters[:alpha])), (:beta, Float64(prior.parameters[beta_key])))
+    elseif prior.distribution == "HalfNormal"
+        ((:sigma, Float64(prior.parameters[:sigma])),)
+    else
+        mu = get(prior.parameters, :mu, 0.0)
+        ((:mu, Float64(mu)), (:sigma, Float64(prior.parameters[:sigma])))
+    end
+    return _HSGPMediaPriorSnapshot(Symbol(prior.distribution), parameters)
+end
+
+function _instantiate_hsgp_media_prior(snapshot::_HSGPMediaPriorSnapshot)
+    parameters = Dict{Symbol, Any}(name => value for (name, value) in snapshot.parameters)
+    return instantiate_distribution(EpsilonPrior(String(snapshot.distribution), parameters))
+end
+
+function _hsgp_media_config_snapshot(config::TimeVaryingMediaConfig)
+    return _HSGPMediaConfigSnapshot(
+        config.m,
+        config.L,
+        config.time_resolution,
+        config.covariance,
+        _hsgp_media_prior_snapshot(config.eta_prior, "eta_prior"),
+        _hsgp_media_prior_snapshot(config.lengthscale_prior, "lengthscale_prior"),
+    )
+end
+
+function _hsgp_time_series_training_state(config::TimeVaryingMediaConfig, dates)
+    dates isa AbstractVector || throw(ArgumentError("time_varying_media requires MMMData.dates to be a Date vector"))
+    all(date -> date isa Date, dates) ||
+        throw(ArgumentError("time_varying_media requires MMMData.dates to contain only Date values"))
+    training_dates = Date[date for date in dates]
+    isempty(training_dates) && throw(ArgumentError("time_varying_media requires at least one training date"))
+    training_indices = _infer_hsgp_time_index(
+        training_dates,
+        training_dates;
+        time_resolution = config.time_resolution,
+    )
+    training_centre = minimum(training_indices) / 2 + maximum(training_indices) / 2
+    return _HSGPTimeSeriesTrainingState(
+        first(training_dates),
+        config.time_resolution,
+        Tuple(training_indices),
+        Float64(training_centre),
+        config.m,
+        config.L,
+        config.covariance,
+        false,
+        false,
+    )
+end
+
+function _hsgp_media_spec_state(config::TimeVaryingMediaConfig, data::MMMData)
+    return _HSGPMediaSpecState(
+        _hsgp_media_config_snapshot(config),
+        _hsgp_time_series_training_state(config, data.dates),
+    )
+end
+
+function _validate_hsgp_media_training_data(config::ModelConfig, data::MMMData)
+    time_varying_media = _time_varying_media_config(config)
+    isnothing(time_varying_media) && return nothing
+    _hsgp_time_series_training_state(time_varying_media, data.dates)
+    return nothing
+end
+
 function _infer_hsgp_time_index(
         new_dates::AbstractVector{<:Date},
         training_dates::AbstractVector{<:Date};

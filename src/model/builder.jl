@@ -404,13 +404,26 @@ function TimeSeriesMMM(
         cost_per_target_data::Union{Nothing, CostPerTargetCalibrationRows} = nothing,
     )
     _validate_model_data_alignment(config, data)
+    _validate_hsgp_media_training_data(config, data)
     calibration = _resolve_time_series_calibration_input(
         config,
         calibration_steps,
         lift_test_data,
         cost_per_target_data,
     )
+    _reject_hsgp_media_calibration(config, calibration)
     return TimeSeriesMMM(config, sampler_config, data, nothing, nothing, calibration)
+end
+
+function _reject_hsgp_media_calibration(
+        config::ModelConfig,
+        calibration::Union{Nothing, TimeSeriesCalibrationInput},
+    )
+    isnothing(_time_varying_media_config(config)) && return nothing
+    isnothing(calibration) || throw(
+        ArgumentError("time_varying_media does not support calibration"),
+    )
+    return nothing
 end
 
 function _resolve_time_series_calibration_input(
@@ -468,6 +481,8 @@ mutable struct PanelMMM <: AbstractMMMModel
 end
 
 function PanelMMM(config::ModelConfig, sampler_config::SamplerConfig, data::PanelMMMData)
+    isnothing(_time_varying_media_config(config)) ||
+        throw(ArgumentError("time_varying_media is supported only for TimeSeriesMMM"))
     _validate_model_data_alignment(config, data)
     _reject_panel_calibration_config(config)
     return PanelMMM(config, sampler_config, data, nothing, nothing)
@@ -526,8 +541,19 @@ function _build_model_spec(
             config.controls;
             control_transform_state,
         ),
-        copy(config.priors),
+        _model_spec_priors(config, data),
     )
+end
+
+function _model_spec_priors(config::ModelConfig, data::MMMData)
+    priors = copy(config.priors)
+    haskey(priors, _HSGP_MEDIA_SPEC_STATE_KEY) && throw(
+        ArgumentError("$(_HSGP_MEDIA_SPEC_STATE_KEY) is reserved for private model-spec state"),
+    )
+    time_varying_media = _time_varying_media_config(config)
+    isnothing(time_varying_media) ||
+        (priors[_HSGP_MEDIA_SPEC_STATE_KEY] = _hsgp_media_spec_state(time_varying_media, data))
+    return priors
 end
 
 function _build_model_spec(
@@ -919,7 +945,17 @@ function _add_panel_transform_prior_dims!(
 end
 
 function fit!(model::TimeSeriesMMM)
+    _reject_hsgp_media_runtime(model.config, "fit!")
     return _fit_time_series_mmm!(model)
+end
+
+function _reject_hsgp_media_runtime(config::ModelConfig, operation::AbstractString)
+    isnothing(_time_varying_media_config(config)) && return nothing
+    throw(
+        ArgumentError(
+            "time_varying_media $operation is unavailable until Phase 36 Task 36-03 adds the Turing runtime",
+        ),
+    )
 end
 
 function fit!(model::PanelMMM)

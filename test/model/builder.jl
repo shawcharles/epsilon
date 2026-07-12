@@ -130,6 +130,56 @@ end
     )
 end
 
+@testset "time-varying media rejects panel and calibration construction" begin
+    time_varying_media = TimeVaryingMediaConfig(
+        m = 3,
+        L = 6.0,
+        time_resolution = 7,
+        eta_prior = EpsilonPrior("Exponential"; lam = 1.0),
+        lengthscale_prior = EpsilonPrior("HalfNormal"; sigma = 2.0),
+    )
+    config = ModelConfig(
+        date_column = "date",
+        target_column = "revenue",
+        channel_columns = ["tv", "search"],
+        control_columns = ["price_index"],
+        time_varying_media = time_varying_media,
+    )
+    sampler = SamplerConfig(draws = 1, tune = 0, chains = 1, cores = 1)
+    data = MMMData(
+        dates = Date[Date(2024, 1, 1) + Week(index - 1) for index in 1:6],
+        target = [5.0, 6.5, 7.5, 9.0, 10.0, 11.5],
+        channels = [1.0 0.5; 2.0 1.0; 2.5 1.5; 3.0 2.0; 3.5 2.5; 4.0 3.0],
+        channel_names = ["tv", "search"],
+        controls = [0.2; 0.4; 0.3; 0.6; 0.5; 0.8][:, :],
+        control_names = ["price_index"],
+    )
+    lift_test = LiftTestCalibrationRows(
+        channel = ["tv"],
+        x = [1.0],
+        delta_x = [0.5],
+        delta_y = [0.3],
+        sigma = [0.1],
+    )
+    @test_throws ArgumentError TimeSeriesMMM(
+        config,
+        sampler,
+        data;
+        calibration_steps = [CalibrationStepConfig(method = "add_lift_test_measurements")],
+        lift_test_data = lift_test,
+    )
+
+    panel_model = sample_panel_model()
+    panel_config = ModelConfig(
+        date_column = "date",
+        target_column = "revenue",
+        channel_columns = ["tv", "search"],
+        dims = ("geo",),
+        time_varying_media = time_varying_media,
+    )
+    @test_throws ArgumentError PanelMMM(panel_config, sampler, panel_model.data)
+end
+
 @testset "fit! with tanh saturation" begin
 
     model = sample_time_series_model(; saturation_type = "tanh")

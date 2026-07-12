@@ -3,6 +3,7 @@ module Epsilon
 export deserialize_model_config
 export deserialize_prior
 export EpsilonPrior
+export TimeVaryingMediaConfig
 export expand_masked_values
 export After
 export Before
@@ -268,8 +269,10 @@ epsilon_version() = pkgversion(@__MODULE__)
 
 Generate prior predictive samples for a typed MMM model.
 """
-prior_predict(model::TimeSeriesMMM, new_data::MMMData = model.data) =
-    _prior_predict_time_series_mmm(model, new_data)
+function prior_predict(model::TimeSeriesMMM, new_data::MMMData = model.data)
+    _reject_hsgp_media_runtime(model.config, "prior_predict")
+    return _prior_predict_time_series_mmm(model, new_data)
+end
 
 prior_predict(model::PanelMMM, new_data::PanelMMMData = model.data) =
     _prior_predict_panel_mmm(model, new_data)
