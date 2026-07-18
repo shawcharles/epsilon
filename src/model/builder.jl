@@ -377,6 +377,7 @@ function Base.:(==)(lhs::ModelFitState, rhs::ModelFitState)
 end
 
 function ModelFitState(status::Symbol, backend::Symbol; artifact = nothing, message::AbstractString = "")
+    _validate_backend_policy(backend; context = "ModelFitState")
     return ModelFitState(status, backend, artifact, String(message))
 end
 

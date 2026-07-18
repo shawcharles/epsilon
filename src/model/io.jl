@@ -150,6 +150,8 @@ function _model_from_payload(payload)
     calibration = get(payload, :calibration, nothing)
     payload_version = _model_payload_schema_version(payload)
 
+    _validate_model_envelope_fit_state(metadata, fit_state)
+
     _validate_model_payload_hsgp_state(
         payload_version,
         model_type,
@@ -417,6 +419,7 @@ function _restore_fit_state(state_payload::NamedTuple)
         throw(ArgumentError("serialized fit state payload is incomplete"))
     state_payload.status isa Symbol || throw(ArgumentError("serialized fit state status must be a Symbol"))
     state_payload.backend isa Symbol || throw(ArgumentError("serialized fit state backend must be a Symbol"))
+    _validate_backend_policy(state_payload.backend; context = "serialized fit state")
     state_payload.message isa AbstractString ||
         throw(ArgumentError("serialized fit state message must be a string"))
     return ModelFitState(
@@ -425,6 +428,51 @@ function _restore_fit_state(state_payload::NamedTuple)
         artifact = state_payload.artifact,
         message = state_payload.message,
     )
+end
+
+function _validate_backend_policy(
+        backend::Union{Nothing, Symbol};
+        context::AbstractString,
+        allow_fixture::Bool = false,
+        allow_unfitted::Bool = false,
+    )
+    backend === :turing && return nothing
+    allow_fixture && backend === :fixture && return nothing
+    allow_unfitted && isnothing(backend) && return nothing
+    allowed = allow_fixture ? "Turing/MCMC or deterministic fixture" : "Turing/MCMC"
+    allow_unfitted && (allowed *= ", or an unfitted no-chain container")
+    throw(ArgumentError("$context supports only $allowed"))
+end
+
+function _validate_result_metadata(
+        metadata::ModelArtifactMetadata,
+        components...;
+        context::AbstractString,
+    )
+    allow_unfitted = isnothing(metadata.fit_status) && all(isnothing, components)
+    return _validate_backend_policy(
+        metadata.backend;
+        context,
+        allow_fixture = true,
+        allow_unfitted,
+    )
+end
+
+function _validate_model_envelope_fit_state(
+        metadata::ModelArtifactMetadata,
+        fit_state::Union{Nothing, ModelFitState},
+    )
+    if isnothing(fit_state)
+        isnothing(metadata.backend) && isnothing(metadata.fit_status) ||
+            throw(ArgumentError("serialized model metadata must be unfitted when no fit state is present"))
+        return nothing
+    end
+
+    metadata.backend === fit_state.backend ||
+        throw(ArgumentError("serialized model metadata backend must match the restored fit state backend"))
+    metadata.fit_status === fit_state.status ||
+        throw(ArgumentError("serialized model metadata fit status must match the restored fit state status"))
+    return nothing
 end
 
 function _artifact_metadata(
@@ -457,5 +505,11 @@ function _validate_artifact_metadata(
         metadata.model_type == expected_model_type ||
             throw(ArgumentError("serialized artifact metadata model type $(metadata.model_type) does not match expected $(expected_model_type)"))
     end
+    _validate_backend_policy(
+        metadata.backend;
+        context = "serialized artifact metadata",
+        allow_fixture = true,
+        allow_unfitted = isnothing(metadata.fit_status),
+    )
     return nothing
 end

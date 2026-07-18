@@ -68,7 +68,7 @@ broader support expansion.
 | Surface | Supported Rows | Notes |
 |---|---|---|
 | MMM feature bundles | `TS-00` through `TS-05`, `P-00` | Frozen at Phase 5 closeout |
-| Inference | `INF-TS-MCMC`, `INF-P-MCMC` | V1 inference support is MCMC-only; `approximate_fit!` and `VariationalConfig` remain scaffolded pre-v1 review exports |
+| Inference | `INF-TS-MCMC`, `INF-P-MCMC` | Epsilon permanently supports only MCMC/Turing fitting |
 | Post-model | `POST-TS-MCMC`, `POST-P-MCMC` | Deterministic replay from grouped MCMC `InferenceResults`; post-model result arrays have validated axis-order contracts, and panel response/metric curves are panel-cell/channel artifacts with explicit `delta_grid` historical-scaling semantics |
 | Optimization | `OPT-TS-MCMC`, `OPT-P-MCMC` | Fixed-budget `:total_response` only; panel optimization allocates channel totals and preserves historical within-channel panel-cell spend shares |
 | Scenario planner | solved time-series and bounded panel optimization results; evaluated time-series manual allocations; local scenario-store artifacts | Non-UI comparison tables over existing optimizer outputs and existing time-series response surfaces; typed current, manual-allocation, and fixed-budget optimized scenario specs are supported. Compatible evaluated manual scenarios can be compared with one solved optimization result, and existing `ScenarioPlanResult` tables can be written to a local typed `scenario_store.jls` payload with CSV inspection sidecars. The store artifact is Epsilon/Julia-version-bound and should not be treated as a portable or untrusted interchange format. Panel manual allocation, automatic scenario refits, future-path simulation, pipeline scenario-store emission, hosted/background stores, and Dash workflows remain deferred |
@@ -81,12 +81,10 @@ The release gate keeps the unsupported surface explicit:
 
 - `seasonality.type = "hsgp"`
 - panel seasonality, trend, events, and richer controls
-- `PanelMMM` + `approximate_fit!`
-- `approximate_fit!` / `VariationalConfig` as a v1 release-supported inference
-  backend
-- YAML-driven VI
-- VI-backed `model_results`, sampler diagnostics, convergence reports, and
-  convergence warnings
+- variational fitting or a variational inference backend; the former VI surface
+  is permanently retired
+- variational-shaped YAML inputs, which are rejected rather than treated as a
+  configurable backend
 - panel Stage `35` holdout validation; time-series blocked holdout validation
   remains supported, but panel holdout semantics are deferred unless a concrete
   methodological requirement is added
@@ -154,8 +152,8 @@ than false Abacus parity claims:
 The release-gate harness exercises `VAL-TS-04-MCMC` through the repaired
 automatic-holiday grouped inference / post-model / optimization contract,
 and the bounded plotting row through `write_plot_bundle(run)` on a successful
-pipeline run. Historical VI harness work remains scaffolded implementation
-evidence only and is not part of the v1 release gate after Phase 27.
+pipeline run. Historical variational harness work was superseded by the Phase
+38 removal and is not part of the release gate.
 
 ### Maintainer Commands
 
@@ -192,9 +190,8 @@ from a clean tagged worktree for the final release artifact.
 
 - [x] The frozen Phase 5 feature matrix is documented with supported and
   unsupported rows.
-- [x] The Phase 6 inference matrix is documented; Phase 27 supersedes the
-  earlier VI row as release support and keeps v1 inference MCMC-only with
-  explicit unsupported rows.
+- [x] The Phase 6 inference matrix is documented; Phase 38 permanently retires
+  variational inference and keeps MCMC/Turing as the sole fitting path.
 - [x] The Phase 7 post-model contract is closed on grouped `InferenceResults`.
 - [x] The Phase 8 fixed-budget optimization surface is documented with explicit
   unsupported constraint/objective families.
@@ -253,8 +250,8 @@ full Abacus scope:
   within-channel panel shares; arbitrary channel-by-panel allocation is not
   implied. Panel Stage `35` holdout validation is deferred for v1 rather than
   added for parity theater.
-- VI exports remain scaffolded, Julia-only pre-v1 review surfaces and are not
-  part of v1 release support.
+- Variational inference is permanently retired; no compatibility API or runtime
+  backend is retained.
 - The pipeline remains time-series-first and MCMC-only.
 - Plotting is static and Makie-based rather than a replicated Dash product
   layer; Dash/dashboard parity remains explicitly deferred.

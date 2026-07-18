@@ -92,7 +92,6 @@ export npanels
 export nobs
 export ntime
 export ParameterDiagnostics
-export approximate_fit!
 export run_pipeline
 export CalibrationStepConfig
 export validate_calibration_step_config
@@ -200,7 +199,6 @@ export validate_mmm_data
 export validate_panel_mmm_data
 export validate_sampler_config
 export validate_target_data
-export VariationalConfig
 export weibull_adstock
 
 include("distributions/priors.jl")
@@ -224,7 +222,6 @@ include("model/diagnostics.jl")
 include("inference/mcmc.jl")
 include("inference/diagnostics.jl")
 include("inference/results.jl")
-include("inference/vi.jl")
 include("mmm/media.jl")
 include("mmm/model.jl")
 include("mmm/panel.jl")
@@ -335,19 +332,6 @@ Fit an MMM model or preprocessing scaler in-place.
   for later `transform` or `inverse_transform` calls.
 """
 fit!
-
-"""
-    approximate_fit!(model::TimeSeriesMMM, config::VariationalConfig = VariationalConfig())
-    approximate_fit!(model::PanelMMM, config::VariationalConfig = VariationalConfig())
-
-Run the bounded explicit variational-inference path.
-
-- `TimeSeriesMMM` currently supports mean-field Gaussian ADVI and materializes
-  `config.draws` posterior draws into the stored fit artifact.
-- `PanelMMM` variational inference is not supported in the current Phase 6
-  surface.
-"""
-approximate_fit!
 
 """
     summary_table(result)

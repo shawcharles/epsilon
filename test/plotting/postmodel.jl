@@ -110,27 +110,6 @@ end
     @test adstock_axes[1].title[] == "Adstock curve: tv"
     _assert_plot_saves(adstock_figure, "adstock_curve_plot")
 
-    vi_model = sample_time_series_model(;
-        seasonality = Dict("type" => "fourier", "n_order" => 2),
-        trend = Dict("type" => "linear"),
-        dates = Date(2024, 1, 1):Day(7):Date(2024, 2, 5),
-    )
-    approximate_fit!(
-        vi_model,
-        VariationalConfig(; max_iters = 25, draws = 12, random_seed = 234, progressbar = false),
-    )
-    vi_total = sum(vi_model.data.channels[:, 2])
-    vi_curve = response_curve_results(
-        _grouped_results_for_response_curves(vi_model);
-        channel = "search",
-        grid = [0.0, vi_total / 2, vi_total],
-    )
-    vi_figure = response_curve_plot(vi_curve)
-    vi_axes = _plot_axes(vi_figure)
-
-    @test vi_figure isa Figure
-    @test length(vi_axes) == 2
-    @test vi_axes[1].title[] == "Response curve: search"
 end
 
 @testset "post-model plotting rejects panel-shaped results honestly" begin

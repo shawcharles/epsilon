@@ -272,35 +272,3 @@ end
         end
     end
 end
-
-@testset "summary_table supports bounded VI-backed time-series grouped artifacts" begin
-    model = sample_time_series_model(;
-        seasonality = Dict("type" => "fourier", "n_order" => 2),
-        trend = Dict("type" => "linear"),
-        dates = Date(2024, 1, 1):Day(7):Date(2024, 2, 5),
-    )
-    vi_config = VariationalConfig(;
-        max_iters = 25,
-        draws = 12,
-        random_seed = 319,
-        progressbar = false,
-    )
-    approximate_fit!(model, vi_config)
-    grouped = _grouped_results_for_postmodel(model)
-    observed_total = sum(model.data.channels[:, 1])
-
-    @test size(summary_table(contribution_results(grouped)), 1) > 0
-    @test size(summary_table(decomposition_results(grouped)), 1) > 0
-    @test size(
-        summary_table(
-            response_curve_results(grouped; channel = "tv", grid = [0.0, observed_total]),
-        ),
-        1,
-    ) > 0
-    @test size(
-        summary_table(
-            metric_results(grouped; channel = "tv", grid = [0.0, observed_total / 2, observed_total]),
-        ),
-        1,
-    ) > 0
-end

@@ -769,3 +769,33 @@ end
         overrides = Dict("media" => Dict("time_varying_media" => Dict("m" => 3))),
     )
 end
+
+@testset "public configuration permanently rejects retired inference input" begin
+    base = Dict(
+        "data" => Dict("date_column" => "date"),
+        "target" => Dict("column" => "revenue"),
+        "media" => Dict("channels" => ["tv"]),
+    )
+
+    for key in ("vi", "variational", "approximate_fit")
+        @test_throws ModelConfigError model_config_from_dict(merge(copy(base), Dict(key => Dict())))
+        @test_throws ModelConfigError model_config_from_dict(base; defaults = Dict(key => Dict()))
+        @test_throws ModelConfigError model_config_from_dict(base; overrides = Dict(key => Dict()))
+        @test_throws ModelConfigError sampler_config_from_dict(Dict(key => Dict()))
+        @test_throws ModelConfigError sampler_config_from_dict(
+            Dict("fit" => Dict(key => Dict()));
+            defaults = Dict("fit" => Dict("draws" => 8)),
+        )
+    end
+
+    for backend in ("vi", "advi", "fixture")
+        @test_throws ModelConfigError model_config_from_dict(
+            merge(copy(base), Dict("fit" => Dict("backend" => backend))),
+        )
+        @test_throws ModelConfigError sampler_config_from_dict(Dict("backend" => backend))
+        @test_throws ModelConfigError sampler_config_from_dict(
+            Dict("fit" => Dict("draws" => 8));
+            overrides = Dict("fit" => Dict("backend" => backend)),
+        )
+    end
+end

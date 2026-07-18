@@ -37,7 +37,8 @@ format-check-touched:
 	@files="$$( \
 		{ git diff --name-only -- '*.jl'; \
 		  git diff --name-only --cached -- '*.jl'; \
-		  git ls-files --others --exclude-standard -- '*.jl'; } | sort -u \
+		  git ls-files --others --exclude-standard -- '*.jl'; } | \
+		while IFS= read -r file; do [ -e "$$file" ] && printf '%s\n' "$$file"; done | sort -u \
 	)"; \
 	if [ -z "$$files" ]; then \
 		echo "No touched Julia files to format-check."; \

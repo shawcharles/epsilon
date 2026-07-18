@@ -26,8 +26,8 @@ The current implementation should be read with these labels:
 - `missing`: Abacus behavior is not implemented yet, but remains in scope
   unless explicitly deferred
 - `deferred`: intentionally not part of the current statistical/methodological
-  port scope. Current explicit deferrals are variational inference, AI advisor,
-  and Dash/dashboard parity for v1.
+  port scope. Current explicit deferrals are AI advisor and Dash/dashboard
+  parity; variational inference is permanently retired.
 
 The active implementation plan is tracked in
 [`ABACUS-PARITY-LEDGER.md`](.planning/ABACUS-PARITY-LEDGER.md). The first
@@ -47,7 +47,8 @@ artifact-key parity (where each stage is enabled) all pass the fixture/demo
 gates recorded in
 [`ABACUS-PARITY-LEDGER.md`](.planning/ABACUS-PARITY-LEDGER.md). This is not
 full Abacus product parity: HSGP/time-varying parameters, Mundlak/correlated
-random effects, calibration/lift tests, variational inference release support,
+random effects, calibration/lift tests, permanently retired variational
+inference,
 panel holdout validation, and free channel-by-panel optimization remain
 `missing`, `scaffolded`, or `deferred` and are not implied by the above. Any
 surface not listed in the ledger as `ported` or covered by a closed Phase 14
@@ -78,8 +79,8 @@ Phase 7 is now closed for the time-series surface: grouped time-series
 `contribution_results`, `decomposition_results`, `response_curve_results`,
 `saturation_curve_results`, `adstock_curve_results`, `metric_results`, and
 `summary_table` through deterministic replay of the frozen additive model
-terms. Earlier phase work also left scaffolded VI artefact consumers in the
-codebase, but Phase 27 supersedes that as a v1 release-support claim. Stage 60
+terms. A former variational implementation was permanently removed in Phase 38.
+Stage 60
 keeps three bounded curve families on the time-series path: forward-pass
 response curves in target units, saturation-only curves in target units, and
 adstock-only carryover curves in original channel-spend-equivalent units. Phase
@@ -102,8 +103,7 @@ fixed-budget optimization entry point on supported grouped time-series
 `budget_impact_table(result)`, and `budget_audit_table(result)`. The
 v1-supported optimization rows are MCMC-backed: `TimeSeriesMMM` + MCMC and the
 bounded `PanelMMM` historical-share policy for `geo_panel` and
-`geo_brand_panel`. Earlier VI optimisation wiring remains scaffolded
-implementation history, not a v1 release-support row.
+`geo_brand_panel`. Variational optimisation is permanently retired.
 
 The bounded non-UI scenario planner now supports typed current, manual
 allocation, and fixed-budget optimized scenario specs. `evaluate_manual_scenario`
@@ -120,8 +120,8 @@ and the repo now ships a thin `bin/epsilon` wrapper for the same `epsilon run
 config.yml` path. The closed pipeline surface is time-series-first and
 MCMC-only, runs the full fixed Stage `00`-`70` sequence, preserves blocked
 holdout validation as a side branch off the full-sample fit path, writes
-stage-local `png` plots alongside the corresponding stage artifacts, and keeps
-YAML-driven VI explicitly unsupported. Panel pipeline orchestration is
+stage-local `png` plots alongside the corresponding stage artifacts, and rejects
+retired variational-shaped configuration keys. Panel pipeline orchestration is
 currently bounded to metadata, fit, assessment, decomposition, diagnostics, and
 curves, plus explicitly enabled historical-share optimization: `PanelMMM`
 configs can emit Stage `00` metadata/manifest artifacts, Stage `20` fit
@@ -157,14 +157,14 @@ pipeline has already written stage-local plots into the Stage `10`-`70`
 directories. The frozen plotting support matrix remains intentionally narrower than
 Dash/dashboard parity: diagnostics consume grouped `InferenceResults`, post-model
 visuals consume the closed Phase 7 typed result surfaces, optimization visuals
-consume `BudgetOptimizationResult`, VI trace plots stay unsupported, and panel
+consume `BudgetOptimizationResult`, variational plotting is permanently retired, and panel
 post-model/optimization plotting is not yet supported on the current bounded
 slice.
 
 Phase 11 landed the release-gate infrastructure: the harness distinguishes
 Abacus-reference time-series MCMC rows from bounded Epsilon-only panel,
-pipeline, and plotting rows. Historical VI validation scaffolding is superseded
-by Phase 27's v1 boundary. The compact final validation fixtures provide one
+pipeline, and plotting rows. Historical variational validation scaffolding was
+superseded by the Phase 38 removal. The compact final validation fixtures provide one
 explicit maintainer-facing harness over the closed surface, the retained
 Phase 7/8 comparison fixtures remain the hard numeric gate for detailed
 post-model and optimization cross-checks where semantics actually match, and
@@ -281,10 +281,10 @@ Current key-level contract:
 
 | ID | Combination | Status | Reason |
 |---|---|---|---|
-| `INF-U1` | `PanelMMM` + `approximate_fit!` | Unsupported | Panel VI is not implemented in the bounded Phase 6 surface |
-| `INF-U2` | YAML-driven VI or mixed-backend `fit!` semantics | Unsupported | YAML `fit` and `SamplerConfig` remain MCMC-only |
-| `INF-U3` | VI-backed `model_results`, `model_diagnostics`, `sampler_diagnostics`, `convergence_report`, `convergence_warnings` | Unsupported | These remain MCMC/Turing-only surfaces |
-| `INF-U5` | `approximate_fit!` / `VariationalConfig` as a v1 release-supported backend | Unsupported | The exports remain scaffolded pre-v1 review surfaces, but Phase 27 keeps v1 inference support MCMC-only |
+| `INF-U1` | Former variational API | Retired | Epsilon permanently supports only MCMC/Turing fitting |
+| `INF-U2` | Retired inference-shaped configuration or mixed-backend `fit!` semantics | Retired | Parsers reject variational-shaped keys and non-MCMC backends |
+| `INF-U3` | Retired-backend artifacts | Retired | Loaders reject non-Turing backend metadata before consumer use |
+| `INF-U5` | Variational inference backend | Retired | Permanently removed before release; no compatibility API is retained |
 | `INF-U4` | NetCDF / ArviZ-native grouped export | Unsupported | Deferred from Phase 6; `InferenceResults` is the canonical grouped artifact |
 
 ## Phase 7 Post-Model Matrix
@@ -302,7 +302,7 @@ Current key-level contract:
 |---|---|---|---|
 | `POST-U2` | Flat `ModelResults` as the canonical post-model input | Unsupported | Phase 7 consumes grouped `InferenceResults` directly |
 | `POST-U3` | Post-model outputs without grouped posterior/spec/observed-data state | Unsupported | Deterministic replay requires the frozen grouped artifact contract |
-| `POST-U4` | VI-backed post-model outputs as v1 release-supported rows | Unsupported | Historical implementation artefacts remain scaffolded; v1 post-model support is MCMC-only |
+| `POST-U4` | Retired-backend post-model outputs | Retired | Grouped results permit only Turing, deterministic fixture, or unfitted no-chain metadata |
 
 ## Phase 8 Optimization Matrix
 
@@ -319,7 +319,7 @@ Current key-level contract:
 |---|---|---|---|
 | `OPT-U2` | Objectives other than `:total_response` | Unsupported | Phase 8 freezes one posterior-mean total-response objective |
 | `OPT-U3` | Constraint families beyond total-budget equality, absolute bounds, and reference-relative guardrails | Unsupported | Pairwise ratios, pacing, and multi-objective trade-offs are not yet implemented |
-| `OPT-U4` | VI-backed optimisation as a v1 release-supported row | Unsupported | Historical implementation artefacts remain scaffolded; v1 optimisation support is MCMC-only |
+| `OPT-U4` | Retired-backend optimisation | Retired | Retired backend artifacts are rejected before optimisation |
 
 ## Why Julia?
 
@@ -330,7 +330,7 @@ Current key-level contract:
 | Autodiff | PyTensor graph-mode | Native (ForwardDiff.jl / ReverseDiff.jl) |
 | Tensor Operations | PyTensor / NumPy | Native arrays + LinearAlgebra stdlib |
 | Performance | Interpreted + JIT (JAX path) | JIT-compiled (LLVM) |
-| Variational Inference | PyMC ADVI | AdvancedVI.jl scaffold exists; out of scope for v1 support |
+| Variational Inference | PyMC ADVI | Permanently retired from Epsilon; no Epsilon variational backend |
 | Gaussian Processes | PyMC GP / HSGP | AbstractGPs.jl / KernelFunctions.jl |
 | Diagnostics | ArviZ | MCMCChains.jl / MCMCDiagnosticTools.jl |
 | Optimization | scipy.optimize | Optim.jl / JuMP.jl |

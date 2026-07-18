@@ -7,8 +7,7 @@ using Statistics
 Render a bounded posterior trace-plot figure for MCMC-backed grouped
 `InferenceResults`.
 
-This Phase 10 surface is currently supported only for Turing-backed MCMC
-artifacts. VI-backed grouped inference results are rejected explicitly.
+This Phase 10 surface is supported only for Turing-backed MCMC artifacts.
 """
 function trace_plot(
         results::InferenceResults;
@@ -18,7 +17,7 @@ function trace_plot(
     results.metadata.backend === :turing ||
         throw(
         ArgumentError(
-            "trace_plot currently supports only MCMC-backed `InferenceResults`; VI-backed grouped artifacts are unsupported in the bounded Phase 10 surface",
+            "trace_plot currently supports only MCMC-backed `InferenceResults`",
         ),
     )
     posterior = _require_plot_posterior(results, "trace_plot")
@@ -66,8 +65,7 @@ end
 Render a bounded posterior-density figure for grouped `InferenceResults`.
 
 This Phase 10 surface requires grouped posterior draws on
-`InferenceResults.posterior` and is supported on both the bounded MCMC and VI
-rows.
+`InferenceResults.posterior` from a Turing-backed MCMC artifact.
 """
 function posterior_density_plot(
         results::InferenceResults;

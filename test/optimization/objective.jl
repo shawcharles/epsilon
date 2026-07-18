@@ -133,19 +133,6 @@ end
     @test_throws ArgumentError Epsilon._evaluate_budget_objective(problem, [observed_tv])
 end
 
-@testset "budget optimization problem supports bounded VI grouped artifacts" begin
-    model = sample_time_series_model()
-    config = VariationalConfig(; max_iters = 20, draws = 12, random_seed = 331, progressbar = false)
-    approximate_fit!(model, config)
-    grouped = _grouped_results_for_optimization(model)
-
-    total_budget = sum(model.data.channels)
-    problem = Epsilon._build_budget_optimization_problem(grouped; total_budget)
-
-    @test problem.optimized_channels == ["tv", "search"]
-    @test isfinite(problem.current_response)
-end
-
 @testset "budget optimization problem rejects malformed contract inputs" begin
     model = sample_time_series_model()
     fit!(model)

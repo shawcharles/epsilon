@@ -1,6 +1,9 @@
 using Epsilon
 using Test
 
+isdefined(@__MODULE__, :sample_time_series_model) ||
+    include(joinpath(@__DIR__, "..", "model", "sample_models.jl"))
+
 @testset "fit! stores explicit MCMC execution plan" begin
     model = sample_multichain_time_series_model(; cores = 1)
     state = fit!(model)

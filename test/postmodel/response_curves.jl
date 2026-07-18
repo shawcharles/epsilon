@@ -166,7 +166,7 @@ end
     )
 end
 
-@testset "metric_results supports bounded MCMC and VI grouped artifacts" begin
+@testset "metric_results supports bounded MCMC grouped artifacts" begin
     model = feature_matrix_time_series_model(; random_seed = 215)
     fit!(model)
     grouped = _grouped_results_for_response_curves(model)
@@ -191,27 +191,6 @@ end
     finite_mask = isfinite.(mroas) .& isfinite.(mcpa)
     @test all((mroas .* mcpa)[finite_mask] .≈ 1.0)
 
-    vi_model = sample_time_series_model(;
-        seasonality = Dict("type" => "fourier", "n_order" => 2),
-        trend = Dict("type" => "linear"),
-        dates = Date(2024, 1, 1):Day(7):Date(2024, 2, 5),
-    )
-    vi_config = VariationalConfig(;
-        max_iters = 25,
-        draws = 12,
-        random_seed = 216,
-        progressbar = false,
-    )
-    approximate_fit!(vi_model, vi_config)
-    vi_grouped = _grouped_results_for_response_curves(vi_model)
-    vi_total = sum(vi_model.data.channels[:, 2])
-    vi_metrics = metric_results(
-        vi_grouped;
-        channel = "search",
-        grid = [0.0, vi_total / 2, vi_total],
-    )
-
-    @test size(vi_metrics.values) == (vi_config.draws, 3, 4)
 end
 
 @testset "metric_results defaults to CPA semantics for conversion targets" begin

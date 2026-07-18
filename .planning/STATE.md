@@ -8,21 +8,28 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 37 HSGP Time-Series Contribution Replay is complete.
-The v1
-release boundary remains MCMC/Turing-only for supported inference, while
-`VariationalConfig` and `approximate_fit!` remain scaffolded pre-v1 review
-exports. Variational inference, dashboard/UI parity, and AI advisor behaviour
-remain explicitly out of scope for v1.
+**Current focus:** Phase 38 Permanent VI Surface Retirement is complete.
+MCMC/Turing is the sole fitting contract; variational inference is permanently
+retired. Dashboard/UI parity and AI advisor behaviour remain explicitly
+deferred.
 
 ## Current Position
 
-**Current Phase:** 37
-**Current Phase Name:** HSGP Time-Series Contribution Replay
-**Total Phases:** 37
-**Current Plan:** `.planning/phases/37-hsgp-timeseries-contribution-replay/PLAN.md`
-**Total Plans in Phase:** 1 bounded replay slice
-**Status:** Phase 37 permits grouped-posterior `contribution_results` and
+**Current Phase:** 38
+**Current Phase Name:** Permanent VI Surface Retirement
+**Total Phases:** 38
+**Current Plan:** `.planning/phases/38-permanent-vi-surface-retirement/PLAN.md`
+**Total Plans in Phase:** 1 bounded retirement slice
+**Status:** Phase 38 is complete. It removed the public/runtime variational
+surface, deleted the VI source and test leaf, made MCMC/Turing the sole fitting
+contract, rejects retired configuration and artifact backend input, and retains
+MCMC coverage at each former consumer boundary. Independent implementation
+review approved the landed contract. A closure-gate regression in the synthetic
+HSGP guard fixture was fixed by marking its chain-bearing artifact as a fitted
+deterministic `:fixture`, then independently approved. The final
+phase-closing `make check-full` gate passed `9925 / 9925` tests in `23m33.1s`
+and completed the docs build successfully. Phase 37 permits grouped-posterior
+`contribution_results` and
 `decomposition_results` only for the exact retained TimeSeriesMMM HSGP training
 grid. Each draw rebuilds the shared multiplier from immutable spec state and
 the named HSGP posterior parameters after beta weighting and before target
@@ -97,12 +104,12 @@ broader support expansion. Phase 27 is complete at
 docs and planning state stop presenting VI as a v1-supported backend.
 `.planning/PROJECT.md` contains a marked v1 out-of-scope table for
 `variational_inference`, `dashboard_ui`, and `ai_advisor`, each with
-`out-of-scope-v1` status. `test/api_exports.jl` guards that table and rejects
+`permanently-retired` status for variational inference. `test/api_exports.jl` guards that table and rejects
 legacy active VI support row IDs and phrases across release-facing docs and
 planning files while allowing unsupported, out-of-scope, historical-superseded,
-and export-existence contexts. `VariationalConfig` and `approximate_fit!`
-remain exported scaffolded surfaces; no source files, dependency files,
-runtime warnings, model semantics, or API cleanup candidates changed. Phase 26
+and historical contexts. The former variational exports were permanently
+removed in Phase 38; no dependency files, MCMC semantics, or API cleanup
+candidates changed. Phase 26
 is complete at
 `.planning/phases/26-deprecated-validation-helper-migration-audit/PLAN.md`.
 `.planning/API-EXPORT-CLEANUP-RFC.md` now treats Phase 22 as historical
@@ -397,7 +404,7 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 | 5 | Use `PanelMMM` plus centered panel intercept offsets as the first supported panel slice | Lands a real panel/hierarchical path without overloading `TimeSeriesMMM` or pretending broader panel feature support already exists |
 | 5 | Freeze Phase 5 as a supported feature-bundle matrix rather than an implied combinatorial surface | Keeps the package contract honest and makes closeout testable without inventing unsupported combinations |
 | 6 | Fix the canonical grouped inference artifact contract as Julia-native `InferenceResults` and defer NetCDF / ArviZ-native interchange from Phase 6 | Removes implementation-time ambiguity before grouped export, VI, and Phase 7 consumers depend on the artifact surface |
-| 6 | Historical decision: keep VI visible via `approximate_fit!` and `VariationalConfig`, with the YAML `fit` block remaining MCMC-only | Superseded by Phase 27 for v1 release support: those exports remain scaffolded pre-v1 review surfaces, while MCMC/Turing is the only supported v1 inference path |
+| 6 | Historical decision: keep VI visible via `approximate_fit!` and `VariationalConfig`, with the YAML `fit` block remaining MCMC-only | Superseded by Phase 38: those exports are now permanently removed, and MCMC/Turing is the only fitting path |
 | 6 | Freeze the inference support matrix explicitly instead of leaving backend availability implicit in docs and tests | Makes the Phase 6 contract truthful before Phase 7 consumes it |
 | 7 | Keep Phase 7 post-modeling time-series first and consume canonical `InferenceResults` directly | Avoids reopening inference contracts or inventing premature panel decomposition/response semantics |
 | 7 | Carry resolved standardized-control replay state inside `MMMModelSpec.controls` instead of widening `InferenceResults` | Keeps deterministic replay faithful for grouped `new_data` artifacts while preserving the frozen grouped-artifact contract |
@@ -443,8 +450,8 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
   not accept HSGP config or add graph/model semantics.
 - Phase 15 calibration likelihood integration is closed; keep the calibration
   row `scaffolded` until a separate contract implements panel,
-  broader saturation-family, or UI calibration paths. VI calibration remains
-  outside v1 because variational inference itself is out of scope for v1.
+  broader saturation-family, or UI calibration paths. Variational calibration
+  is permanently retired with the inference backend.
 - Keep Stage `35` panel holdout validation deferred unless a concrete
   methodological requirement and fixture-backed contract are added.
 - Do not force free channel-by-panel allocation, panel-total bounds, fairness

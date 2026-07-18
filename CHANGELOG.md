@@ -5,6 +5,16 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ## Unreleased
 
+### Removed
+
+- Permanently removed the pre-release variational-inference API and runtime
+  path. Epsilon supports only MCMC/Turing fitting; public configuration rejects
+  retired inference-shaped keys and non-MCMC backends, and model/result loaders
+  reject retired or unknown backend metadata. Previously serialized payloads
+  containing only retired metadata now fail with a controlled `ArgumentError`;
+  payloads embedding the removed Julia type may fail during deserialization
+  before Epsilon can validate them.
+
 ### Added
 
 - Added the bounded programmatic `TimeSeriesMMM` MCMC shared-media HSGP
@@ -204,9 +214,9 @@ All notable project changes are recorded here. Epsilon is still on the
 - Reconciled the v1 release boundary after Phase 27: release-facing docs and
   planning state now make MCMC/Turing the only v1-supported inference path,
   with variational inference, dashboard/UI parity, and AI advisor behaviour
-  explicitly out of scope for v1. `VariationalConfig` and `approximate_fit!`
-  remain scaffolded pre-v1 review exports; this change does not remove exports,
-  add runtime warnings, or change model semantics.
+  explicitly out of scope for v1. At that point, `VariationalConfig` and
+  `approximate_fit!` remained scaffolded pre-v1 review exports; Phase 38 later
+  permanently removed them.
 - Deprecated the six exported validation-helper candidates at runtime while
   preserving exports and validation semantics. Direct public calls to
   `validate_calibration_step_config`,

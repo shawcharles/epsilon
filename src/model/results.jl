@@ -41,6 +41,13 @@ function ModelResults(
         posterior_predictive = nothing,
         prior_predictive = nothing,
     )
+    _validate_result_metadata(
+        metadata,
+        chain,
+        posterior_predictive,
+        prior_predictive;
+        context = "ModelResults",
+    )
     return ModelResults{typeof(chain), typeof(posterior_predictive), typeof(prior_predictive)}(
         metadata,
         spec,
@@ -55,8 +62,8 @@ end
 
 Extract the flat convenience results object from a Turing-backed fitted model.
 
-The richer grouped `InferenceResults` surface is the backend-agnostic artifact
-entry point for supported variational fits.
+The richer grouped `InferenceResults` surface is the canonical grouped artifact
+entry point for supported Turing fits.
 """
 function model_results(
         model::TimeSeriesMMM;

@@ -686,43 +686,6 @@ end
     ]
 end
 
-@testset "Phase 11 bounded VI contract row remains truthful" begin
-    case_dir = _validation_case_dir("ts00_mcmc")
-    model, _ = _time_series_validation_model(case_dir)
-    vi_config = VariationalConfig(;
-        max_iters = 15,
-        draws = 10,
-        random_seed = 71,
-        progressbar = false,
-    )
-
-    approximate_fit!(model, vi_config)
-    grouped = inference_results(
-        model;
-        include_prior = false,
-        include_posterior_predictive = true,
-        include_prior_predictive = false,
-    )
-
-    @test model.fit_state.backend == :variational
-    @test !isnothing(grouped.posterior)
-    @test !isnothing(grouped.posterior_predictive)
-
-    contributions = contribution_results(grouped)
-    @test contributions.component_names == ["intercept", "media:tv", "media:search"]
-
-    channel = first(grouped.spec.channel_columns)
-    channel_index = grouped.spec.channel_indices[channel]
-    observed_total = sum(Float64.(grouped.observed_data.channels[:, channel_index]))
-    curves = response_curve_results(grouped; channel, grid = observed_total .* _RESPONSE_GRID_FACTORS)
-    metrics = metric_results(curves)
-    optimisation = optimize_budget(grouped; total_budget = sum(Float64.(grouped.observed_data.channels)))
-
-    @test curves.channel == channel
-    @test metrics.channel == channel
-    @test optimisation.optimized_response >= optimisation.current_response
-    @test_throws ArgumentError trace_plot(grouped)
-end
 
 @testset "Phase 11 bounded pipeline reference row remains truthful" begin
     case_dir = _validation_case_dir("pipeline_ts00_mcmc")

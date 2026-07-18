@@ -196,10 +196,9 @@ Current repository state on 2026-05-18:
   remain exported and not ready to unexport.
 - Phase 27 is closed:
   release-facing docs, planning state, and the focused `api_exports` lane now
-  make MCMC/Turing the only v1-supported inference backend. `VariationalConfig`
-  and `approximate_fit!` remain scaffolded pre-v1 review exports, but
-  variational inference, dashboard/UI parity, and AI advisor behaviour are
-  explicitly out of scope for v1.
+  made MCMC/Turing the only v1-supported inference backend. Phase 38
+  subsequently permanently retired the former variational implementation;
+  dashboard/UI parity and AI advisor behaviour remain explicitly deferred.
 - Phase 28 is closed: a tiny synthetic
   `TimeSeriesMMM` toy MCMC smoke demo now lives under `examples/toy_mmm/`,
   exposes `run_toy_mmm`, writes compact summaries only when an output directory
@@ -310,9 +309,8 @@ Current repository state on 2026-05-18:
       validation-helper exports without removing exports, changing runtime
       behaviour, or making Abacus parity or stable-v1 API claims.
 - [x] **Phase 27: Scope Boundary Reconciliation** - Keep v1 inference support
-      MCMC-only while retaining VI exports as scaffolded pre-v1 review
-      surfaces and documenting dashboard/UI and AI advisor behaviour as out of
-      scope for v1.
+      MCMC-only and document dashboard/UI and AI advisor behaviour as out of
+      scope for v1. Superseded for inference implementation by Phase 38.
 - [x] **Phase 28: Toy MCMC Smoke Demo** - Add a tiny synthetic `TimeSeriesMMM`
       MCMC smoke demo plus focused test coverage, without treating it as
       release evidence, benchmark work, Abacus parity, or broader support
@@ -355,6 +353,12 @@ Current repository state on 2026-05-18:
       independent review and the single `make check-full` closure gate; HSGP
       curves, metrics, panels, YAML/pipeline, optimisation, and TVP remain
       unsupported.
+- [x] **Phase 38: Permanent VI Surface Retirement** - Removed the pre-release
+      `VariationalConfig` and `approximate_fit!` API, made MCMC/Turing the sole
+      inference contract, and rejected legacy variational artefacts and config
+      inputs without adding a compatibility bridge. Closed with independent
+      review and the phase-closing `make check-full` gate: `9925 / 9925` tests
+      in `23m33.1s` plus a successful docs build.
 
 ## Phase Details
 
@@ -468,8 +472,8 @@ Plans:
 ### Phase 6: Inference
 **Goal:** Harden the current fitting workflow into a truthful inference layer
 with a canonical grouped artifact contract. Phase 6 also landed an explicit VI
-implementation, but Phase 27 reclassifies that surface as scaffolded pre-v1
-review rather than v1 release support.
+implementation. Phase 27 reclassified that surface as scaffolded pre-v1
+review, and Phase 38 later permanently removed it.
 **Depends on:** Phase 5
 **Requirements:** [INFER-01, INFER-02, INFER-03]
 **Success Criteria** (what must be TRUE):
@@ -477,9 +481,8 @@ review rather than v1 release support.
      with reproducible settings and explicit warning/failure behavior.
   2. Users can inspect and persist grouped inference artifacts through one
      canonical Julia-native `InferenceResults` surface.
-  3. The historical variational-inference implementation remains visible as
-     `approximate_fit!` / `VariationalConfig` scaffolded export surface, while
-     Phase 27 keeps v1 release support MCMC-only.
+  3. The historical variational-inference implementation was removed in Phase
+     38; `approximate_fit!` and `VariationalConfig` are no longer public API.
   4. The inference support matrix is documented honestly before Phase 7 begins,
      and Phase 7 consumes that frozen artifact contract rather than redefining
      it.
@@ -489,8 +492,8 @@ Plans:
 - [x] 06-01: Harden the current MCMC workflow, warning policy, and execution contract.
 - [x] 06-02: Implement the canonical `InferenceResults` grouped export and predictive grouping surface.
 - [x] 06-03: Implement `approximate_fit!`, `VariationalConfig`, and the first
-      variational-inference implementation, now treated as scaffolded
-      pre-v1-review history after Phase 27.
+      variational-inference implementation, now superseded by Phase 38's
+      permanent removal.
 - [x] 06-04: Freeze the truthful inference support matrix and close the phase.
 
 ### Phase 7: Post-Modeling
@@ -721,7 +724,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 29
 | 3. Priors and Distributions | 3/3 | Completed | prior schema, distribution mapping, config deserialization, special-prior compatibility, custom distributions, shrinkage recipes |
 | 4. Model Core | 5/5 | Completed | typed model/config/data structs, runnable Turing-backed MMMs, predictive paths, save/load, diagnostics, warnings |
 | 5. MMM Features | 4/4 | Completed | frozen TimeSeriesMMM / PanelMMM feature-bundle matrix and explicit unsupported combinations |
-| 6. Inference | 4/4 | Completed | hardened MCMC path, canonical `InferenceResults`, historical VI implementation now classified as scaffolded after Phase 27, frozen support matrix |
+| 6. Inference | 4/4 | Completed | hardened MCMC path, canonical `InferenceResults`, historical variational implementation later permanently retired in Phase 38, frozen support matrix |
 | 7. Post-Modeling | 3/3 | Completed | deterministic replay, typed post-model outputs, summary tables, Abacus parity coverage, frozen post-model matrix |
 | 8. Budget Optimization | 3/3 | Completed | bounded fixed-budget optimizer, parity fixtures, comparison/audit outputs |
 | 9. Pipeline | 4/4 | Completed | bounded time-series-first MCMC runner, CLI, and full Stage `00`-`70` contract |
@@ -730,7 +733,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 29
 | 12. Parity Remediation | 4/4 | Completed | scaling/model-space parity, Stage 60 curve parity, Stage 70 verification, coherent holiday/design contract, and final revalidation/release reconciliation landed |
 | 13. Prediction-State and Contract Remediation | 6/6 | Completed | fitted trend/holiday prediction-state repair, media input contract hardening, pipeline YAML contract hardening, and final release-gate revalidation landed |
 | 14. Abacus Parity Recovery | 5/5 | Plan complete | `timeseries`, `geo_panel`, and `geo_brand_panel` demo-backed evidence spine; `timeseries` pipeline Stage `00`-`70` artifact-key parity; `geo_panel` and `geo_brand_panel` pipeline Stage `00`, Stage `20`, Stage `30`, Stage `40`, Stage `50`, Stage `60`, and explicitly enabled Stage `70` historical-share optimization coverage, with panel Stage `35` deferred |
-| 27. Scope Boundary Reconciliation | 4/4 | Completed | MCMC-only v1 inference boundary, VI/dashboard/AI out-of-scope table, release-doc and planning guardrails |
+| 27. Scope Boundary Reconciliation | 4/4 | Completed | MCMC-only v1 inference boundary, dashboard/AI out-of-scope table, release-doc and planning guardrails; inference retirement later completed in Phase 38 |
 | 28. Toy MCMC Smoke Demo | 4/4 | Completed | tiny synthetic `TimeSeriesMMM` MCMC smoke demo, callable toy entry point, optional compact summaries, and focused example test landed |
 | 29. Toy MCMC Path Hardening | 4/4 | Completed | CLI malformed-integer errors, `-h`/`--help`, include-safety evidence, focused docs, and toy test hardening landed |
 | 30. CSV Time-Series MCMC Quickstart | 4/4 | Completed | fixed-schema CSV time-series MCMC quickstart, strict input guards, and scoped review/verification landed |

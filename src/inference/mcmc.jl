@@ -193,7 +193,7 @@ function _successful_turing_fit!(
         artifact,
         message::AbstractString,
     )
-    return _successful_fit!(model, :turing, artifact, message)
+    return _successful_fit!(model, artifact, message)
 end
 
 function _fit_error_message(model::Union{TimeSeriesMMM, PanelMMM}, err)
@@ -202,18 +202,13 @@ function _fit_error_message(model::Union{TimeSeriesMMM, PanelMMM}, err)
 end
 
 function _mark_failed_turing_fit!(model::Union{TimeSeriesMMM, PanelMMM}, err)
-    return _mark_failed_fit!(model, :turing, _fit_error_message(model, err))
+    return _mark_failed_fit!(model, _fit_error_message(model, err))
 end
 
-function _successful_fit!(
-        model::Union{TimeSeriesMMM, PanelMMM},
-        backend::Symbol,
-        artifact,
-        message::AbstractString,
-    )
+function _successful_fit!(model::Union{TimeSeriesMMM, PanelMMM}, artifact, message::AbstractString)
     state = ModelFitState(
         :fit,
-        backend;
+        :turing;
         artifact,
         message,
     )
@@ -221,14 +216,10 @@ function _successful_fit!(
     return state
 end
 
-function _mark_failed_fit!(
-        model::Union{TimeSeriesMMM, PanelMMM},
-        backend::Symbol,
-        message::AbstractString,
-    )
+function _mark_failed_fit!(model::Union{TimeSeriesMMM, PanelMMM}, message::AbstractString)
     state = ModelFitState(
         :error,
-        backend;
+        :turing;
         artifact = nothing,
         message,
     )
@@ -247,12 +238,7 @@ end
 
 function _require_successful_posterior_fit(state::Union{Nothing, ModelFitState}, action::AbstractString)
     state = _require_successful_fit_state(state, action)
-    state.backend in (:turing, :variational) ||
-        throw(
-        ArgumentError(
-            "$action currently supports only posterior-backed fit states",
-        ),
-    )
+    state.backend === :turing || throw(ArgumentError("$action currently supports only Turing-backed fit states"))
     hasproperty(state.artifact, :chain) ||
         throw(ArgumentError("cannot $action because the last fit! did not produce posterior draws"))
     return state
@@ -263,4 +249,22 @@ function _require_successful_turing_fit(state::Union{Nothing, ModelFitState}, ac
     state.backend === :turing ||
         throw(ArgumentError("$action currently supports only Turing-backed fit states"))
     return state
+end
+
+function _sampler_config_with_draws(
+        config::SamplerConfig,
+        draws::Int;
+        chains::Int = config.chains,
+        cores::Int = config.cores,
+    )
+    return SamplerConfig(
+        draws = draws,
+        tune = config.tune,
+        chains = chains,
+        cores = cores,
+        target_accept = config.target_accept,
+        random_seed = config.random_seed,
+        progressbar = config.progressbar,
+        compute_convergence_checks = config.compute_convergence_checks,
+    )
 end

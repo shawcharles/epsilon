@@ -201,18 +201,6 @@ end
     @test sum(audit.optimized_share) ≈ 1.0
 end
 
-@testset "budget optimization summary projections support bounded VI results" begin
-    model = sample_time_series_model()
-    config = VariationalConfig(; max_iters = 20, draws = 12, random_seed = 411, progressbar = false)
-    approximate_fit!(model, config)
-    grouped = _grouped_results_for_optimization(model)
-
-    result = optimize_budget(grouped; total_budget = sum(model.data.channels))
-    @test result.solver_status in _OPTIMIZATION_SUCCESS_STATUSES
-    @test size(budget_impact_table(result), 1) == length(result.spec.channel_columns)
-    @test size(budget_audit_table(result), 1) == length(result.optimized_channels)
-end
-
 @testset "optimization parity matches retained Abacus fixtures" begin
     atol = 1.0e-5
     rtol = 1.0e-5

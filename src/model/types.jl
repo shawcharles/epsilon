@@ -76,50 +76,6 @@ function SamplerConfig(;
 end
 
 """
-    VariationalConfig(; max_iters=1000, draws=1000, family=:meanfield_gaussian, random_seed=nothing, progressbar=true)
-
-Typed variational-inference settings for explicit `approximate_fit!` workflows.
-
-`draws` controls how many posterior approximation draws are materialized into
-the stored fit artifact for later grouped inference export and posterior
-predictive generation. The current Phase 6 surface supports only the bounded
-mean-field Gaussian family.
-"""
-struct VariationalConfig
-    max_iters::Int
-    draws::Int
-    family::Symbol
-    random_seed::Union{Nothing, Int}
-    progressbar::Bool
-end
-
-function Base.:(==)(lhs::VariationalConfig, rhs::VariationalConfig)
-    return lhs.max_iters == rhs.max_iters &&
-        lhs.draws == rhs.draws &&
-        lhs.family == rhs.family &&
-        lhs.random_seed == rhs.random_seed &&
-        lhs.progressbar == rhs.progressbar
-end
-
-function VariationalConfig(;
-        max_iters::Integer = 1000,
-        draws::Integer = 1000,
-        family::Union{Symbol, AbstractString} = :meanfield_gaussian,
-        random_seed = nothing,
-        progressbar::Bool = true,
-    )
-    config = VariationalConfig(
-        Int(max_iters),
-        Int(draws),
-        family isa Symbol ? family : Symbol(lowercase(String(family))),
-        isnothing(random_seed) ? nothing : Int(random_seed),
-        progressbar,
-    )
-    _validate_variational_config(config)
-    return config
-end
-
-"""
     TimeVaryingMediaConfig(; m, L, time_resolution, covariance=:expquad, eta_prior, lengthscale_prior)
 
 Programmatic-only configuration for the bounded time-series shared media HSGP
@@ -435,18 +391,6 @@ function _validate_sampler_config(config::SamplerConfig)
     config.cores > 0 || throw(ArgumentError("cores must be positive"))
     0.0 < config.target_accept < 1.0 ||
         throw(ArgumentError("target_accept must lie in (0, 1)"))
-    return nothing
-end
-
-function _validate_variational_config(config::VariationalConfig)
-    config.max_iters > 0 || throw(ArgumentError("max_iters must be positive"))
-    config.draws > 0 || throw(ArgumentError("draws must be positive"))
-    config.family === :meanfield_gaussian ||
-        throw(
-        ArgumentError(
-            "VariationalConfig.family currently supports only :meanfield_gaussian",
-        ),
-    )
     return nothing
 end
 

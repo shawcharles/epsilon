@@ -73,7 +73,7 @@ fields are rejected rather than ignored.
 The following remain outside the current supported surface:
 
 - `PanelMMM` calibration.
-- Variational inference via `approximate_fit!`.
+- Variational inference, which is permanently retired from Epsilon.
 - YAML `fit.backend` values outside the MCMC/Turing aliases when calibration is
   present.
 - Saturation families other than the centered-logistic `"logistic"` path for

@@ -50,9 +50,8 @@ where a direct copy would be less coherent.
 
 ### Deferred
 
-- Variational inference - `VariationalConfig` and `approximate_fit!` remain
-  scaffolded exports for pre-v1 review, but VI is not a v1-supported inference
-  backend.
+- Variational inference - permanently retired before release. Epsilon will not
+  implement a variational backend; MCMC/Turing is the sole inference contract.
 - AI advisor functionality - useful product assistance, but not central to the
   statistical or methodological port.
 - Plotly Dash / hosted dashboard parity - Epsilon is a Julia package and CLI
@@ -61,7 +60,7 @@ where a direct copy would be less coherent.
 <!-- BEGIN V1 OUT OF SCOPE -->
 | Surface | Status | Rationale |
 |---|---|---|
-| variational_inference | out-of-scope-v1 | MCMC/Turing is the supported v1 inference path; existing VI exports remain scaffolded pre-v1 review surfaces. |
+| variational_inference | permanently-retired | Epsilon will not implement variational inference; MCMC/Turing is the sole supported fitting path. |
 | dashboard_ui | out-of-scope-v1 | Epsilon v1 is a Julia library and artifact-producing workflow, not a Plotly Dash or hosted dashboard clone. |
 | ai_advisor | out-of-scope-v1 | Advisor behaviour is product assistance outside the statistical and methodological v1 evidence spine. |
 <!-- END V1 OUT OF SCOPE -->
@@ -126,7 +125,7 @@ stable artifacts before Epsilon makes broad release claims.
 | Reopen the roadmap if the methodology audit invalidates a release claim | Release readiness is subordinate to truthful methodology and documentation | Good |
 | Add Phase 13 before release prep to close external code-review findings | Prediction/replay state and config-validation bugs can invalidate release behavior even after methodology claims are reconciled | Pending |
 | Use the Abacus parity ledger as the release roadmap | Module presence is not enough; release claims need fixture-backed or demo-backed evidence | Pending |
-| Keep v1 inference support MCMC-only after Phase 27 | Existing VI exports are scaffolded pre-v1 review surfaces, not release-supported backends | Good |
+| Permanently retire VI before release in Phase 38 | Epsilon will not own an approximate-inference contract; MCMC/Turing is the sole fitting path | Good |
 
 ---
 *Last updated: 2026-07-06 after Phase 27 scope-boundary reconciliation*

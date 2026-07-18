@@ -75,20 +75,6 @@ end
     @test sum(values(result.optimized_spend)) ≈ total_budget
 end
 
-@testset "optimize_budget supports bounded VI grouped artifacts" begin
-    model = sample_time_series_model()
-    config = VariationalConfig(; max_iters = 20, draws = 12, random_seed = 331, progressbar = false)
-    approximate_fit!(model, config)
-    grouped = _grouped_results_for_optimization(model)
-
-    total_budget = sum(model.data.channels)
-    result = optimize_budget(grouped; total_budget)
-
-    @test result.solver_status in _SUCCESS_SOLVER_STATUSES
-    @test result.optimized_response + 1.0e-6 >= result.current_response
-    @test result.objective_value ≈ result.optimized_response atol = 1.0e-5 rtol = 1.0e-5
-end
-
 @testset "optimize_budget uses CPA-style default efficiency for conversion targets" begin
     model = sample_time_series_model(; target_type = "conversion")
     fit!(model)

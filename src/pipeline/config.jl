@@ -273,7 +273,7 @@ function _validate_pipeline_top_level_contract(config::Dict{String, Any})
             continue
         throw(
             ArgumentError(
-                "run_pipeline does not support YAML-driven variational inference; `$key` is outside the bounded Phase 9 surface",
+                "run_pipeline rejects `$key`: Epsilon permanently supports only MCMC/Turing fitting",
             ),
         )
     end

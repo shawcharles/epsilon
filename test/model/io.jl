@@ -4,39 +4,7 @@ using Serialization
 using Dates
 using Random
 
-function sample_persisted_model(; compute_convergence_checks = false, chains = 1)
-    config = ModelConfig(
-        date_column = "date",
-        target_column = "revenue",
-        target_type = "revenue",
-        channel_columns = ["tv", "search"],
-        control_columns = ["price_index"],
-        dims = ("geo",),
-        adstock = Dict("type" => "geometric", "l_max" => 8),
-        saturation = Dict("type" => "logistic"),
-        priors = Dict("intercept" => EpsilonPrior("Normal"; mu = 0.0, sigma = 1.0)),
-    )
-    sampler = SamplerConfig(;
-        draws = 20,
-        tune = 20,
-        chains = chains,
-        cores = 1,
-        target_accept = 0.8,
-        progressbar = false,
-        compute_convergence_checks = compute_convergence_checks,
-    )
-    data = MMMData(
-        dates = 1:6,
-        target = [5.0, 6.5, 7.5, 9.0, 10.0, 11.5],
-        channels = [1.0 0.5; 2.0 1.0; 2.5 1.5; 3.0 2.0; 3.5 2.5; 4.0 3.0],
-        channel_names = ["tv", "search"],
-        controls = [0.2; 0.4; 0.3; 0.6; 0.5; 0.8][:, :],
-        control_names = ["price_index"],
-    )
-    model = TimeSeriesMMM(config, sampler, data)
-    fit!(model)
-    return model
-end
+isdefined(@__MODULE__, :sample_time_series_model) || include("sample_models.jl")
 
 function _hsgp_io_config()
     return TimeVaryingMediaConfig(
@@ -407,4 +375,44 @@ end
         serialize(io, (; payload..., metadata = bad_metadata))
     end
     @test_throws ArgumentError load_model(path)
+end
+
+@testset "model loaders reject unsupported and incoherent fit backends" begin
+    model = sample_persisted_model()
+    path = tempname()
+    save_model(path, model)
+    payload = open(deserialize, path)
+    metadata = payload.metadata
+
+    retired_metadata = ModelArtifactMetadata(
+        metadata.schema_version,
+        metadata.epsilon_version,
+        metadata.julia_version,
+        metadata.created_at_utc,
+        metadata.model_type,
+        :variational,
+        metadata.fit_status,
+    )
+    @test_throws ArgumentError load_model(
+        _write_model_payload(tempname(), (; payload..., metadata = retired_metadata)),
+    )
+
+    retired_fit_state = (; payload.fit_state..., backend = :variational)
+    @test_throws ArgumentError load_model(
+        _write_model_payload(tempname(), (; payload..., fit_state = retired_fit_state)),
+    )
+
+    incoherent_metadata = ModelArtifactMetadata(
+        metadata.schema_version,
+        metadata.epsilon_version,
+        metadata.julia_version,
+        metadata.created_at_utc,
+        metadata.model_type,
+        nothing,
+        nothing,
+    )
+    @test_throws ArgumentError load_model(
+        _write_model_payload(tempname(), (; payload..., metadata = incoherent_metadata)),
+    )
+    @test_throws ArgumentError ModelFitState(:fit, :fixture)
 end

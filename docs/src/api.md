@@ -102,12 +102,10 @@ export must appear exactly once.
 | `TimeSeriesMMM` | Model core | bounded |
 | `TimeVaryingMediaConfig` | Configuration | bounded |
 | `UnalignedValuesError` | Calibration | scaffolded |
-| `VariationalConfig` | Inference | scaffolded |
 | `WeibullType` | Transforms | core |
 | `active_count` | Priors and distributions | scaffolded |
 | `adstock_curve_plot` | Plotting | bounded |
 | `adstock_curve_results` | Post-model results | core |
-| `approximate_fit!` | Inference | scaffolded |
 | `assert_monotonic_lift` | Calibration | scaffolded |
 | `assert_scenario_store_compatible` | Scenario planning | bounded |
 | `batched_convolution` | Transforms | core |

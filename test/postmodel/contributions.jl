@@ -184,28 +184,6 @@ end
     @test size(results.values, 1) == model.sampler_config.draws * model.sampler_config.chains
 end
 
-@testset "decomposition_results supports VI-backed time-series grouped artifacts" begin
-    model = sample_time_series_model(;
-        seasonality = Dict("type" => "fourier", "n_order" => 2),
-        trend = Dict("type" => "linear"),
-        dates = Date(2024, 1, 1):Day(7):Date(2024, 2, 5),
-    )
-    vi_config = VariationalConfig(;
-        max_iters = 25,
-        draws = 12,
-        random_seed = 205,
-        progressbar = false,
-    )
-    approximate_fit!(model, vi_config)
-
-    grouped = _grouped_results_for_postmodel(model)
-    results = decomposition_results(grouped)
-
-    @test results isa DecompositionResults
-    @test size(results.totals) == (vi_config.draws, length(results.component_names))
-    @test vec(sum(results.shares; dims = 2)) ≈ ones(vi_config.draws)
-end
-
 @testset "contribution_results rejects grouped artifacts missing beta_media outside Michaelis-Menten" begin
     model = feature_matrix_time_series_model(; random_seed = 218)
     fit!(model)

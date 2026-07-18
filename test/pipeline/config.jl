@@ -15,6 +15,30 @@ using Test
     @test_throws ArgumentError PipelineRunConfig(config_path = "config.yml", tune = -1)
 end
 
+@testset "pipeline configuration rejects retired inference-shaped keys" begin
+    mktempdir() do tmpdir
+        for key in ("vi", "variational", "approximate_fit")
+            config_path = joinpath(tmpdir, "$key.yml")
+            write(
+                config_path,
+                """
+                data:
+                  date_column: date
+                  dataset_path: data.csv
+                target:
+                  column: revenue
+                media:
+                  channels: [tv]
+                $key: {}
+                """,
+            )
+            @test_throws ArgumentError Epsilon._load_pipeline_configuration(
+                PipelineRunConfig(config_path = config_path),
+            )
+        end
+    end
+end
+
 @testset "_load_pipeline_configuration strips runner-only keys and merges overrides" begin
     fixture = joinpath(@__DIR__, "..", "fixtures", "pipeline_config.yml")
     loaded = Epsilon._load_pipeline_configuration(

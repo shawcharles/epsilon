@@ -23,7 +23,7 @@ function _hsgp_guard_results()
         channel_names = ["tv"],
     )
     spec = build_model(TimeSeriesMMM(config, SamplerConfig(draws = 1, tune = 0, chains = 1, cores = 1), data))
-    metadata = Epsilon._artifact_metadata("TimeSeriesMMM")
+    metadata = Epsilon._artifact_metadata("TimeSeriesMMM"; backend = :fixture, fit_status = :fit)
     parameter_names = Symbol[
         :intercept,
         :sigma,

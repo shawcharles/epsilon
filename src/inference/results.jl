@@ -84,6 +84,15 @@ function InferenceResults(
         sample_stats = InferenceSampleStats(),
         observed_data = nothing,
     )
+    _validate_result_metadata(
+        metadata,
+        posterior,
+        prior,
+        posterior_predictive,
+        prior_predictive,
+        sample_stats.internals;
+        context = "InferenceResults",
+    )
     return InferenceResults{
         typeof(posterior),
         typeof(prior),
@@ -111,8 +120,7 @@ Extract the canonical grouped inference-results artifact from a fitted model.
 This grouped surface is additive to `model_results(model; ...)`: the existing
 `ModelResults` container remains the flatter convenience view, while
 `InferenceResults` preserves grouped posterior, prior, predictive, sample-stat,
-and observed-data content together across the currently supported Turing-backed
-and variational fit states.
+and observed-data content together for supported Turing-backed fits.
 """
 function inference_results(
         model::TimeSeriesMMM;
@@ -129,9 +137,9 @@ function inference_results(
         _prior_predict_time_series_mmm(
             model,
             new_data;
-            draws_override = _grouped_prior_draws(artifact),
-            chains_override = _grouped_prior_chains(artifact),
-            cores_override = _grouped_prior_cores(artifact),
+            draws_override = nothing,
+            chains_override = nothing,
+            cores_override = nothing,
         )
     else
         nothing
@@ -293,21 +301,6 @@ function _grouped_sample_stats(artifact)
         convergence_report = hasproperty(artifact, :convergence_report) ? artifact.convergence_report : nothing,
         convergence_warnings = hasproperty(artifact, :convergence_warnings) ? artifact.convergence_warnings : nothing,
     )
-end
-
-function _grouped_prior_draws(artifact)
-    hasproperty(artifact, :variational_config) || return nothing
-    return artifact.variational_config.draws
-end
-
-function _grouped_prior_chains(artifact)
-    hasproperty(artifact, :variational_config) || return nothing
-    return 1
-end
-
-function _grouped_prior_cores(artifact)
-    hasproperty(artifact, :variational_config) || return nothing
-    return 1
 end
 
 function _parameter_chain(chain)

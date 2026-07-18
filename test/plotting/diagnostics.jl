@@ -3,6 +3,9 @@ using Dates
 using Epsilon
 using Test
 
+isdefined(@__MODULE__, :sample_results_model) ||
+    include(joinpath(@__DIR__, "..", "model", "sample_models.jl"))
+
 function _plot_axes(figure)
     return [content for content in figure.content if content isa Axis]
 end
@@ -36,26 +39,7 @@ end
     _assert_plot_saves(figure, "trace")
 end
 
-@testset "trace_plot rejects VI-backed grouped inference honestly" begin
-    model = sample_time_series_model()
-    approximate_fit!(
-        model,
-        VariationalConfig(; max_iters = 5, draws = 6, random_seed = 31, progressbar = false),
-    )
-    grouped = inference_results(model; include_prior = true, include_prior_predictive = true)
-
-    err = try
-        trace_plot(grouped)
-        nothing
-    catch caught
-        caught
-    end
-
-    @test err isa ArgumentError
-    @test occursin("MCMC-backed", sprint(showerror, err))
-end
-
-@testset "posterior_density_plot supports grouped VI posterior draws" begin
+@testset "posterior_density_plot supports grouped MCMC posterior draws" begin
     model = sample_time_series_model(;
         seasonality = Dict("type" => "fourier", "n_order" => 2),
         trend = Dict("type" => "linear"),
@@ -64,10 +48,7 @@ end
         event_values = [1.0 0.0; 0.0 1.0; 0.0 0.0; 1.0 0.0; 0.0 0.0; 0.0 1.0],
         dates = Date(2024, 1, 1):Day(7):Date(2024, 2, 5),
     )
-    approximate_fit!(
-        model,
-        VariationalConfig(; max_iters = 5, draws = 6, random_seed = 37, progressbar = false),
-    )
+    fit!(model)
     grouped = inference_results(model; include_prior = true, include_prior_predictive = true)
 
     figure = posterior_density_plot(grouped; max_parameters = 2)

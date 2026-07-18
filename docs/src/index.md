@@ -26,16 +26,14 @@ remediation pass on the bounded reference time-series story:
   statistics, observed data, and coordinate metadata without redefining the
   flatter `ModelResults` convenience surface
 - Phase 6 is now closed historically: `fit!` is the canonical MCMC path and
-  `InferenceResults` is the canonical grouped artifact surface. Phase 6 also
-  landed `approximate_fit!(model, VariationalConfig(...))`, but Phase 27
-  supersedes that as a v1 release-support claim; the exports remain scaffolded
-  pre-v1 review surfaces.
+  `InferenceResults` is the canonical grouped artifact surface. Its former
+  variational implementation was permanently removed in Phase 38.
 - Phase 7 is now closed: grouped time-series `InferenceResults` can now
   produce `contribution_results`, `decomposition_results`,
   `response_curve_results`, `metric_results`, and `summary_table` on the
   v1-supported MCMC row through deterministic replay of the frozen Phase 5
-  additive model contract; earlier VI artefact consumers remain scaffolded
-  implementation history, not v1 release support. Response curves use
+  additive model contract; the former variational artifacts were permanently
+  retired in Phase 38. Response curves use
   total-spend grids in original units and preserve the observed temporal spend
   shape for the selected channel
 - Phase 8 is now closed for time-series optimization, and Phase 14 adds a
@@ -52,8 +50,8 @@ remediation pass on the bounded reference time-series story:
   `epsilon run config.yml` path. The closed time-series pipeline surface is
   MCMC-only, runs the fixed Stage `00`-`70` sequence, preserves blocked
   holdout validation as a side branch off the full-sample fit path, writes
-  stage-local `png` plots beside the corresponding stage artifacts, and keeps
-  YAML-driven VI explicitly unsupported. The pipeline also supports Abacus-style
+  stage-local `png` plots beside the corresponding stage artifacts, and rejects
+  retired variational-shaped configuration keys. The pipeline also supports Abacus-style
   optional Stage `05` prior-sensitivity planning: it writes resolved scenario
   configs plus human and LLM-safe manifests, but does not refit every scenario
   automatically. Panel pipeline orchestration is currently bounded to metadata,
@@ -77,13 +75,12 @@ remediation pass on the bounded reference time-series story:
   remains the separate curated bundle export. The plotting support matrix remains
   intentionally narrower than Dash parity: it is time-series-first for
   post-model visuals, supports channel-level budget optimization plots for
-  time-series and bounded panel optimization results, keeps VI trace plots
-  unsupported, and bounds the report bundle to deterministic `png` export over
+  time-series and bounded panel optimization results, has no variational plotting
+  path, and bounds the report bundle to deterministic `png` export over
   successful pipeline runs
 - Phase 10 `10-01` is now landed: `epsilon_theme()` plus the bounded
   diagnostic plotting surface now ship on top of grouped `InferenceResults`.
-  `trace_plot(results)` is the MCMC-only posterior trace view; VI-backed
-  grouped artifacts are rejected honestly there. `posterior_density_plot`,
+  `trace_plot(results)` is the MCMC-only posterior trace view. `posterior_density_plot`,
   `prior_posterior_plot`, `observed_fitted_plot`, and
   `residual_diagnostics_plot` now return Makie `Figure` objects and save
   through direct `png`, `svg`, or `pdf` exports. Time-series observed/fitted
@@ -95,8 +92,8 @@ remediation pass on the bounded reference time-series story:
   through `contribution_plot`, `contribution_area_plot`, `decomposition_plot`,
   and `response_curve_plot`. The current bounded row remains time-series first,
   and those figures work on the v1-supported MCMC post-model artifacts where
-  the underlying typed Phase 7 surface exists. Earlier VI plotting consumers
-  remain scaffolded implementation history, not v1 release support. Panel
+  the underlying typed Phase 7 surface exists. The former variational plotting
+  path was permanently removed. Panel
   post-model plotting remains explicitly unsupported
 - Phase 10 `10-03` is now landed and closes Phase 10: optimization plotting
   now renders directly from `BudgetOptimizationResult` through
@@ -158,7 +155,7 @@ remediation pass on the bounded reference time-series story:
   scaled into model space, and fixture-backed against comparable Abacus helper
   semantics. Public dict/YAML configs and the bounded time-series MCMC pipeline
   path can now carry those calibration terms into model construction.
-  `PanelMMM` calibration, VI calibration, non-logistic lift-test saturation
+  `PanelMMM` calibration, non-logistic lift-test saturation
   families, Dash/UI workflows, and AI-advisor behaviour remain unsupported.
 - a bounded, programmatic-only `TimeSeriesMMM` MCMC shared-media HSGP
   multiplier is available with retained date/cadence replay state and
@@ -167,7 +164,7 @@ remediation pass on the bounded reference time-series story:
   report posterior-conditional HSGP-adjusted model allocations; they are not
   causal effects, realised-target decompositions, or forecast attribution.
   Existing summary and contribution/decomposition plots consume those result
-  objects. YAML/pipeline configuration, panels, VI, calibration,
+  objects. YAML/pipeline configuration, panels, calibration,
   Michaelis-Menten, channel-specific/intercept/multidimensional/periodic HSGP,
   TVP, curves, saturation/adstock diagnostics, and metrics remain unsupported.
 
@@ -251,7 +248,7 @@ channel-by-panel allocation.
 |---|---|---|---|
 | `POST-U2` | Flat `ModelResults` as the canonical post-model input | Unsupported | Phase 7 consumes grouped `InferenceResults` directly |
 | `POST-U3` | Post-model outputs without grouped posterior/spec/observed-data state | Unsupported | Deterministic replay requires the frozen grouped artifact contract |
-| `POST-U4` | VI-backed post-model outputs as v1 release-supported rows | Unsupported | Historical implementation artefacts remain scaffolded; v1 post-model support is MCMC-only |
+| `POST-U4` | Retired-backend post-model outputs | Retired | Retired backend artifacts are rejected before post-model use |
 
 ## Phase 8 Optimization Matrix
 
@@ -269,7 +266,7 @@ channel-by-panel allocation.
 | `OPT-U2` | Objectives other than `:total_response` | Unsupported | Phase 8 freezes one posterior-mean total-response objective |
 | `OPT-U3` | Constraint families beyond total-budget equality, absolute bounds, and reference-relative guardrails | Unsupported | Pairwise ratios, pacing, and multi-objective trade-offs are deferred |
 | `OPT-U4` | Free channel-by-panel allocation or panel-total bounds | Unsupported | Panel response curves are valid for shared within-channel historical deltas; arbitrary panel allocation needs a separate validity contract |
-| `OPT-U5` | VI-backed optimisation as a v1 release-supported row | Unsupported | Historical implementation artefacts remain scaffolded; v1 optimisation support is MCMC-only |
+| `OPT-U5` | Retired-backend optimisation | Retired | Retired backend artifacts are rejected before optimisation |
 
 ## Supported Phase 5 Matrix
 
@@ -338,11 +335,11 @@ dimensions varying more slowly. For example, `("geo", "brand")` with geos
 
 | ID | Combination | Status | Reason |
 |---|---|---|---|
-| `INF-U1` | `PanelMMM` + `approximate_fit!` | Unsupported | Panel VI is not implemented in the bounded Phase 6 surface |
-| `INF-U2` | YAML-driven VI or mixed-backend `fit!` semantics | Unsupported | YAML `fit` and `SamplerConfig` remain MCMC-only |
-| `INF-U3` | VI-backed `model_results`, `model_diagnostics`, `sampler_diagnostics`, `convergence_report`, `convergence_warnings` | Unsupported | These remain MCMC/Turing-only surfaces |
+| `INF-U1` | Variational fitting | Retired | Epsilon permanently supports only MCMC/Turing fitting |
+| `INF-U2` | Retired inference-shaped configuration or mixed-backend `fit!` semantics | Retired | Parsers reject variational-shaped keys and non-MCMC backends |
+| `INF-U3` | Retired-backend artifacts | Retired | Loaders reject non-Turing backend metadata before consumer use |
 | `INF-U4` | NetCDF / ArviZ-native grouped export | Unsupported | Deferred from Phase 6; `InferenceResults` is the canonical grouped artifact |
-| `INF-U5` | `approximate_fit!` / `VariationalConfig` as a v1 release-supported backend | Unsupported | The exports remain scaffolded pre-v1 review surfaces, but Phase 27 keeps v1 inference support MCMC-only |
+| `INF-U5` | Variational inference backend | Retired | Permanently removed before release; no compatibility API is retained |
 
 ## Working Principles
 
@@ -506,7 +503,6 @@ Epsilon.SamplerDiagnostics
 Epsilon.SamplerWarning
 Epsilon.SamplerWarnings
 Epsilon.SamplerConfig
-Epsilon.VariationalConfig
 Epsilon.PanelMMM
 Epsilon.TimeSeriesMMM
 Epsilon.WeibullType
@@ -598,7 +594,6 @@ Epsilon.StandardScaler
 Epsilon.StandardizeControls
 Epsilon.standardize_control_data
 Epsilon.tanh_saturation
-Epsilon.approximate_fit!
 Epsilon.validate_column_indices
 Epsilon.validate_channel_values
 Epsilon.validate_model_config

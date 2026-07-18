@@ -196,7 +196,6 @@ end
         SamplerConfig(draws = 1, tune = 0, chains = 1, cores = 1),
         _time_varying_media_test_data(),
     )
-    @test_throws ArgumentError approximate_fit!(model)
 
     @test_throws ArgumentError TimeSeriesMMM(
         _time_varying_media_test_config(; time_varying_media = config),

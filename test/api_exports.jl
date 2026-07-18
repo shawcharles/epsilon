@@ -40,7 +40,7 @@ const API_EXPORTS_V1_OUT_OF_SCOPE_SURFACES = [
     "dashboard_ui",
     "ai_advisor",
 ]
-const API_EXPORTS_V1_OUT_OF_SCOPE_STATUS = "out-of-scope-v1"
+const API_EXPORTS_V1_OUT_OF_SCOPE_STATUS = "permanently-retired"
 const API_EXPORTS_LEGACY_VI_ROW_IDS = [
     "INF-TS-VI",
     "POST-TS-VI",
@@ -760,15 +760,13 @@ end
     @test empty_evidence_symbols == Symbol[]
 end
 
-@testset "v1 release scope excludes unsupported VI surface" begin
+@testset "permanent inference retirement removes the public VI surface" begin
     out_of_scope_rows = _api_exports_v1_out_of_scope_rows()
     surfaces = [row.surface for row in out_of_scope_rows]
     statuses = [row.status for row in out_of_scope_rows]
     allowed_vi_lines = [
-        "YAML-driven VI explicitly unsupported.",
-        "VI exports remain scaffolded, Julia-only pre-v1 review surfaces and are not part of v1 release support.",
-        "Existing Julia exports remain scaffolded pre-v1 review implementation surfaces, not supported release backends.",
-        "Historical VI validation scaffolding is superseded by Phase 27's v1 boundary.",
+        "The former VI surface is permanently retired.",
+        "Historical VI implementation work is superseded by the Phase 38 removal.",
     ]
     rejected_vi_lines = [
         "supported MCMC and VI rows can produce post-model outputs.",
@@ -781,8 +779,10 @@ end
     legacy_vi_claims = _api_exports_legacy_vi_release_claims()
 
     @test surfaces == API_EXPORTS_V1_OUT_OF_SCOPE_SURFACES
-    @test statuses == fill(API_EXPORTS_V1_OUT_OF_SCOPE_STATUS, length(API_EXPORTS_V1_OUT_OF_SCOPE_SURFACES))
+    @test statuses == ["permanently-retired", "out-of-scope-v1", "out-of-scope-v1"]
     @test length(out_of_scope_rows) == length(API_EXPORTS_V1_OUT_OF_SCOPE_SURFACES)
+    @test !isdefined(Epsilon, :VariationalConfig)
+    @test !isdefined(Epsilon, :approximate_fit!)
     @test [_api_exports_has_active_vi_release_claim(line) for line in allowed_vi_lines] == fill(false, length(allowed_vi_lines))
     @test [_api_exports_has_active_vi_release_claim(line) for line in rejected_vi_lines] == fill(true, length(rejected_vi_lines))
     @test legacy_vi_claims == String[]

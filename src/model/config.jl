@@ -17,6 +17,8 @@ function model_config_from_dict(
     merged = _resolve_model_relative_paths(merged; base_path)
 
     merged = _normalize_abacus_config_surface(merged)
+    _reject_retired_inference_config_keys(merged)
+    _validate_mcmc_fit_backend(merged)
     _reject_time_varying_media_yaml(merged)
 
     data_cfg = _required_mapping(merged, :data)
@@ -72,6 +74,32 @@ function _reject_time_varying_media_yaml(config::AbstractDict)
     media isa AbstractDict && haskey(media, "time_varying_media") && throw(
         ModelConfigError("media.time_varying_media is programmatic-only and cannot be set in YAML"),
     )
+    return nothing
+end
+
+const _RETIRED_INFERENCE_CONFIG_KEYS = Set(("vi", "variational", "approximate_fit"))
+
+function _reject_retired_inference_config_keys(config::AbstractDict; path::AbstractString = "")
+    for (key, value) in config
+        key_name = String(key)
+        key_path = isempty(path) ? key_name : "$path.$key_name"
+        key_name in _RETIRED_INFERENCE_CONFIG_KEYS &&
+            throw(ModelConfigError("$key_path is permanently unsupported; Epsilon supports only MCMC/Turing fitting"))
+        value isa AbstractDict && _reject_retired_inference_config_keys(value; path = key_path)
+    end
+    return nothing
+end
+
+function _validate_mcmc_fit_backend(config::AbstractDict; standalone::Bool = false)
+    has_fit = _has_key(config, :fit)
+    !has_fit && !standalone && return nothing
+    fit_cfg = has_fit ? _lookup(config, :fit) : config
+    fit_cfg isa AbstractDict || throw(ModelConfigError("fit configuration must be a mapping"))
+    backend = _lookup(fit_cfg, :backend, nothing)
+    isnothing(backend) && return nothing
+    backend isa AbstractString || throw(ModelConfigError("fit.backend must be a string"))
+    lowercase(strip(String(backend))) in ("mcmc", "nuts", "turing") ||
+        throw(ModelConfigError("fit.backend supports only MCMC/Turing; got $(String(backend))"))
     return nothing
 end
 
@@ -146,8 +174,10 @@ function sampler_config_from_dict(
         overrides::AbstractDict = Dict{String, Any}(),
     )
     merged = _merge_public_config(defaults, config, overrides)
+    _reject_retired_inference_config_keys(merged)
     fit_cfg = _has_key(merged, :fit) ? _lookup(merged, :fit) : merged
     fit_cfg isa AbstractDict || throw(ModelConfigError("fit configuration must be a mapping"))
+    _validate_mcmc_fit_backend(fit_cfg; standalone = true)
 
     try
         return SamplerConfig(
@@ -364,16 +394,6 @@ function _validate_model_calibration_yaml_contract(
             "calibration YAML is supported only for TimeSeriesMMM configs; dimensions.panel must be empty",
         ),
     )
-    for key in (:vi, :variational, :approximate_fit)
-        _has_key(config, key) ||
-            continue
-        throw(
-            ArgumentError(
-                "calibration YAML does not support variational inference; use TimeSeriesMMM with fit! (Turing/NUTS)",
-            ),
-        )
-    end
-
     fit_cfg = _lookup(config, :fit, nothing)
     isnothing(fit_cfg) && return nothing
     fit_cfg isa AbstractDict || throw(ModelConfigError("fit configuration must be a mapping"))

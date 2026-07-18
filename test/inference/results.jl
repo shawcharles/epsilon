@@ -3,6 +3,9 @@ using Dates
 using Serialization
 using Test
 
+isdefined(@__MODULE__, :sample_results_model) ||
+    include(joinpath(@__DIR__, "..", "model", "sample_models.jl"))
+
 function _same_chain_content(lhs, rhs)
     return Array(lhs) == Array(rhs) && names(lhs) == names(rhs)
 end
@@ -209,6 +212,65 @@ end
     )
     open(path, "w") do io
         serialize(io, (; payload..., metadata = bad_metadata))
+    end
+    @test_throws ArgumentError load_inference_results(path)
+end
+
+@testset "InferenceResults backend policy is fail-closed" begin
+    model = sample_results_model()
+    grouped = inference_results(
+        model;
+        include_prior = false,
+        include_posterior_predictive = false,
+        include_prior_predictive = false,
+    )
+    metadata = grouped.metadata
+    retired_metadata = ModelArtifactMetadata(
+        metadata.schema_version,
+        metadata.epsilon_version,
+        metadata.julia_version,
+        metadata.created_at_utc,
+        metadata.model_type,
+        :variational,
+        metadata.fit_status,
+    )
+    unknown_metadata = ModelArtifactMetadata(
+        metadata.schema_version,
+        metadata.epsilon_version,
+        metadata.julia_version,
+        metadata.created_at_utc,
+        metadata.model_type,
+        :unknown,
+        metadata.fit_status,
+    )
+
+    @test_throws ArgumentError InferenceResults(retired_metadata, grouped.spec; posterior = grouped.posterior)
+    @test_throws ArgumentError InferenceResults(unknown_metadata, grouped.spec; posterior = grouped.posterior)
+    unfitted_metadata = Epsilon._artifact_metadata("TimeSeriesMMM")
+    @test_throws ArgumentError InferenceResults(
+        unfitted_metadata,
+        grouped.spec;
+        posterior_predictive = grouped.posterior,
+    )
+    @test_throws ArgumentError InferenceResults(
+        unfitted_metadata,
+        grouped.spec;
+        sample_stats = grouped.sample_stats,
+    )
+
+    path = tempname()
+    open(path, "w") do io
+        serialize(io, (; schema_version = 1, metadata = retired_metadata, spec = grouped.spec, coordinate_metadata = grouped.coordinate_metadata, posterior = grouped.posterior, prior = nothing, posterior_predictive = nothing, prior_predictive = nothing, sample_stats = InferenceSampleStats(), observed_data = nothing))
+    end
+    @test_throws ArgumentError load_inference_results(path)
+
+    open(path, "w") do io
+        serialize(io, (; schema_version = 1, metadata = unfitted_metadata, spec = grouped.spec, coordinate_metadata = grouped.coordinate_metadata, posterior = nothing, prior = nothing, posterior_predictive = grouped.posterior, prior_predictive = nothing, sample_stats = InferenceSampleStats(), observed_data = nothing))
+    end
+    @test_throws ArgumentError load_inference_results(path)
+
+    open(path, "w") do io
+        serialize(io, (; schema_version = 1, metadata = unfitted_metadata, spec = grouped.spec, coordinate_metadata = grouped.coordinate_metadata, posterior = nothing, prior = nothing, posterior_predictive = nothing, prior_predictive = nothing, sample_stats = grouped.sample_stats, observed_data = nothing))
     end
     @test_throws ArgumentError load_inference_results(path)
 end

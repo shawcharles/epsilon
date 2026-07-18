@@ -3,40 +3,7 @@ using Dates
 using Serialization
 using Test
 
-function sample_results_model(; adstock_type = "geometric", saturation_type = "logistic")
-    config = ModelConfig(
-        date_column = "date",
-        target_column = "revenue",
-        target_type = "revenue",
-        channel_columns = ["tv", "search"],
-        control_columns = ["price_index"],
-        dims = ("geo",),
-        adstock = Dict("type" => adstock_type, "l_max" => 8),
-        saturation = Dict("type" => saturation_type),
-        priors = Dict("intercept" => EpsilonPrior("Normal"; mu = 0.0, sigma = 1.0)),
-    )
-    sampler = SamplerConfig(;
-        draws = 20,
-        tune = 20,
-        chains = 1,
-        cores = 1,
-        target_accept = 0.8,
-        random_seed = 7,
-        progressbar = false,
-        compute_convergence_checks = false,
-    )
-    data = MMMData(
-        dates = 1:6,
-        target = [5.0, 6.5, 7.5, 9.0, 10.0, 11.5],
-        channels = [1.0 0.5; 2.0 1.0; 2.5 1.5; 3.0 2.0; 3.5 2.5; 4.0 3.0],
-        channel_names = ["tv", "search"],
-        controls = [0.2; 0.4; 0.3; 0.6; 0.5; 0.8][:, :],
-        control_names = ["price_index"],
-    )
-    model = TimeSeriesMMM(config, sampler, data)
-    fit!(model)
-    return model
-end
+isdefined(@__MODULE__, :sample_results_model) || include("sample_models.jl")
 
 @testset "model_results" begin
     model = sample_results_model(; adstock_type = "weibull_pdf", saturation_type = "hill")
@@ -202,6 +169,53 @@ end
     )
     open(path, "w") do io
         serialize(io, (; payload..., metadata = bad_metadata))
+    end
+    @test_throws ArgumentError load_results(path)
+end
+
+@testset "ModelResults backend policy is fail-closed" begin
+    model = sample_results_model()
+    results = model_results(model; include_posterior_predictive = false)
+    metadata = results.metadata
+    retired_metadata = ModelArtifactMetadata(
+        metadata.schema_version,
+        metadata.epsilon_version,
+        metadata.julia_version,
+        metadata.created_at_utc,
+        metadata.model_type,
+        :variational,
+        metadata.fit_status,
+    )
+    unknown_metadata = ModelArtifactMetadata(
+        metadata.schema_version,
+        metadata.epsilon_version,
+        metadata.julia_version,
+        metadata.created_at_utc,
+        metadata.model_type,
+        :unknown,
+        metadata.fit_status,
+    )
+    unfitted_metadata = Epsilon._artifact_metadata("TimeSeriesMMM")
+
+    @test_throws ArgumentError ModelResults(retired_metadata, results.spec, results.chain)
+    @test_throws ArgumentError ModelResults(unknown_metadata, results.spec, results.chain)
+    @test_throws ArgumentError ModelResults(unfitted_metadata, results.spec, results.chain)
+    @test_throws ArgumentError ModelResults(
+        unfitted_metadata,
+        results.spec,
+        nothing;
+        posterior_predictive = results.chain,
+    )
+    @test ModelResults(Epsilon._artifact_metadata("TimeSeriesMMM"), results.spec, nothing) isa ModelResults
+
+    path = tempname()
+    open(path, "w") do io
+        serialize(io, (; schema_version = 1, metadata = retired_metadata, spec = results.spec, chain = results.chain, posterior_predictive = nothing, prior_predictive = nothing))
+    end
+    @test_throws ArgumentError load_results(path)
+
+    open(path, "w") do io
+        serialize(io, (; schema_version = 1, metadata = unfitted_metadata, spec = results.spec, chain = nothing, posterior_predictive = results.chain, prior_predictive = nothing))
     end
     @test_throws ArgumentError load_results(path)
 end

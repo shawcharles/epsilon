@@ -19,9 +19,9 @@ or a documented Julia-native divergence.
 - `scaffolded`: API or module exists, but Abacus parity is not yet proven
 - `missing`: Abacus behavior is not implemented in Epsilon, but remains in
   scope for the Julia port unless explicitly deferred
-- `deferred`: intentionally out of the statistical/methodological port scope
-  for now. Current explicit deferrals are variational inference v1 support, AI
-  advisor, and Dash/dashboard parity.
+- `deferred`: intentionally out of the statistical/methodological port scope.
+  Current explicit deferrals include permanently retired variational inference,
+  AI advisor, and Dash/dashboard parity.
 
 ## Acceptance Targets
 
@@ -70,7 +70,7 @@ Each target should pass these gates before it is counted as ported:
 
 
 | Fitting and sampler config | `abacus/modeling/base.py`, `abacus/pytensor/sampling.py` | `src/inference/mcmc.jl`, `src/model/config.jl` | scaffolded | Compare sampler config parsing and saved fit metadata; numerical posterior equality is not required. |
-| Variational inference | Abacus/PyMC ADVI surfaces | `VariationalConfig`, `approximate_fit!` | deferred | Out of scope for v1 release support after Phase 27. Existing Julia exports remain scaffolded pre-v1 review implementation surfaces, not supported release backends and not Abacus parity evidence. |
+| Variational inference | Abacus/PyMC ADVI surfaces | none | deferred | Permanently retired in Phase 38 before release. Epsilon will not implement a variational backend; MCMC/Turing is the sole fitting path. |
 | Posterior predictive | `abacus/mmm/base.py`, `abacus/mmm/models/panel_predict.py` | `src/model/results.jl`, `src/inference/results.jl` | scaffolded | Make prediction replay consume saved state for train, holdout, and new data. |
 | Diagnostics | `abacus/mmm/diagnostics/*.py` | `src/model/diagnostics.jl`, `src/inference/diagnostics.jl`, `src/plotting/diagnostics.jl` | scaffolded | Port design, MCMC, and predictive summary schemas before plot polish. |
 | Panel holdout validation | `abacus/pipeline/stages/validation.py` and panel prediction paths | none | deferred | Stage `35` panel validation is not a v1 MMM requirement. Epsilon keeps time-series blocked holdout validation, but defers panel holdout semantics until there is a concrete methodological requirement beyond parity theater. |
