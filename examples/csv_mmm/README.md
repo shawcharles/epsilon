@@ -34,3 +34,8 @@ upper_95`, and metric rows contain `channel,spend,metric,mean,lower_5,upper_95`.
 This is a fixed-schema teaching example, not a general CSV ingestion API,
 pipeline feature, data-cleaning workflow, benchmark, release claim, or Abacus
 parity evidence. `--help` shows the available options without fitting a model.
+
+For the canonical supported local workflow, including compact-output
+inspection, trusted-local fitted-model and grouped-results roundtrips, and
+`make smoke`, see
+[`docs/src/supported_paths.md`](../../docs/src/supported_paths.md).

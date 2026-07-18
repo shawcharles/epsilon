@@ -196,6 +196,10 @@ writes compact contribution and metric summaries when an output directory is
 provided. It is not release evidence, not a benchmark, not an Abacus parity
 claim, and not a broader support expansion.
 
+The canonical local runbook for the toy example, the fixed-schema CSV
+quickstart, compact sidecars, trusted-local artifact roundtrips, and
+`make smoke` is [Supported Local Workflows](supported_paths.md).
+
 ## Demo Data And Runner
 
 The repo also ships a bounded demo/comparison surface under

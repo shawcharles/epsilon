@@ -26,3 +26,8 @@ with `ArgumentError` messages that name the rejected option.
 
 This is a fast supported MCMC smoke demo only. It is not release evidence, not
 a benchmark, not an Abacus parity claim, and not a broader support expansion.
+
+For the canonical supported local workflow, including compact-output
+inspection, trusted-local fitted-model and grouped-results roundtrips, and
+`make smoke`, see
+[`docs/src/supported_paths.md`](../../docs/src/supported_paths.md).
