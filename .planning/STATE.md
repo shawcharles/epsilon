@@ -8,19 +8,30 @@ See: .planning/PROJECT.md (updated 2026-05-10)
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 38 Permanent VI Surface Retirement is complete.
+**Current focus:** Phase 39 Supported-Path Smoke Certification is complete.
 MCMC/Turing is the sole fitting contract; variational inference is permanently
 retired. Dashboard/UI parity and AI advisor behaviour remain explicitly
 deferred.
 
 ## Current Position
 
-**Current Phase:** 38
-**Current Phase Name:** Permanent VI Surface Retirement
-**Total Phases:** 38
-**Current Plan:** `.planning/phases/38-permanent-vi-surface-retirement/PLAN.md`
-**Total Plans in Phase:** 1 bounded retirement slice
-**Status:** Phase 38 is complete. It removed the public/runtime variational
+**Current Phase:** 39
+**Current Phase Name:** Supported-Path Smoke Certification
+**Total Phases:** 39
+**Current Plan:** `.planning/phases/39-supported-path-smoke-certification/PLAN.md`
+**Total Plans in Phase:** 1 bounded smoke-certification slice
+**Status:** Phase 39 is complete. It adds `scripts/smoke_supported_paths.sh`
+and `make smoke` as a local supported-path smoke command for the toy MCMC and
+fixed-schema CSV quickstart examples. The harness runs both examples with
+small MCMC settings, writes outputs only to temporary directories, checks
+non-empty compact summaries, and verifies `status=fit` plus `backend=turing`.
+The phase did not add benchmarks, release evidence, Abacus parity claims, new
+ingestion APIs, or new modelling surface. Independent plan review approved the
+contract before implementation. Scoped verification passed:
+`bash -n scripts/smoke_supported_paths.sh`, `make smoke`,
+`make test-file FILE=test/examples/toy_mcmc_smoke.jl` (`92 / 92`), and
+`make test-file FILE=test/examples/csv_mmm_quickstart.jl` (`114 / 114`).
+Phase 38 is complete. It removed the public/runtime variational
 surface, deleted the VI source and test leaf, made MCMC/Turing the sole fitting
 contract, rejects retired configuration and artifact backend input, and retains
 MCMC coverage at each former consumer boundary. Independent implementation

@@ -17,6 +17,11 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Added
 
+- Added `make smoke`, a local supported-path smoke harness that runs the
+  synthetic toy MCMC example and fixed-schema CSV quickstart with tiny MCMC
+  settings, verifies compact summary outputs in temporary directories, and
+  keeps the result explicitly outside benchmark, release, and Abacus parity
+  evidence.
 - Added the bounded programmatic `TimeSeriesMMM` MCMC shared-media HSGP
   multiplier, including immutable date/cadence/prior snapshots, retained-grid
   posterior replay, model-envelope v2 validation after trusted-local Julia

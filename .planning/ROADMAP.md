@@ -359,6 +359,11 @@ Current repository state on 2026-05-18:
       inputs without adding a compatibility bridge. Closed with independent
       review and the phase-closing `make check-full` gate: `9925 / 9925` tests
       in `23m33.1s` plus a successful docs build.
+- [x] **Phase 39: Supported-Path Smoke Certification** - Added one local
+      supported-path smoke command for the toy MCMC and fixed-schema CSV
+      quickstart examples, without benchmarks, release claims, Abacus parity
+      claims, or new modelling/API surface. Closed with independent plan review
+      and scoped smoke/example verification.
 
 ## Phase Details
 

@@ -56,12 +56,14 @@ The canonical entry points for the closed v1 surface are:
 For a fast local smoke check of the supported MCMC path, maintainers can run:
 
 ```bash
-julia --project=. examples/toy_mmm/run_toy_mmm.jl --draws 8 --tune 8 --output-dir "$(mktemp -d)"
+make smoke
 ```
 
-That toy uses synthetic data and compact post-model summaries. It is not
-release evidence, not a benchmark, not an Abacus parity claim, and not a
-broader support expansion.
+That command runs the synthetic toy model and fixed-schema CSV quickstart with
+small MCMC settings, verifies compact summaries in temporary directories, and
+does not persist generated artifacts in the repository. It is not release
+evidence, not a benchmark, not an Abacus parity claim, and not a broader
+support expansion.
 
 ## Supported v1 Surface
 

@@ -184,7 +184,17 @@ Release docs:
 
 ## Toy MCMC Smoke Demo
 
-For the fastest supported-path check, run the synthetic toy model:
+For the fastest combined supported-path check, run:
+
+```bash
+make smoke
+```
+
+This runs both the synthetic toy model and the fixed-schema CSV quickstart with
+small MCMC settings, writes their compact summaries to temporary directories,
+and verifies that both paths fit through the supported Turing backend.
+
+To run only the synthetic toy model directly:
 
 ```bash
 julia --project=. examples/toy_mmm/run_toy_mmm.jl --draws 8 --tune 8 --output-dir "$(mktemp -d)"

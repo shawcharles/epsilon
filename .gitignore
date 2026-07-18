@@ -23,4 +23,5 @@
 
 AGENTS.md
 
-/scripts/
+/scripts/*
+!/scripts/smoke_supported_paths.sh
