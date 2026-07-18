@@ -373,6 +373,11 @@ that later closed in Phase 14:
       harden the compact output sidecars produced by the toy MCMC and
       fixed-schema CSV quickstart examples, without changing model semantics,
       widening support, running benchmarks, or making release claims.
+- [x] **Phase 42: Supported-Path Artifact Roundtrip Audit** - Prove the toy MCMC
+      and fixed-schema CSV quickstart fitted model and grouped inference result
+      objects can be saved and reloaded through existing trusted-local Epsilon
+      APIs, without new CLI flags, artifact formats, benchmarks, release claims,
+      or model semantics changes.
 
 ## Phase Details
 
@@ -730,7 +735,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 41
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 42
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -775,3 +780,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 41
 | 39. Supported-Path Smoke Certification | 1/1 | Completed | local `make smoke` command landed for toy MCMC and CSV quickstart supported-path smoke checks |
 | 40. Planning Truth Reconciliation | 1/1 | Completed | project-control docs reconciled after Phase 39 without runtime, test, example, benchmark, release, manifest, dependency, or parity-status changes |
 | 41. Supported-Path Output Usability Audit | 1/1 | Completed | toy and CSV example sidecar outputs audited, documented, and guarded with focused content-contract tests without model, source, benchmark, release, or parity-status changes |
+| 42. Supported-Path Artifact Roundtrip Audit | 1/1 | Completed | bounded toy and CSV fitted-model/grouped-results roundtrip audit landed using existing trusted-local persistence APIs only |

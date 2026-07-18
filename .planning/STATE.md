@@ -8,28 +8,33 @@ See: .planning/PROJECT.md
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 41 Supported-Path Output Usability Audit is complete.
-The slice audited and lightly hardened the compact output sidecars from the toy
-MCMC and fixed-schema CSV quickstart examples, without changing model semantics,
-widening support, running benchmarks, or making release claims.
+**Current focus:** Phase 42 Supported-Path Artifact Roundtrip Audit is
+complete. The toy MCMC and fixed-schema CSV quickstart fitted model and grouped
+inference result objects are now guarded through existing trusted-local Epsilon
+save/load APIs, without new CLI flags, artifact formats, benchmarks, release
+claims, or model semantics changes.
 
 ## Current Position
 
-**Current Phase:** 41
-**Current Phase Name:** Supported-Path Output Usability Audit
-**Total Phases:** 41
-**Current Plan:** `.planning/phases/41-supported-path-output-usability/PLAN.md`
-**Total Plans in Phase:** 1 bounded supported-path output-usability slice
-**Status:** Phase 41 is complete. The toy and CSV example sidecars were
-inspected with tiny MCMC runs, their stable summary keys and CSV columns were
-documented in the example READMEs, and the two focused example tests now guard
-summary keys/settings, CSV headers, row counts, contribution components, and
-metric labels without asserting exact posterior numeric values. Verification
-passed with `make test-file FILE=test/examples/toy_mcmc_smoke.jl` (`109 / 109`),
-`make test-file FILE=test/examples/csv_mmm_quickstart.jl` (`132 / 132`),
-`make format-check-touched`, `git diff --check`, and the source/dependency/
-benchmark guard. No full suite, benchmark, release, source, dependency,
-manifest, model-semantics, or parity-status changes were made.
+**Current Phase:** 42
+**Current Phase Name:** Supported-Path Artifact Roundtrip Audit
+**Total Phases:** 42
+**Current Plan:** `.planning/phases/42-supported-path-artifact-roundtrip/PLAN.md`
+**Total Plans in Phase:** 1 bounded supported-path artifact-roundtrip slice
+**Status:** Phase 42 is complete. The toy and CSV examples now have focused
+roundtrip assertions proving their returned fitted `TimeSeriesMMM` objects and
+grouped `InferenceResults` objects can be saved and reloaded with the existing
+trusted-local Julia serialization APIs. The tests rebuild grouped results from
+the loaded models, reload saved grouped results directly, and assert stable
+metadata, fitted spec equality, observed-data equality/dimensions, posterior
+draw counts, compact table headers, row counts, component labels, and metric
+labels without asserting exact tiny-chain posterior values or object identity
+across serialization boundaries. Verification passed with
+`make test-file FILE=test/examples/toy_mcmc_smoke.jl` (`144 / 144`, `1m31.3s`),
+`make test-file FILE=test/examples/csv_mmm_quickstart.jl` (`167 / 167`,
+`1m15.3s`), `make format-check-touched`, `git diff --check`, and the
+source/dependency/benchmark guard. No full suite, benchmark, release, source,
+dependency, manifest, model-semantics, or parity-status changes were made.
 
 Phase 40 is complete. It reconciled `.planning/PROJECT.md`,
 `.planning/ROADMAP.md`, `.planning/STATE.md`, and its own phase plan so the
@@ -322,31 +327,23 @@ Calibration/lift-test parity remains a `scaffolded` ledger row after Phase 17:
 evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
 are landed for both accepted calibration terms, but the wider Abacus
 calibration surface is not complete.
-**Last Activity:** 2026-07-11
-**Last Activity Description:** Phase 32 implemented private fixture-backed
-HSGP linearised geometry: frequencies, training-range-centred fixed bases,
-ExpQuad/Matern square-root PSD weights, and Abacus recommendation heuristics.
-Architecture and implementation review tightened covariance formulas,
-heuristic constants/defaults, input contracts, fixture discrimination, AD
-behaviour, and extreme finite-domain handling. Focused verification passes
-`86 / 86` and final `make test` passes `8,574 / 8,574` in `20m59.8s`; no
-HSGP/TVP support claim has been made. Phase 31 added a fixture-backed internal
-`Date` cadence-index primitive matched to Abacus `infer_time_index` for daily,
-weekly, forward/backward, leap-boundary, and off-cadence cases. It preserves the
-first supplied training date as origin, returns signed `Vector{Int}` indices,
-and deliberately rejects empty training input with `ArgumentError`. The helper
-is unexported and HSGP configuration remains rejected; no HSGP/TVP model,
-prior, Turing, prediction, or replay behaviour was added. Phase 30 added a fixed-schema CSV
-`TimeSeriesMMM` quickstart under `examples/csv_mmm/`. The internal example
-loader requires `date,sales,tv,search`, parses ISO dates strictly, rejects
-missing/malformed/non-finite values and duplicate dates with column-specific
-errors, sorts accepted rows chronologically, and uses the existing bounded
-Turing/NUTS MCMC path. Focused coverage includes the loader contract, CLI/help,
-include safety, optional compact output files, and a tiny MCMC smoke run. No
-source/runtime files, dependency files, exports, pipeline semantics, benchmarks,
-release claims, or Abacus parity claims changed.
+**Last Activity:** 2026-07-18
+**Last Activity Description:** Phase 42 completed the supported-path artifact
+roundtrip audit. The toy MCMC and fixed-schema CSV quickstart tests now save and
+reload each returned fitted `TimeSeriesMMM`, rebuild grouped inference results
+from the loaded model, save and reload each returned grouped
+`InferenceResults`, and verify stable metadata, fitted specs, observed-data
+equality/dimensions, posterior draw counts, contribution table structure, and
+metric table structure. The phase uses existing trusted-local Julia
+serialization APIs only. It did not change `src/`, dependencies, manifests,
+CLI flags, artifact formats, benchmarks, release files, parity ledgers, model
+semantics, or support claims. Scoped verification passed with
+`make test-file FILE=test/examples/toy_mcmc_smoke.jl` (`144 / 144`, `1m31.3s`),
+`make test-file FILE=test/examples/csv_mmm_quickstart.jl` (`167 / 167`,
+`1m15.3s`), `make format-check-touched`, `git diff --check`, and the
+source/dependency/benchmark guard.
 **Progress:** 100%
-**Paused At:** `.planning/phases/32-hsgp-linearized-geometry-foundation/PLAN.md`
+**Paused At:** `.planning/phases/42-supported-path-artifact-roundtrip/PLAN.md`
 
 ## Performance Metrics
 
@@ -399,17 +396,18 @@ release claims, or Abacus parity claims changed.
 | 39 | 1/1 | Completed | local supported-path smoke command landed for toy MCMC and CSV quickstart examples |
 | 40 | 1/1 | Completed | planning truth reconciliation landed without runtime, test, example, benchmark, release, manifest, dependency, or parity-status changes |
 | 41 | 1/1 | Completed | supported-path example output sidecars audited, documented, and guarded with focused content-contract tests |
+| 42 | 1/1 | Completed | supported-path fitted-model and grouped-results roundtrips guarded for toy MCMC and CSV quickstart examples |
 
 **Recent Trend:**
-- Last 5 completed phases: 37, 38, 39, 40, 41.
+- Last 5 completed phases: 38, 39, 40, 41, 42.
 - Trend: the recent work narrowed rather than widened the library contract.
-  Phase 37 completed fitted-period replay for the bounded TimeSeriesMMM HSGP
-  multiplier while keeping broader HSGP/TVP support guarded. Phase 38
-  permanently retired variational inference, so MCMC/Turing is the sole fitting
-  path. Phase 39 added a local supported-path smoke command for the toy and CSV
-  examples without turning it into release or benchmark evidence. Phase 40
-  reconciled planning truth, and Phase 41 made the supported-path sidecar output
-  contract more inspectable and better tested without widening support.
+  Phase 38 permanently retired variational inference, so MCMC/Turing is the
+  sole fitting path. Phase 39 added a local supported-path smoke command for the
+  toy and CSV examples without turning it into release or benchmark evidence.
+  Phase 40 reconciled planning truth. Phase 41 made the supported-path sidecar
+  output contract more inspectable and better tested, and Phase 42 now guards
+  trusted-local fitted-model and grouped-results roundtrips for those same two
+  examples without widening support.
 
 ## Decisions Made
 
@@ -456,6 +454,7 @@ release claims, or Abacus parity claims changed.
 | 39 | Add smoke certification as a local supported-path command, not release evidence | Maintainers need a fast confidence command for the toy and CSV examples without confusing it for a benchmark or parity gate |
 | 40 | Reconcile planning truth before choosing more work | Current-state docs are part of the project control surface; stale open checkboxes and handoffs create false next actions |
 | 41 | Guard example output structure rather than posterior values | Tiny MCMC examples are useful for supported-path confidence, but their tests should stabilise keys, columns, and row counts instead of brittle posterior numerics |
+| 42 | Guard trusted-local example artifact roundtrips rather than promise portability | The supported examples should prove fitted objects can survive Epsilon's existing Julia serialization path, but that is not a portable interchange, release, benchmark, or Abacus parity claim |
 
 ## Pending Todos
 
@@ -472,6 +471,10 @@ release claims, or Abacus parity claims changed.
 - Phase 41 is complete; toy and CSV sidecar outputs are documented and guarded,
   but remain local supported-path evidence only, not benchmark, release, Abacus
   parity, reporting, or ingestion evidence.
+- Phase 42 is complete; toy and CSV fitted-model and grouped-results roundtrips
+  are guarded through existing trusted-local APIs, but these artifacts remain
+  Julia/Epsilon-version-bound local serialization, not portable interchange or
+  release evidence.
 - HSGP/TVP broader support remains bounded: Phase 36/37 cover only the
   TimeSeriesMMM shared-media multiplier and retained-grid contribution replay.
   Do not add new HSGP/TVP config, prediction, panel, curve, metric, optimization,
@@ -516,13 +519,15 @@ release claims, or Abacus parity claims changed.
 - Phase 39 added local supported-path smoke certification.
 - Phase 40 reconciled stale planning truth after Phase 39.
 - Phase 41 audited and guarded supported-path example output sidecars.
+- Phase 42 audited and guarded trusted-local fitted-model and grouped-results
+  roundtrips for the supported toy and CSV examples.
 
 ## Session
 
 **Last Date:** 2026-07-18
-**Stopped At:** Phase 41 is complete. The toy and CSV MCMC examples still write
-the same compact sidecars, and the focused tests now guard their stable summary
-keys, CSV headers, row counts, contribution components, and metric labels.
-Choose the next bounded slice from the reconciled roadmap/state, with
-plan/review before implementation.
-**Resume File:** `.planning/phases/41-supported-path-output-usability/PLAN.md`
+**Stopped At:** Phase 42 is complete. The toy and CSV MCMC examples now have
+focused tests for compact sidecar structure and trusted-local artifact
+roundtrips of both fitted models and grouped inference results. Choose the next
+bounded slice from the reconciled roadmap/state, with plan/review before
+implementation.
+**Resume File:** `.planning/phases/42-supported-path-artifact-roundtrip/PLAN.md`

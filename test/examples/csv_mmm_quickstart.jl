@@ -33,6 +33,26 @@ function _csv_quickstart_header(path::AbstractString)
     return split(first(readlines(path)), ",")
 end
 
+function _csv_quickstart_assert_compact_tables_from_grouped(grouped)
+    contribution_table = summary_table(contribution_results(grouped))
+    metric_table = summary_table(
+        metric_results(
+            grouped;
+            channel = "tv",
+            grid = [0.0, 30.0, 60.0],
+        ),
+    )
+
+    @test names(contribution_table) ==
+        ["observation", "date", "component", "mean", "lower_5", "upper_95"]
+    @test names(metric_table) == ["channel", "spend", "metric", "mean", "lower_5", "upper_95"]
+    @test nrow(contribution_table) == 12
+    @test nrow(metric_table) == 12
+    @test Set(contribution_table.component) == Set(["intercept", "media:tv", "media:search"])
+    @test Set(metric_table.metric) == Set(["roas", "mroas", "cpa", "mcpa"])
+    return nothing
+end
+
 @testset "CSV MMM quickstart loader" begin
     repo_root = normpath(joinpath(@__DIR__, "..", ".."))
     bundled_path = joinpath(repo_root, "examples", "csv_mmm", "toy_timeseries.csv")
@@ -273,6 +293,45 @@ end
             Set(["intercept", "media:tv", "media:search"])
         @test Set(DataFrame(CSV.File(result.written_paths.metric_summary)).metric) ==
             Set(["roas", "mroas", "cpa", "mcpa"])
+
+        model_path = joinpath(output_dir, "model.jls")
+        grouped_path = joinpath(output_dir, "grouped_inference_results.jls")
+        @test save_model(model_path, result.model) == model_path
+        @test save_inference_results(grouped_path, result.grouped) == grouped_path
+
+        loaded_model = load_model(model_path)
+        @test loaded_model isa TimeSeriesMMM
+        @test loaded_model.fit_state.status == :fit
+        @test loaded_model.fit_state.backend == :turing
+        @test loaded_model.sampler_config.draws == 8
+        @test loaded_model.sampler_config.tune == 8
+        @test loaded_model.data == result.data
+        @test loaded_model.data.channel_names == ["tv", "search"]
+        @test size(loaded_model.fit_state.artifact.chain, 1) == 8
+
+        rebuilt_grouped = inference_results(
+            loaded_model;
+            include_prior = false,
+            include_posterior_predictive = false,
+            include_prior_predictive = false,
+        )
+        @test rebuilt_grouped.observed_data == result.grouped.observed_data
+        @test rebuilt_grouped.spec == result.grouped.spec
+        @test size(rebuilt_grouped.posterior, 1) == 8
+        @test isnothing(rebuilt_grouped.prior)
+        @test isnothing(rebuilt_grouped.posterior_predictive)
+        @test isnothing(rebuilt_grouped.prior_predictive)
+        _csv_quickstart_assert_compact_tables_from_grouped(rebuilt_grouped)
+
+        loaded_grouped = load_inference_results(grouped_path)
+        @test loaded_grouped.metadata == result.grouped.metadata
+        @test loaded_grouped.spec == result.grouped.spec
+        @test loaded_grouped.observed_data == result.grouped.observed_data
+        @test size(loaded_grouped.posterior, 1) == 8
+        @test isnothing(loaded_grouped.prior)
+        @test isnothing(loaded_grouped.posterior_predictive)
+        @test isnothing(loaded_grouped.prior_predictive)
+        _csv_quickstart_assert_compact_tables_from_grouped(loaded_grouped)
     end
 
 end
