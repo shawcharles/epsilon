@@ -2,22 +2,23 @@
 
 ## Overview
 
-Epsilon has moved through thirteen historical implementation phases, but those
-phases should no longer be treated as evidence of broad Abacus parity. The
-active roadmap is now governed by `.planning/ABACUS-PARITY-LEDGER.md`: each
-surface is classified as `ported`, `native`, `scaffolded`, `missing`, or
-`deferred`, and release readiness depends on demo-backed acceptance rather than
-module presence.
+Epsilon has moved beyond the original implementation scaffold into a bounded,
+ledger-governed Julia MMM library. Historical phase completion is still not
+evidence of broad Abacus parity by itself; the controlling record is
+`.planning/ABACUS-PARITY-LEDGER.md`, where each surface is classified as
+`ported`, `native`, `scaffolded`, `missing`, or `deferred`.
 
-The next milestone is the Abacus statistical and methodological parity recovery
-program: first `timeseries`, then `geo_panel`, then `geo_brand_panel`. Each
-target must pass config/data, model, posterior replay, post-model,
-optimization, and pipeline artifact gates before it can support a release
-claim.
+The bounded Abacus statistical and methodological evidence spine for
+`timeseries`, `geo_panel`, and `geo_brand_panel` is now landed through Phase 14 /
+Plan `14-05`. Broader release claims, benchmark refreshes, panel validation,
+free channel-by-panel optimization, dashboard/UI, AI advisor behaviour, and any
+future HSGP/TVP expansion require separate explicit plans rather than being the
+automatic next milestone.
 
-## Repository Review Snapshot
+## Historical Repository Review Snapshot
 
-Current repository state on 2026-05-18:
+Historical repository state on 2026-05-18, retained to explain the parity reset
+that later closed in Phase 14:
 
 - `make test` and `make docs` have passed in prior phase work, but passing the
   existing suite is not sufficient to claim Abacus parity
@@ -25,10 +26,10 @@ Current repository state on 2026-05-18:
   `scripts/export_abacus_fixtures.py`
 - the transform layer has the strongest fixture-backed parity evidence
 - prior/distribution, model, inference, post-model, optimization, plotting, and
-  pipeline modules exist but need ledger-backed revalidation before broad
-  parity claims
-- `.planning/ABACUS-PARITY-LEDGER.md` is now the controlling document for the
-  next implementation sequence
+  pipeline modules existed but needed ledger-backed revalidation before broad
+  parity claims; Phase 14 later closed the bounded demo-backed evidence spine
+- `.planning/ABACUS-PARITY-LEDGER.md` became the controlling document for the
+  implementation sequence
 - Phase 4 is complete:
   - typed model/config/data structs are in place
   - deterministic config merging is in place
@@ -364,6 +365,10 @@ Current repository state on 2026-05-18:
       quickstart examples, without benchmarks, release claims, Abacus parity
       claims, or new modelling/API surface. Closed with independent plan review
       and scoped smoke/example verification.
+- [x] **Phase 40: Planning Truth Reconciliation** - Reconcile stale planning
+      and project-control documents after Phase 39 without changing runtime
+      code, tests, examples, benchmarks, release artefacts, manifests, or Abacus
+      parity status rows.
 
 ## Phase Details
 
@@ -709,18 +714,19 @@ Plans:
 - [x] 14-03: Land one-dimensional `geo_panel` config/model/replay parity.
 - [x] 14-04: Land multidimensional `geo_brand_panel` config/model/replay
       parity and panel-cell artifact semantics.
-- [ ] 14-05: Complete pipeline manifest and artifact parity. Current state:
+- [x] 14-05: Complete pipeline manifest and artifact parity. Current state:
       `timeseries` Stage `00` through Stage `70` artifact-key parity is
       covered, and `geo_panel` / `geo_brand_panel` Stage `00`
       metadata/manifest, Stage `20` fit, Stage `30` assessment, and Stage
       `40` decomposition, Stage `50` diagnostics, and Stage `60`
-      response-curve artifact-key parity are covered; expand panel downstream
-      only when the next artifact semantics are fixture-backed.
+      response-curve artifact-key parity are covered. Explicitly enabled Stage
+      `70` historical-share optimization is also covered for both panel paths;
+      Stage `35` panel holdout validation remains deferred.
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 29
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 40
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -738,9 +744,29 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 29
 | 12. Parity Remediation | 4/4 | Completed | scaling/model-space parity, Stage 60 curve parity, Stage 70 verification, coherent holiday/design contract, and final revalidation/release reconciliation landed |
 | 13. Prediction-State and Contract Remediation | 6/6 | Completed | fitted trend/holiday prediction-state repair, media input contract hardening, pipeline YAML contract hardening, and final release-gate revalidation landed |
 | 14. Abacus Parity Recovery | 5/5 | Plan complete | `timeseries`, `geo_panel`, and `geo_brand_panel` demo-backed evidence spine; `timeseries` pipeline Stage `00`-`70` artifact-key parity; `geo_panel` and `geo_brand_panel` pipeline Stage `00`, Stage `20`, Stage `30`, Stage `40`, Stage `50`, Stage `60`, and explicitly enabled Stage `70` historical-share optimization coverage, with panel Stage `35` deferred |
+| 15. Calibration Likelihood Integration | 8/8 | Completed | bounded `TimeSeriesMMM` MCMC lift-test and cost-per-target calibration likelihood integration landed; panel, VI, broader saturation, UI, and advisor surfaces remain out of scope |
+| 16. Scenario Planner Manual Allocation Evaluation | 4/4 | Completed | current/manual/fixed-budget scenario specs, manual-allocation response evaluation, and current/manual/optimized comparison with mismatch rejection landed |
+| 17. Calibration YAML And Pipeline Integration | 4/4 | Completed | bounded public time-series calibration parsing, construction, and MCMC pipeline fit-stage threading landed |
+| 18. Scenario Store Artifacts | 4/4 | Completed | local typed scenario-store artifacts and CSV inspection sidecars landed for existing non-UI scenario plans |
+| 19. Public API Export Hygiene | 4/4 | Completed | public export inventory and focused guard landed without changing exports |
+| 20. Public API Docstring Guard | 4/4 | Completed | exported public-symbol docstring and Documenter `@docs` coverage guard landed |
+| 21. Public API Export Triage | 5/5 | Completed | lifecycle triage register and focused guard landed for current exports |
+| 22. Public API Export Cleanup RFC | 5/5 | Completed | candidate-only cleanup RFC and focused RFC/register guard landed |
+| 23. Runtime Deprecation Design | 4/4 | Completed | runtime-deprecation design contract landed for six validation-helper candidates |
+| 24. Runtime Deprecation Wrappers | 5/5 | Completed | runtime warnings landed for six direct validation-helper calls while internal callers stay warning-free |
+| 25. Focused Test File Harness | 4/4 | Completed | single-file `Pkg.test` selector and `make test-file FILE=...` helper landed |
+| 26. Deprecated Validation Helper Migration Audit | 4/4 | Completed | migration-readiness audit and focused guard landed; helpers remain exported |
 | 27. Scope Boundary Reconciliation | 4/4 | Completed | MCMC-only v1 inference boundary, dashboard/AI out-of-scope table, release-doc and planning guardrails; inference retirement later completed in Phase 38 |
 | 28. Toy MCMC Smoke Demo | 4/4 | Completed | tiny synthetic `TimeSeriesMMM` MCMC smoke demo, callable toy entry point, optional compact summaries, and focused example test landed |
 | 29. Toy MCMC Path Hardening | 4/4 | Completed | CLI malformed-integer errors, `-h`/`--help`, include-safety evidence, focused docs, and toy test hardening landed |
 | 30. CSV Time-Series MCMC Quickstart | 4/4 | Completed | fixed-schema CSV time-series MCMC quickstart, strict input guards, and scoped review/verification landed |
 | 31. HSGP Time-Index Foundation | 3/3 | Completed | private fixture-backed signed cadence-index helper; HSGP/TVP model support remains missing |
 | 32. HSGP Linearised Geometry Foundation | 3/3 | Completed | private fixture-backed deterministic basis/PSD and recommendation foundation; HSGP/TVP model support remains missing |
+| 33. HSGP Latent Projection And Positive Multiplier Semantics | 3/3 | Completed | private fixture-backed latent projection, stable softplus, and mean-one positive multiplier helpers landed |
+| 34. HSGP Fitted Positive Multiplier Replay | 3/3 | Completed | private fitted positive-multiplier replay state landed without public HSGP support |
+| 35. Time-Series HSGP Media Methodology Contract | 3/3 | Completed | reviewed TimeSeriesMMM-only shared-media multiplier contract landed as planning-only methodology work |
+| 36. Time-Series HSGP Shared Media Multiplier | 5/5 | Completed | bounded TimeSeriesMMM shared HSGP media multiplier landed with retained prediction state and strict wider-surface rejection |
+| 37. HSGP Time-Series Contribution Replay | 4/4 | Completed | fitted-period HSGP contribution and decomposition replay landed for the Phase 36 retained training grid |
+| 38. Permanent VI Surface Retirement | 4/4 | Completed | `VariationalConfig`, `approximate_fit!`, VI source/tests, and legacy config/artifact acceptance removed; MCMC/Turing is the sole fitting path |
+| 39. Supported-Path Smoke Certification | 1/1 | Completed | local `make smoke` command landed for toy MCMC and CSV quickstart supported-path smoke checks |
+| 40. Planning Truth Reconciliation | 1/1 | Completed | project-control docs reconciled after Phase 39 without runtime, test, example, benchmark, release, manifest, dependency, or parity-status changes |

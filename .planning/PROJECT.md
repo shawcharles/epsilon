@@ -23,7 +23,7 @@ where a direct copy would be less coherent.
 - [x] `batched_convolution` is implemented and parity-tested against Abacus
 - [x] The full transform layer is implemented and parity-tested against Abacus
 - [x] The prior/distribution layer is implemented and validated as Julia-side compatibility objects
-- [ ] Abacus demo-style `timeseries`, `geo_panel`, and `geo_brand_panel`
+- [x] Abacus demo-style `timeseries`, `geo_panel`, and `geo_brand_panel`
       acceptance targets pass through config/data, model, post-model, and
       pipeline artifact gates.
 
@@ -39,12 +39,13 @@ where a direct copy would be less coherent.
 - [x] Analysts can generate decomposition, response, and optimization outputs
       that are methodologically coherent and truthfully cross-checkable against
       Abacus where comparison is meaningful on the bounded time-series row.
-- [x] Maintainers can prove the bounded v1 methodology and benchmark behavior
-      honestly before a v1.0 release.
-- [ ] Maintainers can close the external code-review findings around fitted
+- [x] Maintainers can prove the bounded v1 methodology and existing benchmark
+      methodology honestly before a v1.0 release; any refreshed benchmark
+      snapshot remains a separate explicit decision.
+- [x] Maintainers can close the external code-review findings around fitted
       prediction state, media-domain validation, and pipeline config parsing
       before release preparation resumes.
-- [ ] Maintainers can distinguish `ported`, `native`, `scaffolded`, `missing`,
+- [x] Maintainers can distinguish `ported`, `native`, `scaffolded`, `missing`,
       and `deferred` surfaces in the Abacus parity ledger before making release
       claims.
 
@@ -76,19 +77,19 @@ where a direct copy would be less coherent.
 
 ## Context
 
-The repository has a broad Julia package scaffold and many implemented modules,
-but functional parity with Abacus is not yet established at the product level.
-Transforms and some primitive behavior have fixture-backed parity. Higher
-surfaces - config compilation, panel model semantics, prediction replay,
-post-model artifacts, optimization, and pipeline outputs - must now be
-revalidated against concrete Abacus demo-style runs instead of treated as
-complete because matching modules exist. The active planning document for that
-reset is `.planning/ABACUS-PARITY-LEDGER.md`.
+The repository now has a broad Julia package implementation with a
+ledger-backed bounded evidence spine for the Abacus-referenced MMM core.
+Transforms, primitive behavior, time-series model/replay paths, bounded
+calibration, selected panel/brand-panel replay, and pipeline artifact-key
+surfaces have fixture-backed or demo-backed evidence where the semantics
+genuinely match. `.planning/ABACUS-PARITY-LEDGER.md` remains the source of truth
+for which surfaces are `ported`, `native`, `scaffolded`, `missing`, or
+`deferred`.
 
-The port strategy remains bottom-up, but the acceptance criterion is now
-vertical: the `timeseries`, `geo_panel`, and `geo_brand_panel` Abacus
-demo-style paths must compile, fit, replay, summarize, optimize, and emit
-stable artifacts before Epsilon makes broad release claims.
+The port strategy remains bottom-up, but acceptance is vertical: broad release
+claims must be backed by the ledger and by concrete `timeseries`, `geo_panel`,
+and `geo_brand_panel` evidence rather than by the presence of matching module
+names.
 
 ## Constraints
 
@@ -123,9 +124,11 @@ stable artifacts before Epsilon makes broad release claims.
 | Treat docs, tests, and comparison evidence as first-class deliverables in each phase | The project is scientific software, so correctness and reproducibility are product features | Good |
 | Let methodological coherence beat literal Abacus fidelity when the two conflict | Abacus is a reference library, not a hard requirement to reproduce every implementation detail | Good |
 | Reopen the roadmap if the methodology audit invalidates a release claim | Release readiness is subordinate to truthful methodology and documentation | Good |
-| Add Phase 13 before release prep to close external code-review findings | Prediction/replay state and config-validation bugs can invalidate release behavior even after methodology claims are reconciled | Pending |
-| Use the Abacus parity ledger as the release roadmap | Module presence is not enough; release claims need fixture-backed or demo-backed evidence | Pending |
+| Add Phase 13 before release prep to close external code-review findings | Prediction/replay state and config-validation bugs can invalidate release behavior even after methodology claims are reconciled | Closed |
+| Use the Abacus parity ledger as the release roadmap | Module presence is not enough; release claims need fixture-backed or demo-backed evidence | Good |
 | Permanently retire VI before release in Phase 38 | Epsilon will not own an approximate-inference contract; MCMC/Turing is the sole fitting path | Good |
+| Keep local smoke certification separate from release evidence in Phase 39 | Toy and CSV supported-path smoke checks are useful maintenance commands, but they are not benchmarks, release gates, or Abacus parity claims | Good |
+| Reconcile planning truth in Phase 40 before choosing more feature work | Stale control docs can misdirect future agents into reopened release-prep or benchmark work despite the current scoped-test and MCMC-only boundaries | Good |
 
 ---
-*Last updated: 2026-07-06 after Phase 27 scope-boundary reconciliation*
+*Last updated: 2026-07-18 after Phase 40 planning truth reconciliation*

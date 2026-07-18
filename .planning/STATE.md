@@ -2,26 +2,34 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-10)
+See: .planning/PROJECT.md
 
 **Core value:** Deliver a methodologically coherent Bayesian MMM library in
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 39 Supported-Path Smoke Certification is complete.
-MCMC/Turing is the sole fitting contract; variational inference is permanently
-retired. Dashboard/UI parity and AI advisor behaviour remain explicitly
-deferred.
+**Current focus:** Phase 40 Planning Truth Reconciliation is complete. The slice
+was documentation/state hygiene only: stale project-control documents now agree
+that Phase 13 remediation, Plan 14-05 parity recovery, Phase 38 VI retirement,
+and Phase 39 supported-path smoke certification are closed, without touching
+runtime code, tests, examples, benchmarks, release artefacts, manifests,
+dependencies, or Abacus parity status rows.
 
 ## Current Position
 
-**Current Phase:** 39
-**Current Phase Name:** Supported-Path Smoke Certification
-**Total Phases:** 39
-**Current Plan:** `.planning/phases/39-supported-path-smoke-certification/PLAN.md`
-**Total Plans in Phase:** 1 bounded smoke-certification slice
-**Status:** Phase 39 is complete. It adds `scripts/smoke_supported_paths.sh`
-and `make smoke` as a local supported-path smoke command for the toy MCMC and
+**Current Phase:** 40
+**Current Phase Name:** Planning Truth Reconciliation
+**Total Phases:** 40
+**Current Plan:** `.planning/phases/40-planning-truth-reconciliation/PLAN.md`
+**Total Plans in Phase:** 1 bounded planning/docs reconciliation slice
+**Status:** Phase 40 is complete. It reconciled `.planning/PROJECT.md`,
+`.planning/ROADMAP.md`, `.planning/STATE.md`, and its own phase plan so the
+control docs no longer present closed Phase 13, Phase 14 / Plan 14-05, Phase 38,
+or Phase 39 work as pending. No runtime, test, example, benchmark, release,
+manifest, dependency, or parity-status files changed.
+
+Phase 39 is complete. It adds `scripts/smoke_supported_paths.sh` and
+`make smoke` as a local supported-path smoke command for the toy MCMC and
 fixed-schema CSV quickstart examples. The harness runs both examples with
 small MCMC settings, writes outputs only to temporary directories, checks
 non-empty compact summaries, and verifies `status=fit` plus `backend=turing`.
@@ -371,28 +379,27 @@ release claims, or Abacus parity claims changed.
 | 28 | 4/4 | Completed | toy `TimeSeriesMMM` MCMC smoke demo and focused example test landed; no source/runtime or dependency changes |
 | 29 | 4/4 | Completed | toy CLI/input hardening, help/include safety, and focused regression coverage landed |
 | 30 | 4/4 | Completed | fixed-schema CSV time-series MCMC quickstart, strict input guards, and scoped review/verification landed |
+| 31 | 3/3 | Completed | private fixture-backed HSGP cadence-index helper landed without HSGP/TVP support claims |
+| 32 | 3/3 | Completed | private deterministic HSGP basis/PSD and recommendation foundation landed without graph/config/model support |
+| 33 | 3/3 | Completed | private fixture-backed HSGP latent projection, stable softplus, and mean-one positive multiplier helpers landed |
+| 34 | 3/3 | Completed | private fitted positive-multiplier replay state landed without public HSGP support |
+| 35 | 3/3 | Completed | reviewed TimeSeriesMMM-only shared HSGP media multiplier methodology contract landed as planning-only work |
+| 36 | 5/5 | Completed | bounded TimeSeriesMMM shared HSGP media multiplier landed with retained prediction state and strict wider-surface rejection |
+| 37 | 4/4 | Completed | fitted-period HSGP contribution and decomposition replay landed for the retained training grid |
+| 38 | 4/4 | Completed | variational inference surface permanently retired; MCMC/Turing is the sole fitting path |
+| 39 | 1/1 | Completed | local supported-path smoke command landed for toy MCMC and CSV quickstart examples |
+| 40 | 1/1 | Completed | planning truth reconciliation landed without runtime, test, example, benchmark, release, manifest, dependency, or parity-status changes |
 
 **Recent Trend:**
-- Last 5 completed plans: `14-01`, `14-02`, `14-03`, `14-04`, `14-05`
-- Trend: Phase 12 closed the methodology-remediation pass, and Phase 14 has
-  started rebuilding Abacus parity evidence from the `timeseries` demo-style
-  config/data and deterministic replay gates, then expanded the evidence spine
-  to `geo_panel` config/data, panel-indexed model-core semantics, and bounded
-  deterministic panel replay. The evidence spine now includes
-`geo_brand_panel` multidimensional config/data, dimension-order, model-spec,
-runtime artifact-schema, controlled contribution/decomposition replay, and
-panel-cell response/metric coverage. Pipeline recovery now exports Abacus's
-`timeseries` pipeline contract and validates Epsilon's Stage `00` through
-Stage `70` artifact keys against it, while preserving Julia-native file formats
-where direct PyMC/NetCDF identity would be misleading. The pipeline evidence
-spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
-  metadata/manifest parity, Stage `20` fit artifact-key parity, Stage `30`
-  assessment artifact-key parity, and Stage `40` decomposition artifact-key
-  parity plus Stage `50` diagnostics artifact-key parity, with unsupported panel
-  stages intentionally skipped; Stage `60` response-curve artifact-key parity is
-  now also covered with explicit `delta_grid` historical-scaling semantics, and
-  Stage `70` has a bounded historical-share optimization artifact path
-  covering both `geo_panel` and `geo_brand_panel`.
+- Last 5 completed phases: 36, 37, 38, 39, 40.
+- Trend: the recent work narrowed rather than widened the library contract.
+  Phase 36/37 landed the reviewed TimeSeriesMMM-only HSGP shared-media
+  multiplier and fitted-period replay slices while keeping HSGP/TVP broader
+  model support guarded. Phase 38 permanently retired variational inference, so
+  MCMC/Turing is the sole fitting path. Phase 39 added a local supported-path
+  smoke command for the toy and CSV examples without turning it into release or
+  benchmark evidence. Phase 40 reconciled planning truth so future work starts
+  from those current boundaries instead of stale Phase 14/26/29 handoff text.
 
 ## Decisions Made
 
@@ -435,30 +442,26 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 | 14 | Expose panel coordinate reconstruction as a small public helper surface | `PanelCoordinate` and `panel_coordinates` make the flat panel-cell axis inspectable without changing model/result schemas or sampler tensors |
 | 14 | Make panel observation-count semantics explicit | `ntime`, `npanels`, and `npanel_observations` distinguish shared time rows from flattened panel-cell observations while preserving `nobs(::PanelMMMData)` compatibility |
 | 14 | Add ordered panel-axis metadata | `PanelAxis`, `panel_axis`, and `panel_axes` make `panel_cell` the explicit flat artifact axis while keeping declared coordinate columns in model order |
+| 38 | Permanently retire variational inference rather than stabilise it | Epsilon will not own an approximate-inference contract; MCMC/Turing remains the sole fitting path |
+| 39 | Add smoke certification as a local supported-path command, not release evidence | Maintainers need a fast confidence command for the toy and CSV examples without confusing it for a benchmark or parity gate |
+| 40 | Reconcile planning truth before choosing more work | Current-state docs are part of the project control surface; stale open checkboxes and handoffs create false next actions |
 
 ## Pending Todos
 
-- Phase 26 is complete; the six deprecated validation-helper exports remain
-  exported and not ready to unexport, with migration-audit consistency guarded
-  by `test/api_exports.jl`.
-- Phase 28 is complete; do not treat the toy smoke demo as release evidence,
-  benchmark evidence, Abacus parity evidence, or a broader support expansion.
-- Phase 29 is complete; keep the toy path a smoke demo only, not release
-  evidence, benchmark evidence, Abacus parity evidence, or a broader support
-  expansion.
 - Phase 25 is complete; prefer `make test-file FILE=...` or
   `Pkg.test(; test_args=[...], julia_args=["--depwarn=yes"])` for focused
   single-file verification when files use test-only dependencies.
-- Phase 24 is complete; direct calls to the six validation-helper candidates
-  now warn, but the `deprecation-candidate` rows are still not export removals
-  or stable v1 API decisions.
-- Phase 22 remains candidate-only for export cleanup; no unexport/removal phase
-  has landed.
-- Phase 31 is complete. The next HSGP/TVP slice must start with a separate
-  methodological contract for basis construction and parameter semantics; do
-  not infer HSGP support from the private cadence-index helper.
-- Phase 32 is complete. Keep the landed helpers private and numerical only; do
-  not accept HSGP config or add graph/model semantics.
+- Phase 38 is complete; variational inference is permanently retired. Do not
+  reintroduce `VariationalConfig`, `approximate_fit!`, VI config acceptance, or
+  VI artifact compatibility.
+- Phase 39 is complete; keep `make smoke` as local supported-path confidence
+  evidence only, not benchmark, release, or Abacus parity evidence.
+- Phase 40 is complete; future work should start from the reconciled planning
+  docs rather than older Phase 14/26/29 handoff text.
+- HSGP/TVP broader support remains bounded: Phase 36/37 cover only the
+  TimeSeriesMMM shared-media multiplier and retained-grid contribution replay.
+  Do not add new HSGP/TVP config, prediction, panel, curve, metric, optimization,
+  YAML, or pipeline support without a separate reviewed implementation plan.
 - Phase 15 calibration likelihood integration is closed; keep the calibration
   row `scaffolded` until a separate contract implements panel,
   broader saturation-family, or UI calibration paths. Variational calibration
@@ -468,25 +471,24 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 - Do not force free channel-by-panel allocation, panel-total bounds, fairness
   constraints, or aggregate panel budget semantics into the pipeline before a
   separate validity contract exists.
-- Keep Phase 13 remediation behavior protected by focused regression tests as
-  downstream release-prep and demo acceptance work continues.
-- Prepare the actual release branch / tag workflow only after Phase 14
-  demo-backed acceptance closes.
-- Refresh the benchmark snapshot from a clean worktree before publishing a
-  release artifact.
+- Keep Phase 13 remediation behavior protected by focused regression tests.
+- Treat release-branch/tag work and benchmark refreshes as explicit future
+  decisions, not as the automatic next action.
 
 ## Blockers
 
-- Release branch/tag work is blocked on final release-prep decisions and a
-  clean benchmark snapshot, not on Phase 13 remediation.
+- There is no current blocker for the completed Phase 40 planning reconciliation
+  slice.
+- Release branch/tag work remains unstarted and should only proceed after an
+  explicit release-prep decision.
 - Broad Abacus parity claims beyond the ledger-backed `timeseries`,
   `geo_panel`, and `geo_brand_panel` evidence spine remain blocked on explicit
   acceptance evidence.
 - Repo-wide `make format-check` is now clean after the formatter-only Runic
   drift cleanup. Keep day-to-day verification scoped; do not run the full suite
   for future formatter-only changes.
-- The clean-worktree benchmark rerun remains outstanding if maintainers want a
-  release artifact without the current published `git_dirty = true` note.
+- Benchmark refresh work remains unstarted future work and should only run under
+  an explicit benchmark/release plan.
 
 ## Accumulated Context
 
@@ -496,11 +498,15 @@ spine now also includes `geo_panel` and `geo_brand_panel` Stage `00`
 - Abacus parity ledger added as the new release-readiness roadmap; module
   completion is no longer sufficient evidence for Abacus parity.
 - Phase 14 added: Abacus Parity Recovery
+- Phase 38 permanently retired variational inference.
+- Phase 39 added local supported-path smoke certification.
+- Phase 40 reconciled stale planning truth after Phase 39.
 
 ## Session
 
-**Last Date:** 2026-07-06
-**Stopped At:** Phase 26 is complete. The deprecated validation-helper
-migration audit is recorded and guarded; choose the next bounded release-prep
-slice before making export removals or broader v1 API claims.
-**Resume File:** `.planning/phases/26-deprecated-validation-helper-migration-audit/PLAN.md`
+**Last Date:** 2026-07-18
+**Stopped At:** Phase 40 is complete. The current control docs agree that Phase
+13 remediation, Plan 14-05 parity recovery, Phase 38 VI retirement, and Phase
+39 supported-path smoke certification are closed. Choose the next bounded slice
+from the reconciled roadmap/state, with plan/review before implementation.
+**Resume File:** `.planning/phases/40-planning-truth-reconciliation/PLAN.md`
