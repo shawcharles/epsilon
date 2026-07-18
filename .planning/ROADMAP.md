@@ -369,6 +369,10 @@ that later closed in Phase 14:
       and project-control documents after Phase 39 without changing runtime
       code, tests, examples, benchmarks, release artefacts, manifests, or Abacus
       parity status rows.
+- [x] **Phase 41: Supported-Path Output Usability Audit** - Audit and lightly
+      harden the compact output sidecars produced by the toy MCMC and
+      fixed-schema CSV quickstart examples, without changing model semantics,
+      widening support, running benchmarks, or making release claims.
 
 ## Phase Details
 
@@ -726,7 +730,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 40
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 41
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -770,3 +774,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 40
 | 38. Permanent VI Surface Retirement | 4/4 | Completed | `VariationalConfig`, `approximate_fit!`, VI source/tests, and legacy config/artifact acceptance removed; MCMC/Turing is the sole fitting path |
 | 39. Supported-Path Smoke Certification | 1/1 | Completed | local `make smoke` command landed for toy MCMC and CSV quickstart supported-path smoke checks |
 | 40. Planning Truth Reconciliation | 1/1 | Completed | project-control docs reconciled after Phase 39 without runtime, test, example, benchmark, release, manifest, dependency, or parity-status changes |
+| 41. Supported-Path Output Usability Audit | 1/1 | Completed | toy and CSV example sidecar outputs audited, documented, and guarded with focused content-contract tests without model, source, benchmark, release, or parity-status changes |

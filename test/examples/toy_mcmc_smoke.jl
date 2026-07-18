@@ -12,6 +12,21 @@ function _argument_error_message(f)
     error("expected ArgumentError")
 end
 
+function _toy_summary_pairs(path::AbstractString)
+    lines = readlines(path)
+    @test first(lines) == "Epsilon toy MMM MCMC smoke demo"
+    pairs = Dict{String, String}()
+    for line in lines[2:end]
+        key, value = split(line, "="; limit = 2)
+        pairs[key] = value
+    end
+    return pairs
+end
+
+function _toy_csv_header(path::AbstractString)
+    return split(first(readlines(path)), ",")
+end
+
 @testset "toy MMM CLI parsing" begin
     default_options = _parse_toy_cli(String[])
     @test default_options["draws"] == _TOY_DEFAULT_DRAWS
@@ -150,5 +165,42 @@ end
             @test isfile(path)
             @test filesize(path) > 0
         end
+
+        summary = _toy_summary_pairs(result.written_paths.run_summary)
+        @test Set(keys(summary)) == Set(
+            [
+                "status",
+                "backend",
+                "draws",
+                "tune",
+                "seed",
+                "channel",
+                "observed_total_tv",
+                "contribution_rows",
+                "metric_rows",
+            ]
+        )
+        @test summary["status"] == "fit"
+        @test summary["backend"] == "turing"
+        @test summary["draws"] == "8"
+        @test summary["tune"] == "8"
+        @test summary["seed"] == "20260706"
+        @test summary["channel"] == "tv"
+        @test summary["observed_total_tv"] == "172.0"
+        @test summary["contribution_rows"] == string(nrow(result.contribution_table))
+        @test summary["metric_rows"] == string(nrow(result.metric_table))
+
+        @test _toy_csv_header(result.written_paths.contribution_summary) ==
+            ["observation", "date", "component", "mean", "lower_5", "upper_95"]
+        @test _toy_csv_header(result.written_paths.metric_summary) ==
+            ["channel", "spend", "metric", "mean", "lower_5", "upper_95"]
+        @test nrow(DataFrame(CSV.File(result.written_paths.contribution_summary))) ==
+            nrow(result.contribution_table)
+        @test nrow(DataFrame(CSV.File(result.written_paths.metric_summary))) ==
+            nrow(result.metric_table)
+        @test Set(DataFrame(CSV.File(result.written_paths.contribution_summary)).component) ==
+            Set(["intercept", "media:tv", "media:search"])
+        @test Set(DataFrame(CSV.File(result.written_paths.metric_summary)).metric) ==
+            Set(["roas", "mroas", "cpa", "mcpa"])
     end
 end

@@ -25,6 +25,11 @@ Use `--data PATH` to load another file with this same four-column schema. It
 defaults to the bundled CSV. A successful run prints `status=fit` and
 `backend=turing`; with `--output-dir`, it writes `contribution_summary.csv`,
 `metric_summary.csv`, and `run_summary.txt`.
+The text summary uses stable `key=value` lines for status, backend, data path,
+sampler settings, the evaluated channel, observed `tv` spend total, and output
+row counts. The CSV sidecars use the same compact summary-table columns returned
+by Epsilon: contribution rows contain `observation,date,component,mean,lower_5,
+upper_95`, and metric rows contain `channel,spend,metric,mean,lower_5,upper_95`.
 
 This is a fixed-schema teaching example, not a general CSV ingestion API,
 pipeline feature, data-cleaning workflow, benchmark, release claim, or Abacus

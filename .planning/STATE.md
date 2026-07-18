@@ -8,21 +8,30 @@ See: .planning/PROJECT.md
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 40 Planning Truth Reconciliation is complete. The slice
-was documentation/state hygiene only: stale project-control documents now agree
-that Phase 13 remediation, Plan 14-05 parity recovery, Phase 38 VI retirement,
-and Phase 39 supported-path smoke certification are closed, without touching
-runtime code, tests, examples, benchmarks, release artefacts, manifests,
-dependencies, or Abacus parity status rows.
+**Current focus:** Phase 41 Supported-Path Output Usability Audit is complete.
+The slice audited and lightly hardened the compact output sidecars from the toy
+MCMC and fixed-schema CSV quickstart examples, without changing model semantics,
+widening support, running benchmarks, or making release claims.
 
 ## Current Position
 
-**Current Phase:** 40
-**Current Phase Name:** Planning Truth Reconciliation
-**Total Phases:** 40
-**Current Plan:** `.planning/phases/40-planning-truth-reconciliation/PLAN.md`
-**Total Plans in Phase:** 1 bounded planning/docs reconciliation slice
-**Status:** Phase 40 is complete. It reconciled `.planning/PROJECT.md`,
+**Current Phase:** 41
+**Current Phase Name:** Supported-Path Output Usability Audit
+**Total Phases:** 41
+**Current Plan:** `.planning/phases/41-supported-path-output-usability/PLAN.md`
+**Total Plans in Phase:** 1 bounded supported-path output-usability slice
+**Status:** Phase 41 is complete. The toy and CSV example sidecars were
+inspected with tiny MCMC runs, their stable summary keys and CSV columns were
+documented in the example READMEs, and the two focused example tests now guard
+summary keys/settings, CSV headers, row counts, contribution components, and
+metric labels without asserting exact posterior numeric values. Verification
+passed with `make test-file FILE=test/examples/toy_mcmc_smoke.jl` (`109 / 109`),
+`make test-file FILE=test/examples/csv_mmm_quickstart.jl` (`132 / 132`),
+`make format-check-touched`, `git diff --check`, and the source/dependency/
+benchmark guard. No full suite, benchmark, release, source, dependency,
+manifest, model-semantics, or parity-status changes were made.
+
+Phase 40 is complete. It reconciled `.planning/PROJECT.md`,
 `.planning/ROADMAP.md`, `.planning/STATE.md`, and its own phase plan so the
 control docs no longer present closed Phase 13, Phase 14 / Plan 14-05, Phase 38,
 or Phase 39 work as pending. No runtime, test, example, benchmark, release,
@@ -389,17 +398,18 @@ release claims, or Abacus parity claims changed.
 | 38 | 4/4 | Completed | variational inference surface permanently retired; MCMC/Turing is the sole fitting path |
 | 39 | 1/1 | Completed | local supported-path smoke command landed for toy MCMC and CSV quickstart examples |
 | 40 | 1/1 | Completed | planning truth reconciliation landed without runtime, test, example, benchmark, release, manifest, dependency, or parity-status changes |
+| 41 | 1/1 | Completed | supported-path example output sidecars audited, documented, and guarded with focused content-contract tests |
 
 **Recent Trend:**
-- Last 5 completed phases: 36, 37, 38, 39, 40.
+- Last 5 completed phases: 37, 38, 39, 40, 41.
 - Trend: the recent work narrowed rather than widened the library contract.
-  Phase 36/37 landed the reviewed TimeSeriesMMM-only HSGP shared-media
-  multiplier and fitted-period replay slices while keeping HSGP/TVP broader
-  model support guarded. Phase 38 permanently retired variational inference, so
-  MCMC/Turing is the sole fitting path. Phase 39 added a local supported-path
-  smoke command for the toy and CSV examples without turning it into release or
-  benchmark evidence. Phase 40 reconciled planning truth so future work starts
-  from those current boundaries instead of stale Phase 14/26/29 handoff text.
+  Phase 37 completed fitted-period replay for the bounded TimeSeriesMMM HSGP
+  multiplier while keeping broader HSGP/TVP support guarded. Phase 38
+  permanently retired variational inference, so MCMC/Turing is the sole fitting
+  path. Phase 39 added a local supported-path smoke command for the toy and CSV
+  examples without turning it into release or benchmark evidence. Phase 40
+  reconciled planning truth, and Phase 41 made the supported-path sidecar output
+  contract more inspectable and better tested without widening support.
 
 ## Decisions Made
 
@@ -445,6 +455,7 @@ release claims, or Abacus parity claims changed.
 | 38 | Permanently retire variational inference rather than stabilise it | Epsilon will not own an approximate-inference contract; MCMC/Turing remains the sole fitting path |
 | 39 | Add smoke certification as a local supported-path command, not release evidence | Maintainers need a fast confidence command for the toy and CSV examples without confusing it for a benchmark or parity gate |
 | 40 | Reconcile planning truth before choosing more work | Current-state docs are part of the project control surface; stale open checkboxes and handoffs create false next actions |
+| 41 | Guard example output structure rather than posterior values | Tiny MCMC examples are useful for supported-path confidence, but their tests should stabilise keys, columns, and row counts instead of brittle posterior numerics |
 
 ## Pending Todos
 
@@ -458,6 +469,9 @@ release claims, or Abacus parity claims changed.
   evidence only, not benchmark, release, or Abacus parity evidence.
 - Phase 40 is complete; future work should start from the reconciled planning
   docs rather than older Phase 14/26/29 handoff text.
+- Phase 41 is complete; toy and CSV sidecar outputs are documented and guarded,
+  but remain local supported-path evidence only, not benchmark, release, Abacus
+  parity, reporting, or ingestion evidence.
 - HSGP/TVP broader support remains bounded: Phase 36/37 cover only the
   TimeSeriesMMM shared-media multiplier and retained-grid contribution replay.
   Do not add new HSGP/TVP config, prediction, panel, curve, metric, optimization,
@@ -501,12 +515,14 @@ release claims, or Abacus parity claims changed.
 - Phase 38 permanently retired variational inference.
 - Phase 39 added local supported-path smoke certification.
 - Phase 40 reconciled stale planning truth after Phase 39.
+- Phase 41 audited and guarded supported-path example output sidecars.
 
 ## Session
 
 **Last Date:** 2026-07-18
-**Stopped At:** Phase 40 is complete. The current control docs agree that Phase
-13 remediation, Plan 14-05 parity recovery, Phase 38 VI retirement, and Phase
-39 supported-path smoke certification are closed. Choose the next bounded slice
-from the reconciled roadmap/state, with plan/review before implementation.
-**Resume File:** `.planning/phases/40-planning-truth-reconciliation/PLAN.md`
+**Stopped At:** Phase 41 is complete. The toy and CSV MCMC examples still write
+the same compact sidecars, and the focused tests now guard their stable summary
+keys, CSV headers, row counts, contribution components, and metric labels.
+Choose the next bounded slice from the reconciled roadmap/state, with
+plan/review before implementation.
+**Resume File:** `.planning/phases/41-supported-path-output-usability/PLAN.md`

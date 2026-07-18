@@ -16,6 +16,11 @@ observed_total]`.
 Successful runs print `status=fit`, `backend=turing`, the sampler settings,
 and compact row counts. When `--output-dir` is supplied, the script writes
 `contribution_summary.csv`, `metric_summary.csv`, and `run_summary.txt` there.
+The text summary uses stable `key=value` lines for status, backend, sampler
+settings, the evaluated channel, observed `tv` spend total, and output row
+counts. The CSV sidecars use the same compact summary-table columns returned by
+Epsilon: contribution rows contain `observation,date,component,mean,lower_5,
+upper_95`, and metric rows contain `channel,spend,metric,mean,lower_5,upper_95`.
 `--help` prints usage without fitting a model, and malformed CLI values fail
 with `ArgumentError` messages that name the rejected option.
 

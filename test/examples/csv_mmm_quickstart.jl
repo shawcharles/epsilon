@@ -18,6 +18,21 @@ function _write_csv_quickstart_fixture(path::AbstractString, body::AbstractStrin
     return path
 end
 
+function _csv_quickstart_summary_pairs(path::AbstractString)
+    lines = readlines(path)
+    @test first(lines) == "Epsilon CSV MMM MCMC quickstart"
+    pairs = Dict{String, String}()
+    for line in lines[2:end]
+        key, value = split(line, "="; limit = 2)
+        pairs[key] = value
+    end
+    return pairs
+end
+
+function _csv_quickstart_header(path::AbstractString)
+    return split(first(readlines(path)), ",")
+end
+
 @testset "CSV MMM quickstart loader" begin
     repo_root = normpath(joinpath(@__DIR__, "..", ".."))
     bundled_path = joinpath(repo_root, "examples", "csv_mmm", "toy_timeseries.csv")
@@ -219,6 +234,45 @@ end
             @test isfile(path)
             @test filesize(path) > 0
         end
+
+        summary = _csv_quickstart_summary_pairs(result.written_paths.run_summary)
+        @test Set(keys(summary)) == Set(
+            [
+                "status",
+                "backend",
+                "data_path",
+                "draws",
+                "tune",
+                "seed",
+                "channel",
+                "observed_total_tv",
+                "contribution_rows",
+                "metric_rows",
+            ]
+        )
+        @test summary["status"] == "fit"
+        @test summary["backend"] == "turing"
+        @test summary["data_path"] == _CSV_MMM_DEFAULT_DATA_PATH
+        @test summary["draws"] == "8"
+        @test summary["tune"] == "8"
+        @test summary["seed"] == "20260711"
+        @test summary["channel"] == "tv"
+        @test summary["observed_total_tv"] == "60.0"
+        @test summary["contribution_rows"] == string(nrow(result.contribution_table))
+        @test summary["metric_rows"] == string(nrow(result.metric_table))
+
+        @test _csv_quickstart_header(result.written_paths.contribution_summary) ==
+            ["observation", "date", "component", "mean", "lower_5", "upper_95"]
+        @test _csv_quickstart_header(result.written_paths.metric_summary) ==
+            ["channel", "spend", "metric", "mean", "lower_5", "upper_95"]
+        @test nrow(DataFrame(CSV.File(result.written_paths.contribution_summary))) ==
+            nrow(result.contribution_table)
+        @test nrow(DataFrame(CSV.File(result.written_paths.metric_summary))) ==
+            nrow(result.metric_table)
+        @test Set(DataFrame(CSV.File(result.written_paths.contribution_summary)).component) ==
+            Set(["intercept", "media:tv", "media:search"])
+        @test Set(DataFrame(CSV.File(result.written_paths.metric_summary)).metric) ==
+            Set(["roas", "mroas", "cpa", "mcpa"])
     end
 
 end
