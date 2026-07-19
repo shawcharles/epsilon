@@ -157,6 +157,12 @@ local settings:
 julia --project=. runme.jl
 ```
 
+The runner is intentionally more visual than the programmatic API: it prints
+the Epsilon header, a config/output context block, one-line stage progress
+bars, and a structured final success or failure summary. The progress display
+counts all manifest stage records, including skipped optional stages in the
+final status summary.
+
 The bundled config owns its local `dataset.csv` and `holidays.csv` paths. The
 runner delegates to `pipeline_main`, so normal pipeline flags such as
 `--output-dir`, `--run-name`, `--dataset-path`, `--draws`, `--tune`,

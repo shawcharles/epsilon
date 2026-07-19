@@ -90,8 +90,11 @@ make smoke-demo-configs
 ```
 
 The root `runme.jl` runner delegates to `pipeline_main` and keeps
-`dataset.csv` / `holidays.csv` paths owned by the config bundle. The smoke
-command runs the shipped time-series demo config through a tiny headless
+`dataset.csv` / `holidays.csv` paths owned by the config bundle. The runner is
+the polished terminal surface: it prints the Epsilon header, run context,
+stage progress bars, and structured final summaries while leaving the
+programmatic API unchanged. The smoke command runs the shipped time-series demo
+config through a tiny headless
 pipeline, including its default validation stage, and checks the panel demo
 configs through config/data/model-spec construction without panel MCMC
 sampling. These commands are local workflow evidence only, not release evidence

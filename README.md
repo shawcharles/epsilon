@@ -246,6 +246,11 @@ quick local settings:
 julia --project=. runme.jl
 ```
 
+`runme.jl` is the polished human terminal runner: it prints the Epsilon header,
+a compact config/output context block, simple stage progress bars, and a final
+structured success or failure summary. The underlying execution path still
+delegates to `pipeline_main`.
+
 For a maintained smoke check across all bundled demo configs, run:
 
 ```bash

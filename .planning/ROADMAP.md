@@ -15,13 +15,14 @@ free channel-by-panel optimization, dashboard/UI, AI advisor behaviour, and any
 future HSGP/TVP expansion require separate explicit plans rather than being the
 automatic next milestone.
 
-Current planning has subsequently landed through Phase 72. The recent sequence
+Current planning has subsequently landed through Phase 73. The recent sequence
 is mostly bounded hardening and governance work: optimiser API/tolerance
 cleanup, package-entry decomposition, calibration fail-fast validation,
 methodology wording, AD-safety guards, prior-domain guards, export-list
 auditability, demo-surface reconciliation, local drift cleanup, and
-config-driven runner ergonomics. These phases do not change the parity ledger's
-controlling status rows or imply a broader release claim.
+config-driven runner ergonomics plus terminal presentation polish. These phases
+do not change the parity ledger's controlling status rows or imply a broader
+release claim.
 
 ## Historical Repository Review Snapshot
 
@@ -971,3 +972,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 72
 | 70. Demo Surface Reconciliation | 1/1 | Completed | `data/demo/*` is now documented as the canonical Epsilon-native config-driven demo surface, while `examples/demo/*` is framed as historical/reference comparison material with a time-series-only legacy helper |
 | 71. Local Drift And Resume-State Cleanup | 1/1 | Completed | July critical review tracked as historical evidence, narrow `graphify-out/` ignore rule committed, and planning resume state cleaned without runtime or parity changes |
 | 72. Config-Driven Runner Contract | 1/1 | Completed | root `runme.jl` runner and `make run-demo-config` landed as thin wrappers over `pipeline_main`, giving users a minimal-code config/data/holidays workflow without new modelling, parity, benchmark, or release claims |
+| 73. Pretty Terminal Runner Output | 1/1 | Completed | root `runme.jl` now prints the Epsilon header, config context, stage progress bars, and structured success/failure summaries while preserving the existing pipeline execution contract |

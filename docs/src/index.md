@@ -230,8 +230,10 @@ julia --project=. runme.jl data/demo/timeseries/config.yml --quick
 ```
 
 The runner delegates to `pipeline_main`; bundle-local `dataset.csv` and
-`holidays.csv` paths stay owned by the YAML config. Maintainers can check all
-bundled demo configs locally with:
+`holidays.csv` paths stay owned by the YAML config. As a human-facing command,
+`runme.jl` prints the Epsilon header, a compact run context, stage progress
+bars, and a structured final summary. Maintainers can check all bundled demo
+configs locally with:
 
 ```bash
 make smoke-demo-configs

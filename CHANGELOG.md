@@ -30,6 +30,13 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Added
 
+- Added polished terminal output for the root `runme.jl` config-driven runner:
+  the runner now prints the Epsilon header from `assets/ascii.txt`, a
+  structured run context, stage progress bars from the central pipeline stage
+  lifecycle, and structured success/failure summaries. This is terminal UX
+  only; `run_pipeline`, normal `pipeline_main` behaviour, model semantics,
+  artifact layouts, sampler defaults, dependencies, and parity claims are
+  unchanged.
 - Added root `runme.jl`, a thin Epsilon-native config-driven runner over
   `pipeline_main`, plus `make run-demo-config`. Users can run
   `julia --project=. runme.jl data/demo/timeseries/config.yml --quick` or the

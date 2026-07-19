@@ -2,14 +2,32 @@ using Epsilon
 using JSON3
 using Test
 
-function _read_combined_output(cmd)
-    path, io = mktemp()
-    close(io)
+function _capture_streams(f::Function)
+    stdout_path, stdout_handle = mktemp()
+    stderr_path, stderr_handle = mktemp()
+    close(stdout_handle)
+    close(stderr_handle)
     try
-        run(pipeline(ignorestatus(cmd); stdout = path, stderr = path))
-        return read(path, String)
+        status = open(stdout_path, "w") do stdout_io
+            open(stderr_path, "w") do stderr_io
+                redirect_stdout(stdout_io) do
+                    redirect_stderr(stderr_io) do
+                        f()
+                    end
+                end
+            end
+        end
+        output = read(stdout_path, String) * read(stderr_path, String)
+        return (status = status, output = output)
     finally
-        rm(path; force = true)
+        rm(stdout_path; force = true)
+        rm(stderr_path; force = true)
+    end
+end
+
+function _capture_runme(args::Vector{String})
+    return _capture_streams() do
+        runme_main(args)
     end
 end
 
@@ -18,12 +36,14 @@ end
     script = joinpath(repo_root, "scripts", "smoke_demo_configs.sh")
     makefile = joinpath(repo_root, "Makefile")
     runme = joinpath(repo_root, "runme.jl")
+    header = joinpath(repo_root, "assets", "ascii.txt")
 
     @test isfile(script)
     @test success(`bash -n $script`)
     @test occursin("smoke-demo-configs:", read(makefile, String))
     @test occursin("scripts/smoke_demo_configs.sh", read(makefile, String))
     @test isfile(runme)
+    @test isfile(header)
     @test occursin("run-demo-config:", read(makefile, String))
     @test occursin("runme.jl demo", read(makefile, String))
 end
@@ -54,23 +74,48 @@ end
     no_quick_args = _runme_pipeline_args("config.yml", ["--draws", "11"])
     @test no_quick_args == ["run", "config.yml", "--draws", "11"]
 
+    @test _runme_pipeline_plan("config.yml", ["--quick"]).quick
+    @test _runme_pipeline_plan("config.yml", ["--output-dir", "custom"]).output_dir == "custom"
+    @test _runme_pipeline_plan("config.yml", ["--run-name=smoke"]).run_name == "smoke"
+    @test Epsilon._pipeline_progress_bar(0, 4; width = 8) == "[--------]"
+    @test Epsilon._pipeline_progress_bar(2, 4; width = 8) == "[####----]"
+    @test Epsilon._pipeline_progress_bar(4, 4; width = 8) == "[########]"
+    @test Epsilon._pipeline_progress_bar(1, 0; width = 8) == "[--------]"
+    @test Epsilon._pipeline_stage_status_summary(
+        Dict(:completed => 2, :skipped => 1, :failed => 0),
+    ) == "completed=2, skipped=1"
+
+    normal_pipeline_cli = _capture_streams() do
+        pipeline_main(["run"])
+    end
+    @test normal_pipeline_cli.status != 0
+    @test occursin("epsilon run <config_path>", normal_pipeline_cli.output)
+    @test !occursin("███████", normal_pipeline_cli.output)
+    @test !occursin("Status       : failed", normal_pipeline_cli.output)
+
     help_output = read(
         `$(Base.julia_cmd()) --project=$repo_root --startup-file=no $runme --help`,
         String,
     )
+    @test occursin("███████", help_output)
     @test occursin("runme.jl [config_path]", help_output)
     @test occursin("dataset.csv and holidays.csv paths are owned by the config", help_output)
 
-    bad_output = _read_combined_output(
-        `$(Base.julia_cmd()) --project=$repo_root --startup-file=no $runme demo geo_panel`,
-    )
+    bad_result = _capture_runme(["demo", "geo_panel"])
+    bad_output = bad_result.output
+    @test bad_result.status != 0
+    @test occursin("███████", bad_output)
+    @test occursin("Runner status : failed", bad_output)
     @test occursin("unsupported demo `geo_panel`", bad_output)
     @test !occursin("Stacktrace", bad_output)
 
     missing_config = joinpath(repo_root, "data", "demo", "timeseries", "missing.yml")
-    missing_cmd = `$(Base.julia_cmd()) --project=$repo_root --startup-file=no $runme $missing_config`
-    missing_process = run(pipeline(ignorestatus(missing_cmd); stdout = devnull, stderr = devnull))
-    @test !success(missing_process)
+    missing_result = _capture_runme([missing_config])
+    @test missing_result.status != 0
+    @test occursin("███████", missing_result.output)
+    @test occursin("Status       : failed", missing_result.output)
+    @test occursin("Error", missing_result.output)
+    @test !occursin("Stacktrace", missing_result.output)
 end
 
 @testset "runme.jl executes the canonical time-series config with tiny overrides" begin
@@ -84,8 +129,16 @@ end
             String,
         )
 
-        @test occursin("Pipeline run completed.", output)
-        @test occursin("run_name=runme-smoke", output)
+        @test occursin("███████", output)
+        @test occursin("Config", output)
+        @test occursin("Output root", output)
+        @test occursin("Quick mode", output)
+        @test occursin("RUNNING", output)
+        @test occursin("DONE", output)
+        @test occursin("Status      ", output)
+        @test occursin("completed", output)
+        @test occursin("Run name     : runme-smoke", output)
+        @test occursin("Manifest", output)
 
         run_dirs = readdir(tmpdir; join = true)
         @test length(run_dirs) == 1

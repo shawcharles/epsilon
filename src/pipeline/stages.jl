@@ -420,6 +420,7 @@ function _run_pipeline_stage!(
         error = nothing,
     )
     _write_pipeline_manifest!(context)
+    _pipeline_pretty_stage_started(context, key)
 
     try
         result = execute!(context)
@@ -435,6 +436,7 @@ function _run_pipeline_stage!(
             error = nothing,
         )
         _write_pipeline_manifest!(context)
+        _pipeline_pretty_stage_completed(context, key)
         return nothing
     catch err
         payload = _pipeline_error_payload(err, key)
@@ -450,6 +452,7 @@ function _run_pipeline_stage!(
         context.finished_at_utc = _pipeline_timestamp_utc()
         context.error = payload
         _write_pipeline_manifest!(context)
+        _pipeline_pretty_stage_failed(context, key, err)
         rethrow()
     end
 end

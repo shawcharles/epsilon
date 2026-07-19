@@ -3,6 +3,7 @@
 using Epsilon
 
 const _RUNME_DEFAULT_CONFIG = joinpath(@__DIR__, "data", "demo", "timeseries", "config.yml")
+const _RUNME_HEADER_PATH = joinpath(@__DIR__, "assets", "ascii.txt")
 
 const _RUNME_QUICK_DEFAULTS = (
     "--draws" => "20",
@@ -49,6 +50,7 @@ function runme_main(args = ARGS)
         end
 
         if argv[1] in ("-h", "--help")
+            _runme_print_header(stdout)
             println(stdout, _RUNME_USAGE)
             return 0
         end
@@ -68,23 +70,37 @@ function runme_main(args = ARGS)
 
         return _runme_run_config(argv[1], argv[2:end])
     catch err
-        println(stderr, "Error: $(sprint(showerror, err))")
+        _runme_print_header(stderr)
+        _runme_print_runner_failure(stderr, err)
         println(stderr, _RUNME_USAGE)
         return 1
     end
 end
 
 function _runme_run_config(config_path::AbstractString, args::Vector{String})
-    forwarded = _runme_pipeline_args(config_path, args)
-    return pipeline_main(forwarded)
+    plan = _runme_pipeline_plan(config_path, args)
+    _runme_print_header(stdout)
+    _runme_print_context(stdout, config_path, plan)
+    return Epsilon._with_pipeline_pretty_output() do
+        pipeline_main(plan.args)
+    end
 end
 
 function _runme_pipeline_args(config_path::AbstractString, args::Vector{String})
+    return _runme_pipeline_plan(config_path, args).args
+end
+
+function _runme_pipeline_plan(config_path::AbstractString, args::Vector{String})
     quick, forwarded = _runme_remove_quick(args)
     if quick
         _runme_apply_quick_defaults!(forwarded)
     end
-    return vcat(["run", String(config_path)], forwarded)
+    return (
+        args = vcat(["run", String(config_path)], forwarded),
+        quick = quick,
+        output_dir = _runme_cli_option_value(forwarded, "--output-dir", "results"),
+        run_name = _runme_cli_option_value(forwarded, "--run-name", "(derived from config)"),
+    )
 end
 
 function _runme_remove_quick(args::Vector{String})
@@ -117,6 +133,57 @@ function _runme_has_cli_option(args::Vector{String}, option::AbstractString)
         (arg == option || startswith(arg, option * "=")) && return true
     end
     return false
+end
+
+function _runme_cli_option_value(
+        args::Vector{String},
+        option::AbstractString,
+        fallback::AbstractString,
+    )
+    for index in eachindex(args)
+        arg = args[index]
+        if startswith(arg, option * "=")
+            return split(arg, '='; limit = 2)[2]
+        end
+        if arg == option && index < lastindex(args)
+            return args[index + 1]
+        end
+    end
+    return String(fallback)
+end
+
+function _runme_print_header(io::IO)
+    println(io)
+    if isfile(_RUNME_HEADER_PATH)
+        try
+            text = read(_RUNME_HEADER_PATH, String)
+            print(io, chomp(text))
+            println(io)
+        catch
+            println(io, "EPSILON")
+        end
+    else
+        println(io, "EPSILON")
+    end
+    println(io, repeat("=", 72))
+    return nothing
+end
+
+function _runme_print_context(io::IO, config_path::AbstractString, plan)
+    println(io, "Config       : $(config_path)")
+    println(io, "Output root  : $(plan.output_dir)")
+    println(io, "Run name     : $(plan.run_name)")
+    println(io, "Quick mode   : $(plan.quick ? "yes" : "no")")
+    println(io, "Data bundle  : dataset.csv and holidays.csv are resolved from the config")
+    println(io, repeat("=", 72))
+    return nothing
+end
+
+function _runme_print_runner_failure(io::IO, err)
+    println(io, "Runner status : failed")
+    println(io, "Error         : $(sprint(showerror, err))")
+    println(io, repeat("=", 72))
+    return nothing
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

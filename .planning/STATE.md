@@ -8,38 +8,39 @@ See: .planning/PROJECT.md
 Julia by using validated reference behavior where it is methodologically
 meaningful, proving comparison claims only where semantics genuinely match, and
 letting Epsilon stand as an independent Julia MMM library.
-**Current focus:** Phase 72 Config-Driven Runner Contract is complete. Epsilon
-now has a root `runme.jl` runner for the config/data/holidays bundle workflow,
-delegating to `pipeline_main` rather than creating a second pipeline control
-plane.
+**Current focus:** Phase 73 Pretty Terminal Runner Output is complete. Epsilon
+now has a polished root `runme.jl` terminal runner for the config/data/holidays
+bundle workflow, still delegating to `pipeline_main` rather than creating a
+second pipeline control plane.
 
 ## Current Position
 
-**Current Phase:** 72
-**Current Phase Name:** Config-Driven Runner Contract
-**Total Phases:** 72
-**Current Plan:** `.planning/phases/72-config-driven-runner-contract/PLAN.md`
-**Total Plans in Phase:** 1 planned runner workflow slice
-**Status:** Phase 72 is complete. Root `runme.jl` now supports
+**Current Phase:** 73
+**Current Phase Name:** Pretty Terminal Runner Output
+**Total Phases:** 73
+**Current Plan:** `.planning/phases/73-pretty-terminal-runner-output/PLAN.md`
+**Total Plans in Phase:** 1 planned terminal UX slice
+**Status:** Phase 73 is complete. Root `runme.jl` still supports
 `julia --project=. runme.jl`, `julia --project=. runme.jl <config_path>`, and
 `julia --project=. runme.jl demo timeseries`, with `--quick` injecting bounded
 local runtime overrides while preserving user-supplied flags and delegating all
-real pipeline execution to `pipeline_main`. `make run-demo-config` provides a
-thin Make wrapper around the same runner. Docs now present `runme.jl` as the
-minimum-code Epsilon-native config-driven workflow while keeping
-`run_pipeline(PipelineRunConfig(...))` as the programmatic API. The
-config-owned `dataset.csv` / `holidays.csv` bundle contract is preserved; no
-holiday override, new package binary, model semantics, sampler defaults, panel
-MCMC test, panel validation, panel calibration, dashboard/UI, VI, benchmark,
-release gate, fixture, parity-ledger, dependency, manifest, or internal
-reference/provenance change was made. Scoped verification passed:
-`make test-file FILE=test/pipeline/demo_configs_smoke.jl` (`43 / 43`,
-`3m00.8s`), `make format-check-touched`, and `git diff --check`.
+real pipeline execution to `pipeline_main`. It now prints the Epsilon header
+from `assets/ascii.txt`, a concise run context block, simple stage progress
+bars from the central pipeline stage lifecycle, and structured success/failure
+summaries. `make run-demo-config` remains a thin Make wrapper around the same
+runner. Docs present `runme.jl` as the minimum-code Epsilon-native
+config-driven workflow while keeping `run_pipeline(PipelineRunConfig(...))` as
+the programmatic API. The config-owned `dataset.csv` / `holidays.csv` bundle
+contract is preserved; no holiday override, new package binary, model
+semantics, sampler defaults, panel MCMC test, panel validation, panel
+calibration, dashboard/UI, VI, benchmark, release gate, fixture, parity-ledger,
+dependency, manifest, or internal reference/provenance change was made. Scoped
+verification passed: `make test-file FILE=test/pipeline/demo_configs_smoke.jl`
+(`73 / 73`, `2m38.5s`).
 
 Known unrelated local drift at implementation time: `.gitignore` has an
-unstaged `.codex/` ignore addition, and `assets/ascii.txt` is untracked. These
-are outside Phase 72 and should not be staged with the runner commit unless the
-user explicitly chooses to keep them.
+unstaged `.codex/` ignore addition, and `results/` is local runner output.
+These are outside Phase 73 and should not be staged with the runner commit.
 
 Phase 71 is complete. `.planning/CRITICAL-REVIEW-2026-07-19.md`
 is now tracked with a historical-snapshot note pointing future readers to
