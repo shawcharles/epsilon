@@ -128,6 +128,18 @@ end
         model.data;
         lift_test_data = lift_test_data,
     )
+
+    extras_model = sample_time_series_model()
+    extras_model.config.extras["calibration"] = TimeSeriesCalibrationInput(
+        [CalibrationStepConfig(method = "add_lift_test_measurements")],
+        LiftTestCalibrationRows(["tv"], [1.0], [0.5], [0.3], [0.0]),
+        nothing,
+    )
+    @test_throws ArgumentError TimeSeriesMMM(
+        extras_model.config,
+        extras_model.sampler_config,
+        extras_model.data,
+    )
 end
 
 @testset "time-varying media rejects panel and calibration construction" begin
@@ -1063,6 +1075,59 @@ end
     @test expected_term != 0.0
 end
 
+@testset "lift-test calibration maps invalid sampled saturation states to -Inf" begin
+    model = sample_time_series_model()
+    spec = build_model(model)
+    runtime, controls = Epsilon._turing_runtime(model.config, model.data)
+    events = Epsilon._event_design_matrix(model.config.events, model.data)
+    holidays = Epsilon._holiday_design_matrix(model.config.holidays, model.data)
+    scaled_channels = Epsilon._scale_channels(model.data.channels, spec.channel_scale)
+    scaled_target = model.data.target ./ spec.target_scale
+
+    lift_test_data = LiftTestCalibrationRows(
+        channel = ["tv"],
+        x = [1.0],
+        delta_x = [0.5],
+        delta_y = [0.3],
+        sigma = [0.1],
+    )
+    calibration_input = Epsilon._build_calibration_input(
+        [CalibrationStepConfig(method = "add_lift_test_measurements")],
+        lift_test_data,
+        nothing,
+    )
+    calibration = Epsilon._resolve_calibration_spec(
+        model.config,
+        calibration_input,
+        spec.channel_scale,
+        spec.target_scale,
+    )
+    calibrated_model = Epsilon._time_series_mmm_model(
+        scaled_target, scaled_channels, controls, events, holidays, runtime;
+        lift_test_payload = calibration.lift_test,
+    )
+
+    fixed_params = (;
+        intercept = 0.1,
+        sigma = 0.5,
+        beta_media = [0.3, 0.4],
+        alpha = [0.2, 0.25],
+        lam = [0.0, 0.7],
+        beta_controls = [0.05],
+    )
+    @test_throws ArgumentError lift_test_payload_log_density(
+        (x_row, lam_row) -> centered_logistic_saturation.(x_row, lam_row),
+        calibration.lift_test,
+        fixed_params.lam,
+    )
+
+    conditioned = Turing.DynamicPPL.condition(calibrated_model, fixed_params)
+    _, varinfo = Turing.DynamicPPL.evaluate!!(
+        conditioned, Turing.DynamicPPL.VarInfo(conditioned),
+    )
+    @test Turing.DynamicPPL.getlogjoint(varinfo) == -Inf
+end
+
 @testset "lift-test calibration rejects non-logistic saturation" begin
     model = sample_time_series_model(; saturation_type = "tanh")
     lift_test_data = LiftTestCalibrationRows(
@@ -1072,15 +1137,13 @@ end
         delta_y = [0.3],
         sigma = [0.1],
     )
-    calibrated_model = TimeSeriesMMM(
+    @test_throws ArgumentError TimeSeriesMMM(
         model.config,
         model.sampler_config,
         model.data;
         calibration_steps = [CalibrationStepConfig(method = "add_lift_test_measurements")],
         lift_test_data = lift_test_data,
     )
-
-    @test_throws ArgumentError fit!(calibrated_model)
 end
 
 @testset "fit! with logistic saturation and lift-test calibration is a tiny MCMC smoke test" begin

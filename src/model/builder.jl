@@ -413,6 +413,7 @@ function TimeSeriesMMM(
         cost_per_target_data,
     )
     _reject_hsgp_media_calibration(config, calibration)
+    _reject_unsupported_time_series_calibration(config, calibration)
     return TimeSeriesMMM(config, sampler_config, data, nothing, nothing, calibration)
 end
 
@@ -464,7 +465,23 @@ function _calibration_input_from_config(config::ModelConfig)
     isnothing(calibration) && return nothing
     calibration isa TimeSeriesCalibrationInput ||
         throw(ArgumentError("ModelConfig.extras[\"calibration\"] must be a TimeSeriesCalibrationInput"))
+    _validate_time_series_calibration_input(calibration)
     return calibration
+end
+
+function _reject_unsupported_time_series_calibration(
+        config::ModelConfig,
+        calibration::Union{Nothing, TimeSeriesCalibrationInput},
+    )
+    isnothing(calibration) && return nothing
+    isnothing(calibration.lift_test) && return nothing
+    _transform_type(config.saturation, :saturation) === :logistic ||
+        throw(
+        ArgumentError(
+            "lift-test calibration is only supported for `logistic` saturation in the current model path",
+        ),
+    )
+    return nothing
 end
 
 function _reject_panel_calibration_config(config::ModelConfig)

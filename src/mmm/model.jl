@@ -294,6 +294,11 @@ function _fit_time_series_mmm!(model::TimeSeriesMMM)
             spec.channel_scale,
             spec.target_scale,
         )
+        !isnothing(calibration) && _validate_mmm_calibration_spec(
+            calibration;
+            nchannels = runtime.nchannels,
+            saturation_type = runtime.saturation_type,
+        )
         lift_test_payload = isnothing(calibration) ? nothing : calibration.lift_test
         cost_per_target_payload = isnothing(calibration) ? nothing : calibration.cost_per_target
 

@@ -840,20 +840,14 @@ function LiftTestCalibrationRows(;
         delta_y::AbstractVector{<:Real},
         sigma::AbstractVector{<:Real},
     )
-    _matching_lengths(
-        "channel" => channel,
-        "x" => x,
-        "delta_x" => delta_x,
-        "delta_y" => delta_y,
-        "sigma" => sigma,
-    )
-    assert_monotonic_lift(delta_x, delta_y)
     channel_values = String[String(value) for value in channel]
     x_values = _finite_float_vector(x, "x")
     delta_x_values = _finite_float_vector(delta_x, "delta_x")
     delta_y_values = _finite_float_vector(delta_y, "delta_y")
     sigma_values = _positive_float_vector(sigma, "sigma")
-    return LiftTestCalibrationRows(channel_values, x_values, delta_x_values, delta_y_values, sigma_values)
+    rows = LiftTestCalibrationRows(channel_values, x_values, delta_x_values, delta_y_values, sigma_values)
+    _validate_lift_test_calibration_rows(rows)
+    return rows
 end
 
 """
@@ -886,11 +880,47 @@ function CostPerTargetCalibrationRows(;
         targets::AbstractVector{<:Real},
         sigma::AbstractVector{<:Real},
     )
-    _matching_lengths("gathered_cpt" => gathered_cpt, "targets" => targets, "sigma" => sigma)
     gathered_values = _finite_float_vector(gathered_cpt, "gathered_cpt")
     target_values = _finite_float_vector(targets, "targets")
     sigma_values = _positive_float_vector(sigma, "sigma")
-    return CostPerTargetCalibrationRows(gathered_values, target_values, sigma_values)
+    rows = CostPerTargetCalibrationRows(gathered_values, target_values, sigma_values)
+    _validate_cost_per_target_calibration_rows(rows)
+    return rows
+end
+
+function _validate_lift_test_calibration_rows(rows::LiftTestCalibrationRows)
+    n = length(rows.channel)
+    n > 0 || throw(ArgumentError("lift-test calibration rows must contain at least one row"))
+    _matching_lengths(
+        "channel" => rows.channel,
+        "x" => rows.x,
+        "delta_x" => rows.delta_x,
+        "delta_y" => rows.delta_y,
+        "sigma" => rows.sigma,
+    )
+    assert_monotonic_lift(rows.delta_x, rows.delta_y)
+    all(isfinite, rows.x) ||
+        throw(ArgumentError("lift-test calibration rows x must contain only finite values"))
+    all(isfinite, rows.delta_x) ||
+        throw(ArgumentError("lift-test calibration rows delta_x must contain only finite values"))
+    all(isfinite, rows.delta_y) ||
+        throw(ArgumentError("lift-test calibration rows delta_y must contain only finite values"))
+    all(value -> isfinite(value) && value > 0.0, rows.sigma) ||
+        throw(ArgumentError("lift-test calibration rows sigma must contain only positive finite values"))
+    return nothing
+end
+
+function _validate_cost_per_target_calibration_rows(rows::CostPerTargetCalibrationRows)
+    n = length(rows.gathered_cpt)
+    n > 0 || throw(ArgumentError("cost-per-target calibration rows must contain at least one row"))
+    _matching_lengths("gathered_cpt" => rows.gathered_cpt, "targets" => rows.targets, "sigma" => rows.sigma)
+    all(isfinite, rows.gathered_cpt) ||
+        throw(ArgumentError("cost-per-target calibration rows gathered_cpt must contain only finite values"))
+    all(isfinite, rows.targets) ||
+        throw(ArgumentError("cost-per-target calibration rows targets must contain only finite values"))
+    all(value -> isfinite(value) && value > 0.0, rows.sigma) ||
+        throw(ArgumentError("cost-per-target calibration rows sigma must contain only positive finite values"))
+    return nothing
 end
 
 """
@@ -948,25 +978,81 @@ function _validate_calibration_steps_and_rows(
         lift_test::Union{Nothing, LiftTestCalibrationRows},
         cost_per_target::Union{Nothing, CostPerTargetCalibrationRows},
     )
+    methods = _validate_calibration_step_configs(steps)
+    !isnothing(lift_test) && _validate_lift_test_calibration_rows(lift_test)
+    !isnothing(cost_per_target) && _validate_cost_per_target_calibration_rows(cost_per_target)
+    _validate_calibration_step_presence(methods, !isnothing(lift_test), !isnothing(cost_per_target))
+    return nothing
+end
+
+function _validate_calibration_step_configs(steps::Vector{CalibrationStepConfig})
+    foreach(_validate_calibration_step_config, steps)
     methods = [step.method for step in steps]
     length(unique(methods)) == length(methods) ||
         throw(ArgumentError("calibration steps must not repeat the same method"))
+    return methods
+end
+
+function _validate_calibration_step_presence(
+        methods::AbstractVector{<:AbstractString},
+        has_lift_test::Bool,
+        has_cost_per_target::Bool,
+    )
+    isempty(methods) && !has_lift_test && !has_cost_per_target &&
+        throw(ArgumentError("calibration must include at least one configured step"))
 
     has_lift_step = "add_lift_test_measurements" in methods
     has_cpt_step = "add_cost_per_target_calibration" in methods
 
-    has_lift_step == !isnothing(lift_test) ||
+    has_lift_step == has_lift_test ||
         throw(
         ArgumentError(
             "an `add_lift_test_measurements` calibration step requires `lift_test_data`, and `lift_test_data` requires an `add_lift_test_measurements` step",
         ),
     )
-    has_cpt_step == !isnothing(cost_per_target) ||
+    has_cpt_step == has_cost_per_target ||
         throw(
         ArgumentError(
             "an `add_cost_per_target_calibration` calibration step requires `cost_per_target_data`, and `cost_per_target_data` requires an `add_cost_per_target_calibration` step",
         ),
     )
+    return nothing
+end
+
+function _validate_time_series_calibration_input(input::TimeSeriesCalibrationInput)
+    _validate_calibration_steps_and_rows(input.steps, input.lift_test, input.cost_per_target)
+    return nothing
+end
+
+function _validate_mmm_calibration_spec(
+        spec::MMMCalibrationSpec;
+        nchannels::Union{Nothing, Integer} = nothing,
+        saturation_type::Union{Nothing, Symbol} = nothing,
+    )
+    methods = _validate_calibration_step_configs(spec.steps)
+    !isnothing(spec.lift_test) && _validate_lift_test_calibration_payload(spec.lift_test)
+    !isnothing(spec.cost_per_target) && _validate_cost_per_target_calibration_payload(spec.cost_per_target)
+    _validate_calibration_step_presence(methods, !isnothing(spec.lift_test), !isnothing(spec.cost_per_target))
+
+    if !isnothing(spec.lift_test)
+        if !isnothing(nchannels)
+            nchannels > 0 || throw(ArgumentError("calibration model channel count must be positive"))
+            all(index -> index <= nchannels, spec.lift_test.channel_index) ||
+                throw(
+                ArgumentError(
+                    "lift-test calibration payload channel_index is out of bounds for a model with $(nchannels) channels",
+                ),
+            )
+        end
+        if !isnothing(saturation_type)
+            saturation_type === :logistic ||
+                throw(
+                ArgumentError(
+                    "lift-test calibration is only supported for `logistic` saturation in the current model path",
+                ),
+            )
+        end
+    end
     return nothing
 end
 
@@ -983,7 +1069,9 @@ function _build_calibration_input(
     )
     isempty(steps) && isnothing(lift_test) && isnothing(cost_per_target) && return nothing
     _validate_calibration_steps_and_rows(steps, lift_test, cost_per_target)
-    return TimeSeriesCalibrationInput(steps, lift_test, cost_per_target)
+    input = TimeSeriesCalibrationInput(steps, lift_test, cost_per_target)
+    _validate_time_series_calibration_input(input)
+    return input
 end
 
 """
@@ -1002,6 +1090,7 @@ function _resolve_calibration_spec(
         channel_scale::AbstractVector{<:Real},
         target_scale::Real,
     )
+    _validate_time_series_calibration_input(calibration_input)
     channel_scale_values = Float64.(collect(channel_scale))
     target_scale_value = Float64(target_scale)
     channel_transform = matrix -> matrix ./ reshape(channel_scale_values, 1, :)
@@ -1033,5 +1122,7 @@ function _resolve_calibration_spec(
         )
     end
 
-    return MMMCalibrationSpec(calibration_input.steps, lift_test_payload, cost_per_target_payload)
+    spec = MMMCalibrationSpec(calibration_input.steps, lift_test_payload, cost_per_target_payload)
+    _validate_mmm_calibration_spec(spec; nchannels = length(config.channel_columns))
+    return spec
 end

@@ -381,6 +381,87 @@ end
     end
 end
 
+@testset "raw calibration row fail-fast validation" begin
+    lift_rows = LiftTestCalibrationRows(
+        channel = ["paid"],
+        x = [1.0],
+        delta_x = [0.5],
+        delta_y = [0.25],
+        sigma = [0.1],
+    )
+    cost_rows = CostPerTargetCalibrationRows(
+        gathered_cpt = [2.0],
+        targets = [1.5],
+        sigma = [0.2],
+    )
+    @test Epsilon._validate_lift_test_calibration_rows(lift_rows) === nothing
+    @test Epsilon._validate_cost_per_target_calibration_rows(cost_rows) === nothing
+
+    @test_throws ArgumentError LiftTestCalibrationRows(
+        channel = String[],
+        x = Float64[],
+        delta_x = Float64[],
+        delta_y = Float64[],
+        sigma = Float64[],
+    )
+    @test_throws ArgumentError CostPerTargetCalibrationRows(
+        gathered_cpt = Float64[],
+        targets = Float64[],
+        sigma = Float64[],
+    )
+    @test_throws NonMonotonicError Epsilon._validate_lift_test_calibration_rows(
+        LiftTestCalibrationRows(["paid"], [1.0], [0.5], [-0.25], [0.1]),
+    )
+    @test_throws ArgumentError Epsilon._validate_lift_test_calibration_rows(
+        LiftTestCalibrationRows(["paid"], [Inf], [0.5], [0.25], [0.1]),
+    )
+    @test_throws ArgumentError Epsilon._validate_lift_test_calibration_rows(
+        LiftTestCalibrationRows(["paid"], [1.0], [0.5], [0.25], [0.0]),
+    )
+    @test_throws ArgumentError Epsilon._validate_cost_per_target_calibration_rows(
+        CostPerTargetCalibrationRows([2.0], [Inf], [0.2]),
+    )
+    @test_throws ArgumentError Epsilon._validate_cost_per_target_calibration_rows(
+        CostPerTargetCalibrationRows([2.0], [1.5], [0.0]),
+    )
+end
+
+@testset "time-series calibration input fail-fast validation" begin
+    lift_step = CalibrationStepConfig(method = "add_lift_test_measurements")
+    lift_rows = LiftTestCalibrationRows(
+        channel = ["paid"],
+        x = [1.0],
+        delta_x = [0.5],
+        delta_y = [0.25],
+        sigma = [0.1],
+    )
+    input = TimeSeriesCalibrationInput([lift_step], lift_rows, nothing)
+    @test Epsilon._validate_time_series_calibration_input(input) === nothing
+
+    empty = TimeSeriesCalibrationInput(CalibrationStepConfig[], nothing, nothing)
+    @test_throws ArgumentError Epsilon._validate_time_series_calibration_input(empty)
+
+    repeated = TimeSeriesCalibrationInput([lift_step, lift_step], lift_rows, nothing)
+    @test_throws ArgumentError Epsilon._validate_time_series_calibration_input(repeated)
+
+    unsupported = TimeSeriesCalibrationInput(
+        [CalibrationStepConfig("unsupported_method", Dict{String, Any}())],
+        lift_rows,
+        nothing,
+    )
+    @test_throws ArgumentError Epsilon._validate_time_series_calibration_input(unsupported)
+
+    mismatched = TimeSeriesCalibrationInput(CalibrationStepConfig[], lift_rows, nothing)
+    @test_throws ArgumentError Epsilon._validate_time_series_calibration_input(mismatched)
+
+    bad_rows = TimeSeriesCalibrationInput(
+        [lift_step],
+        LiftTestCalibrationRows(["paid"], [1.0], [0.5], [0.25], [0.0]),
+        nothing,
+    )
+    @test_throws ArgumentError Epsilon._validate_time_series_calibration_input(bad_rows)
+end
+
 @testset "LiftTestCalibrationPayload construction and validation" begin
     channel_columns = ["organic", "paid"]
     scale = [2.0, 5.0]
@@ -559,6 +640,65 @@ end
             CostPerTargetCalibrationPayload(Float64[], Float64[], Float64[]),
         ),
     ) == "cost-per-target calibration payload must contain at least one row"
+end
+
+@testset "resolved calibration spec fail-fast validation" begin
+    lift_step = CalibrationStepConfig(method = "add_lift_test_measurements")
+    cost_step = CalibrationStepConfig(method = "add_cost_per_target_calibration")
+    lift_payload = LiftTestCalibrationPayload([1], [1.0], [0.5], [0.25], [0.1])
+    cost_payload = CostPerTargetCalibrationPayload([2.0], [1.5], [0.2])
+
+    lift_spec = MMMCalibrationSpec([lift_step], lift_payload, nothing)
+    @test Epsilon._validate_mmm_calibration_spec(
+        lift_spec;
+        nchannels = 1,
+        saturation_type = :logistic,
+    ) === nothing
+
+    combined_spec = MMMCalibrationSpec([lift_step, cost_step], lift_payload, cost_payload)
+    @test Epsilon._validate_mmm_calibration_spec(
+        combined_spec;
+        nchannels = 1,
+        saturation_type = :logistic,
+    ) === nothing
+
+    empty_spec = MMMCalibrationSpec(CalibrationStepConfig[], nothing, nothing)
+    @test_throws ArgumentError Epsilon._validate_mmm_calibration_spec(empty_spec)
+
+    bad_channel = MMMCalibrationSpec(
+        [lift_step],
+        LiftTestCalibrationPayload([2], [1.0], [0.5], [0.25], [0.1]),
+        nothing,
+    )
+    @test_throws ArgumentError Epsilon._validate_mmm_calibration_spec(
+        bad_channel;
+        nchannels = 1,
+        saturation_type = :logistic,
+    )
+
+    @test_throws ArgumentError Epsilon._validate_mmm_calibration_spec(
+        lift_spec;
+        nchannels = 1,
+        saturation_type = :tanh,
+    )
+
+    bad_payload = MMMCalibrationSpec(
+        [lift_step],
+        LiftTestCalibrationPayload([1], [1.0], [0.5], [0.25], [0.0]),
+        nothing,
+    )
+    @test_throws ArgumentError Epsilon._validate_mmm_calibration_spec(
+        bad_payload;
+        nchannels = 1,
+        saturation_type = :logistic,
+    )
+
+    mismatched = MMMCalibrationSpec([cost_step], lift_payload, nothing)
+    @test_throws ArgumentError Epsilon._validate_mmm_calibration_spec(
+        mismatched;
+        nchannels = 1,
+        saturation_type = :logistic,
+    )
 end
 
 @testset "calibration integration fixture payloads and log density" begin
