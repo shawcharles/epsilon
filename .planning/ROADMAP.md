@@ -15,12 +15,13 @@ free channel-by-panel optimization, dashboard/UI, AI advisor behaviour, and any
 future HSGP/TVP expansion require separate explicit plans rather than being the
 automatic next milestone.
 
-Current planning has subsequently landed through Phase 66. The recent sequence
+Current planning has subsequently landed through Phase 71. The recent sequence
 is mostly bounded hardening and governance work: optimiser API/tolerance
 cleanup, package-entry decomposition, calibration fail-fast validation,
-methodology wording, AD-safety guards, prior-domain guards, and export-list
-auditability. These phases do not change the parity ledger's controlling status
-rows or imply a broader release claim.
+methodology wording, AD-safety guards, prior-domain guards, export-list
+auditability, demo-surface reconciliation, and local drift cleanup. These phases
+do not change the parity ledger's controlling status rows or imply a broader
+release claim.
 
 ## Historical Repository Review Snapshot
 
@@ -894,7 +895,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 70
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 71
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -968,3 +969,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 70
 | 68. Plotting Extension Boundary | 1/1 | Completed | CairoMakie-backed plotting moved behind an optional package extension while preserving public plot names, backend-loaded plot artifacts, and headless non-plot pipeline outputs |
 | 69. Config-Driven Demo Smoke Harness | 1/1 | Completed | local `make smoke-demo-configs` harness landed for the Epsilon-native `data/demo` workflow: tiny headless time-series pipeline including validation plus panel config/data/model-spec checks |
 | 70. Demo Surface Reconciliation | 1/1 | Completed | `data/demo/*` is now documented as the canonical Epsilon-native config-driven demo surface, while `examples/demo/*` is framed as historical/reference comparison material with a time-series-only legacy helper |
+| 71. Local Drift And Resume-State Cleanup | 1/1 | Completed | July critical review tracked as historical evidence, narrow `graphify-out/` ignore rule committed, and planning resume state cleaned without runtime or parity changes |

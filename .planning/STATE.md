@@ -8,19 +8,29 @@ See: .planning/PROJECT.md
 Julia by using validated reference behavior where it is methodologically
 meaningful, proving comparison claims only where semantics genuinely match, and
 letting Epsilon stand as an independent Julia MMM library.
-**Current focus:** Phase 70 Demo Surface Reconciliation is complete.
-`data/demo/*` is now the canonical documented Epsilon-native config-driven demo
-workflow, and `examples/demo/*` is framed as historical/reference comparison
-material with a time-series-only legacy helper.
+**Current focus:** Phase 71 Local Drift And Resume-State Cleanup is complete.
+The July critical review is tracked as historical evidence, the narrow
+`graphify-out/` ignore rule is committed, and the repo has no intended local
+drift after push.
 
 ## Current Position
 
-**Current Phase:** 70
-**Current Phase Name:** Demo Surface Reconciliation
-**Total Phases:** 70
-**Current Plan:** `.planning/phases/70-demo-surface-reconciliation/PLAN.md`
-**Total Plans in Phase:** 1 planned docs/runner reconciliation slice
-**Status:** Phase 70 is complete. Public docs now route users first to
+**Current Phase:** 71
+**Current Phase Name:** Local Drift And Resume-State Cleanup
+**Total Phases:** 71
+**Current Plan:** `.planning/phases/71-local-drift-resume-state-cleanup/PLAN.md`
+**Total Plans in Phase:** 1 planned local hygiene slice
+**Status:** Phase 71 is complete. `.planning/CRITICAL-REVIEW-2026-07-19.md`
+is now tracked with a historical-snapshot note pointing future readers to
+`.planning/STATE.md` and `.planning/ROADMAP.md` for current status, and the
+narrow `graphify-out/` generated-output ignore rule is committed. No runtime
+source, tests, docs-site inputs, public API, parity ledger, changelog,
+dependencies, fixtures, examples, benchmark assets, release claims, model
+semantics, pipeline behaviour, or internal reference/provenance names changed.
+No Julia tests were run because the change is limited to planning/history
+metadata and `.gitignore`.
+
+Phase 70 is complete. Public docs now route users first to
 `data/demo/*` and `make smoke-demo-configs` for Epsilon-native config-driven
 demos, while `examples/demo/*` is described as historical/reference comparison
 material. The legacy `examples/demo/run_demo.jl` helper remains

@@ -25,3 +25,5 @@ AGENTS.md
 
 /scripts/*
 !/scripts/smoke_supported_paths.sh
+
+graphify-out/
