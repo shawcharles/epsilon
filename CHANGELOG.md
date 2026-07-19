@@ -13,6 +13,10 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Changed
 
+- Deduplicated pipeline artifact generation for validation, decomposition,
+  diagnostics, and response-curve stages: compatibility manifest keys are kept
+  where useful, but they now point at canonical physical files instead of
+  writing byte-identical duplicates.
 - Promoted `CairoMakie` into the root runtime dependency surface so the
   repo-local `runme.jl` command can load plotting support and write stage-local
   PNG artifacts by default. `using Epsilon` still does not eagerly load

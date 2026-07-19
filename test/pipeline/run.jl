@@ -282,7 +282,7 @@ end
         @test isfile(holdout_predictive_summary_path)
         @test isfile(holdout_predictive_report_path)
         @test isfile(holdout_residuals_acf_path)
-        @test isfile(holdout_summary_path)
+        @test !isfile(holdout_summary_path)
         @test isfile(holdout_plot_path)
         @test isfile(contribution_results_path)
         @test isfile(decomposition_results_path)
@@ -290,10 +290,10 @@ end
         @test isfile(decomposition_summary_path)
         @test isfile(baseline_contributions_path)
         @test isfile(channel_contributions_path)
-        @test isfile(mean_contributions_path)
+        @test !isfile(mean_contributions_path)
         @test isfile(contribution_plot_path)
-        @test isfile(weekly_media_plot_path)
-        @test isfile(waterfall_plot_path)
+        @test !isfile(weekly_media_plot_path)
+        @test !isfile(waterfall_plot_path)
         @test isfile(model_diagnostics_path)
         @test isfile(sampler_diagnostics_path)
         @test isfile(convergence_report_path)
@@ -301,7 +301,7 @@ end
         @test isfile(posterior_density_plot_path)
         @test isfile(chain_diagnostics_path)
         @test isfile(design_report_path)
-        @test isfile(design_summary_path)
+        @test !isfile(design_summary_path)
         @test isfile(diagnostics_report_path)
         @test isfile(diagnostics_summary_path)
         @test isfile(mcmc_report_path)
@@ -323,9 +323,9 @@ end
         @test isfile(response_curve_summary_path)
         @test isfile(saturation_curve_summary_path)
         @test isfile(adstock_curve_summary_path)
-        @test isfile(response_curve_bundle_plot_path)
-        @test isfile(saturation_curve_bundle_plot_path)
-        @test isfile(adstock_curve_bundle_plot_path)
+        @test !isfile(response_curve_bundle_plot_path)
+        @test !isfile(saturation_curve_bundle_plot_path)
+        @test !isfile(adstock_curve_bundle_plot_path)
         @test isfile(response_curve_plot_path)
         @test isfile(saturation_curve_plot_path)
         @test isfile(adstock_curve_plot_path)
@@ -462,6 +462,22 @@ end
             "60_response_curves/saturation_curve_tv.png"
         @test manifest["stages"]["curves"]["artifact_paths"]["adstock_curve_tv_plot"] ==
             "60_response_curves/adstock_curve_tv.png"
+        @test manifest["stages"]["validation"]["artifact_paths"]["holdout_summary"] ==
+            "35_holdout_validation/holdout_predictive_summary.csv"
+        @test manifest["stages"]["decomposition"]["artifact_paths"]["mean_contributions_over_time"] ==
+            "40_decomposition/contribution_summary.csv"
+        @test manifest["stages"]["decomposition"]["artifact_paths"]["weekly_media_contribution_plot"] ==
+            "40_decomposition/contributions_area.png"
+        @test manifest["stages"]["decomposition"]["artifact_paths"]["waterfall_plot"] ==
+            "40_decomposition/decomposition.png"
+        @test manifest["stages"]["diagnostics"]["artifact_paths"]["design_summary"] ==
+            "00_run_metadata/design_matrix_manifest.csv"
+        @test manifest["stages"]["curves"]["artifact_paths"]["forward_pass_contribution_curve_plot"] ==
+            "60_response_curves/response_curve_tv.png"
+        @test manifest["stages"]["curves"]["artifact_paths"]["saturation_curve_plot"] ==
+            "60_response_curves/saturation_curve_tv.png"
+        @test manifest["stages"]["curves"]["artifact_paths"]["adstock_curve_plot"] ==
+            "60_response_curves/adstock_curve_tv.png"
 
         @test read(config_copy_path, String) == read(original_path, String)
 
@@ -565,7 +581,7 @@ end
         @test length(validation_result.residuals) == 4
         @test validation_result.metrics["rmse"] >= 0.0
 
-        holdout_summary = CSV.File(holdout_summary_path)
+        holdout_summary = CSV.File(holdout_predictive_summary_path)
         @test "mae" in holdout_summary.metric
         @test "rmse" in holdout_summary.metric
         @test "bias" in holdout_summary.metric
@@ -896,7 +912,7 @@ end
         decomposition_summary = CSV.File(decomposition_summary_path)
         baseline_contributions = CSV.File(baseline_contributions_path)
         channel_contributions = CSV.File(channel_contributions_path)
-        mean_contributions = CSV.File(mean_contributions_path)
+        mean_contributions = CSV.File(contribution_summary_path)
         @test :panel_cell in propertynames(contribution_summary)
         @test :geo in propertynames(contribution_summary)
         @test :component in propertynames(contribution_summary)
@@ -906,8 +922,8 @@ end
         @test all(startswith.(String.(channel_contributions.component), "media:"))
         @test all(!startswith(String(component), "media:") for component in baseline_contributions.component)
         @test Set(decomposition_summary.component) == Set(decomposition.component_names)
-        @test isfile(waterfall_plot_path)
-        @test isfile(weekly_media_plot_path)
+        @test !isfile(waterfall_plot_path)
+        @test !isfile(weekly_media_plot_path)
 
         model_diagnostics = Epsilon._load_pipeline_serialized(
             model_diagnostics_path;
@@ -924,7 +940,8 @@ end
         @test design_report["n_time"] == fixture.ntime
         @test design_report["n_panels"] == fixture.npanels
         @test String.(design_report["panel_dims"]) == fixture.panel_dims
-        diagnostics_design_summary = CSV.File(design_summary_path)
+        @test !isfile(design_summary_path)
+        diagnostics_design_summary = CSV.File(design_matrix_manifest_path)
         @test "panel" in collect(diagnostics_design_summary.feature_group)
         @test Set(fixture.channel_columns) ⊆ Set(String.(diagnostics_design_summary.feature))
         @test isfile(diagnostics_report_path)
@@ -980,9 +997,9 @@ end
         @test length(saturation_summary.mean) == length(response_summary.mean)
         @test length(adstock_summary.mean) == length(response_summary.mean)
         @test Set(["roas", "mroas", "cpa", "mcpa"]) ⊆ Set(String.(metric_summary.metric))
-        @test isfile(response_curve_bundle_plot_path)
-        @test isfile(saturation_curve_bundle_plot_path)
-        @test isfile(adstock_curve_bundle_plot_path)
+        @test !isfile(response_curve_bundle_plot_path)
+        @test !isfile(saturation_curve_bundle_plot_path)
+        @test !isfile(adstock_curve_bundle_plot_path)
     end
 end
 
@@ -1157,6 +1174,7 @@ end
         decomposition_dir = joinpath(result.run_dir, "40_decomposition")
         diagnostics_dir = joinpath(result.run_dir, "50_diagnostics")
         curves_dir = joinpath(result.run_dir, "60_response_curves")
+        design_matrix_manifest_path = joinpath(metadata_dir, "design_matrix_manifest.csv")
         dataset_metadata = JSON3.read(read(joinpath(metadata_dir, "dataset_metadata.json"), String))
         @test dataset_metadata["date_min"] == first(fixture.dates)
         @test dataset_metadata["date_max"] == last(fixture.dates)
@@ -1310,7 +1328,7 @@ end
         decomposition_summary = CSV.File(decomposition_summary_path)
         baseline_contributions = CSV.File(baseline_contributions_path)
         channel_contributions = CSV.File(channel_contributions_path)
-        mean_contributions = CSV.File(mean_contributions_path)
+        mean_contributions = CSV.File(contribution_summary_path)
         @test :panel_cell in propertynames(contribution_summary)
         @test :panel in propertynames(contribution_summary)
         @test :geo in propertynames(contribution_summary)
@@ -1322,8 +1340,8 @@ end
         @test all(startswith.(String.(channel_contributions.component), "media:"))
         @test all(!startswith(String(component), "media:") for component in baseline_contributions.component)
         @test Set(decomposition_summary.component) == Set(decomposition.component_names)
-        @test isfile(waterfall_plot_path)
-        @test isfile(weekly_media_plot_path)
+        @test !isfile(waterfall_plot_path)
+        @test !isfile(weekly_media_plot_path)
 
         model_diagnostics = Epsilon._load_pipeline_serialized(
             model_diagnostics_path;
@@ -1340,7 +1358,8 @@ end
         @test design_report["n_time"] == fixture.ntime
         @test design_report["n_panels"] == fixture.npanels
         @test String.(design_report["panel_dims"]) == fixture.panel_dims
-        diagnostics_design_summary = CSV.File(design_summary_path)
+        @test !isfile(design_summary_path)
+        diagnostics_design_summary = CSV.File(design_matrix_manifest_path)
         @test Set(fixture.panel_dims) ⊆ Set(String.(diagnostics_design_summary.feature))
         @test Set(fixture.channel_columns) ⊆ Set(String.(diagnostics_design_summary.feature))
         @test isfile(diagnostics_report_path)
@@ -1398,9 +1417,9 @@ end
         @test length(saturation_summary.mean) == length(response_summary.mean)
         @test length(adstock_summary.mean) == length(response_summary.mean)
         @test Set(["roas", "mroas", "cpa", "mcpa"]) ⊆ Set(String.(metric_summary.metric))
-        @test isfile(response_curve_bundle_plot_path)
-        @test isfile(saturation_curve_bundle_plot_path)
-        @test isfile(adstock_curve_bundle_plot_path)
+        @test !isfile(response_curve_bundle_plot_path)
+        @test !isfile(saturation_curve_bundle_plot_path)
+        @test !isfile(adstock_curve_bundle_plot_path)
     end
 end
 

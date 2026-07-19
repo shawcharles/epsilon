@@ -6,6 +6,16 @@ using Statistics
 
 const _PIPELINE_SERIALIZED_ARTIFACT_SCHEMA_VERSION = 1
 
+function _alias_pipeline_artifact_path!(
+        artifact_paths::Dict{String, String},
+        alias_key::AbstractString,
+        canonical_key::AbstractString,
+    )
+    haskey(artifact_paths, canonical_key) || return artifact_paths
+    artifact_paths[String(alias_key)] = artifact_paths[String(canonical_key)]
+    return artifact_paths
+end
+
 function _run_all_pipeline_stages!(context::PipelineContext)
     if !isempty(context.model_config.dims)
         _run_pipeline_stage!(context, "metadata", _run_panel_metadata_stage!)
@@ -626,7 +636,6 @@ function _run_validation_stage!(context::PipelineContext)
     summary_path = joinpath(stage_dir, "holdout_predictive_summary.csv")
     report_path = joinpath(stage_dir, "holdout_predictive_report.json")
     residuals_acf_plot_path = joinpath(stage_dir, "holdout_residuals_acf.png")
-    holdout_summary_path = joinpath(stage_dir, "holdout_summary.csv")
     plot_path = joinpath(stage_dir, "holdout_timeseries.png")
 
     _write_pipeline_json(
@@ -658,7 +667,6 @@ function _run_validation_stage!(context::PipelineContext)
         artifact_kind = "HoldoutPosteriorPredictiveChain",
     )
     _write_pipeline_csv(summary_path, _metric_value_table(validation_result.metrics))
-    _write_pipeline_csv(holdout_summary_path, _metric_value_table(validation_result.metrics))
     _write_pipeline_json(
         report_path,
         _holdout_predictive_report_dict(validation_result, predictive_matrix),
@@ -672,7 +680,7 @@ function _run_validation_stage!(context::PipelineContext)
         "holdout_residuals" => _pipeline_relative_stage_artifact("validation", "holdout_residuals.csv"),
         "validation_metadata" => _pipeline_relative_stage_artifact("validation", "validation_metadata.json"),
         "validation_results" => _pipeline_relative_stage_artifact("validation", "validation_results.jls"),
-        "holdout_summary" => _pipeline_relative_stage_artifact("validation", "holdout_summary.csv"),
+        "holdout_summary" => _pipeline_relative_stage_artifact("validation", "holdout_predictive_summary.csv"),
     )
     warnings = isempty(state.message) ? String[] : [state.message]
     _save_pipeline_plot!(
@@ -720,9 +728,6 @@ function _run_decomposition_stage!(context::PipelineContext)
     decomposition_plot_path = joinpath(stage_dir, "decomposition.png")
     baseline_contributions_path = joinpath(stage_dir, "baseline_contributions.csv")
     channel_contributions_path = joinpath(stage_dir, "channel_contributions.csv")
-    mean_contributions_path = joinpath(stage_dir, "mean_contributions_over_time.csv")
-    waterfall_plot_path = joinpath(stage_dir, "waterfall_components_decomposition.png")
-    weekly_media_plot_path = joinpath(stage_dir, "weekly_media_contribution.png")
 
     _write_pipeline_serialized(
         contributions_path,
@@ -740,7 +745,6 @@ function _run_decomposition_stage!(context::PipelineContext)
     _write_pipeline_csv(decomposition_summary_path, decomposition_summary)
     _write_pipeline_csv(baseline_contributions_path, _component_partition_table(contribution_summary, false))
     _write_pipeline_csv(channel_contributions_path, _component_partition_table(contribution_summary, true))
-    _write_pipeline_csv(mean_contributions_path, contribution_summary)
     artifact_paths = Dict{String, String}(
         "baseline_contributions" => _pipeline_relative_stage_artifact("decomposition", "baseline_contributions.csv"),
         "channel_contributions" => _pipeline_relative_stage_artifact("decomposition", "channel_contributions.csv"),
@@ -748,7 +752,7 @@ function _run_decomposition_stage!(context::PipelineContext)
         "decomposition_results" => _pipeline_relative_stage_artifact("decomposition", "decomposition_results.jls"),
         "contribution_summary" => _pipeline_relative_stage_artifact("decomposition", "contribution_summary.csv"),
         "decomposition_summary" => _pipeline_relative_stage_artifact("decomposition", "decomposition_summary.csv"),
-        "mean_contributions_over_time" => _pipeline_relative_stage_artifact("decomposition", "mean_contributions_over_time.csv"),
+        "mean_contributions_over_time" => _pipeline_relative_stage_artifact("decomposition", "contribution_summary.csv"),
     )
     warnings = String[]
     _save_pipeline_plot!(
@@ -781,26 +785,8 @@ function _run_decomposition_stage!(context::PipelineContext)
         :decomposition,
         decomposition,
     )
-    _save_pipeline_plot!(
-        artifact_paths,
-        warnings,
-        "decomposition",
-        "waterfall_plot",
-        waterfall_plot_path,
-        _pipeline_relative_stage_artifact("decomposition", "waterfall_components_decomposition.png"),
-        :decomposition,
-        decomposition,
-    )
-    _save_pipeline_plot!(
-        artifact_paths,
-        warnings,
-        "decomposition",
-        "weekly_media_contribution_plot",
-        weekly_media_plot_path,
-        _pipeline_relative_stage_artifact("decomposition", "weekly_media_contribution.png"),
-        :contribution_area,
-        contributions,
-    )
+    _alias_pipeline_artifact_path!(artifact_paths, "waterfall_plot", "decomposition_plot")
+    _alias_pipeline_artifact_path!(artifact_paths, "weekly_media_contribution_plot", "contributions_area_plot")
 
     return (
         artifact_paths = artifact_paths,
@@ -822,9 +808,6 @@ function _run_panel_decomposition_stage!(context::PipelineContext)
     decomposition_plot_path = joinpath(stage_dir, "decomposition.png")
     baseline_contributions_path = joinpath(stage_dir, "baseline_contributions.csv")
     channel_contributions_path = joinpath(stage_dir, "channel_contributions.csv")
-    mean_contributions_path = joinpath(stage_dir, "mean_contributions_over_time.csv")
-    waterfall_plot_path = joinpath(stage_dir, "waterfall_components_decomposition.png")
-    weekly_media_plot_path = joinpath(stage_dir, "weekly_media_contribution.png")
 
     _write_pipeline_serialized(
         contributions_path,
@@ -842,7 +825,6 @@ function _run_panel_decomposition_stage!(context::PipelineContext)
     _write_pipeline_csv(decomposition_summary_path, decomposition_summary)
     _write_pipeline_csv(baseline_contributions_path, _component_partition_table(contribution_summary, false))
     _write_pipeline_csv(channel_contributions_path, _component_partition_table(contribution_summary, true))
-    _write_pipeline_csv(mean_contributions_path, contribution_summary)
     artifact_paths = Dict{String, String}(
         "baseline_contributions" => _pipeline_relative_stage_artifact("decomposition", "baseline_contributions.csv"),
         "channel_contributions" => _pipeline_relative_stage_artifact("decomposition", "channel_contributions.csv"),
@@ -850,7 +832,7 @@ function _run_panel_decomposition_stage!(context::PipelineContext)
         "decomposition_results" => _pipeline_relative_stage_artifact("decomposition", "decomposition_results.jls"),
         "contribution_summary" => _pipeline_relative_stage_artifact("decomposition", "contribution_summary.csv"),
         "decomposition_summary" => _pipeline_relative_stage_artifact("decomposition", "decomposition_summary.csv"),
-        "mean_contributions_over_time" => _pipeline_relative_stage_artifact("decomposition", "mean_contributions_over_time.csv"),
+        "mean_contributions_over_time" => _pipeline_relative_stage_artifact("decomposition", "contribution_summary.csv"),
     )
     warnings = String[]
     _save_pipeline_plot!(
@@ -883,26 +865,8 @@ function _run_panel_decomposition_stage!(context::PipelineContext)
         :panel_decomposition,
         decomposition,
     )
-    _save_pipeline_plot!(
-        artifact_paths,
-        warnings,
-        "decomposition",
-        "waterfall_plot",
-        waterfall_plot_path,
-        _pipeline_relative_stage_artifact("decomposition", "waterfall_components_decomposition.png"),
-        :panel_decomposition,
-        decomposition,
-    )
-    _save_pipeline_plot!(
-        artifact_paths,
-        warnings,
-        "decomposition",
-        "weekly_media_contribution_plot",
-        weekly_media_plot_path,
-        _pipeline_relative_stage_artifact("decomposition", "weekly_media_contribution.png"),
-        :panel_contribution_area,
-        contributions,
-    )
+    _alias_pipeline_artifact_path!(artifact_paths, "waterfall_plot", "decomposition_plot")
+    _alias_pipeline_artifact_path!(artifact_paths, "weekly_media_contribution_plot", "contributions_area_plot")
 
     return (
         artifact_paths = artifact_paths,
@@ -932,7 +896,6 @@ function _run_diagnostics_stage!(context::PipelineContext)
     posterior_density_path = joinpath(stage_dir, "posterior_density.png")
     chain_diagnostics_path = joinpath(stage_dir, "chain_diagnostics.txt")
     design_report_path = joinpath(stage_dir, "design_report.json")
-    design_summary_path = joinpath(stage_dir, "design_summary.csv")
     diagnostics_report_path = joinpath(stage_dir, "diagnostics_report.csv")
     diagnostics_summary_path = joinpath(stage_dir, "diagnostics_summary.txt")
     mcmc_report_path = joinpath(stage_dir, "mcmc_report.json")
@@ -974,7 +937,6 @@ function _run_diagnostics_stage!(context::PipelineContext)
         _chain_diagnostics_text(diagnostics, sampler, report),
     )
     _write_pipeline_json(design_report_path, _design_report_dict(model))
-    _write_pipeline_csv(design_summary_path, _design_summary_table(model))
     _write_pipeline_csv(diagnostics_report_path, _diagnostics_report_table(diagnostics))
     _write_pipeline_text(
         diagnostics_summary_path,
@@ -990,7 +952,7 @@ function _run_diagnostics_stage!(context::PipelineContext)
     artifact_paths = Dict{String, String}(
         "chain_diagnostics" => _pipeline_relative_stage_artifact("diagnostics", "chain_diagnostics.txt"),
         "design_report" => _pipeline_relative_stage_artifact("diagnostics", "design_report.json"),
-        "design_summary" => _pipeline_relative_stage_artifact("diagnostics", "design_summary.csv"),
+        "design_summary" => _pipeline_relative_stage_artifact("metadata", "design_matrix_manifest.csv"),
         "diagnostics_report" => _pipeline_relative_stage_artifact("diagnostics", "diagnostics_report.csv"),
         "diagnostics_summary" => _pipeline_relative_stage_artifact("diagnostics", "diagnostics_summary.txt"),
         "model_diagnostics" => _pipeline_relative_stage_artifact("diagnostics", "model_diagnostics.jls"),
@@ -1085,7 +1047,6 @@ function _run_panel_diagnostics_stage!(context::PipelineContext)
     posterior_density_path = joinpath(stage_dir, "posterior_density.png")
     chain_diagnostics_path = joinpath(stage_dir, "chain_diagnostics.txt")
     design_report_path = joinpath(stage_dir, "design_report.json")
-    design_summary_path = joinpath(stage_dir, "design_summary.csv")
     diagnostics_report_path = joinpath(stage_dir, "diagnostics_report.csv")
     diagnostics_summary_path = joinpath(stage_dir, "diagnostics_summary.txt")
     mcmc_report_path = joinpath(stage_dir, "mcmc_report.json")
@@ -1127,7 +1088,6 @@ function _run_panel_diagnostics_stage!(context::PipelineContext)
         _chain_diagnostics_text(diagnostics, sampler, report),
     )
     _write_pipeline_json(design_report_path, _design_report_dict(model))
-    _write_pipeline_csv(design_summary_path, _design_summary_table(model))
     _write_pipeline_csv(diagnostics_report_path, _diagnostics_report_table(diagnostics))
     _write_pipeline_text(
         diagnostics_summary_path,
@@ -1143,7 +1103,7 @@ function _run_panel_diagnostics_stage!(context::PipelineContext)
     artifact_paths = Dict{String, String}(
         "chain_diagnostics" => _pipeline_relative_stage_artifact("diagnostics", "chain_diagnostics.txt"),
         "design_report" => _pipeline_relative_stage_artifact("diagnostics", "design_report.json"),
-        "design_summary" => _pipeline_relative_stage_artifact("diagnostics", "design_summary.csv"),
+        "design_summary" => _pipeline_relative_stage_artifact("metadata", "design_matrix_manifest.csv"),
         "diagnostics_report" => _pipeline_relative_stage_artifact("diagnostics", "diagnostics_report.csv"),
         "diagnostics_summary" => _pipeline_relative_stage_artifact("diagnostics", "diagnostics_summary.txt"),
         "model_diagnostics" => _pipeline_relative_stage_artifact("diagnostics", "model_diagnostics.jls"),
@@ -1282,9 +1242,6 @@ function _run_curves_stage!(context::PipelineContext)
     response_summary_path = joinpath(stage_dir, "forward_pass_contribution_curve_summary.csv")
     saturation_summary_path = joinpath(stage_dir, "saturation_curve_summary.csv")
     adstock_summary_path = joinpath(stage_dir, "adstock_curve_summary.csv")
-    response_plot_path = joinpath(stage_dir, "forward_pass_contribution_curve.png")
-    saturation_plot_path = joinpath(stage_dir, "saturation_curve.png")
-    adstock_plot_path = joinpath(stage_dir, "adstock_curve.png")
 
     _write_pipeline_serialized(
         metrics_path,
@@ -1312,35 +1269,20 @@ function _run_curves_stage!(context::PipelineContext)
     _write_pipeline_csv(saturation_summary_path, _curve_bundle_summary_table(saturation_results, "saturation"))
     _write_pipeline_csv(adstock_summary_path, _curve_bundle_summary_table(adstock_results, "adstock"))
     first_channel = first(grouped.spec.channel_columns)
-    _save_pipeline_plot!(
+    _alias_pipeline_artifact_path!(
         artifact_paths,
-        warnings,
-        "curves",
         "forward_pass_contribution_curve_plot",
-        response_plot_path,
-        _pipeline_relative_stage_artifact("curves", "forward_pass_contribution_curve.png"),
-        :response_curve,
-        response_results[first_channel],
+        "response_curve_$(first_channel)_plot",
     )
-    _save_pipeline_plot!(
+    _alias_pipeline_artifact_path!(
         artifact_paths,
-        warnings,
-        "curves",
         "saturation_curve_plot",
-        saturation_plot_path,
-        _pipeline_relative_stage_artifact("curves", "saturation_curve.png"),
-        :saturation_curve,
-        saturation_results[first_channel],
+        "saturation_curve_$(first_channel)_plot",
     )
-    _save_pipeline_plot!(
+    _alias_pipeline_artifact_path!(
         artifact_paths,
-        warnings,
-        "curves",
         "adstock_curve_plot",
-        adstock_plot_path,
-        _pipeline_relative_stage_artifact("curves", "adstock_curve.png"),
-        :adstock_curve,
-        adstock_results[first_channel],
+        "adstock_curve_$(first_channel)_plot",
     )
 
     artifact_paths["adstock_curve"] =
@@ -1471,9 +1413,6 @@ function _run_panel_curves_stage!(context::PipelineContext)
     response_summary_path = joinpath(stage_dir, "forward_pass_contribution_curve_summary.csv")
     saturation_summary_path = joinpath(stage_dir, "saturation_curve_summary.csv")
     adstock_summary_path = joinpath(stage_dir, "adstock_curve_summary.csv")
-    response_plot_path = joinpath(stage_dir, "forward_pass_contribution_curve.png")
-    saturation_plot_path = joinpath(stage_dir, "saturation_curve.png")
-    adstock_plot_path = joinpath(stage_dir, "adstock_curve.png")
 
     _write_pipeline_serialized(
         metrics_path,
@@ -1501,38 +1440,20 @@ function _run_panel_curves_stage!(context::PipelineContext)
     _write_pipeline_csv(saturation_summary_path, _curve_bundle_summary_table(saturation_results, "saturation"))
     _write_pipeline_csv(adstock_summary_path, _curve_bundle_summary_table(adstock_results, "adstock"))
     first_channel = first(grouped.spec.channel_columns)
-    _save_pipeline_plot!(
+    _alias_pipeline_artifact_path!(
         artifact_paths,
-        warnings,
-        "curves",
         "forward_pass_contribution_curve_plot",
-        response_plot_path,
-        _pipeline_relative_stage_artifact("curves", "forward_pass_contribution_curve.png"),
-        :panel_curve,
-        response_results[first_channel],
-        "Panel response curve",
+        "response_curve_$(first_channel)_plot",
     )
-    _save_pipeline_plot!(
+    _alias_pipeline_artifact_path!(
         artifact_paths,
-        warnings,
-        "curves",
         "saturation_curve_plot",
-        saturation_plot_path,
-        _pipeline_relative_stage_artifact("curves", "saturation_curve.png"),
-        :panel_curve,
-        saturation_results[first_channel],
-        "Panel saturation curve",
+        "saturation_curve_$(first_channel)_plot",
     )
-    _save_pipeline_plot!(
+    _alias_pipeline_artifact_path!(
         artifact_paths,
-        warnings,
-        "curves",
         "adstock_curve_plot",
-        adstock_plot_path,
-        _pipeline_relative_stage_artifact("curves", "adstock_curve.png"),
-        :panel_curve,
-        adstock_results[first_channel],
-        "Panel adstock curve",
+        "adstock_curve_$(first_channel)_plot",
     )
 
     artifact_paths["adstock_curve"] =
