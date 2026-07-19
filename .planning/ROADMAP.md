@@ -15,6 +15,13 @@ free channel-by-panel optimization, dashboard/UI, AI advisor behaviour, and any
 future HSGP/TVP expansion require separate explicit plans rather than being the
 automatic next milestone.
 
+Current planning has subsequently landed through Phase 65. The recent sequence
+is mostly bounded hardening and governance work: optimiser API/tolerance
+cleanup, package-entry decomposition, calibration fail-fast validation,
+methodology wording, AD-safety guards, prior-domain guards, and export-list
+auditability. These phases do not change the parity ledger's controlling status
+rows or imply a broader release claim.
+
 ## Historical Repository Review Snapshot
 
 Historical repository state on 2026-05-18, retained to explain the parity reset
@@ -222,6 +229,77 @@ that later closed in Phase 14:
   leap-boundary, and off-cadence cases. This is foundation work only: HSGP/TVP
   configuration, basis construction, priors, Turing wiring, prediction, and
   replay remain unimplemented.
+- Phase 32 is closed: private HSGP basis/PSD geometry and recommendation
+  helpers are fixture-backed without graph construction, config acceptance, or
+  model support.
+- Phase 33 is closed: private HSGP latent projection, stable softplus, and
+  mean-one positive multiplier helpers are fixture-backed without Turing
+  priors, public config, or model support.
+- Phase 34 is closed: private fitted-state replay for the HSGP positive
+  multiplier preserves training geometry and the softplus denominator without
+  widening support.
+- Phase 35 is closed: the TimeSeriesMMM-only shared HSGP media-multiplier
+  methodology contract was frozen before Turing integration.
+- Phase 36 is closed: the reviewed TimeSeriesMMM-only shared media multiplier
+  implementation landed with strict wider-surface rejection while the combined
+  HSGP/TVP ledger row remained `missing`.
+- Phase 37 is closed: HSGP contribution/decomposition replay is bounded to the
+  exact retained fitted TimeSeriesMMM training grid.
+- Phase 38 is closed: the pre-release VI surface was permanently retired, and
+  MCMC/Turing is the only supported inference contract.
+- Phase 39 is closed: local toy/CSV supported-path smoke certification landed
+  without benchmarks or release claims.
+- Phase 40 is closed: stale planning docs were reconciled after Phase 39.
+- Phase 41 is closed: compact supported-path output sidecars were audited and
+  lightly hardened.
+- Phase 42 is closed: trusted-local fitted-model and grouped-result roundtrips
+  were proven for the toy and CSV supported paths.
+- Phase 43 is closed: the supported-path user workflow runbook landed.
+- Phase 44 is closed: current-facing docs were reconciled to the Phase 43
+  supported-path state.
+- Phase 45 is closed: focused docs-claim guards now protect current-status,
+  VI-retirement, supported-workflow, and trusted-local wording.
+- Phase 46 is closed: Abacus reference surfaces were inventoried and
+  classified before public identity cleanup.
+- Phase 47 is closed: public-facing identity language now presents Epsilon as
+  an independent Julia MMM library while preserving validation provenance.
+- Phase 48 is closed: remaining internal provenance renames were assessed and
+  mostly parked behind alias-first or post-v1 policies.
+- Phase 49 is closed: the suspected even-kernel overlap-convolution bug was
+  disproved against the reference and locked with focused tests.
+- Phase 50 is closed: fitted trend and automatic-holiday prediction state is
+  regression-locked for future prediction.
+- Phase 51 is closed: public model-config parsing now rejects unsupported
+  top-level keys while preserving narrow compatibility extras.
+- Phase 52 is closed: spend-domain saturation/media inputs reject negative
+  values while signed low-level tanh remains supported.
+- Phase 53 is closed: budget optimisation moved off the legacy JuMP nonlinear
+  registration/objective API.
+- Phase 54 is closed: optimiser projection residual handling now has tighter
+  tolerance checks and fail-closed behaviour.
+- Phase 55 is closed: the API/export hub decomposition assessment recommended
+  export extraction, include-order documentation, and forwarder ownership
+  cleanup rather than a broad namespace rewrite.
+- Phase 56 is closed: public export declarations were extracted from
+  `src/Epsilon.jl` into `src/exports.jl` with the loaded export set preserved.
+- Phase 57 is closed: runtime includes were moved to `src/includes.jl` with
+  documented layer ordering and unchanged load order.
+- Phase 58 is closed: panel-coordinate forwarders moved to their owning model
+  leaf without changing public exports.
+- Phase 59 is closed: calibration likelihood validation now fails at the
+  payload/config boundary rather than being swallowed inside the Turing model.
+- Phase 60 is closed: methodology docstrings now clarify binomial adstock and
+  budget/spend units.
+- Phase 61 is closed: model-data validation keeps AD scalar compatibility while
+  rejecting invalid ordinary inputs.
+- Phase 62 is closed: the overlap-convolution contract is documented and locked
+  for odd/even impulse cases.
+- Phase 63 is closed: prior constructors reject non-finite or non-positive
+  positive-parameter values.
+- Phase 64 is closed: the flat-namespace assessment parks internal submodules
+  until after the first usable release path is stable.
+- Phase 65 is closed: `src/exports.jl` is grouped by API-domain comments while
+  preserving the exact export set.
 
 ## Phases
 
@@ -418,6 +496,37 @@ that later closed in Phase 14:
       saturation/media-domain split: spend-domain saturation primitives reject
       negative `x`, signed tanh remains a low-level reference-backed primitive,
       and MMM media/curve surfaces keep nonnegative spend guardrails.
+- [x] **Phase 53: JuMP Nonlinear Operator Migration** - Move budget
+      optimisation off the legacy JuMP nonlinear registration/objective API
+      while preserving the bounded optimisation contract.
+- [x] **Phase 54: Optimization Projection Tolerance Guard** - Harden
+      optimisation projection tolerance and residual handling so infeasible
+      allocations fail closed.
+- [x] **Phase 55: API Export Hub Decomposition Assessment** - Assess entry-point
+      decomposition and choose small structural cleanup over internal submodule
+      churn.
+- [x] **Phase 56: Export Declarations Extraction** - Move public export
+      declarations into `src/exports.jl` while preserving the loaded export set.
+- [x] **Phase 57: Include Order Documentation** - Move runtime includes into
+      `src/includes.jl` with documented layer ordering and unchanged load order.
+- [x] **Phase 58: Panel Coordinate Forwarder Ownership** - Move panel-coordinate
+      forwarders into their model-layer owner without changing public exports.
+- [x] **Phase 59: Calibration Likelihood Fail-Fast Boundary** - Validate
+      calibration likelihood payloads at the public boundary instead of relying
+      on model-internal broad exception swallowing.
+- [x] **Phase 60: Methodology Docstring Units Clarity** - Clarify binomial
+      adstock provenance and budget/spend units in methodology-facing
+      docstrings.
+- [x] **Phase 61: AD-Safety Validation Audit** - Preserve AD scalar validation
+      compatibility while keeping ordinary invalid inputs fail-closed.
+- [x] **Phase 62: Convolution Overlap Contract Clarity** - Document and lock the
+      retained overlap-convolution contract for odd and even impulse cases.
+- [x] **Phase 63: Prior Positive-Finiteness Guards** - Require finite positive
+      parameters for bounded prior/distribution constructors.
+- [x] **Phase 64: Flat Namespace Risk Assessment** - Park internal submodules
+      until after the first usable release path is stable.
+- [x] **Phase 65: Export List Domain Grouping** - Group `src/exports.jl` by
+      API-domain comments while preserving the exact public export set.
 
 ## Phase Details
 
@@ -775,7 +884,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 52
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 65
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -831,3 +940,16 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 52
 | 50. Trend And Holiday Prediction-State Lock | 1/1 | Completed | fitted `TimeSeriesMMM` future prediction now has focused integration evidence that trend origin/scale and automatic-holiday default period state are read from the fitted artifact spec rather than recomputed from holdout data or mutable live config |
 | 51. Public Config Top-Level Typo Guard | 1/1 | Completed | direct public model config parsing now rejects unsupported top-level keys with deterministic errors, preserves only narrow `effects`/`validation` allowances, and pipeline config strips already allowed runner-only blocks before model parsing |
 | 52. Saturation Media Domain Contract | 1/1 | Completed | spend-domain centred-logistic/logistic and Michaelis-Menten saturation reject negative `x`, signed tanh remains reference-backed, and MMM media/curve boundaries keep nonnegative spend checks |
+| 53. JuMP Nonlinear Operator Migration | 1/1 | Completed | optimisation moved from legacy JuMP nonlinear registration/objective APIs to the newer nonlinear operator path |
+| 54. Optimization Projection Tolerance Guard | 1/1 | Completed | optimiser projection tolerance and residual handling now fail closed instead of silently returning infeasible allocations |
+| 55. API Export Hub Decomposition Assessment | 1/1 | Completed | package-entry decomposition was assessed; small structural cleanup was selected over internal submodule churn |
+| 56. Export Declarations Extraction | 1/1 | Completed | public export declarations moved from `src/Epsilon.jl` to `src/exports.jl` with the loaded export set preserved |
+| 57. Include Order Documentation | 1/1 | Completed | runtime includes moved to `src/includes.jl` with documented layer ordering and unchanged load order |
+| 58. Panel Coordinate Forwarder Ownership | 1/1 | Completed | panel-coordinate forwarders moved to the model layer without changing public exports |
+| 59. Calibration Likelihood Fail-Fast Boundary | 1/1 | Completed | calibration payload validation now fails at the public/config boundary before Turing model execution |
+| 60. Methodology Docstring Units Clarity | 1/1 | Completed | methodology-facing docstrings clarify binomial adstock provenance and budget/spend units |
+| 61. AD-Safety Validation Audit | 1/1 | Completed | model-data validation preserves AD scalar compatibility while keeping ordinary invalid input checks fail-closed |
+| 62. Convolution Overlap Contract Clarity | 1/1 | Completed | retained overlap-convolution semantics are documented and locked for odd/even impulse cases |
+| 63. Prior Positive-Finiteness Guards | 1/1 | Completed | bounded prior/distribution constructors now reject non-finite or non-positive positive-parameter values |
+| 64. Flat Namespace Risk Assessment | 1/1 | Completed | planning-only assessment parks internal submodules until after the first usable release path is stable |
+| 65. Export List Domain Grouping | 1/1 | Completed | `src/exports.jl` is grouped by API-domain comments while preserving the exact public export set |

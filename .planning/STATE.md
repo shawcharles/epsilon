@@ -8,20 +8,82 @@ See: .planning/PROJECT.md
 Julia by using validated reference behavior where it is methodologically
 meaningful, proving comparison claims only where semantics genuinely match, and
 letting Epsilon stand as an independent Julia MMM library.
-**Current focus:** Phase 52 Saturation Media Domain Contract is complete.
-Spend-domain saturation primitives now reject negative `x` where they model
-media spend/exposure, `tanh_saturation` remains a signed low-level primitive
-because committed fixtures require it, and MMM media/curve surfaces keep
-nonnegative spend guardrails.
+**Current focus:** Phase 66 Planning Truth Reconciliation is complete. The
+project-control docs now reflect the actual landed sequence through Phase 65,
+and the next recommended slice should return to release-path usability or
+evidence rather than internal submodules or broad parity reopening.
 
 ## Current Position
 
-**Current Phase:** 52
-**Current Phase Name:** Saturation Media Domain Contract
-**Total Phases:** 52
-**Current Plan:** `.planning/phases/52-saturation-media-domain-contract/PLAN.md`
-**Total Plans in Phase:** 1 narrow saturation/media-domain contract-lock slice
-**Status:** Phase 52 is complete. `centered_logistic_saturation` and its
+**Current Phase:** 66
+**Current Phase Name:** Planning Truth Reconciliation
+**Total Phases:** 66
+**Current Plan:** `.planning/phases/66-planning-truth-reconciliation/PLAN.md`
+**Total Plans in Phase:** 1 planning-state reconciliation slice
+**Status:** Phase 66 is complete. `.planning/STATE.md` and
+`.planning/ROADMAP.md` now record the landed Phase 53 through Phase 65 sequence
+instead of presenting Phase 52 as current. This is internal planning-state
+hygiene only: no runtime source, tests, docs-site inputs, public API, parity
+ledger, changelog, dependencies, fixtures, examples, benchmark assets, or
+release claims changed. No Julia tests were run because the change is limited
+to planning documents.
+
+Phase 65 is complete. `src/exports.jl` now groups the flat public export list
+by API-domain comments while preserving one `export SymbolName` declaration per
+line and keeping the exact loaded export set unchanged at 199 symbols.
+`src/Epsilon.jl` and `src/includes.jl` remained untouched, and the scoped
+`test/api_exports.jl` guard passed.
+
+Phase 64 is complete. The planning-only namespace assessment concluded that
+Epsilon should keep the current single-module architecture for the first usable
+release path. The remaining flat-namespace risk is bounded, and an internal
+submodule split would create more pre-release churn than value.
+
+Phase 63 is complete. Positive-parameter prior/distribution constructors now
+fail closed for non-finite or non-positive values on the bounded prior surfaces
+identified in the review, preserving AD-compatible scalar handling and avoiding
+runtime-domain surprises.
+
+Phase 62 is complete. The `batched_convolution(..., mode = Overlap)` contract
+now documents the retained centred-overlap semantics explicitly and adds
+focused odd/even impulse evidence without changing convolution numerics.
+
+Phase 61 is complete. Model-data validation was hardened so nonnegative and
+finite checks preserve AD scalar compatibility while still rejecting invalid
+ordinary inputs at the data boundary.
+
+Phase 60 is complete. Methodology-facing docstrings now clarify binomial
+adstock provenance and optimisation/scenario budget units, reducing
+interpretation risk without changing behaviour.
+
+Phase 59 is complete. Calibration likelihood validation now fails at the public
+payload/config boundary instead of relying on broad `ArgumentError` swallowing
+inside the Turing model path.
+
+Phase 58 is complete. Panel-coordinate accessors now live in
+`src/model/coordinate_forwarders.jl`, removing duplicated one-line forwarding
+pressure from the package entry point without changing the public export set.
+
+Phase 57 is complete. Runtime include declarations are separated into
+`src/includes.jl` with layer-oriented comments that document the manual load
+order while preserving the existing order exactly.
+
+Phase 56 is complete. Public export declarations were extracted from
+`src/Epsilon.jl` into `src/exports.jl` with the loaded export set preserved.
+
+Phase 55 is complete. The API/export hub decomposition assessment recommended
+small structural moves, not a broad namespace rewrite: extract exports,
+document include order, and move panel-coordinate forwarder ownership.
+
+Phase 54 is complete. Optimisation projection logic now has tighter tolerance
+guards and fail-closed residual handling, reducing the risk of silently
+returning infeasible allocations.
+
+Phase 53 is complete. Budget optimisation migrated from the legacy JuMP
+nonlinear registration/objective API to the newer nonlinear operator path while
+preserving the existing bounded optimisation contract.
+
+Phase 52 is complete. `centered_logistic_saturation` and its
 compatibility alias `logistic_saturation` now reject negative `x`, and
 `michaelis_menten` now rejects negative `x`; `tanh_saturation` remains signed
 because committed reference fixtures include negative inputs. `MMMData` and
