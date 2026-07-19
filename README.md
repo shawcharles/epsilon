@@ -16,7 +16,7 @@ decomposition, response curves, diagnostics, validation, and optional budget
 optimisation artifacts.
 
 Epsilon is pre-release software. The supported surface is intentionally
-bounded, but the maintained paths are usable for toy and demo-scale MMM runs.
+bounded, but the maintained paths are usable for demo-scale MMM runs.
 
 ## What It Supports
 
@@ -68,13 +68,13 @@ The runner prints a terminal header, the resolved run context, stage progress
 bars, plotting status, and a final summary. Outputs are written under
 `results/<run_name>_<timestamp>/`.
 
-For a fast maintained smoke check:
+For a fast maintained smoke check over the bundled demo configs:
 
 ```bash
 make smoke
 ```
 
-For the bundled demo configs:
+The explicit target is equivalent:
 
 ```bash
 make smoke-demo-configs
@@ -155,7 +155,7 @@ println(result.run_dir)
 
 Lower-level model construction, fitting, post-model analysis, and plotting APIs
 are available for Julia users who want to work directly with typed model
-objects. See `docs/src/api.md` and the examples under `examples/`.
+objects. See `docs/src/api.md` and the demo bundles under `data/demo/`.
 
 ## Result Layout
 
@@ -192,17 +192,16 @@ using Epsilon, CairoMakie
 
 Core non-plot artifacts remain available without plotting.
 
-## Examples
+## Demo Bundles
 
-- `examples/toy_mmm/` fits a tiny synthetic time-series MMM.
-- `examples/csv_mmm/` demonstrates a fixed-schema CSV time-series workflow.
-- `data/demo/` contains the canonical config-driven demo bundles.
+`data/demo/` contains the canonical config-driven demo bundles. Each bundle has
+its own `README.md`, `config.yml`, `dataset.csv`, and `holidays.csv`.
 
-Useful commands:
+Useful commands from the repository root:
 
 ```bash
-julia --project=. examples/toy_mmm/run_toy_mmm.jl --draws 8 --tune 8 --output-dir "$(mktemp -d)"
-julia --project=. examples/csv_mmm/run_csv_mmm.jl --draws 8 --tune 8 --output-dir "$(mktemp -d)"
+julia --project=. runme.jl data/demo/timeseries/config.yml --quick
+julia --project=. runme.jl
 ```
 
 ## Local Checks

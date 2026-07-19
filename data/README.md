@@ -10,10 +10,14 @@ bundles:
 Each bundle is self-contained:
 
 ```text
+README.md
 config.yml
 dataset.csv
 holidays.csv
 ```
+
+See `demo/README.md` for the demo index and the bundle-local README files for
+model-specific notes.
 
 Run the canonical time-series bundle through the Epsilon runner from the
 repository root:

@@ -37,8 +37,10 @@ const API_EXPORTS_PUBLIC_IDENTITY_GUARD_PATHS = Dict(
     "calibration docs" => joinpath(@__DIR__, "..", "docs", "src", "calibration.md"),
     "benchmark docs" => joinpath(@__DIR__, "..", "docs", "src", "benchmarks.md"),
     "supported paths" => joinpath(@__DIR__, "..", "docs", "src", "supported_paths.md"),
-    "toy example" => joinpath(@__DIR__, "..", "examples", "toy_mmm", "README.md"),
-    "csv example" => joinpath(@__DIR__, "..", "examples", "csv_mmm", "README.md"),
+    "demo index" => joinpath(@__DIR__, "..", "data", "demo", "README.md"),
+    "timeseries demo" => joinpath(@__DIR__, "..", "data", "demo", "timeseries", "README.md"),
+    "geo panel demo" => joinpath(@__DIR__, "..", "data", "demo", "geo_panel", "README.md"),
+    "geo brand panel demo" => joinpath(@__DIR__, "..", "data", "demo", "geo_brand_panel", "README.md"),
 )
 const API_EXPORTS_INVENTORY_BEGIN = "<!-- BEGIN PUBLIC API INVENTORY -->"
 const API_EXPORTS_INVENTORY_END = "<!-- END PUBLIC API INVENTORY -->"
@@ -969,9 +971,9 @@ end
     @test occursin("Epsilon supports MCMC/Turing fitting only", docs_claims["release gate"])
     @test occursin("Unsupported paths should fail explicitly", docs_claims["release gate"])
 
-    @test occursin("trusted-local artifact roundtrips", docs_claims["supported paths"])
-    @test occursin("They are not benchmarks, release evidence, dashboard workflows", docs_claims["supported paths"])
-    @test occursin("trusted-local Julia serialization artifacts", docs_claims["supported paths"])
+    @test occursin("Trusted-Local Artifacts", docs_claims["supported paths"])
+    @test occursin("They are not portable interchange files", docs_claims["supported paths"])
+    @test occursin("trusted-local serialization artifacts", docs_claims["supported paths"])
     @test occursin(
         "not portable interchange files and must not be loaded from untrusted input",
         docs_claims["supported paths"],

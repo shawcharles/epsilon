@@ -12,7 +12,7 @@ instantiate:
 	$(JULIA) --project=. -e 'using Pkg; Pkg.instantiate()'
 
 smoke:
-	JULIA="$(JULIA)" bash scripts/smoke_supported_paths.sh
+	JULIA="$(JULIA)" bash scripts/smoke_demo_configs.sh
 
 smoke-demo-configs:
 	JULIA="$(JULIA)" bash scripts/smoke_demo_configs.sh

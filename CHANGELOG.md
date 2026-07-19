@@ -32,6 +32,8 @@ tagged package release.
 - Deduplicated pipeline artifact generation so compatibility manifest keys can
   point to canonical physical files instead of writing byte-identical outputs.
 - Reconciled the public demo surface around `data/demo/` and `runme.jl`.
+- Retired the standalone toy and fixed-schema CSV example scripts so
+  `data/demo/` is the single maintained demo surface.
 - Clarified support boundaries for MCMC fitting, panel workflows, calibration,
   plotting, optimisation, trusted-local `.jls` artifacts, and unsupported UI or
   hosted workflows.
@@ -62,3 +64,5 @@ tagged package release.
   supports MCMC/Turing fitting only.
 - Removed the obsolete legacy demo helper tree and tracked generated demo
   outputs. The maintained config-driven examples now live under `data/demo/`.
+- Removed the standalone toy and fixed-schema CSV example scripts and their
+  dedicated smoke tests.
