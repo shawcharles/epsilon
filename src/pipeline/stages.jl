@@ -46,6 +46,15 @@ function _skip_panel_pipeline_stages!(context::PipelineContext)
         record.key in ("metadata", "prior_sensitivity", "fit", "assessment", "decomposition", "diagnostics", "curves") && continue
         record.key == "optimisation" && record.status == :completed && continue
         record.status in (:pending, :running, :skipped) || continue
+        if !haskey(record.artifact_paths, "skipped_marker")
+            _write_skipped_stage_marker!(
+                context,
+                record.key;
+                reason = warning,
+                generated_at_utc = finished_at_utc,
+            )
+            record = context.stage_records[_stage_index(context, record.key)]
+        end
         _set_stage_record!(
             context,
             record.key;

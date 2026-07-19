@@ -38,6 +38,7 @@ function _create_pipeline_scaffold!(context::PipelineContext)
     for spec in _PIPELINE_STAGE_SPECS
         mkpath(joinpath(context.run_dir, spec.directory))
     end
+    _write_skipped_stage_markers!(context)
 
     metadata_dir = _stage_directory_path(context, "metadata")
     config_original_path = joinpath(metadata_dir, "config.original.yaml")

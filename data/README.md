@@ -42,6 +42,11 @@ CairoMakie and writes stage-local PNG plots; use `--no-plots` to suppress plot
 artifact generation. It is intended as the minimum-code terminal workflow for
 the `{config, dataset, holidays}` triplet.
 
+Skipped optional stages still create their stage directory and write
+`SKIPPED.json`, with the same marker registered as `skipped_marker` in
+`run_manifest.json`. For example, the demo default `optimization.enabled: false`
+keeps `70_optimisation/` self-explanatory without running optimisation.
+
 For programmatic use, call `run_pipeline(PipelineRunConfig(...))` directly.
 The runner delegates to that same pipeline path.
 

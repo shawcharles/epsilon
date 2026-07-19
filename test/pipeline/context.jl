@@ -1,5 +1,7 @@
 using Epsilon
+using JSON3
 using Test
+using YAML
 
 @testset "Pipeline typed contract surfaces validate and compare cleanly" begin
     record = PipelineStageRecord(
@@ -69,6 +71,58 @@ end
         @test basename(second_dir) == "demo_20260423_120000_2"
         @test isdir(first_dir)
         @test isdir(second_dir)
+    end
+end
+
+@testset "_create_pipeline_scaffold writes skipped stage markers" begin
+    fixture = joinpath(@__DIR__, "..", "fixtures", "pipeline_config.yml")
+    dataset_fixture = joinpath(@__DIR__, "..", "fixtures", "pipeline_dataset.csv")
+
+    mktempdir() do tmpdir
+        config = YAML.load_file(fixture)
+        delete!(config, "prior_sensitivity")
+        config["validation"] = Dict("enabled" => false)
+        config["optimization"] = Dict("enabled" => false)
+        config_path = joinpath(tmpdir, "skipped_markers.yml")
+        YAML.write_file(config_path, config)
+
+        run_config = PipelineRunConfig(
+            config_path = config_path,
+            output_dir = joinpath(tmpdir, "results"),
+            run_name = "skipped_markers",
+            dataset_path = dataset_fixture,
+        )
+        loaded = Epsilon._load_pipeline_configuration(run_config)
+        context = Epsilon._pipeline_context(run_config, loaded)
+
+        Epsilon._create_pipeline_scaffold!(context)
+        Epsilon._write_pipeline_manifest!(context)
+
+        expected = (
+            ("prior_sensitivity", "05_prior_sensitivity", "prior_sensitivity is not configured"),
+            ("validation", "35_holdout_validation", "validation.enabled is false"),
+            ("optimisation", "70_optimisation", "optimization.enabled is false"),
+        )
+        for (stage, directory, reason) in expected
+            record = context.stage_records[Epsilon._stage_index(context, stage)]
+            marker_relative_path = joinpath(directory, "SKIPPED.json")
+            marker_path = joinpath(context.run_dir, marker_relative_path)
+            marker = JSON3.read(read(marker_path, String))
+
+            @test record.status == :skipped
+            @test record.artifact_paths["skipped_marker"] == marker_relative_path
+            @test marker["schema_version"] == 1
+            @test marker["stage"] == stage
+            @test marker["directory"] == directory
+            @test marker["status"] == "skipped"
+            @test marker["reason"] == reason
+            @test marker["optional"] == true
+            @test occursin(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$", marker["generated_at_utc"])
+        end
+
+        manifest = JSON3.read(read(context.manifest_path, String))
+        @test manifest["stages"]["optimisation"]["artifact_paths"]["skipped_marker"] ==
+            joinpath("70_optimisation", "SKIPPED.json")
     end
 end
 

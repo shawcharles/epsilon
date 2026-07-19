@@ -41,6 +41,10 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Added
 
+- Added skipped-stage marker artifacts: skipped pipeline stages now write
+  `SKIPPED.json` in their stage directory and register it as `skipped_marker`
+  in `run_manifest.json`, so disabled optional stages such as
+  `optimization.enabled: false` no longer leave unexplained empty folders.
 - Added plotted runner output by default for `runme.jl`: the runner now
   attempts to load CairoMakie, reports `Plots        : enabled (PNG)` when
   active, writes existing stage-local PNG plot artifacts, and supports

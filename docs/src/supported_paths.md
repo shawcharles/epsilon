@@ -165,6 +165,11 @@ when active; pass `--no-plots` to suppress plot artifact generation. The
 progress display counts all manifest stage records, including skipped optional
 stages in the final status summary.
 
+Skipped stages write a small `SKIPPED.json` marker in their stage directory and
+register it as `skipped_marker` in `run_manifest.json`. For example,
+`optimization.enabled: false` leaves `70_optimisation/` present but records why
+no optimisation artifacts were produced.
+
 The bundled config owns its local `dataset.csv` and `holidays.csv` paths. The
 runner delegates to `pipeline_main`, so normal pipeline flags such as
 `--output-dir`, `--run-name`, `--dataset-path`, `--draws`, `--tune`,

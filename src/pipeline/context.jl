@@ -310,6 +310,13 @@ function _pipeline_stage_directory(key::AbstractString)
     throw(ArgumentError("unknown pipeline stage key `$key`"))
 end
 
+function _pipeline_stage_optional(key::AbstractString)
+    for spec in _PIPELINE_STAGE_SPECS
+        spec.key == key && return Bool(spec.optional)
+    end
+    throw(ArgumentError("unknown pipeline stage key `$key`"))
+end
+
 function _initial_pipeline_stage_records(
         prior_sensitivity_config::Union{Nothing, Dict{String, Any}},
         validation_config::Union{Nothing, Dict{String, Any}},
@@ -502,6 +509,69 @@ function _write_pipeline_json(path::AbstractString, value)
         write(io, JSON3.write(value))
     end
     return path
+end
+
+function _skipped_pipeline_stage_reason(context::PipelineContext, key::AbstractString)
+    key == "prior_sensitivity" && return if isnothing(context.prior_sensitivity_config)
+        "prior_sensitivity is not configured"
+    elseif !_pipeline_stage_enabled(context.prior_sensitivity_config)
+        "prior_sensitivity.enabled is false"
+    else
+        "prior_sensitivity was skipped before execution"
+    end
+    key == "validation" && return if isnothing(context.validation_config)
+        "validation is not configured"
+    elseif !_pipeline_stage_enabled(context.validation_config)
+        "validation.enabled is false"
+    else
+        "validation was skipped before execution"
+    end
+    key == "optimisation" && return if isnothing(context.optimization_config)
+        "optimization is not configured"
+    elseif !_pipeline_stage_enabled(context.optimization_config)
+        "optimization.enabled is false"
+    else
+        "optimisation was skipped before execution"
+    end
+    return "stage was skipped before execution"
+end
+
+function _write_skipped_stage_marker!(
+        context::PipelineContext,
+        key::AbstractString;
+        reason::AbstractString = _skipped_pipeline_stage_reason(context, key),
+        generated_at_utc::AbstractString = _pipeline_timestamp_utc(),
+    )
+    index = _stage_index(context, key)
+    record = context.stage_records[index]
+    marker_relative_path = _pipeline_relative_stage_artifact(record.key, "SKIPPED.json")
+    marker = Dict{String, Any}(
+        "schema_version" => _PIPELINE_SCHEMA_VERSION,
+        "stage" => record.key,
+        "directory" => record.directory,
+        "status" => "skipped",
+        "reason" => String(reason),
+        "optional" => _pipeline_stage_optional(record.key),
+        "generated_at_utc" => String(generated_at_utc),
+    )
+    _write_pipeline_json(joinpath(context.run_dir, marker_relative_path), marker)
+    artifact_paths = merge(record.artifact_paths, Dict("skipped_marker" => marker_relative_path))
+    _set_stage_record!(context, record.key; artifact_paths)
+    return marker
+end
+
+function _write_skipped_stage_markers!(context::PipelineContext)
+    generated_at_utc = _pipeline_timestamp_utc()
+    for record in collect(context.stage_records)
+        record.status == :skipped || continue
+        _write_skipped_stage_marker!(
+            context,
+            record.key;
+            reason = _skipped_pipeline_stage_reason(context, record.key),
+            generated_at_utc,
+        )
+    end
+    return nothing
 end
 
 function _write_pipeline_manifest!(context::PipelineContext)
