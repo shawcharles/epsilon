@@ -1,383 +1,64 @@
 # Changelog
 
 All notable project changes are recorded here. Epsilon is still on the
-`0.1.0-dev` line, so entries are grouped under `Unreleased`.
+`0.1.0-dev` line, so entries are grouped under `Unreleased` until the first
+tagged package release.
 
 ## Unreleased
+
+### Added
+
+- Added the repo-root `runme.jl` runner for config-driven local MMM workflows.
+  It loads a `{config.yml, dataset.csv, holidays.csv}` bundle, prints a
+  structured terminal summary, shows stage progress, and writes results under
+  `results/`.
+- Added Epsilon-native demo bundles under `data/demo/` for `timeseries`,
+  `geo_panel`, and `geo_brand_panel` examples.
+- Added CairoMakie-backed static plot artifacts for pipeline runs when plotting
+  support is available, plus a `--no-plots` runner flag for headless execution.
+- Added skipped-stage marker artifacts: skipped optional stages now write
+  `SKIPPED.json` and record the marker in `run_manifest.json`.
+- Added local smoke commands for the maintained toy, CSV, and config-driven
+  demo workflows.
+- Added bounded time-series calibration support for centered-logistic lift-test
+  terms and cost-per-target soft penalties on the MCMC path.
+- Added bounded scenario-planning helpers for current, manual-allocation, and
+  solved optimisation scenarios, including local scenario-store artifacts.
+
+### Changed
+
+- Rewrote the public README and documentation to describe Epsilon as a
+  standalone Julia MMM library with its own supported workflow and boundaries.
+- Deduplicated pipeline artifact generation so compatibility manifest keys can
+  point to canonical physical files instead of writing byte-identical outputs.
+- Reconciled the public demo surface around `data/demo/` and `runme.jl`.
+- Clarified support boundaries for MCMC fitting, panel workflows, calibration,
+  plotting, optimisation, trusted-local `.jls` artifacts, and unsupported UI or
+  hosted workflows.
+- Moved plotting implementation behind the lazy CairoMakie package extension
+  while keeping runner plot generation available by default.
+- Hardened model/config validation around nonnegative media, unsupported
+  top-level YAML keys, trusted-local artifact metadata, and invalid calibration
+  payloads.
+- Migrated the bounded budget optimiser to current JuMP nonlinear operator
+  construction without changing result schemas.
 
 ### Fixed
 
 - Fixed Stage `30` assessment plot generation so `observed_fitted.png`,
   `fit_timeseries.png`, and `posterior_predictive.png` are distinct diagnostic
   plots instead of three copies of the same observed/fitted figure.
-
-### Changed
-
-- Deduplicated pipeline artifact generation for validation, decomposition,
-  diagnostics, and response-curve stages: compatibility manifest keys are kept
-  where useful, but they now point at canonical physical files instead of
-  writing byte-identical duplicates.
-- Promoted `CairoMakie` into the root runtime dependency surface so the
-  repo-local `runme.jl` command can load plotting support and write stage-local
-  PNG artifacts by default. `using Epsilon` still does not eagerly load
-  CairoMakie; plotting implementation remains behind the lazy
-  `EpsilonCairoMakieExt` extension.
-- Reconciled the demo-surface routing: `data/demo/*` is now documented as the
-  canonical Epsilon-native config-driven demo workflow, while
-  `examples/demo/*` is framed as historical/reference comparison material with
-  a time-series-only legacy helper.
-- Moved the CairoMakie-backed plotting implementation behind the optional
-  `EpsilonCairoMakieExt` package extension. `using Epsilon` no longer loads
-  CairoMakie; load `using Epsilon, CairoMakie` for direct plot functions,
-  plotted pipeline stage artifacts, and `write_plot_bundle(run)`. Headless
-  pipeline runs keep non-plot artifacts and omit plot artifact paths with
-  explicit stage warnings.
+- Fixed skipped optional stages so empty stage directories now explain
+  themselves through marker artifacts.
+- Fixed duplicate pipeline outputs in validation, decomposition, diagnostics,
+  and response-curve stages.
+- Fixed fitted time-series replay state for trend and automatic-holiday
+  features so prediction and replay reuse fitted state rather than drifting to
+  a fresh date basis.
 
 ### Removed
 
-- Permanently removed the pre-release variational-inference API and runtime
-  path. Epsilon supports only MCMC/Turing fitting; public configuration rejects
-  retired inference-shaped keys and non-MCMC backends, and model/result loaders
-  reject retired or unknown backend metadata. Previously serialized payloads
-  containing only retired metadata now fail with a controlled `ArgumentError`;
-  payloads embedding the removed Julia type may fail during deserialization
-  before Epsilon can validate them.
-
-### Added
-
-- Added skipped-stage marker artifacts: skipped pipeline stages now write
-  `SKIPPED.json` in their stage directory and register it as `skipped_marker`
-  in `run_manifest.json`, so disabled optional stages such as
-  `optimization.enabled: false` no longer leave unexplained empty folders.
-- Added plotted runner output by default for `runme.jl`: the runner now
-  attempts to load CairoMakie, reports `Plots        : enabled (PNG)` when
-  active, writes existing stage-local PNG plot artifacts, and supports
-  `--no-plots` to suppress plot artifact generation for headless runs.
-- Added polished terminal output for the root `runme.jl` config-driven runner:
-  the runner now prints the Epsilon header from `assets/ascii.txt`, a
-  structured run context, stage progress bars from the central pipeline stage
-  lifecycle, and structured success/failure summaries. This is terminal UX
-  only; `run_pipeline`, normal `pipeline_main` behaviour, model semantics,
-  artifact layouts, sampler defaults, dependencies, and parity claims are
-  unchanged.
-- Added root `runme.jl`, a thin Epsilon-native config-driven runner over
-  `pipeline_main`, plus `make run-demo-config`. Users can run
-  `julia --project=. runme.jl data/demo/timeseries/config.yml --quick` or the
-  no-argument bundled demo shorthand while keeping `dataset.csv` and
-  `holidays.csv` owned by the YAML config bundle. This is workflow convenience,
-  not a new modelling surface, benchmark, release gate, or parity claim.
-- Added `make smoke-demo-configs`, a local smoke harness for the
-  Epsilon-native `data/demo/*` bundles. The command runs the time-series demo
-  config through a tiny headless pipeline including its default validation
-  stage, checks required non-plot artifacts and omitted-plot warnings, and
-  verifies the panel demo configs through config/data/model-spec construction
-  without panel MCMC sampling. This is local workflow evidence only, not a
-  benchmark, release gate, or reference-parity claim.
-- Added `make smoke`, a local supported-path smoke harness that runs the
-  synthetic toy MCMC example and fixed-schema CSV quickstart with tiny MCMC
-  settings, verifies compact summary outputs in temporary directories, and
-  keeps the result explicitly outside benchmark, release, and Abacus parity
-  evidence.
-- Added the bounded programmatic `TimeSeriesMMM` MCMC shared-media HSGP
-  multiplier, including immutable date/cadence/prior snapshots, retained-grid
-  posterior replay, model-envelope v2 validation after trusted-local Julia
-  deserialisation, and fitted-period posterior contribution/decomposition
-  allocations. HSGP media components replay the shared multiplier on exact
-  retained training indices; these reports are model allocations, not causal or
-  forecast attribution. YAML/pipeline configuration, panels, VI, calibration,
-  Michaelis-Menten, channel-specific, intercept, multidimensional, periodic
-  HSGP, TVP, curves, saturation/adstock diagnostics, and metrics remain
-  unsupported.
-- Added a private, fixture-backed fitted HSGP positive-multiplier replay state
-  that retains immutable concrete-draw coefficients, training basis geometry,
-  optional training de-meaning offsets, and training softplus means for
-  deterministic prediction evaluation. This does not add HSGP configuration,
-  graph construction, Turing inference, public exports, prediction APIs,
-  serialization, or panel support.
-- Added private, fixture-backed HSGP latent projection, PyTensor-thresholded
-  stable softplus, and time-axis mean-one positive multiplier helpers for
-  supplied coefficient values. This does not add HSGP configuration, graph
-  construction, Turing inference, time-varying effects, public exports,
-  prediction or panel support.
-- Added private, fixture-backed one-dimensional HSGP numerical foundations:
-  Laplacian frequencies, fixed training bases, ExpQuad/Matern square-root PSD
-  weights, and Abacus-compatible basis recommendations. This does not add HSGP
-  configuration, graph construction, Turing inference, time-varying effects,
-  public exports, prediction, replay, or panel support.
-- Added an internal, fixture-backed HSGP time-index foundation that maps
-  `Date` inputs onto signed cadence indices using Abacus-compatible first-date
-  origin and off-cadence rejection. This does not add supported HSGP/TVP
-  modelling, HSGP configuration, public exports, or time-varying coefficients.
-- Added `examples/csv_mmm/`, a fixed-schema `date,sales,tv,search`
-  `TimeSeriesMMM` Turing/NUTS quickstart with strict ISO-date and finite-numeric
-  validation, chronological sorting, duplicate-date rejection, optional compact
-  output summaries, and focused example coverage. This is a teaching example
-  only, not a general ingestion API, pipeline feature, benchmark, release
-  claim, or Abacus parity evidence.
-- Added `centered_logistic_saturation(x, lam)` as the explicit public name for
-  Epsilon's zero-baselined logistic-family saturation curve,
-  `tanh(lam * x / 2)`.
-- Added `PanelAxis`, `panel_axis`, `panel_axes`, `PanelCoordinate`,
-  `panel_coordinates`, and `panel_coordinate` helpers for recovering ordered
-  named `PanelMMM` coordinates from Epsilon's deterministic flat `panel_cell`
-  axis.
-- Added `ntime`, `npanels`, and `npanel_observations` helpers so panel code can
-  distinguish shared time rows, flat panel cells, and flattened panel-cell
-  observations explicitly.
-- Added fixture-backed Abacus pipeline artifact-key parity for the bounded
-  `timeseries` Stage `00` through Stage `70` surface.
-- Added Abacus-compatible pipeline artifact keys for Stage `35` holdout
-  validation, Stage `40` decomposition, Stage `50` diagnostics, Stage `60`
-  response curves, and enabled Stage `70` optimization.
-- Added Julia-native serialized artifact equivalents for Abacus PyMC/NetCDF
-  outputs where the stage semantics match but file-format identity would be
-  misleading.
-- Added stricter pipeline tests that assert exported Abacus manifest
-  artifact-key sets are present in Epsilon stage manifests and that all mapped
-  artifacts exist.
-- Added Phase 14 handoff state for resuming with `geo_panel` pipeline Stage
-  `00` metadata/manifest parity.
-- Added fixture-backed `geo_panel` pipeline Stage `00` metadata/manifest
-  parity and Stage `20` fit artifact-key parity, including panel-aware
-  dataset/model metadata, Julia-native fit artifacts, posterior summaries,
-  trace plots, and explicit skipped unsupported panel pipeline stages.
-- Added fixture-backed `geo_brand_panel` pipeline Stage `00` metadata/manifest
-  parity and Stage `20` fit artifact-key parity for multidimensional panel
-  configs, including flattened panel-cell metadata, coordinate round trips, and
-  Julia-native fit artifacts under Abacus-compatible manifest keys.
-- Added fixture-backed `geo_panel` and `geo_brand_panel` pipeline Stage `30`
-  assessment artifact-key parity, including panel-aware observed/fitted,
-  residual, posterior predictive summary, and assessment plot artifacts.
-- Added fixture-backed `geo_panel` and `geo_brand_panel` pipeline Stage `40`
-  decomposition artifact-key parity, including Julia-native contribution and
-  decomposition result artifacts, panel-aware contribution/decomposition
-  summaries, Abacus-compatible baseline/channel/mean contribution CSVs, and
-  decomposition/media contribution plots.
-- Added fixture-backed `geo_panel` and `geo_brand_panel` pipeline Stage `50`
-  diagnostics artifact-key parity, including panel-aware design reports,
-  chain/MCMC diagnostics, predictive diagnostics, residual diagnostics, VIF
-  reports, and residual ACF plots.
-- Added fixture-backed `geo_panel` and `geo_brand_panel` pipeline Stage `60`
-  response-curve artifact-key parity, including panel-cell historical-scaling
-  response, saturation, adstock, and metric artifacts under Abacus-compatible
-  curve keys.
-- Added bounded `PanelMMM` Stage `70` optimization support for channel-level
-  budget allocation with fixed historical within-channel panel-cell shares,
-  including `PanelBudgetOptimizationResult`, panel allocation/audit artifacts,
-  explicit errors for deferred free channel-by-panel constraints, and
-  fixture-backed `geo_panel` pipeline artifact-key coverage.
-- Extended fixture-backed `geo_brand_panel` pipeline Stage `70` historical-share
-  optimization coverage, asserting that the existing bounded
-  `panel_allocation_mode = :historical_shares` policy preserves flattened
-  multidimensional panel-cell axes and `geo`/`brand` coordinate metadata in the
-  emitted `channel_panel_allocation.csv` and `channel_delta_audit.csv`
-  artifacts.
-- Added bounded Abacus-compatible Stage `05` prior-sensitivity planning to the
-  pipeline. The stage parses runner-only `prior_sensitivity` YAML, writes
-  resolved manual or `conservative_mmm` scenario configs, emits human and
-  LLM-safe manifests, and validates narrow prior/selected model-structure
-  override paths without fitting every scenario automatically.
-- Added the first bounded non-UI scenario-planner surface: typed current,
-  manual-allocation, and fixed-budget optimized scenario specs plus
-  `scenario_plan(result)` comparison tables over solved time-series and panel
-  budget optimization results. The surface mirrors Abacus's reusable business
-  planning store shape without Dash UI, background jobs, automatic scenario
-  refits, or free channel-by-panel allocation.
-- Added bounded `TimeSeriesMMM` MCMC calibration likelihood support for
-  centered-logistic lift-test measurements and cost-per-target soft penalties.
-  The two calibration terms are optional and additive, resolve into scaled
-  model space, and are fixture-backed against comparable Abacus preprocessing
-  and log-density helpers. `PanelMMM` calibration, VI calibration, broader
-  saturation-family calibration, Dash/UI workflows, and AI-advisor behaviour
-  remain unsupported.
-- Added bounded public dict/YAML parsing for top-level `calibration` blocks:
-  valid lift-test and cost-per-target row payloads now resolve into the
-  existing typed `TimeSeriesCalibrationInput` under
-  `ModelConfig.extras["calibration"]` and are consumed by `TimeSeriesMMM`
-  construction and the bounded time-series MCMC pipeline fit path. Panel
-  calibration, VI calibration, non-logistic lift-test calibration, Dash/UI
-  workflows, and AI-advisor behaviour remain unsupported.
-- Added the first evaluated manual-allocation scenario-planner contract:
-  `evaluate_manual_scenario(results, scenario)` and
-  `ManualScenarioEvaluationResult` evaluate one `ManualAllocationScenarioSpec`
-  against existing time-series response surfaces without refitting, solving a
-  new optimization problem, adding Dash/UI workflow, or introducing panel
-  manual-allocation semantics.
-- Extended `scenario_plan` so one or more evaluated manual-allocation scenarios
-  project into `ScenarioPlanResult` totals, channel, allocation, and metadata
-  tables with explicit `manual_allocation` scenario rows while preserving the
-  existing solved-optimization table contract.
-- Extended `scenario_plan` again so compatible evaluated manual-allocation
-  scenarios and one solved fixed-budget optimization result can be projected
-  into one deterministic current/manual/optimized `ScenarioPlanResult`, with
-  hard artifact and baseline mismatch rejection before table construction.
-- Added local non-UI scenario-store artifacts for existing
-  `ScenarioPlanResult` tables: `write_scenario_store` writes a typed
-  `scenario_store.jls` payload plus CSV inspection sidecars,
-  `load_scenario_store` restores a validated `ScenarioStoreArtifact`,
-  `scenario_store_plan` projects copied tables, and
-  `assert_scenario_store_compatible` rejects incompatible stores. This is a
-  local Epsilon/Julia-version-bound artifact contract, not Dash/UI, hosted
-  stores, background jobs, automatic refits, future spend simulation, pipeline
-  emission, or panel manual allocation.
-- Added a public API support-status inventory in the docs plus a focused
-  `api_exports` test layer that compares the marked inventory table against
-  the loaded `Epsilon` module export surface.
-- Added a public API documentation guard to the focused `api_exports` test
-  layer. The guard now requires every inventoried/exported symbol to have a
-  non-empty rendered docstring and an exact `Epsilon.<symbol>` entry in a
-  Documenter `@docs` block under `docs/src`, including bang-suffixed names.
-- Added a guarded public API lifecycle triage register at
-  `.planning/API-EXPORT-TRIAGE.md`, plus focused `api_exports` checks that keep
-  every current export's triage row aligned with the documented inventory. This
-  is pre-v1 governance hygiene only, not an export cleanup or Abacus API parity
-  claim.
-- Added a candidate-only public API cleanup RFC at
-  `.planning/API-EXPORT-CLEANUP-RFC.md`, marking a small set of exported
-  validation helpers as planning-level `deprecation-candidate` rows with
-  concrete migration paths and focused RFC/register consistency checks. This
-  does not remove exports, add runtime deprecation warnings, or change Abacus
-  behavioural evidence.
-- Added a marked migration-readiness audit for those six deprecated validation
-  helpers, plus focused `api_exports` checks that keep the audit aligned with
-  current exports, the triage register, the Phase 22 RFC, and the Phase 23/24
-  runtime-deprecation design. The audit records runtime warnings and
-  warning-free replacements as guarded while keeping every helper not ready to
-  unexport.
-- Added a design-only runtime deprecation plan at
-  `.planning/API-RUNTIME-DEPRECATION-DESIGN.md` for those six validation-helper
-  candidates. It records the future wrapper/internal-helper split, warning
-  text, tests, and rollback criteria needed before any runtime warning can
-  safely land; it does not change exports or runtime behaviour.
-- Added focused package-test file selectors to `test/runtests.jl`, so commands
-  such as `Pkg.test(; test_args=["test/model/calibration.jl"],
-  julia_args=["--depwarn=yes"])` run one test file inside the package test
-  environment with test-only dependencies available.
-- Added `make test-file FILE=...` as the local helper for focused package-test
-  file execution.
-- Added `examples/toy_mmm/run_toy_mmm.jl`, a tiny synthetic `TimeSeriesMMM`
-  Turing/NUTS MCMC smoke demo with a callable `run_toy_mmm` entry point,
-  compact optional CSV/text summaries, and focused test coverage under
-  `test/examples/toy_mcmc_smoke.jl`. This is a supported-path smoke demo only,
-  not release evidence, not a benchmark, not an Abacus parity claim, and not a
-  broader support expansion.
-- Documented the bounded calibration YAML/pipeline surface with the supported
-  top-level `calibration` shape and explicit unsupported paths for panel
-  calibration, VI calibration, non-logistic lift-test calibration, Dash/UI
-  workflows, and AI-advisor behaviour.
-
-### Changed
-
-- Hardened prior distribution validation so positive scale, shape, rate,
-  degrees-of-freedom, and shrinkage recipe parameters reject infinite values
-  instead of accepting `Inf` as merely positive.
-- Clarified the public `batched_convolution(..., mode = Overlap)` odd/even
-  alignment contract and added focused impulse tests without changing
-  convolution numerics.
-- Hardened `MMMData` and `PanelMMMData` numeric validation so finite and
-  nonnegative checks preserve generic AD scalar types instead of narrowing
-  values through `Float64` solely for validation.
-- Clarified public docstrings for binomial adstock lag weights and
-  original-unit spend/budget/allocation fields; no runtime behaviour changed.
-- Documented and guarded the bounded budget optimizer's post-solve allocation
-  projection tolerance: near-bound solver drift is snapped, residuals are
-  rebalanced only through valid effective-bound slack, and impossible residuals
-  fail closed without changing optimisation semantics.
-- Migrated the bounded budget optimizer's internal JuMP nonlinear construction
-  from legacy `JuMP.register` / `set_nonlinear_objective` calls to current
-  nonlinear operator objects and `@objective`, without changing allocation
-  semantics, constraints, solver choice, or result schemas.
-- Hardened the saturation/media-domain contract: `centered_logistic_saturation`
-  / `logistic_saturation` and `michaelis_menten` now reject negative `x` as
-  spend-domain primitives, while `tanh_saturation` remains a signed low-level
-  primitive because committed reference fixtures include negative inputs. MMM
-  media containers and public curve grids continue to reject negative spend at
-  their own boundaries.
-- Public model config parsing now rejects unsupported top-level keys instead
-  of silently storing typo-like or pipeline-runner-only entries in
-  `ModelConfig.extras`. The direct parser preserves only the documented
-  comparison shim `effects` and the narrow compatibility extra `validation`;
-  opaque local state remains available through programmatic
-  `ModelConfig(extras = ...)`. Pipeline configs still accept their own
-  runner-only blocks and strip them before model parsing.
-- Hardened the toy MCMC smoke demo CLI: malformed integer values for `--draws`,
-  `--tune`, and `--seed` now fail with option-specific `ArgumentError`
-  messages, the help/include-safe paths are covered without running MCMC, and
-  the toy README documents the expected success output and failure boundary.
-- Reconciled the v1 release boundary after Phase 27: release-facing docs and
-  planning state now make MCMC/Turing the only v1-supported inference path,
-  with variational inference, dashboard/UI parity, and AI advisor behaviour
-  explicitly out of scope for v1. At that point, `VariationalConfig` and
-  `approximate_fit!` remained scaffolded pre-v1 review exports; Phase 38 later
-  permanently removed them.
-- Deprecated the six exported validation-helper candidates at runtime while
-  preserving exports and validation semantics. Direct public calls to
-  `validate_calibration_step_config`,
-  `validate_lift_test_calibration_payload`,
-  `validate_cost_per_target_calibration_payload`, `validate_sampler_config`,
-  `validate_model_config`, and `validate_mmm_data` now emit `Base.depwarn`;
-  supported constructors, loaders, and payload builders use warning-free
-  internal helpers.
-- Fixed Phase 13 remediation issues: fitted time-series trend and automatic
-  holiday date-basis state is now serialized in model specs and reused for
-  prediction/replay, unfitted time-series prior prediction resolves scale and
-  date-derived feature state from the model's training data, media/channel
-  inputs are rejected when negative, `hill_function` now raises a clear
-  `ArgumentError` for negative `x`, and pipeline YAML now rejects unknown
-  top-level keys instead of silently ignoring typoed run blocks.
-- Routed the existing `media.saturation.type = "logistic"` model path through
-  `centered_logistic_saturation` while keeping `logistic_saturation` as a
-  documented legacy compatibility alias. This preserves fitted-model numerical
-  behavior while avoiding a misleading primary API name.
-- Clarified that `nobs(::PanelMMMData)` remains the compatibility flattened
-  panel-cell observation count for existing model-spec and pipeline artifact
-  contracts; use `ntime` and `npanels` for separate panel axes.
-- Updated panel contribution, curve, metric, and budget-allocation summaries to
-  carry an explicit `panel_cell` column plus declared panel-coordinate columns;
-  the legacy multidimensional `panel` column is retained as a compatibility
-  alias.
-- Locked post-model result axis contracts for contribution, decomposition,
-  response, saturation, adstock, and metric artifacts. `summary_table` and
-  `metric_results(::ResponseCurveResults)` now validate expected draw, panel,
-  spend-point, component, and metric axes before deriving tidy tables or
-  downstream metrics.
-- Consolidated the shared response, saturation, and adstock curve construction
-  path so time-series and panel curve entrypoints use one internal
-  `InferenceResults`-to-result builder while preserving the existing replay
-  math and public API.
-- Updated Phase 14 documentation and planning state to treat `timeseries`
-  pipeline Stage `00` through Stage `70` artifact-key parity as covered.
-- Clarified that panel pipeline parity is currently bounded to Stage `00`
-  metadata, Stage `20` fit, Stage `30` assessment, and Stage `40`
-  decomposition, Stage `50` diagnostics, and Stage `60` response-curve
-  semantics on both `geo_panel` and `geo_brand_panel` before broader panel
-  pipeline orchestration.
-- Updated the bounded pipeline contract so `PanelMMM` configs can run the
-  metadata, fit, assessment, decomposition, diagnostics, and curve stages
-  truthfully and can run optimization only when an Epsilon-supported
-  `optimization.total_budget` contract is explicitly provided; Abacus panel
-  relative-budget blocks are not parsed as time-series pipeline options.
-- Documented Stage `35` panel holdout validation as deferred for v1: Epsilon
-  keeps time-series blocked holdout validation, but does not add panel holdout
-  semantics without a concrete methodological requirement.
-- Closed Plan `14-05` with a parity audit: `timeseries` Stage `00` through
-  Stage `70` is covered; `geo_panel` and `geo_brand_panel` cover accepted panel
-  pipeline stages through explicitly enabled Stage `70` historical-share
-  optimization; panel Stage `35` validation, AI advisor, and Dash remain
-  outside the closed surface as documented.
-
-### Notes
-
-- Saved the 2026-05-20 handoff after Phase 13 remediation closeout: planning
-  state now points future work at release-prep choices after the completed
-  Phase 14 evidence spine.
-- AI advisor and Plotly Dash/dashboard parity remain deferred.
-- Panel Stage `35` validation remains deferred; adding it for parity alone is
-  intentionally avoided.
-- Scenario planner execution remains bounded to existing optimizer outputs and
-  time-series manual-allocation evaluations over existing response surfaces;
-  richer scenario simulation, automatic refits, background stores/jobs, panel
-  manual allocation, and UI workflows are still outside the current surface.
-- Repo-wide `make format-check` still reports pre-existing Runic drift outside
-  the Phase 13 remediation slice; targeted Runic checks on the touched Julia
-  files passed.
+- Removed the pre-release variational-inference API and runtime path. Epsilon
+  supports MCMC/Turing fitting only.
+- Removed the obsolete legacy demo helper tree and tracked generated demo
+  outputs. The maintained config-driven examples now live under `data/demo/`.

@@ -61,7 +61,7 @@ That command runs the time-series demo through a tiny full pipeline, including
 the default validation stage, and checks the panel demo configs through
 config/data/model-spec construction without MCMC sampling. It writes outputs to
 temporary directories and removes them when it exits. It is local smoke
-evidence only, not a benchmark, release gate, or parity claim.
+evidence only, not a benchmark or publication gate.
 
 The panel bundles use the bounded `PanelMMM` surface:
 
@@ -79,5 +79,5 @@ Current boundaries:
 - Demo optimisation is disabled by default; add an Epsilon-native
   `optimization.total_budget` block explicitly when needed.
 
-`data/holidays.csv` is retained as a shared reference copy. The runnable demo
-configs use their bundle-local `holidays.csv` files.
+`data/holidays.csv` is retained as a shared holiday calendar copy. The runnable
+demo configs use their bundle-local `holidays.csv` files.

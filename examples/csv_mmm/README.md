@@ -32,9 +32,8 @@ by Epsilon: contribution rows contain `observation,date,component,mean,lower_5,
 upper_95`, and metric rows contain `channel,spend,metric,mean,lower_5,upper_95`.
 
 This is a fixed-schema teaching example, not a general CSV ingestion API,
-pipeline feature, data-cleaning workflow, benchmark, release claim, or
-reference-parity evidence. `--help` shows the available options without fitting
-a model.
+pipeline feature, data-cleaning workflow, benchmark, or release claim. `--help`
+shows the available options without fitting a model.
 
 For the canonical supported local workflow, including compact-output
 inspection, trusted-local fitted-model and grouped-results roundtrips, and

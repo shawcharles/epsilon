@@ -6,8 +6,7 @@ const _YEARLY_FOURIER_PERIOD = 365.25
 Construct a Fourier design matrix with `n_order` sine modes followed by
 `n_order` cosine modes for the provided within-period positions.
 
-This ordering matches Abacus's retained Fourier helpers:
-`sin_1, sin_2, ..., cos_1, cos_2, ...`.
+Columns are ordered as `sin_1, sin_2, ..., cos_1, cos_2, ...`.
 """
 function fourier_features(dayofperiod::AbstractVector, period::Real, n_order::Integer)
     period > 0 || throw(ArgumentError("period must be positive"))

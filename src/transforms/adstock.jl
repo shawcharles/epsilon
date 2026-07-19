@@ -96,9 +96,8 @@ non-convolved dimensions of `x`.
 `type` accepts `:pdf`, `:cdf`, `"pdf"`, `"cdf"`, `Epsilon.PDF`, or
 `Epsilon.CDF`.
 
-For `type=:cdf`, Epsilon preserves the current Abacus convention of prepending a
-leading self-retention term before cumulative multiplication, so the effective
-kernel has `l_max + 1` entries.
+For `type=:cdf`, Epsilon prepends a leading self-retention term before
+cumulative multiplication, so the effective kernel has `l_max + 1` entries.
 """
 function weibull_adstock(
         x::AbstractArray,

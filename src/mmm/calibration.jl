@@ -2,14 +2,11 @@
 Calibration and lift-test schema, alignment, scaling, and likelihood-term
 helpers.
 
-This module ports the bounded, fixture-backed first slice of Abacus
-`abacus/mmm/calibration/*.py` and `abacus/mmm/lift_test.py` semantics:
-row-to-coordinate alignment, lift-test monotonicity validation, channel and
-target rescaling for lift-test data, the PyMC `mu`/`sigma` -> Julia
-`shape`/`scale` `Gamma` reparameterization used by the Abacus lift-test
-likelihood term, and the cost-per-target soft-penalty calculation. Wiring a
-calibration likelihood term into `TimeSeriesMMM`/`PanelMMM` sampling is an
-explicit follow-on slice and is out of scope here.
+This module defines Epsilon's bounded calibration surface: row-to-coordinate
+alignment, lift-test monotonicity validation, channel and target rescaling for
+lift-test data, mean/standard-deviation to `Distributions.Gamma` `shape`/`scale`
+reparameterization, lift-test likelihood helpers, and cost-per-target
+soft-penalty calculations.
 """
 
 using Distributions
@@ -78,12 +75,10 @@ end
 """
     CalibrationStepConfig(; method, params=Dict())
 
-Typed mirror of the Abacus public YAML `calibration` step schema
-(`abacus/mmm/builders/schema.py::CalibrationStepConfig`): one step is a
-`method` name drawn from the supported calibration methods plus a free-form
-`params` mapping. `params.dist` is rejected, matching Abacus's current YAML
-restriction that custom likelihood distributions cannot be configured through
-YAML.
+Typed representation of one public YAML `calibration` step: a `method` name
+drawn from the supported calibration methods plus a free-form `params` mapping.
+`params.dist` is rejected because custom likelihood distributions are not
+currently configurable through YAML.
 
 Applying a configured step to a model is a separate, not-yet-implemented
 model-integration concern.
@@ -137,11 +132,9 @@ end
 """
     UnalignedValuesError(unaligned_values)
 
-Raised by [`exact_row_indices`](@ref) when one or more rows of calibration
-data cannot be exactly matched to a single coordinate value, mirroring Abacus
-`abacus.mmm.calibration.alignment.UnalignedValuesError`. `unaligned_values`
-maps each affected column name to the 1-based row indices that failed to
-align.
+Raised by [`exact_row_indices`](@ref) when one or more rows of calibration data
+cannot be exactly matched to a single coordinate value. `unaligned_values` maps
+each affected column name to the 1-based row indices that failed to align.
 """
 struct UnalignedValuesError <: Exception
     unaligned_values::Dict{String, Vector{Int}}
@@ -156,8 +149,7 @@ end
     NonMonotonicError(message)
 
 Raised by [`assert_monotonic_lift`](@ref) when lift-test `delta_x`/`delta_y`
-pairs disagree in sign, mirroring Abacus
-`abacus.mmm.calibration.alignment.NonMonotonicError`.
+pairs disagree in sign.
 """
 struct NonMonotonicError <: Exception
     message::String
@@ -175,8 +167,7 @@ into the corresponding coordinate vector for every row of `df`.
 shared column must match exactly one coordinate value; throws
 [`UnalignedValuesError`](@ref) listing the offending rows otherwise, and
 throws `ArgumentError` when a `df` column has no matching `coords` entry.
-This mirrors Abacus `abacus.mmm.calibration.alignment.exact_row_indices`,
-adapted to Julia's native 1-based indexing.
+Returned indices use Julia's native 1-based indexing.
 """
 function exact_row_indices(
         coords::AbstractDict{<:AbstractString, <:AbstractVector},
@@ -224,9 +215,8 @@ end
 """
     validate_lift_test_columns(columns)
 
-Require that `columns` contains the lift-test data columns Abacus needs to
-register a calibration likelihood term: `x`, `delta_x`, `delta_y`, and
-`sigma`.
+Require that `columns` contains the lift-test data columns needed to register a
+calibration likelihood term: `x`, `delta_x`, `delta_y`, and `sigma`.
 """
 function validate_lift_test_columns(columns)
     available = Set(String(column) for column in columns)
@@ -243,9 +233,8 @@ end
 """
     assert_monotonic_lift(delta_x, delta_y)
 
-Require that `delta_x` and `delta_y` agree in sign (or are zero) elementwise,
-mirroring Abacus `abacus.mmm.calibration.alignment.assert_monotonic`. Throws
-[`NonMonotonicError`](@ref) otherwise.
+Require that `delta_x` and `delta_y` agree in sign (or are zero) elementwise.
+Throws [`NonMonotonicError`](@ref) otherwise.
 """
 function assert_monotonic_lift(delta_x::AbstractVector{<:Real}, delta_y::AbstractVector{<:Real})
     _matching_lengths("delta_x" => delta_x, "delta_y" => delta_y)
@@ -261,13 +250,12 @@ end
 
 Rescale lift-test `x`/`delta_x` values through a fitted channel `transform`
 (for example a fitted `MaxAbsScaler`'s `transform` applied to its underlying
-matrix), mirroring Abacus
-`abacus.mmm.calibration.scaling.scale_channel_lift_measurements`.
+matrix).
 
 Each row's value is embedded into a zero-filled `(nrows, nchannels)` matrix at
 its own channel's column, `transform` is applied to that full matrix, and each
-row's own scaled value is read back out. This reproduces Abacus's
-pivot/transform/unpivot behavior for any matrix-valued `transform`. Returns a
+row's own scaled value is read back out. This preserves
+pivot/transform/unpivot behaviour for any matrix-valued `transform`. Returns a
 named tuple `(; channel, x, delta_x)`.
 """
 function scale_channel_lift_measurements(
@@ -310,8 +298,7 @@ end
     scale_target_for_lift_measurements(target, transform)
 
 Rescale a lift-test target-like vector (`delta_y` or `sigma`) through a fitted
-target `transform`, mirroring Abacus
-`abacus.mmm.calibration.scaling.scale_target_for_lift_measurements`.
+target `transform`.
 """
 function scale_target_for_lift_measurements(target::AbstractVector{<:Real}, transform::Function)
     target_values = _finite_float_vector(target, "target")
@@ -323,9 +310,8 @@ end
     scale_lift_measurements(channel, x, delta_x, delta_y, sigma, channel_columns, channel_transform, target_transform)
 
 Rescale a full lift-test dataset (channel-indexed `x`/`delta_x` plus target-like
-`delta_y`/`sigma`) for use against a scaled model, mirroring Abacus
-`abacus.mmm.calibration.scaling.scale_lift_measurements`. Returns a named
-tuple `(; channel, x, delta_x, delta_y, sigma)`.
+`delta_y`/`sigma`) for use against a scaled model. Returns a named tuple
+`(; channel, x, delta_x, delta_y, sigma)`.
 """
 function scale_lift_measurements(
         channel::AbstractVector,
@@ -362,9 +348,9 @@ end
 """
     gamma_shape_scale(mu, sigma)
 
-Convert a PyMC-style `Gamma(mu, sigma)` mean/standard-deviation
-parameterization into the `(shape, scale)` parameterization used by
-`Distributions.Gamma`. `mu` and `sigma` must both be strictly positive.
+Convert a `Gamma(mu, sigma)` mean/standard-deviation parameterization into the
+`(shape, scale)` parameterization used by `Distributions.Gamma`. `mu` and
+`sigma` must both be strictly positive.
 """
 function gamma_shape_scale(mu::Real, sigma::Real)
     isfinite(sigma) && sigma > 0 || throw(ArgumentError("sigma must be positive and finite"))
@@ -377,9 +363,8 @@ end
 """
     lift_test_gamma_distribution(mu, sigma)
 
-Build the `Distributions.Gamma` lift-test observation distribution Abacus
-registers via `pm.Gamma(mu=mu, sigma=sigma, observed=...)` in
-`abacus.mmm.calibration.graph.add_saturation_observations`.
+Build the `Distributions.Gamma` lift-test observation distribution from a
+positive observation mean and standard deviation.
 """
 function lift_test_gamma_distribution(mu::Real, sigma::Real)
     params = gamma_shape_scale(mu, sigma)
@@ -390,9 +375,8 @@ end
     lift_test_estimated_lift(saturation_fn, x, delta_x)
 
 Compute the model-estimated lift `saturation_fn(x + delta_x) - saturation_fn(x)`
-for a lift-test row, mirroring the core computation in Abacus
-`abacus.mmm.calibration.graph.add_saturation_observations`. `saturation_fn`
-must accept and return a vector (for example
+for a lift-test row. `saturation_fn` must accept and return a vector (for
+example
 `x -> centered_logistic_saturation(x, lam)`).
 """
 function lift_test_estimated_lift(
@@ -413,11 +397,11 @@ end
 """
     lift_test_likelihood_terms(saturation_fn, x, delta_x, delta_y, sigma)
 
-Compute the Abacus lift-test likelihood-term ingredients for one batch of
-lift-test rows: the Gamma observation mean `mu = |estimated_lift|`, the
-observed value `|delta_y|`, and the elementwise Gamma log-density
-`logp = logpdf(Gamma(mu, sigma), |delta_y|)`. Returns a named tuple
-`(; mu, observed, logp)`.
+Compute lift-test likelihood-term ingredients for one batch of lift-test rows:
+the Gamma observation mean `mu = |estimated_lift|`, the observed value
+`|delta_y|`, and the elementwise Gamma log-density
+`logp = logpdf(Gamma(mu, sigma), |delta_y|)`. Returns a named tuple `(; mu,
+observed, logp)`.
 """
 function lift_test_likelihood_terms(
         saturation_fn::Function,
@@ -529,9 +513,8 @@ end
 """
     cost_per_target_penalties(gathered_cpt, targets, sigma)
 
-Compute the Abacus cost-per-target Gaussian soft-penalty term elementwise,
-`-(|gathered_cpt - targets|)^2 / (2 * sigma^2)`, mirroring
-`abacus.mmm.calibration.graph.add_cost_per_target_potentials`.
+Compute the cost-per-target Gaussian soft-penalty term elementwise:
+`-(|gathered_cpt - targets|)^2 / (2 * sigma^2)`.
 """
 function cost_per_target_penalties(
         gathered_cpt::AbstractVector{<:Real},
@@ -549,8 +532,8 @@ end
 """
     cost_per_target_total_penalty(gathered_cpt, targets, sigma)
 
-Sum [`cost_per_target_penalties`](@ref) into the scalar value Abacus passes
-to `pm.Potential`.
+Sum [`cost_per_target_penalties`](@ref) into a scalar model log-density
+contribution.
 """
 function cost_per_target_total_penalty(
         gathered_cpt::AbstractVector{<:Real},
@@ -721,8 +704,7 @@ end
     CostPerTargetCalibrationPayload(gathered_cpt, targets, sigma)
 
 Typed, already-scaled cost-per-target calibration observations ready for the
-model runtime, matching Abacus's explicit gathered/target/sigma soft-penalty
-semantics: `gathered_cpt` is the observed (gathered) cost-per-target value,
+model runtime: `gathered_cpt` is the observed cost-per-target value,
 `targets` is the target cost-per-target value, and `sigma` is the strictly
 positive soft-penalty scale, all in scaled model space.
 

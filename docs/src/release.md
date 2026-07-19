@@ -1,299 +1,83 @@
-# Release Gate
+# Support Boundaries
 
-Phase 11 landed the bounded v1 release-gate infrastructure for Epsilon, and
-Phase 12 closed the methodology-remediation pass on top of it. Phase 13 later
-revalidated the accepted release-gate contract fixes. The later
-support-boundary and supported-path workflow phases, including Phase 38's
-permanent variational-inference retirement and Phase 43's canonical
-[Supported Local Workflows](supported_paths.md) runbook, did not rerun the
-release gate or refresh benchmark artifacts.
+This page defines the current public support boundaries for Epsilon. It is not
+a release certification page. Epsilon is still on the `0.1.0-dev` line, so the
+supported surface is intentionally narrower than the full public export list.
 
-The package should still avoid blanket reference-parity claims: the guaranteed
-reference-backed row is `VAL-TS-00-MCMC`, while the holiday-bearing automatic
-holiday row remains an Epsilon-native/reference row unless a separate
-compatibility mode is added. More importantly, Epsilon now treats the external
-reference implementation as validation provenance rather than a source of literal
-implementation obligations: methodological coherence wins when strict upstream
-fidelity would produce a weaker or less honest bounded design. Treat this page
-as the canonical release-gate summary for the closed bounded v1 surface and not
-as evidence that a new release-prep pass has run after the documented Phase 13
-revalidation.
+## Supported
 
-Phase 13 also closes the accepted contract-remediation issues from the external
-review: time-series prediction and replay now use fitted trend and
-automatic-holiday date-basis state from the model spec, unfitted prior
-prediction resolves scale and date-derived feature state from `model.data`,
-media/channel arrays must be finite and nonnegative, spend-domain saturation
-primitives reject negative `x` with clear `ArgumentError`s, and pipeline YAML
-fails on unsupported top-level keys. `tanh_saturation` remains a signed
-low-level transform primitive, but public MMM media/spend surfaces reject
-negative values before replay. Specifically,
-`centered_logistic_saturation`, `logistic_saturation`,
-`michaelis_menten`, and `hill_function` require nonnegative `x`.
+| Area | Current Support |
+|---|---|
+| Fitting | Turing/NUTS MCMC for supported `TimeSeriesMMM` and bounded `PanelMMM` models |
+| Data | Config-driven CSV workflows with explicit date, target, media, holiday, control, and panel columns |
+| Pipeline | Stage-based local runs through `run_pipeline`, `pipeline_main`, and `runme.jl` |
+| Time-series validation | Blocked holdout validation through Stage `35` |
+| Panel modelling | One or more declared panel dimensions on a deterministic flattened panel-cell axis |
+| Post-model analysis | Contributions, decomposition, response curves, saturation curves, adstock curves, and marketing metrics from grouped MCMC results |
+| Optimisation | Fixed-budget total-response optimisation; panel optimisation uses historical within-channel panel shares |
+| Plotting | Static CairoMakie-backed plots and stage-local PNG artifacts |
+| Scenario planning | Non-UI comparison tables over current, manual time-series, and solved optimisation scenarios |
+| Calibration | Time-series MCMC lift-test and cost-per-target calibration on the bounded centered-logistic path |
 
-## Quickstart
+## Explicitly Unsupported Or Deferred
 
-The canonical entry points for the closed v1 surface are:
+- Variational inference. Epsilon supports MCMC/Turing fitting only.
+- Dashboard, hosted UI, AI advisor, or background scenario-store workflows.
+- Panel holdout validation.
+- Panel calibration.
+- Free channel-by-panel optimisation.
+- Panel seasonality, trend, events, and richer controls beyond the currently
+  supported panel surface.
+- Automatic refitting of every prior-sensitivity scenario.
+- Arbitrary future spend-path simulation.
+- No portable binary interchange for Julia `.jls` artifacts.
+- Loading serialized artifacts from untrusted sources.
 
-- direct modeling and inference:
-  - `fit!(model)` with sampler settings carried on the typed model
-  - `predict(model)`, `prior_predict(model)`, and `inference_results(model)`
-- post-model analysis:
-  - `contribution_results(results)`
-  - `decomposition_results(results)`
-  - `response_curve_results(results; ...)`
-  - `metric_results(results; ...)`
-- optimization:
-  - `optimize_budget(results; ...)`
-- scenario planning:
-  - `scenario_plan(result)` over solved budget optimization results
-  - `evaluate_manual_scenario(results, scenario)` for bounded time-series
-    manual allocation evaluation over existing response surfaces
-  - `scenario_plan(result, evaluations)` for compatible
-    current/manual/optimized comparison without re-solving
-  - `write_scenario_store(path, plan; ...)` and `load_scenario_store(path)` for
-    local Epsilon/Julia-version-bound scenario-store artifacts over existing
-    `ScenarioPlanResult` tables
-- pipeline:
-  - `run_pipeline(PipelineRunConfig(...))`
-  - `bin/epsilon run path/to/config.yml`
-- plotting:
-  - direct Makie `Figure` APIs such as `trace_plot`, `contribution_plot`, and
-    `budget_optimization_plot`
-  - stage-local pipeline plot artifacts written automatically during Stage
-    `10`-`70` execution
-  - `write_plot_bundle(run)` for the bounded deterministic post-hoc pipeline
-    plot bundle
+Unsupported paths should fail explicitly rather than silently approximating a
+different model.
 
-For a fast local smoke check of the supported MCMC path, maintainers can run:
+## Pipeline Stages
+
+Pipeline runs use fixed stage directories:
+
+| Stage | Directory | Notes |
+|---|---|---|
+| `00` | `00_run_metadata/` | Source config, resolved config, data and model metadata |
+| `05` | `05_prior_sensitivity/` | Optional scenario planning, not automatic refitting |
+| `10` | `10_pre_diagnostics/` | Prior predictive artifacts where supported |
+| `20` | `20_model_fit/` | Fitted model and grouped inference artifacts |
+| `30` | `30_model_assessment/` | Observed/fitted, posterior predictive, residual summaries, plots |
+| `35` | `35_holdout_validation/` | Time-series holdout validation only |
+| `40` | `40_decomposition/` | Contributions and decomposition artifacts |
+| `50` | `50_diagnostics/` | Sampler, convergence, predictive, residual, and design diagnostics |
+| `60` | `60_response_curves/` | Response, saturation, adstock, and metric artifacts |
+| `70` | `70_optimisation/` | Optional budget optimisation |
+
+When a stage is skipped, Epsilon writes `SKIPPED.json` in that stage directory
+and records the marker in `run_manifest.json`.
+
+## Config Guidelines
+
+- Use `fit.backend: mcmc` or omit the backend for the maintained MCMC path.
+- Keep media spend nonnegative.
+- Use explicit panel dimensions under `dimensions.panel` for panel configs.
+- Keep demo optimisation disabled unless a deliberate budget block is supplied.
+- Prefer `runme.jl ... --quick` for local demo checks and increase sampler
+  settings only when inspecting modelling behaviour.
+
+## Local Checks
+
+Use focused checks for routine development:
 
 ```bash
+make format-check
 make smoke
-```
-
-That command runs the synthetic toy model and fixed-schema CSV quickstart with
-small MCMC settings, verifies compact summaries in temporary directories, and
-does not persist generated artifacts in the repository. It is not release
-evidence, not a benchmark, not a reference-parity claim, and not a broader
-support expansion.
-
-For the bundled Epsilon-native config-driven demo files, maintainers can run:
-
-```bash
-julia --project=. runme.jl data/demo/timeseries/config.yml --quick
-```
-
-or run the maintained smoke check across all bundled demo configs:
-
-```bash
 make smoke-demo-configs
 ```
 
-The root `runme.jl` runner delegates to `pipeline_main` and keeps
-`dataset.csv` / `holidays.csv` paths owned by the config bundle. The runner is
-the polished terminal surface: it prints the Epsilon header, run context,
-stage progress bars, plotting status, and structured final summaries while
-leaving the programmatic API unchanged. It writes stage-local PNG plots by
-default when CairoMakie is active and supports `--no-plots` for headless
-non-plot runs. The smoke command runs the shipped time-series demo config
-through a tiny headless
-pipeline, including its default validation stage, and checks the panel demo
-configs through config/data/model-spec construction without panel MCMC
-sampling. These commands are local workflow evidence only, not release evidence
-or a benchmark.
-
-## Supported v1 Surface
-
-| Surface | Supported Rows | Notes |
-|---|---|---|
-| MMM feature bundles | `TS-00` through `TS-05`, `P-00` | Frozen at Phase 5 closeout |
-| Inference | `INF-TS-MCMC`, `INF-P-MCMC` | Epsilon permanently supports only MCMC/Turing fitting |
-| Post-model | `POST-TS-MCMC`, `POST-P-MCMC` | Deterministic replay from grouped MCMC `InferenceResults`; post-model result arrays have validated axis-order contracts, and panel response/metric curves are panel-cell/channel artifacts with explicit `delta_grid` historical-scaling semantics |
-| Optimization | `OPT-TS-MCMC`, `OPT-P-MCMC` | Fixed-budget `:total_response` only; panel optimization allocates channel totals and preserves historical within-channel panel-cell spend shares |
-| Scenario planner | solved time-series and bounded panel optimization results; evaluated time-series manual allocations; local scenario-store artifacts | Non-UI comparison tables over existing optimizer outputs and existing time-series response surfaces; typed current, manual-allocation, and fixed-budget optimized scenario specs are supported. Compatible evaluated manual scenarios can be compared with one solved optimization result, and existing `ScenarioPlanResult` tables can be written to a local typed `scenario_store.jls` payload with CSV inspection sidecars. The store artifact is Epsilon/Julia-version-bound and should not be treated as a portable or untrusted interchange format. Panel manual allocation, automatic scenario refits, future-path simulation, pipeline scenario-store emission, hosted/background stores, and Dash workflows remain deferred |
-| Pipeline | bounded time-series MCMC Stage `00`-`70` path, including optional Stage `05` prior-sensitivity planning; panel Stage `00` metadata, optional Stage `05` prior-sensitivity planning, Stage `20` fit, Stage `30` assessment, Stage `40` decomposition, Stage `50` diagnostics, Stage `60` response-curve path, and explicitly enabled Stage `70` historical-share optimization | `run_pipeline(config)` and `epsilon run config.yml`, with stage-local plot artifacts; Phase 14 validates reference-compatible Stage `00` through Stage `70` artifact keys against an exported reference `timeseries` pipeline contract, and validates `geo_panel` / `geo_brand_panel` Stage `00`-`60` keys plus `geo_panel` and `geo_brand_panel` Stage `70` historical-share optimization artifacts against exported reference panel contracts where semantics match. Stage `05` writes resolved prior-sensitivity scenario configs and human/LLM-safe manifests; it does not refit every scenario automatically. Julia-native serialized artifacts are used where the reference implementation uses PyMC/NetCDF-specific files |
-| Plotting | grouped diagnostics, time-series post-model, channel-level time-series and panel optimization, deterministic plot bundle | Lazy CairoMakie extension; load `using Epsilon, CairoMakie` for direct Makie `Figure` plots and `write_plot_bundle(run)`. The repo-local `runme.jl` runner loads CairoMakie by default for stage-local PNG artifacts |
-
-## Explicit Unsupported Rows
-
-The release gate keeps the unsupported surface explicit:
-
-- `seasonality.type = "hsgp"`
-- panel seasonality, trend, events, and richer controls
-- variational fitting or a variational inference backend; the former VI surface
-  is permanently retired
-- variational-shaped YAML inputs, which are rejected rather than treated as a
-  configurable backend
-- panel Stage `35` holdout validation; time-series blocked holdout validation
-  remains supported, but panel holdout semantics are deferred unless a concrete
-  methodological requirement is added
-- free channel-by-panel allocation, panel-total optimization bounds, and
-  fairness/weighted panel optimization objectives
-- automatic fitting/comparison of every prior-sensitivity scenario; Stage `05`
-  deliberately writes scenario plans for deliberate follow-on runs
-- panel manual-allocation evaluation
-- scenario planner simulation over arbitrary future spend paths, background
-  execution, hosted scenario stores, pipeline scenario-store emission, and
-  interactive scenario-planner UI workflows
-- panel post-model plotting beyond contribution/decomposition summary artifacts
-- unsupported panel pipeline stages beyond Stage `00` through Stage `60` and
-  explicitly enabled Stage `70` historical-share optimization
-- VI trace plots
-- NetCDF / ArviZ-native grouped export
-- Dash parity, AI advisor, or interactive dashboard/reporting surfaces
-
-## Validation Contract
-
-Phase 12 does not widen the reference-backed row set. The guaranteed
-reference-backed row remains:
-
-- `VAL-TS-00-MCMC`
-
-`VAL-TS-04-MCMC` now runs on Epsilon’s coherent native automatic holiday path.
-Unless Epsilon later ships a separate compatibility mode with matching Prophet
-semantics, this row should remain a bounded Epsilon-native/reference row rather
-than a reference-backed row.
-
-All other rows remain bounded Epsilon-only validation rows unless Phase 12
-changes that explicitly in docs and tests.
-
-Phase 11 uses one explicit release gate with two kinds of checks.
-
-### Reference-Backed Rows
-
-These rows are validated against compact committed Abacus-derived fixtures:
-
-- `VAL-TS-00-MCMC`
-
-The final harness checks:
-
-- exact dataset and config metadata identity
-- posterior parameter identity
-- posterior-predictive summary parity on the observed design
-- bounded schema / budget-consistency checks for the compact post-model and
-  optimization summaries
-
-Detailed numeric comparison for the transform layer and the retained Phase 7 / 8
-post-model and optimization surfaces stays on the committed phase-local fixture
-gates. These checks justify parity claims only where the semantics of the
-underlying Epsilon surface still genuinely match the reference implementation.
-
-### Bounded Epsilon-Only Rows
-
-These rows are validated through explicit contract-regression checks rather
-than false reference-parity claims:
-
-- `VAL-TS-04-MCMC`
-- `VAL-P-00-MCMC`
-- `VAL-PIPE-TS-00-MCMC`
-- bounded plotting support
-
-The release-gate harness exercises `VAL-TS-04-MCMC` through the repaired
-automatic-holiday grouped inference / post-model / optimization contract,
-and the bounded plotting row through `write_plot_bundle(run)` on a successful
-pipeline run. Historical variational harness work was superseded by the Phase
-38 removal and is not part of the release gate.
-
-### Maintainer Commands
+Use the full suite only when a broad local gate is needed:
 
 ```bash
-julia --project=. test/validation/runtests.jl
 make test
 make docs
 ```
-
-Fixture regeneration commands remain documented in
-`test/fixtures/abacus/README.md`.
-
-## Benchmarks
-
-The benchmark methodology and published reference-machine results live in the
-[Benchmarks](benchmarks.md) page and in the committed `benchmark/results/`
-artifacts.
-
-Phase 11 does not require a universal faster-than-reference claim. The benchmark
-gate is honest publication of:
-
-- workload identities
-- run protocol
-- machine / environment metadata
-- measured results for the frozen v1 workload matrix
-
-The current committed benchmark snapshot records `git_dirty = true` and a
-row-specific pipeline exception: `B-W4-PIPELINE` inherits `target_accept = 0.8`
-from the frozen pipeline fixture YAML while the direct workflow rows use the
-explicit `0.85` benchmark override. Maintainers should rerun the frozen suite
-from a clean tagged worktree for the final release artifact.
-
-## Phase 11 Infrastructure Checklist
-
-- [x] The frozen Phase 5 feature matrix is documented with supported and
-  unsupported rows.
-- [x] The Phase 6 inference matrix is documented; Phase 38 permanently retires
-  variational inference and keeps MCMC/Turing as the sole fitting path.
-- [x] The Phase 7 post-model contract is closed on grouped `InferenceResults`.
-- [x] The Phase 8 fixed-budget optimization surface is documented with explicit
-  unsupported constraint/objective families.
-- [x] The Phase 9 pipeline contract is closed on the bounded time-series MCMC
-  Stage `00`-`70` path, including stage-local plot artifacts.
-- [x] The Phase 10 plotting surface is documented as a bounded optional
-  CairoMakie extension with deterministic static bundle export.
-- [x] The Phase 11 release-gate harness passes locally.
-- [x] `make test` passes on the current repo state.
-- [x] `make docs` passes on the current repo state.
-- [x] The frozen benchmark workload matrix is documented and the committed
-  reference-machine snapshot is published.
-- [x] Known unsupported rows and residual limitations are explicit in release
-  docs.
-
-## Phase 12 Closeout Status
-
-The checklist above records what Phase 11 infrastructure landed. The additional
-Phase 12 closeout work has now rerun the final validation harness and
-reconciled the release-facing methodology claim.
-
-Closed Phase 12 items:
-
-- [x] The guaranteed reference-backed row `VAL-TS-00-MCMC` fits in the same
-  scaling/model space as the reference implementation.
-- [x] Original-scale predictive and contribution outputs are reconstructed on
-  top of that repaired scaled-space contract.
-- [x] Stage 60 exposes the repaired comparable curve families:
-  forward-pass, saturation-only, and adstock.
-- [x] Stage 70 optimization is revalidated against the repaired comparable
-  curve/model-space contract.
-- [x] The shipped time-series demo and holiday/trend/seasonality design are
-  reconciled with the final bounded methodology decision.
-- [x] Release-facing docs can truthfully distinguish repaired reference-backed
-  rows from Epsilon-native rows.
-
-Release preparation may resume from this narrowed claim set. Maintainers should
-still rerun the frozen benchmark suite from a clean worktree before publishing
-an actual release artifact because the current committed benchmark snapshot
-still records `git_dirty = true`.
-
-## Known Residual Limitations
-
-Even after Phase 12, the bounded v1 surface remains intentionally smaller than
-the full reference scope:
-
-- HSGP is not yet implemented on the bounded v1 surface.
-- The panel path can represent one or more declared panel dimensions through a
-  deterministic flat panel-cell axis, with hierarchical intercept offsets.
-- Panel contribution/decomposition replay is covered for the `geo_panel` and
-  `geo_brand_panel` gates. Multidimensional panel contribution summaries use a
-  deterministic flat `panel` key plus declared coordinate columns. Panel
-  response, saturation, adstock, and marketing metrics use the same flat
-  panel-cell axis and require an explicit `delta_grid`. Panel optimization is
-  implemented only as channel-total allocation with fixed historical
-  within-channel panel shares; arbitrary channel-by-panel allocation is not
-  implied. Panel Stage `35` holdout validation is deferred for v1 rather than
-  added for parity theater.
-- Variational inference is permanently retired; no compatibility API or runtime
-  backend is retained.
-- The pipeline remains time-series-first and MCMC-only.
-- Plotting is optional, static, and CairoMakie-based rather than a replicated
-  Dash product layer; Dash/dashboard parity remains explicitly deferred.
-
-These are documented release boundaries, not hidden follow-up tasks inside the
-closed v1 gate.

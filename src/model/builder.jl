@@ -321,7 +321,7 @@ panel_axis(spec::MMMModelSpec) = panel_axis(spec.coordinate_metadata)
 """
     _compute_scales(data::MMMData)
 
-Compute Abacus-style max scaling factors for channel and target data.
+Compute max scaling factors for channel and target data.
 `channel_scale[j] = max(channels[:, j])` over the date dimension.
 `target_scale   = max(target)` over the date dimension.
 Zero or negative scales are replaced with 1.0 to avoid division by zero.

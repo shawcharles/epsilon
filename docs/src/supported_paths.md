@@ -7,8 +7,8 @@ roundtrips, the local supported-path smoke command, and the local demo-config
 smoke command.
 
 These workflows are maintenance and teaching evidence for the supported
-Turing/NUTS MCMC path. They are not benchmarks, release evidence, reference-parity
-claims, dashboard workflows, or a broader ingestion API.
+Turing/NUTS MCMC path. They are not benchmarks, release evidence, dashboard
+workflows, or a broader ingestion API.
 
 ## Toy MCMC Example
 
@@ -193,8 +193,8 @@ and verifies `status=fit` plus `backend=turing`. It removes its temporary
 outputs when it exits.
 
 `make smoke` is useful before or after small supported-path changes. It is not
-a benchmark, not release evidence, not a reference-parity gate, and not a
-replacement for focused tests when code behavior changes.
+a benchmark, not release evidence, and not a replacement for focused tests when
+code behaviour changes.
 
 For a local check of the canonical Epsilon-native config-driven demo bundles
 under `data/demo/`:
@@ -219,5 +219,4 @@ checks. It does not run panel MCMC sampling.
 `make smoke-demo-configs` writes only to temporary directories by default. Set
 `KEEP_SMOKE_OUTPUTS=1` when inspecting the generated run directory manually.
 This command is local workflow evidence only; it is not a benchmark, release
-gate, reference-parity claim, dashboard workflow, or substitute for focused
-tests.
+gate, dashboard workflow, or substitute for focused tests.

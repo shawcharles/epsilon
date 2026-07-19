@@ -1,8 +1,8 @@
 # Public API
 
 This page inventories the symbols currently exported by `Epsilon`. It is a
-support-status map, not a claim of broad upstream package or API parity. Use
-the validation ledger for method-specific evidence.
+support-status map for a pre-release library, not a promise that every exported
+symbol has the same stability level.
 
 Support bands:
 
@@ -11,12 +11,9 @@ Support bands:
 - `compatibility`: retained for migration, legacy naming, or Julia package
   conventions.
 - `scaffolded`: public because implementation exists, but broader support or
-  reference-parity evidence is incomplete.
+  API stability is still being reviewed.
 
-Support status is the current documented scope. Lifecycle triage is tracked
-separately in `.planning/API-EXPORT-TRIAGE.md`; it records whether an export is
-an intended public candidate, bounded surface, compatibility surface, or
-pre-v1 review item, and it is not a v1 API freeze.
+Support status is the current documented scope, not a v1 API freeze.
 
 ## Inventory
 
@@ -235,16 +232,213 @@ methods are loaded through the optional `EpsilonCairoMakieExt` extension. Use
 ## Reading The Table
 
 Several domains are intentionally still `scaffolded`. That label means the
-symbol is exported today and has some implementation behind it; it does not
-mean that the whole corresponding reference area has been proven equivalent.
+symbol is exported today and has implementation behind it, but the API may
+still change before a stable release.
 
-The strongest parity evidence is concentrated in lower-level transforms and in
-the bounded post-model result surfaces already tracked in the parity ledger.
 Panel, calibration, scenario-planner, pipeline, optimization, inference, and
-configuration entries should be read with their documented scope limits.
+configuration entries should be read with the scope limits documented in
+[Support Boundaries](release.md).
 
-## Time-Varying Media Configuration
+## Docstring Reference
 
 ```@docs
+Epsilon.AbstractMMMModel
+Epsilon.AbstractModel
+Epsilon.AbstractRegressionModel
+Epsilon.AbstractScenarioSpec
+Epsilon.AdstockCurveResults
+Epsilon.After
+Epsilon.Before
+Epsilon.BudgetOptimizationResult
+Epsilon.CalibrationStepConfig
+Epsilon.ContributionResults
+Epsilon.ConvMode
+Epsilon.ConvergenceIssue
+Epsilon.ConvergenceReport
+Epsilon.ConvergenceWarning
+Epsilon.ConvergenceWarnings
+Epsilon.CostPerTargetCalibrationPayload
+Epsilon.CostPerTargetCalibrationRows
+Epsilon.CurrentScenarioSpec
+Epsilon.DecompositionResults
+Epsilon.EpsilonPrior
+Epsilon.FinnishHorseshoePrior
+Epsilon.FixedBudgetOptimizedScenarioSpec
+Epsilon.HorseshoePrior
+Epsilon.InferenceResults
+Epsilon.InferenceSampleStats
+Epsilon.LaplacePrior
+Epsilon.LiftTestCalibrationPayload
+Epsilon.LiftTestCalibrationRows
+Epsilon.LogNormalPrior
+Epsilon.MMMCalibrationSpec
+Epsilon.MMMData
+Epsilon.MMMModelSpec
+Epsilon.ManualAllocationScenarioSpec
+Epsilon.ManualScenarioEvaluationResult
+Epsilon.MaskedPrior
+Epsilon.MaxAbsScaleChannels
+Epsilon.MaxAbsScaleTarget
+Epsilon.MaxAbsScaler
+Epsilon.MetricResults
+Epsilon.ModelArtifactMetadata
+Epsilon.ModelConfig
+Epsilon.ModelConfigError
+Epsilon.ModelCoordinateMetadata
+Epsilon.ModelDiagnostics
+Epsilon.ModelFitState
+Epsilon.ModelResults
+Epsilon.NonMonotonicError
+Epsilon.Overlap
+Epsilon.PanelAxis
+Epsilon.PanelBudgetOptimizationResult
+Epsilon.PanelCoordinate
+Epsilon.PanelMMM
+Epsilon.PanelMMMData
+Epsilon.ParameterDiagnostics
+Epsilon.PipelineRunConfig
+Epsilon.PipelineRunResult
+Epsilon.PipelineStageRecord
+Epsilon.PipelineValidationResult
+Epsilon.R2D2Prior
+Epsilon.ResponseCurveResults
+Epsilon.SamplerConfig
+Epsilon.SamplerDiagnostics
+Epsilon.SamplerWarning
+Epsilon.SamplerWarnings
+Epsilon.SaturationCurveResults
+Epsilon.Scaled
+Epsilon.ScenarioDataArraySpec
+Epsilon.ScenarioPlanResult
+Epsilon.ScenarioStoreArtifact
+Epsilon.SkewStudentT
+Epsilon.StandardScaler
+Epsilon.StandardizeControls
+Epsilon.TimeSeriesCalibrationInput
+Epsilon.TimeSeriesMMM
 Epsilon.TimeVaryingMediaConfig
+Epsilon.UnalignedValuesError
+Epsilon.WeibullType
+Epsilon.active_count
+Epsilon.adstock_curve_plot
+Epsilon.adstock_curve_results
+Epsilon.assert_monotonic_lift
+Epsilon.assert_scenario_store_compatible
+Epsilon.batched_convolution
+Epsilon.binomial_adstock
+Epsilon.budget_audit_table
+Epsilon.budget_impact_table
+Epsilon.budget_optimization_plot
+Epsilon.build_cost_per_target_calibration_payload
+Epsilon.build_lift_test_calibration_payload
+Epsilon.build_model
+Epsilon.centered_logistic_saturation
+Epsilon.contribution_area_plot
+Epsilon.contribution_plot
+Epsilon.contribution_results
+Epsilon.convergence_report
+Epsilon.convergence_warnings
+Epsilon.cost_per_target_penalties
+Epsilon.cost_per_target_total_penalty
+Epsilon.decomposition_plot
+Epsilon.decomposition_results
+Epsilon.delayed_adstock
+Epsilon.deserialize_model_config
+Epsilon.deserialize_prior
+Epsilon.epsilon_theme
+Epsilon.epsilon_version
+Epsilon.evaluate_manual_scenario
+Epsilon.exact_row_indices
+Epsilon.expand_masked_values
+Epsilon.finnish_horseshoe_coefficients
+Epsilon.fit!
+Epsilon.fit_transform!
+Epsilon.fourier_features
+Epsilon.gamma_shape_scale
+Epsilon.geometric_adstock
+Epsilon.has_convergence_issues
+Epsilon.has_convergence_warnings
+Epsilon.has_numerical_errors
+Epsilon.has_sampler_warnings
+Epsilon.hill_function
+Epsilon.horseshoe_coefficients
+Epsilon.inference_results
+Epsilon.instantiate_distribution
+Epsilon.inverse_transform
+Epsilon.lift_test_estimated_lift
+Epsilon.lift_test_estimated_lift_ad
+Epsilon.lift_test_gamma_distribution
+Epsilon.lift_test_likelihood_terms
+Epsilon.lift_test_log_density
+Epsilon.lift_test_payload_log_density
+Epsilon.load_inference_results
+Epsilon.load_model
+Epsilon.load_model_config
+Epsilon.load_public_config
+Epsilon.load_results
+Epsilon.load_sampler_config
+Epsilon.load_scenario_store
+Epsilon.logistic_saturation
+Epsilon.max_abs_scale_channel_data
+Epsilon.max_abs_scale_target_data
+Epsilon.metric_results
+Epsilon.michaelis_menten
+Epsilon.model_config_from_dict
+Epsilon.model_diagnostics
+Epsilon.model_results
+Epsilon.nobs
+Epsilon.normalize_channel_columns
+Epsilon.npanel_observations
+Epsilon.npanels
+Epsilon.ntime
+Epsilon.observed_fitted_plot
+Epsilon.optimize_budget
+Epsilon.panel_axes
+Epsilon.panel_axis
+Epsilon.panel_coordinate
+Epsilon.panel_coordinates
+Epsilon.pipeline_main
+Epsilon.posterior_density_plot
+Epsilon.predict
+Epsilon.prior_posterior_plot
+Epsilon.prior_predict
+Epsilon.r2d2_coefficients
+Epsilon.r2d2_variance_weights
+Epsilon.regularized_local_scales
+Epsilon.residual_diagnostics_plot
+Epsilon.response_curve_plot
+Epsilon.response_curve_results
+Epsilon.run_pipeline
+Epsilon.sampler_config_from_dict
+Epsilon.sampler_diagnostics
+Epsilon.sampler_warnings
+Epsilon.saturation_curve_plot
+Epsilon.saturation_curve_results
+Epsilon.save_inference_results
+Epsilon.save_model
+Epsilon.save_results
+Epsilon.scale_channel_lift_measurements
+Epsilon.scale_lift_measurements
+Epsilon.scale_target_for_lift_measurements
+Epsilon.scenario_plan
+Epsilon.scenario_store_plan
+Epsilon.standardize_control_data
+Epsilon.summary_table
+Epsilon.tanh_saturation
+Epsilon.trace_plot
+Epsilon.transform
+Epsilon.validate_calibration_step_config
+Epsilon.validate_channel_values
+Epsilon.validate_column_indices
+Epsilon.validate_cost_per_target_calibration_payload
+Epsilon.validate_lift_test_calibration_payload
+Epsilon.validate_lift_test_columns
+Epsilon.validate_mmm_data
+Epsilon.validate_model_config
+Epsilon.validate_panel_mmm_data
+Epsilon.validate_sampler_config
+Epsilon.validate_target_data
+Epsilon.weibull_adstock
+Epsilon.write_plot_bundle
+Epsilon.write_scenario_store
 ```

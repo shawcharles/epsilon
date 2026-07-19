@@ -25,7 +25,7 @@ upper_95`, and metric rows contain `channel,spend,metric,mean,lower_5,upper_95`.
 with `ArgumentError` messages that name the rejected option.
 
 This is a fast supported MCMC smoke demo only. It is not release evidence, not
-a benchmark, not a reference-parity claim, and not a broader support expansion.
+a benchmark, and not a broader support expansion.
 
 For the canonical supported local workflow, including compact-output
 inspection, trusted-local fitted-model and grouped-results roundtrips, and

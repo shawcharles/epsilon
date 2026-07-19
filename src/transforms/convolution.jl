@@ -127,8 +127,7 @@ function _source_index(
     elseif mode === Before
         return t + lag_length - lag
     else
-        # PyTensor's convolve1d orientation makes Abacus's lags ÷ 2 left
-        # padding equivalent to this source-index shift for even kernels.
+        # Centered overlap shifts the source index left for even kernels.
         return t + ((lag_length - 1) ÷ 2) - lag + 1
     end
 end

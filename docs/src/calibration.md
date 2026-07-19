@@ -2,8 +2,7 @@
 
 Calibration support is intentionally bounded. Epsilon currently supports
 calibration likelihood terms for `TimeSeriesMMM` fitted with MCMC through
-`fit!`; the implementation is fixture-backed against comparable reference
-preprocessing and log-density semantics.
+`fit!`.
 
 ## Supported Surface
 
@@ -24,9 +23,9 @@ Lift-test calibration is computed in scaled model space as
 saturation only. Adstock is not inserted into the lift-test calibration term.
 
 Cost-per-target calibration uses caller-supplied gathered, target, and `sigma`
-values, scaled with the model target scale, and adds the reference-style soft
-penalty. It does not infer calibration values from posterior predictive,
-optimization, or pipeline artifacts.
+values, scaled with the model target scale, and adds a soft penalty to the
+model log-joint. It does not infer calibration values from posterior
+predictive, optimization, or pipeline artifacts.
 
 ## YAML Configuration
 
@@ -80,50 +79,16 @@ The following remain outside the current supported surface:
   lift-test calibration.
 - Automatic generation of calibration rows from lift-test artifacts,
   posterior-predictive outputs, optimization outputs, or pipeline artifacts.
-- Dash/UI workflows and AI-advisor behaviour.
+- Dashboard/UI workflows and AI-advisor behaviour.
 
 Unsupported calibration paths fail closed with explicit errors rather than
 silently dropping calibration.
 
 ## Validation Status
 
-The calibration/lift-test ledger row remains `scaffolded`, not `ported`.
-Epsilon has fixture-backed evidence for the bounded `TimeSeriesMMM` MCMC slice,
-including combined lift-test plus cost-per-target model integration. That does
-not imply broad reference calibration parity across panel models, VI, broader
-saturation families, hosted/UI workflows, or AI-advisor behaviour.
+The supported calibration path is the bounded `TimeSeriesMMM` MCMC slice,
+including combined lift-test plus cost-per-target model integration. This does
+not imply support for panel models, variational inference, broader saturation
+families, hosted/UI workflows, or AI-advisor behaviour.
 
-```@docs
-Epsilon.CalibrationStepConfig
-Epsilon.validate_calibration_step_config
-Epsilon.LiftTestCalibrationRows
-Epsilon.CostPerTargetCalibrationRows
-Epsilon.TimeSeriesCalibrationInput
-Epsilon.MMMCalibrationSpec
-Epsilon.UnalignedValuesError
-Epsilon.NonMonotonicError
-Epsilon.exact_row_indices
-Epsilon.validate_lift_test_columns
-Epsilon.assert_monotonic_lift
-Epsilon.scale_channel_lift_measurements
-Epsilon.scale_target_for_lift_measurements
-Epsilon.scale_lift_measurements
-Epsilon.gamma_shape_scale
-Epsilon.lift_test_gamma_distribution
-Epsilon.lift_test_estimated_lift
-Epsilon.lift_test_estimated_lift_ad
-Epsilon.lift_test_likelihood_terms
-Epsilon.lift_test_log_density
-Epsilon.lift_test_payload_log_density
-Epsilon.LiftTestCalibrationPayload
-Epsilon.validate_lift_test_calibration_payload
-Epsilon.build_lift_test_calibration_payload
-Epsilon.CostPerTargetCalibrationPayload
-Epsilon.validate_cost_per_target_calibration_payload
-Epsilon.build_cost_per_target_calibration_payload
-Epsilon.cost_per_target_penalties
-Epsilon.cost_per_target_total_penalty
-Epsilon._validate_calibration_steps_and_rows
-Epsilon._build_calibration_input
-Epsilon._resolve_calibration_spec
-```
+Calibration docstrings are included in the [Public API](api.md) reference.

@@ -66,8 +66,8 @@ abstract type AbstractScenarioSpec end
 Describe the baseline/current scenario in a non-UI scenario-planner comparison.
 
 Dates may be `Date`, ISO date strings, or `nothing`. When `scenario_id` is not
-provided it is deterministically slugified from `name`, matching Abacus's
-scenario-store convention.
+provided it is deterministically slugified from `name` so scenario artifacts
+have stable local identifiers.
 """
 struct CurrentScenarioSpec <: AbstractScenarioSpec
     name::String
@@ -239,12 +239,12 @@ end
 """
     ScenarioPlanResult
 
-Abacus-like non-UI scenario comparison tables derived from a solved Epsilon
-budget optimization result.
+Non-UI scenario comparison tables derived from a solved Epsilon budget
+optimization result.
 
-`totals`, `channels`, `allocations`, and `metadata` mirror the reusable
-business-planning store shape from Abacus. `channel_panel_allocations` is empty
-for time-series results and populated for bounded panel historical-share
+`totals`, `channels`, `allocations`, and `metadata` provide the reusable
+business-planning store shape. `channel_panel_allocations` is empty for
+time-series results and populated for bounded panel historical-share
 optimization results.
 
 Spend and allocation table columns are copied from existing optimizer or manual
