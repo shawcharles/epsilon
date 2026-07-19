@@ -201,6 +201,7 @@ function instantiate_distribution(prior::R2D2Prior)
 end
 
 function _positive_parameter(value, label::AbstractString)
-    Float64(value) > 0 || throw(ArgumentError("$label must be positive"))
+    value isa Real && isfinite(value) && value > zero(value) ||
+        throw(ArgumentError("$label must be finite and positive"))
     return nothing
 end

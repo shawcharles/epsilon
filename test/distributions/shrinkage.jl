@@ -9,6 +9,7 @@ using Test
     @test coeffs ≈ [0.25, -1.5] atol = 1.0e-12 rtol = 1.0e-12
 
     @test_throws ArgumentError HorseshoePrior(; scale = 0.0)
+    @test_throws ArgumentError HorseshoePrior(; scale = Inf)
     @test_throws ArgumentError instantiate_distribution(prior)
 end
 
@@ -26,6 +27,9 @@ end
     @test coeffs ≈ 1.5 .* [lambda_tilde[1] * 2.0, -lambda_tilde[2] * 2.0] atol = 1.0e-12 rtol = 1.0e-12
 
     @test_throws ArgumentError FinnishHorseshoePrior(; slab_scale = -1.0)
+    @test_throws ArgumentError FinnishHorseshoePrior(; scale = Inf)
+    @test_throws ArgumentError FinnishHorseshoePrior(; slab_scale = Inf)
+    @test_throws ArgumentError FinnishHorseshoePrior(; slab_df = Inf)
     @test_throws ArgumentError instantiate_distribution(prior)
 end
 
@@ -40,6 +44,8 @@ end
     @test coeffs ≈ [2.0 * sqrt(4.5), -sqrt(13.5)] atol = 1.0e-12 rtol = 1.0e-12
 
     @test_throws ArgumentError R2D2Prior(; mean_R2 = 1.2)
+    @test_throws ArgumentError R2D2Prior(; concentration = Inf)
+    @test_throws ArgumentError R2D2Prior(; scale = Inf)
     @test_throws ArgumentError r2d2_variance_weights(prior, [-1.0, 1.0], 2.0)
     @test_throws ArgumentError r2d2_variance_weights(prior, [0.0, 0.0], 2.0)
     @test_throws ArgumentError r2d2_variance_weights(prior, [1.0, 3.0], -2.0)

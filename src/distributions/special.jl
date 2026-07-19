@@ -14,7 +14,7 @@ struct Scaled{D <: ContinuousUnivariateDistribution, T <: Real} <: ContinuousUni
     scale::T
 
     function Scaled(base::D, scale::T) where {D <: ContinuousUnivariateDistribution, T <: Real}
-        scale > zero(scale) || throw(ArgumentError("scale must be positive"))
+        _require_finite_positive(scale, "scale")
         return new{D, T}(base, scale)
     end
 end
@@ -32,8 +32,8 @@ struct SkewStudentT{T <: Real} <: ContinuousUnivariateDistribution
     alpha::T
 
     function SkewStudentT(nu::T, mu::T, sigma::T, alpha::T) where {T <: Real}
-        nu > zero(nu) || throw(ArgumentError("nu must be positive"))
-        sigma > zero(sigma) || throw(ArgumentError("sigma must be positive"))
+        _require_finite_positive(nu, "nu")
+        _require_finite_positive(sigma, "sigma")
         return new{T}(nu, mu, sigma, alpha)
     end
 end
@@ -160,8 +160,8 @@ function instantiate_distribution(prior::LogNormalPrior)
 
     mean_float = Float64(mean_value)
     std_float = Float64(std_value)
-    mean_float > 0 || throw(ArgumentError("LogNormalPrior mean must be positive"))
-    std_float > 0 || throw(ArgumentError("LogNormalPrior std must be positive"))
+    _require_finite_positive(mean_float, "LogNormalPrior mean")
+    _require_finite_positive(std_float, "LogNormalPrior std")
 
     mu_log = log(mean_float^2 / sqrt(mean_float^2 + std_float^2))
     sigma_log = sqrt(log(1 + std_float^2 / mean_float^2))
@@ -175,7 +175,13 @@ function instantiate_distribution(prior::LaplacePrior)
         throw(ArgumentError("LaplacePrior mu must be scalar to instantiate a Distributions.jl object"))
     _is_scalar_like(b) ||
         throw(ArgumentError("LaplacePrior b must be scalar to instantiate a Distributions.jl object"))
+    _require_finite_positive(b, "LaplacePrior b")
     return Laplace(Float64(mu), Float64(b))
+end
+
+function _require_finite_positive(value::Real, label::AbstractString)
+    isfinite(value) && value > zero(value) || throw(ArgumentError("$label must be finite and positive"))
+    return nothing
 end
 
 function _special_prior_to_dict(class_name::AbstractString, prior::AbstractSpecialPrior)

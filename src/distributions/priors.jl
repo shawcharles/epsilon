@@ -169,6 +169,7 @@ function instantiate_distribution(prior::EpsilonPrior)
         scale = _required_parameter(params, distribution, :scale)
         _is_nested_distribution_parameter(scale) &&
             throw(ArgumentError("Scaled scale cannot be a nested prior parameter"))
+        scale = _positive_finite_scalar(scale, distribution, :scale)
         base_distribution = _resolve_distribution_parameter(base)
         base_distribution isa ContinuousUnivariateDistribution ||
             throw(ArgumentError("Scaled base must be a continuous univariate distribution"))
@@ -176,9 +177,9 @@ function instantiate_distribution(prior::EpsilonPrior)
     elseif distribution == "SkewStudentT"
         _has_nested_distribution_parameters(params) &&
             throw(ArgumentError("cannot instantiate SkewStudentT with nested prior parameters"))
-        nu = _required_parameter(params, distribution, :nu)
+        nu = _required_positive_finite_parameter(params, distribution, :nu)
         mu = _optional_parameter(params, 0.0, :mu)
-        sigma = _optional_parameter(params, 1.0, :sigma)
+        sigma = _optional_positive_finite_parameter(params, 1.0, distribution, :sigma)
         alpha = _optional_parameter(params, 0.0, :alpha)
         return SkewStudentT(nu, mu, sigma, alpha)
     end
@@ -188,53 +189,53 @@ function instantiate_distribution(prior::EpsilonPrior)
 
     if distribution == "Normal"
         mu = _optional_parameter(params, 0.0, :mu)
-        sigma = _required_parameter(params, distribution, :sigma)
+        sigma = _required_positive_finite_parameter(params, distribution, :sigma)
         return Normal(mu, sigma)
     elseif distribution == "HalfNormal"
-        sigma = _required_parameter(params, distribution, :sigma)
+        sigma = _required_positive_finite_parameter(params, distribution, :sigma)
         return truncated(Normal(0.0, sigma), 0.0, Inf)
     elseif distribution == "Beta"
-        alpha = _required_parameter(params, distribution, :alpha)
-        beta = _required_parameter(params, distribution, :beta)
+        alpha = _required_positive_finite_parameter(params, distribution, :alpha)
+        beta = _required_positive_finite_parameter(params, distribution, :beta)
         return Beta(alpha, beta)
     elseif distribution == "Gamma"
-        alpha = _required_parameter(params, distribution, :alpha)
-        beta = _required_parameter(params, distribution, :beta, :rate)
+        alpha = _required_positive_finite_parameter(params, distribution, :alpha)
+        beta = _required_positive_finite_parameter(params, distribution, :beta, :rate)
         return Gamma(alpha, inv(beta))
     elseif distribution == "Exponential"
-        lam = _required_parameter(params, distribution, :lam, :lambda, :rate)
+        lam = _required_positive_finite_parameter(params, distribution, :lam, :lambda, :rate)
         return Exponential(inv(lam))
     elseif distribution == "Laplace"
         mu = _optional_parameter(params, 0.0, :mu)
-        b = _required_parameter(params, distribution, :b)
+        b = _required_positive_finite_parameter(params, distribution, :b)
         return Laplace(mu, b)
     elseif distribution == "LogNormal"
         mu = _optional_parameter(params, 0.0, :mu)
-        sigma = _required_parameter(params, distribution, :sigma)
+        sigma = _required_positive_finite_parameter(params, distribution, :sigma)
         return LogNormal(mu, sigma)
     elseif distribution == "Uniform"
         lower = _required_parameter(params, distribution, :lower)
         upper = _required_parameter(params, distribution, :upper)
         return Uniform(lower, upper)
     elseif distribution == "Weibull"
-        alpha = _required_parameter(params, distribution, :alpha)
-        beta = _required_parameter(params, distribution, :beta)
+        alpha = _required_positive_finite_parameter(params, distribution, :alpha)
+        beta = _required_positive_finite_parameter(params, distribution, :beta)
         return Weibull(alpha, beta)
     elseif distribution == "Cauchy"
         location = _optional_parameter(params, 0.0, :mu, :alpha)
-        scale = _required_parameter(params, distribution, :beta, :sigma)
+        scale = _required_positive_finite_parameter(params, distribution, :beta, :sigma)
         return Cauchy(location, scale)
     elseif distribution == "HalfCauchy"
-        scale = _required_parameter(params, distribution, :beta, :sigma)
+        scale = _required_positive_finite_parameter(params, distribution, :beta, :sigma)
         return truncated(Cauchy(0.0, scale), 0.0, Inf)
     elseif distribution == "StudentT"
-        nu = _required_parameter(params, distribution, :nu)
+        nu = _required_positive_finite_parameter(params, distribution, :nu)
         mu = _optional_parameter(params, 0.0, :mu)
-        sigma = _optional_parameter(params, 1.0, :sigma)
+        sigma = _optional_positive_finite_parameter(params, 1.0, distribution, :sigma)
         return mu + sigma * TDist(nu)
     elseif distribution == "TruncatedNormal"
         mu = _optional_parameter(params, 0.0, :mu)
-        sigma = _required_parameter(params, distribution, :sigma)
+        sigma = _required_positive_finite_parameter(params, distribution, :sigma)
         lower = _optional_parameter(params, -Inf, :lower)
         upper = _optional_parameter(params, Inf, :upper)
         return truncated(Normal(mu, sigma), lower, upper)
@@ -383,6 +384,32 @@ function _optional_parameter(parameters::AbstractDict{Symbol, Any}, default, nam
         haskey(parameters, name) && return parameters[name]
     end
     return default
+end
+
+function _required_positive_finite_parameter(
+        parameters::AbstractDict{Symbol, Any},
+        distribution::AbstractString,
+        names::Symbol...,
+    )
+    value = _required_parameter(parameters, distribution, names...)
+    return _positive_finite_scalar(value, distribution, names...)
+end
+
+function _optional_positive_finite_parameter(
+        parameters::AbstractDict{Symbol, Any},
+        default,
+        distribution::AbstractString,
+        names::Symbol...,
+    )
+    value = _optional_parameter(parameters, default, names...)
+    return _positive_finite_scalar(value, distribution, names...)
+end
+
+function _positive_finite_scalar(value, distribution::AbstractString, names::Symbol...)
+    value isa Real || throw(ArgumentError("$distribution prior parameter $(join(string.(names), " or ")) must be a scalar real number"))
+    isfinite(value) && value > zero(value) ||
+        throw(ArgumentError("$distribution prior parameter $(join(string.(names), " or ")) must be finite and positive"))
+    return value
 end
 
 function _serialize_prior_value(value)

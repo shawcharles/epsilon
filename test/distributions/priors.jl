@@ -146,4 +146,33 @@ end
     @test_throws ArgumentError instantiate_distribution(
         EpsilonPrior("Normal"; mu = EpsilonPrior("HalfNormal"; sigma = 1.0), sigma = 1.0),
     )
+
+    infinite_positive_parameter_cases = [
+        EpsilonPrior("Normal"; mu = 0.0, sigma = Inf),
+        EpsilonPrior("HalfNormal"; sigma = Inf),
+        EpsilonPrior("Beta"; alpha = Inf, beta = 5.0),
+        EpsilonPrior("Beta"; alpha = 2.0, beta = Inf),
+        EpsilonPrior("Gamma"; alpha = Inf, beta = 2.0),
+        EpsilonPrior("Gamma"; alpha = 3.0, rate = Inf),
+        EpsilonPrior("Exponential"; lambda = Inf),
+        EpsilonPrior("Laplace"; mu = 0.0, b = Inf),
+        EpsilonPrior("LogNormal"; mu = 0.5, sigma = Inf),
+        EpsilonPrior("Weibull"; alpha = Inf, beta = 4.0),
+        EpsilonPrior("Weibull"; alpha = 2.0, beta = Inf),
+        EpsilonPrior("Cauchy"; mu = 0.0, beta = Inf),
+        EpsilonPrior("HalfCauchy"; sigma = Inf),
+        EpsilonPrior("StudentT"; nu = Inf, mu = 0.0, sigma = 1.0),
+        EpsilonPrior("StudentT"; nu = 7.0, mu = 0.0, sigma = Inf),
+        EpsilonPrior("TruncatedNormal"; mu = 0.0, sigma = Inf, lower = -Inf, upper = Inf),
+    ]
+    for prior in infinite_positive_parameter_cases
+        @test_throws ArgumentError instantiate_distribution(prior)
+    end
+
+    @test instantiate_distribution(EpsilonPrior("Cauchy"; alpha = Inf, beta = 2.0)) isa Cauchy
+    @test rand(
+        instantiate_distribution(
+            EpsilonPrior("TruncatedNormal"; mu = 0.0, sigma = 1.0, lower = -Inf, upper = Inf),
+        ),
+    ) isa Float64
 end

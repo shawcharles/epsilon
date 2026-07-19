@@ -212,6 +212,9 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Changed
 
+- Hardened prior distribution validation so positive scale, shape, rate,
+  degrees-of-freedom, and shrinkage recipe parameters reject infinite values
+  instead of accepting `Inf` as merely positive.
 - Clarified the public `batched_convolution(..., mode = Overlap)` odd/even
   alignment contract and added focused impulse tests without changing
   convolution numerics.

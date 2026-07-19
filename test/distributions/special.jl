@@ -56,6 +56,10 @@ using Test
     @test_throws ArgumentError instantiate_distribution(
         EpsilonPrior("Scaled"; base = EpsilonPrior("HalfNormal"; sigma = 1.0), scale = EpsilonPrior("HalfNormal"; sigma = 1.0)),
     )
+    @test_throws ArgumentError Scaled(instantiate_distribution(EpsilonPrior("HalfNormal"; sigma = 1.0)), Inf)
+    @test_throws ArgumentError instantiate_distribution(
+        EpsilonPrior("Scaled"; base = EpsilonPrior("HalfNormal"; sigma = 1.0), scale = Inf),
+    )
 end
 
 @testset "SkewStudentT distribution" begin
@@ -105,6 +109,15 @@ end
     @test_throws ArgumentError instantiate_distribution(
         EpsilonPrior("SkewStudentT"; nu = EpsilonPrior("HalfNormal"; sigma = 1.0)),
     )
+    @test_throws ArgumentError SkewStudentT(Inf, 0.0, 1.0, 0.0)
+    @test_throws ArgumentError SkewStudentT(7.0, 0.0, Inf, 0.0)
+    @test_throws ArgumentError instantiate_distribution(
+        EpsilonPrior("SkewStudentT"; nu = Inf, mu = 1.5, sigma = 2.0, alpha = 0.0),
+    )
+    @test_throws ArgumentError instantiate_distribution(
+        EpsilonPrior("SkewStudentT"; nu = 7.0, mu = 1.5, sigma = Inf, alpha = 0.0),
+    )
+    @test SkewStudentT(7.0, Inf, 2.0, Inf) isa SkewStudentT
 end
 
 @testset "LogNormalPrior" begin
@@ -118,6 +131,9 @@ end
 
     payload = Epsilon.to_dict(prior)
     @test deserialize_prior(payload) == prior
+
+    @test_throws ArgumentError instantiate_distribution(LogNormalPrior(; mean = Inf, std = 3.0))
+    @test_throws ArgumentError instantiate_distribution(LogNormalPrior(; mean = 4.0, std = Inf))
 end
 
 @testset "LaplacePrior" begin
@@ -129,6 +145,7 @@ end
 
     payload = Epsilon.to_dict(prior)
     @test deserialize_prior(payload) == prior
+    @test_throws ArgumentError instantiate_distribution(LaplacePrior(; mu = 0.0, b = Inf))
 end
 
 @testset "special prior validation" begin
