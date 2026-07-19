@@ -212,6 +212,10 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Changed
 
+- Migrated the bounded budget optimizer's internal JuMP nonlinear construction
+  from legacy `JuMP.register` / `set_nonlinear_objective` calls to current
+  nonlinear operator objects and `@objective`, without changing allocation
+  semantics, constraints, solver choice, or result schemas.
 - Hardened the saturation/media-domain contract: `centered_logistic_saturation`
   / `logistic_saturation` and `michaelis_menten` now reject negative `x` as
   spend-domain primitives, while `tanh_saturation` remains a signed low-level

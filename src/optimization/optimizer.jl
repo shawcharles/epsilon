@@ -13,24 +13,29 @@ function _register_channel_operator!(
     )
     operator_name = Symbol("budget_response_$(index)")
     interpolation = _surface_interpolation(surface, "optimize_budget")
-    evaluate(x::Float64) = _evaluate(interpolation, x)
-    gradient(x::Float64) = _evaluate_derivative(interpolation, x)
-    hessian(x::Float64) = _evaluate_second_derivative(interpolation, x)
-    JuMP.register(model, operator_name, 1, evaluate, gradient, hessian)
-    return operator_name
+    evaluate(x::Real) = Float64(_evaluate(interpolation, Float64(x)))
+    gradient(x::Real) = Float64(_evaluate_derivative(interpolation, Float64(x)))
+    hessian(x::Real) = Float64(_evaluate_second_derivative(interpolation, Float64(x)))
+    return JuMP.add_nonlinear_operator(
+        model,
+        1,
+        evaluate,
+        gradient,
+        hessian;
+        name = operator_name,
+    )
 end
 
 function _objective_expression(
         problem::BudgetOptimizationProblem,
         allocation::AbstractVector,
-        operators::AbstractVector{Symbol},
+        operators::AbstractVector,
     )
-    terms = Any[problem.baseline_response + problem.fixed_response]
-    append!(
-        terms,
-        [Expr(:call, operators[index], allocation[index]) for index in eachindex(operators)],
-    )
-    return Expr(:call, :+, terms...)
+    expression = problem.baseline_response + problem.fixed_response
+    for index in eachindex(operators)
+        expression += operators[index](allocation[index])
+    end
+    return expression
 end
 
 function _clamped_current_spend(constraint::BudgetChannelConstraint)
@@ -109,11 +114,8 @@ function _build_optimizer_model(problem::BudgetOptimizationProblem)
         _register_channel_operator!(model, surface, index) for
             (index, surface) in enumerate(problem.channel_surfaces)
     ]
-    JuMP.set_nonlinear_objective(
-        model,
-        JuMP.MAX_SENSE,
-        _objective_expression(problem, allocation, operators),
-    )
+    objective = _objective_expression(problem, allocation, operators)
+    JuMP.@objective(model, Max, objective)
     return model, allocation
 end
 
