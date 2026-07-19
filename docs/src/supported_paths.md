@@ -159,9 +159,11 @@ julia --project=. runme.jl
 
 The runner is intentionally more visual than the programmatic API: it prints
 the Epsilon header, a config/output context block, one-line stage progress
-bars, and a structured final success or failure summary. The progress display
-counts all manifest stage records, including skipped optional stages in the
-final status summary.
+bars, plotting status, and a structured final success or failure summary. The
+runner loads CairoMakie by default and writes stage-local PNG plot artifacts
+when active; pass `--no-plots` to suppress plot artifact generation. The
+progress display counts all manifest stage records, including skipped optional
+stages in the final status summary.
 
 The bundled config owns its local `dataset.csv` and `holidays.csv` paths. The
 runner delegates to `pipeline_main`, so normal pipeline flags such as

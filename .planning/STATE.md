@@ -8,39 +8,45 @@ See: .planning/PROJECT.md
 Julia by using validated reference behavior where it is methodologically
 meaningful, proving comparison claims only where semantics genuinely match, and
 letting Epsilon stand as an independent Julia MMM library.
-**Current focus:** Phase 73 Pretty Terminal Runner Output is complete. Epsilon
-now has a polished root `runme.jl` terminal runner for the config/data/holidays
-bundle workflow, still delegating to `pipeline_main` rather than creating a
-second pipeline control plane.
+**Current focus:** Phase 74 Plotted Runner Output is complete. Epsilon now has
+a polished root `runme.jl` terminal runner for the config/data/holidays bundle
+workflow that loads CairoMakie by default, writes stage-local PNG plots when
+active, and still delegates to `pipeline_main` rather than creating a second
+pipeline control plane.
 
 ## Current Position
 
-**Current Phase:** 73
-**Current Phase Name:** Pretty Terminal Runner Output
-**Total Phases:** 73
-**Current Plan:** `.planning/phases/73-pretty-terminal-runner-output/PLAN.md`
-**Total Plans in Phase:** 1 planned terminal UX slice
-**Status:** Phase 73 is complete. Root `runme.jl` still supports
+**Current Phase:** 74
+**Current Phase Name:** Plotted Runner Output
+**Total Phases:** 74
+**Current Plan:** `.planning/phases/74-plotted-runner-output/PLAN.md`
+**Total Plans in Phase:** 1 planned plotted runner slice
+**Status:** Phase 74 is complete. Root `runme.jl` still supports
 `julia --project=. runme.jl`, `julia --project=. runme.jl <config_path>`, and
 `julia --project=. runme.jl demo timeseries`, with `--quick` injecting bounded
-local runtime overrides while preserving user-supplied flags and delegating all
-real pipeline execution to `pipeline_main`. It now prints the Epsilon header
-from `assets/ascii.txt`, a concise run context block, simple stage progress
-bars from the central pipeline stage lifecycle, and structured success/failure
-summaries. `make run-demo-config` remains a thin Make wrapper around the same
+local runtime overrides and `--no-plots` suppressing plot artifact generation
+for headless runs. It prints the Epsilon header from `assets/ascii.txt`, a
+concise run context block, plotting status, simple stage progress bars from the
+central pipeline stage lifecycle, and structured success/failure summaries.
+The root project now includes CairoMakie as a runtime dependency so `runme.jl`
+can load plotting support and write stage-local PNG artifacts by default.
+`using Epsilon` still keeps the plotting extension unloaded until CairoMakie is
+loaded. `make run-demo-config` remains a thin Make wrapper around the same
 runner. Docs present `runme.jl` as the minimum-code Epsilon-native
 config-driven workflow while keeping `run_pipeline(PipelineRunConfig(...))` as
 the programmatic API. The config-owned `dataset.csv` / `holidays.csv` bundle
 contract is preserved; no holiday override, new package binary, model
 semantics, sampler defaults, panel MCMC test, panel validation, panel
 calibration, dashboard/UI, VI, benchmark, release gate, fixture, parity-ledger,
-dependency, manifest, or internal reference/provenance change was made. Scoped
-verification passed: `make test-file FILE=test/pipeline/demo_configs_smoke.jl`
-(`73 / 73`, `2m38.5s`).
+manifest, or internal reference/provenance change was made. Scoped verification
+passed: lazy-extension check (`PLOTTING_EXTENSION_OK`) and
+`make test-file FILE=test/pipeline/demo_configs_smoke.jl` (`99 / 99`,
+`5m10.6s`), including a loaded-backend `--no-plots` regression.
 
 Known unrelated local drift at implementation time: `.gitignore` has an
-unstaged `.codex/` ignore addition, and `results/` is local runner output.
-These are outside Phase 73 and should not be staged with the runner commit.
+unstaged `.codex/` ignore addition, `assets/ascii.txt` has an unstaged local
+branding edit, and `results/` is local runner output. These are outside
+Phase 74 and should not be staged with the runner commit.
 
 Phase 71 is complete. `.planning/CRITICAL-REVIEW-2026-07-19.md`
 is now tracked with a historical-snapshot note pointing future readers to
@@ -70,13 +76,15 @@ by default and remains local workflow evidence only: not a benchmark, release
 gate, reference-parity claim, dashboard workflow, or broader modelling-surface
 expansion.
 
-Phase 68 is complete. CairoMakie moved from a mandatory runtime
-dependency to the optional `EpsilonCairoMakieExt` extension while exported
-plotting names keep base-package docstrings and deterministic no-backend
-fallback errors. Pipeline plot emission now routes through an optional hook:
-loaded-backend runs keep the existing stage-local PNG keys/files, and headless
-runs keep non-plot artifacts while omitting plot paths with explicit stage
-warnings.
+Phase 68 is complete. CairoMakie-backed implementation moved behind the lazy
+`EpsilonCairoMakieExt` extension while exported plotting names keep
+base-package docstrings and deterministic no-backend fallback errors. Phase 74
+later promoted CairoMakie back into the root runtime dependency surface for
+repo-local plotted runner ergonomics, but `using Epsilon` still leaves the
+extension unloaded until CairoMakie is loaded. Pipeline plot emission routes
+through a lazy hook: loaded-backend runs keep the existing stage-local PNG
+keys/files, and headless runs keep non-plot artifacts while omitting plot paths
+with explicit stage warnings.
 
 Phase 67 is complete. The copied `data/demo/{timeseries,geo_panel,geo_brand_panel}`
 bundles now have Epsilon-native configs and a local data README documenting the

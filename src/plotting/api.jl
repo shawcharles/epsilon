@@ -1,5 +1,6 @@
 const _PLOTTING_BACKEND_NAME = "CairoMakie"
 const _PLOTTING_EXTENSION_NAME = :EpsilonCairoMakieExt
+const _PIPELINE_PLOTS_DISABLED = Ref(false)
 
 function _plotting_backend_message(action::AbstractString)
     return string(
@@ -21,12 +22,36 @@ function _plotting_backend_warning()
     )
 end
 
+function _pipeline_plots_disabled_warning()
+    return "pipeline plot artifact generation is disabled for this run; non-plot artifacts were written and plot artifact paths were omitted."
+end
+
 function _plotting_backend_loaded()
     return Base.get_extension(@__MODULE__, _PLOTTING_EXTENSION_NAME) !== nothing
 end
 
+function _pipeline_plots_enabled()
+    return !_PIPELINE_PLOTS_DISABLED[] && _plotting_backend_loaded()
+end
+
+function _with_pipeline_plots_disabled(f::Function)
+    previous = _PIPELINE_PLOTS_DISABLED[]
+    _PIPELINE_PLOTS_DISABLED[] = true
+    try
+        return f()
+    finally
+        _PIPELINE_PLOTS_DISABLED[] = previous
+    end
+end
+
 function _push_plotting_backend_warning!(warnings::Vector{String})
     warning = _plotting_backend_warning()
+    warning in warnings || push!(warnings, warning)
+    return warnings
+end
+
+function _push_pipeline_plots_disabled_warning!(warnings::Vector{String})
+    warning = _pipeline_plots_disabled_warning()
     warning in warnings || push!(warnings, warning)
     return warnings
 end
@@ -42,9 +67,15 @@ function _save_pipeline_plot!(
         args...;
         kwargs...,
     )
+    if _PIPELINE_PLOTS_DISABLED[]
+        _push_pipeline_plots_disabled_warning!(warnings)
+        return artifact_paths
+    end
+
     extension = _plotting_extension()
     if !isnothing(extension)
-        return extension._save_pipeline_plot_impl!(
+        return Base.invokelatest(
+            extension._save_pipeline_plot_impl!,
             artifact_paths,
             warnings,
             stage,

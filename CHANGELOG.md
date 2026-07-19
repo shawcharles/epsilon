@@ -7,6 +7,11 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Changed
 
+- Promoted `CairoMakie` into the root runtime dependency surface so the
+  repo-local `runme.jl` command can load plotting support and write stage-local
+  PNG artifacts by default. `using Epsilon` still does not eagerly load
+  CairoMakie; plotting implementation remains behind the lazy
+  `EpsilonCairoMakieExt` extension.
 - Reconciled the demo-surface routing: `data/demo/*` is now documented as the
   canonical Epsilon-native config-driven demo workflow, while
   `examples/demo/*` is framed as historical/reference comparison material with
@@ -30,6 +35,10 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Added
 
+- Added plotted runner output by default for `runme.jl`: the runner now
+  attempts to load CairoMakie, reports `Plots        : enabled (PNG)` when
+  active, writes existing stage-local PNG plot artifacts, and supports
+  `--no-plots` to suppress plot artifact generation for headless runs.
 - Added polished terminal output for the root `runme.jl` config-driven runner:
   the runner now prints the Epsilon header from `assets/ascii.txt`, a
   structured run context, stage progress bars from the central pipeline stage

@@ -1017,12 +1017,15 @@ function _run_diagnostics_stage!(context::PipelineContext)
         grouped,
     )
 
-    if _plotting_backend_loaded()
-        posterior = Base.get_extension(@__MODULE__, _PLOTTING_EXTENSION_NAME)._require_plot_posterior(
+    if _pipeline_plots_enabled()
+        extension = Base.get_extension(@__MODULE__, _PLOTTING_EXTENSION_NAME)
+        posterior = Base.invokelatest(
+            extension._require_plot_posterior,
             grouped,
             "_run_diagnostics_stage!",
         )
-        selected = Base.get_extension(@__MODULE__, _PLOTTING_EXTENSION_NAME)._select_plot_parameters(
+        selected = Base.invokelatest(
+            extension._select_plot_parameters,
             posterior;
             parameters = nothing,
             max_parameters = 8,
@@ -1032,7 +1035,8 @@ function _run_diagnostics_stage!(context::PipelineContext)
             Set(Symbol.(names(grouped.prior, :parameters)))
         for parameter in selected
             parameter in prior_available || continue
-            filename = "prior_posterior_$(Base.get_extension(@__MODULE__, _PLOTTING_EXTENSION_NAME)._plot_parameter_slug(parameter)).png"
+            slug = Base.invokelatest(extension._plot_parameter_slug, parameter)
+            filename = "prior_posterior_$(slug).png"
             _save_pipeline_plot!(
                 artifact_paths,
                 warnings,

@@ -78,13 +78,15 @@ surface:
   `35` panel holdout validation is explicitly deferred for v1 rather than
   added for parity alone; time-series blocked holdout validation remains
   supported.
-- Phase 10 is now closed and Phase 68 makes plotting an optional extension: load
+- Phase 10 is now closed and Phase 68 keeps direct plotting behind a lazy extension: load
   `using Epsilon, CairoMakie` before calling bounded plot functions such as
   `trace_plot`, `contribution_plot`, `response_curve_plot`, and
-  `budget_optimization_plot`, or before expecting stage-local pipeline PNGs and
-  `write_plot_bundle(run)` exports. Without the backend, direct plot calls fail
-  clearly and pipeline non-plot artifacts remain available while plot paths are
-  omitted with stage warnings. The plotting support matrix remains intentionally
+  `budget_optimization_plot`, or before using `write_plot_bundle(run)`. The
+  repo-local `runme.jl` runner loads CairoMakie by default for stage-local PNG
+  pipeline artifacts; direct `run_pipeline` calls remain headless unless the
+  caller loads CairoMakie. Without the backend, direct plot calls fail clearly
+  and pipeline non-plot artifacts remain available while plot paths are omitted
+  with stage warnings. The plotting support matrix remains intentionally
   narrower than Dash parity: it is time-series-first for post-model visuals,
   supports channel-level budget optimization plots for time-series and bounded
   panel optimization results, has no variational plotting path, and bounds the
@@ -232,8 +234,10 @@ julia --project=. runme.jl data/demo/timeseries/config.yml --quick
 The runner delegates to `pipeline_main`; bundle-local `dataset.csv` and
 `holidays.csv` paths stay owned by the YAML config. As a human-facing command,
 `runme.jl` prints the Epsilon header, a compact run context, stage progress
-bars, and a structured final summary. Maintainers can check all bundled demo
-configs locally with:
+bars, plotting status, and a structured final summary. It loads CairoMakie by
+default and writes stage-local PNG plot artifacts when active; pass
+`--no-plots` for a headless non-plot run. Maintainers can check all bundled
+demo configs locally with:
 
 ```bash
 make smoke-demo-configs
@@ -440,7 +444,7 @@ Epsilon.run_pipeline
 
 Phase 10 has landed the bounded diagnostic plotting foundation on grouped
 `InferenceResults`. Phase 68 moves the CairoMakie-backed implementation behind
-an optional extension; load `using Epsilon, CairoMakie` before calling these
+a lazy extension; load `using Epsilon, CairoMakie` before calling these
 functions.
 
 ```@docs
@@ -471,7 +475,7 @@ Epsilon.adstock_curve_plot
 
 Phase 10 is now closed with optimization plotting plus deterministic static
 bundle export over successful pipeline runs. These helpers require loading the
-optional CairoMakie extension.
+lazy CairoMakie extension.
 
 ```@docs
 Epsilon.budget_optimization_plot

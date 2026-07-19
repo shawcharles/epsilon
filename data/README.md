@@ -37,8 +37,10 @@ julia --project=. runme.jl
 ```
 
 The runner prints the Epsilon header, the resolved run context, stage progress
-bars, and a structured final summary. It is intended as the minimum-code
-terminal workflow for the `{config, dataset, holidays}` triplet.
+bars, plotting status, and a structured final summary. By default it loads
+CairoMakie and writes stage-local PNG plots; use `--no-plots` to suppress plot
+artifact generation. It is intended as the minimum-code terminal workflow for
+the `{config, dataset, holidays}` triplet.
 
 For programmatic use, call `run_pipeline(PipelineRunConfig(...))` directly.
 The runner delegates to that same pipeline path.

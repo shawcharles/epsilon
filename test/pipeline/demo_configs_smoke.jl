@@ -58,10 +58,11 @@ end
 
     config_args = _runme_pipeline_args(
         "config.yml",
-        ["--quick", "--output-dir=custom", "--draws=7", "--tune", "9"],
+        ["--quick", "--no-plots", "--output-dir=custom", "--draws=7", "--tune", "9"],
     )
     @test config_args[1:2] == ["run", "config.yml"]
     @test "--quick" ∉ config_args
+    @test "--no-plots" ∉ config_args
     @test "--output-dir=custom" in config_args
     @test "--draws=7" in config_args
     @test "--tune" in config_args
@@ -75,8 +76,10 @@ end
     @test no_quick_args == ["run", "config.yml", "--draws", "11"]
 
     @test _runme_pipeline_plan("config.yml", ["--quick"]).quick
+    @test !_runme_pipeline_plan("config.yml", ["--no-plots"]).plots
     @test _runme_pipeline_plan("config.yml", ["--output-dir", "custom"]).output_dir == "custom"
     @test _runme_pipeline_plan("config.yml", ["--run-name=smoke"]).run_name == "smoke"
+    @test_throws ArgumentError _runme_pipeline_plan("config.yml", ["--no-plots=yes"])
     @test Epsilon._pipeline_progress_bar(0, 4; width = 8) == "[--------]"
     @test Epsilon._pipeline_progress_bar(2, 4; width = 8) == "[####----]"
     @test Epsilon._pipeline_progress_bar(4, 4; width = 8) == "[########]"
@@ -84,6 +87,27 @@ end
     @test Epsilon._pipeline_stage_status_summary(
         Dict(:completed => 2, :skipped => 1, :failed => 0),
     ) == "completed=2, skipped=1"
+
+    @eval Main using CairoMakie
+    @test Epsilon._plotting_backend_loaded()
+    @test Epsilon._pipeline_plots_enabled()
+
+    disabled_artifacts = Dict{String, String}()
+    disabled_warnings = String[]
+    Epsilon._with_pipeline_plots_disabled() do
+        @test !Epsilon._pipeline_plots_enabled()
+        Epsilon._save_pipeline_plot!(
+            disabled_artifacts,
+            disabled_warnings,
+            "fit",
+            "trace_plot",
+            "trace.png",
+            "20_model_fit/trace.png",
+            :trace,
+        )
+    end
+    @test isempty(disabled_artifacts)
+    @test disabled_warnings == [Epsilon._pipeline_plots_disabled_warning()]
 
     normal_pipeline_cli = _capture_streams() do
         pipeline_main(["run"])
@@ -133,6 +157,7 @@ end
         @test occursin("Config", output)
         @test occursin("Output root", output)
         @test occursin("Quick mode", output)
+        @test occursin("Plots        : enabled (PNG)", output)
         @test occursin("RUNNING", output)
         @test occursin("DONE", output)
         @test occursin("Status      ", output)
@@ -145,11 +170,69 @@ end
         run_dir = only(run_dirs)
         manifest_path = joinpath(run_dir, "run_manifest.json")
         @test isfile(manifest_path)
+        @test isfile(joinpath(run_dir, "20_model_fit", "trace.png"))
+        @test isfile(joinpath(run_dir, "30_model_assessment", "observed_fitted.png"))
 
         manifest = JSON3.read(read(manifest_path, String))
         @test manifest["status"] == "completed"
         @test manifest["stages"]["fit"]["status"] == "completed"
+        @test manifest["stages"]["fit"]["artifact_paths"]["trace_plot"] == "20_model_fit/trace.png"
         @test manifest["stages"]["validation"]["status"] == "completed"
+    end
+end
+
+@testset "runme.jl --no-plots suppresses artifacts with a loaded plotting backend" begin
+    repo_root = dirname(dirname(pathof(Epsilon)))
+    runme = joinpath(repo_root, "runme.jl")
+    config_path = joinpath(repo_root, "data", "demo", "timeseries", "config.yml")
+
+    if !isdefined(@__MODULE__, :runme_main)
+        include(runme)
+    end
+
+    @eval Main using CairoMakie
+    @test Epsilon._plotting_backend_loaded()
+
+    mktempdir() do tmpdir
+        result = _capture_runme(
+            [
+                config_path,
+                "--output-dir",
+                tmpdir,
+                "--run-name",
+                "runme-no-plots-smoke",
+                "--quick",
+                "--no-plots",
+                "--draws",
+                "10",
+                "--tune",
+                "10",
+                "--random-seed",
+                "722",
+            ],
+        )
+        output = result.output
+
+        @test result.status == 0
+        @test occursin("Plots        : disabled (--no-plots)", output)
+        @test occursin("completed", output)
+
+        run_dir = only(readdir(tmpdir; join = true))
+        manifest_path = joinpath(run_dir, "run_manifest.json")
+        @test isfile(manifest_path)
+        @test !isfile(joinpath(run_dir, "20_model_fit", "trace.png"))
+        @test !isfile(joinpath(run_dir, "30_model_assessment", "observed_fitted.png"))
+        @test !isfile(joinpath(run_dir, "50_diagnostics", "posterior_density.png"))
+
+        manifest = JSON3.read(read(manifest_path, String))
+        @test manifest["status"] == "completed"
+        @test !haskey(manifest["stages"]["fit"]["artifact_paths"], "trace_plot")
+        @test !haskey(manifest["stages"]["assessment"]["artifact_paths"], "observed_fitted_plot")
+        @test !haskey(manifest["stages"]["diagnostics"]["artifact_paths"], "posterior_density_plot")
+        @test Epsilon._pipeline_plots_disabled_warning() in
+            String.(manifest["stages"]["fit"]["warnings"])
+        @test Epsilon._pipeline_plots_disabled_warning() in
+            String.(manifest["stages"]["diagnostics"]["warnings"])
     end
 end
 

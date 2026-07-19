@@ -146,7 +146,7 @@ Stage `40` decomposition, Stage `50` diagnostics, and Stage `60` response-curve
 keys plus explicitly enabled Stage `70` historical-share optimization keys are
 validated against exported reference pipeline manifest contracts.
 
-Phase 10 is now closed and Phase 68 makes plotting an optional extension: the
+Phase 10 is now closed and Phase 68 keeps plotting behind a lazy extension: the
 bounded `CairoMakie` plotting surface is available after loading
 `using Epsilon, CairoMakie` through `epsilon_theme()`, `trace_plot`,
 `posterior_density_plot`, `prior_posterior_plot`, `observed_fitted_plot`,
@@ -157,7 +157,7 @@ Those direct plotting APIs return Makie `Figure` objects and save through
 direct `png`, `svg`, or `pdf` exports; the bounded bundle helper is a
 deterministic `png`-only export over successful pipeline runs after the
 pipeline has already written stage-local plots into the Stage `10`-`70`
-directories when the plotting backend is loaded. Without `CairoMakie`, core
+directories when the plotting backend is loaded. Without loaded `CairoMakie`, core
 model, inference, post-model, optimization, scenario, and pipeline non-plot
 artifacts remain available; direct plot calls fail with a clear optional-backend
 message, and plotted pipeline artifact paths are omitted with stage warnings.
@@ -248,7 +248,9 @@ julia --project=. runme.jl
 
 `runme.jl` is the polished human terminal runner: it prints the Epsilon header,
 a compact config/output context block, simple stage progress bars, and a final
-structured success or failure summary. The underlying execution path still
+structured success or failure summary. It loads CairoMakie by default and
+writes the existing stage-local PNG plot artifacts when plotting is active; add
+`--no-plots` for a headless non-plot run. The underlying execution path still
 delegates to `pipeline_main`.
 
 For a maintained smoke check across all bundled demo configs, run:

@@ -92,9 +92,11 @@ make smoke-demo-configs
 The root `runme.jl` runner delegates to `pipeline_main` and keeps
 `dataset.csv` / `holidays.csv` paths owned by the config bundle. The runner is
 the polished terminal surface: it prints the Epsilon header, run context,
-stage progress bars, and structured final summaries while leaving the
-programmatic API unchanged. The smoke command runs the shipped time-series demo
-config through a tiny headless
+stage progress bars, plotting status, and structured final summaries while
+leaving the programmatic API unchanged. It writes stage-local PNG plots by
+default when CairoMakie is active and supports `--no-plots` for headless
+non-plot runs. The smoke command runs the shipped time-series demo config
+through a tiny headless
 pipeline, including its default validation stage, and checks the panel demo
 configs through config/data/model-spec construction without panel MCMC
 sampling. These commands are local workflow evidence only, not release evidence
@@ -110,7 +112,7 @@ or a benchmark.
 | Optimization | `OPT-TS-MCMC`, `OPT-P-MCMC` | Fixed-budget `:total_response` only; panel optimization allocates channel totals and preserves historical within-channel panel-cell spend shares |
 | Scenario planner | solved time-series and bounded panel optimization results; evaluated time-series manual allocations; local scenario-store artifacts | Non-UI comparison tables over existing optimizer outputs and existing time-series response surfaces; typed current, manual-allocation, and fixed-budget optimized scenario specs are supported. Compatible evaluated manual scenarios can be compared with one solved optimization result, and existing `ScenarioPlanResult` tables can be written to a local typed `scenario_store.jls` payload with CSV inspection sidecars. The store artifact is Epsilon/Julia-version-bound and should not be treated as a portable or untrusted interchange format. Panel manual allocation, automatic scenario refits, future-path simulation, pipeline scenario-store emission, hosted/background stores, and Dash workflows remain deferred |
 | Pipeline | bounded time-series MCMC Stage `00`-`70` path, including optional Stage `05` prior-sensitivity planning; panel Stage `00` metadata, optional Stage `05` prior-sensitivity planning, Stage `20` fit, Stage `30` assessment, Stage `40` decomposition, Stage `50` diagnostics, Stage `60` response-curve path, and explicitly enabled Stage `70` historical-share optimization | `run_pipeline(config)` and `epsilon run config.yml`, with stage-local plot artifacts; Phase 14 validates reference-compatible Stage `00` through Stage `70` artifact keys against an exported reference `timeseries` pipeline contract, and validates `geo_panel` / `geo_brand_panel` Stage `00`-`60` keys plus `geo_panel` and `geo_brand_panel` Stage `70` historical-share optimization artifacts against exported reference panel contracts where semantics match. Stage `05` writes resolved prior-sensitivity scenario configs and human/LLM-safe manifests; it does not refit every scenario automatically. Julia-native serialized artifacts are used where the reference implementation uses PyMC/NetCDF-specific files |
-| Plotting | grouped diagnostics, time-series post-model, channel-level time-series and panel optimization, deterministic plot bundle | Optional CairoMakie extension; load `using Epsilon, CairoMakie` for direct Makie `Figure` plots, plotted pipeline stage artifacts, and `write_plot_bundle(run)` |
+| Plotting | grouped diagnostics, time-series post-model, channel-level time-series and panel optimization, deterministic plot bundle | Lazy CairoMakie extension; load `using Epsilon, CairoMakie` for direct Makie `Figure` plots and `write_plot_bundle(run)`. The repo-local `runme.jl` runner loads CairoMakie by default for stage-local PNG artifacts |
 
 ## Explicit Unsupported Rows
 
