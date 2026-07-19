@@ -23,6 +23,11 @@ pre-v1 review item, and it is not a v1 API freeze.
 The table between the markers below is checked by the test suite. Every current
 export must appear exactly once.
 
+Plotting exports are part of the public API, but their concrete CairoMakie
+methods are loaded through the optional `EpsilonCairoMakieExt` extension. Use
+`using Epsilon, CairoMakie` before calling plotting functions or
+`write_plot_bundle(run)`.
+
 <!-- BEGIN PUBLIC API INVENTORY -->
 | Symbol | Domain | Support |
 |---|---|---|

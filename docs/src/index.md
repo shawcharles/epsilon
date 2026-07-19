@@ -78,18 +78,17 @@ surface:
   `35` panel holdout validation is explicitly deferred for v1 rather than
   added for parity alone; time-series blocked holdout validation remains
   supported.
-- Phase 10 is now closed: the bounded `CairoMakie` plotting layer returns
-  Makie `Figure` objects through explicit functions such as `trace_plot`,
-  `contribution_plot`, `response_curve_plot`, and
-  `budget_optimization_plot`, plus an optional `write_plot_bundle(run)` helper
-  for successful pipeline runs. The pipeline itself now writes stage-local
-  plots during Stage `10`-`70` execution, while `write_plot_bundle(run)`
-  remains the separate curated bundle export. The plotting support matrix remains
-  intentionally narrower than Dash parity: it is time-series-first for
-  post-model visuals, supports channel-level budget optimization plots for
-  time-series and bounded panel optimization results, has no variational plotting
-  path, and bounds the report bundle to deterministic `png` export over
-  successful pipeline runs
+- Phase 10 is now closed and Phase 68 makes plotting an optional extension: load
+  `using Epsilon, CairoMakie` before calling bounded plot functions such as
+  `trace_plot`, `contribution_plot`, `response_curve_plot`, and
+  `budget_optimization_plot`, or before expecting stage-local pipeline PNGs and
+  `write_plot_bundle(run)` exports. Without the backend, direct plot calls fail
+  clearly and pipeline non-plot artifacts remain available while plot paths are
+  omitted with stage warnings. The plotting support matrix remains intentionally
+  narrower than Dash parity: it is time-series-first for post-model visuals,
+  supports channel-level budget optimization plots for time-series and bounded
+  panel optimization results, has no variational plotting path, and bounds the
+  report bundle to deterministic `png` export over successful pipeline runs
 - Phase 10 `10-01` is now landed: `epsilon_theme()` plus the bounded
   diagnostic plotting surface now ship on top of grouped `InferenceResults`.
   `trace_plot(results)` is the MCMC-only posterior trace view. `posterior_density_plot`,
@@ -417,7 +416,9 @@ Epsilon.run_pipeline
 ## Plotting Foundation
 
 Phase 10 has landed the bounded diagnostic plotting foundation on grouped
-`InferenceResults`.
+`InferenceResults`. Phase 68 moves the CairoMakie-backed implementation behind
+an optional extension; load `using Epsilon, CairoMakie` before calling these
+functions.
 
 ```@docs
 Epsilon.epsilon_theme
@@ -431,7 +432,8 @@ Epsilon.residual_diagnostics_plot
 ## Post-Model Plotting
 
 Phase 10 now also includes the first bounded plotting layer over the closed
-Phase 7 post-model result surfaces.
+Phase 7 post-model result surfaces. These functions require the optional
+CairoMakie extension to be loaded.
 
 ```@docs
 Epsilon.contribution_plot
@@ -445,7 +447,8 @@ Epsilon.adstock_curve_plot
 ## Optimization And Bundle Plotting
 
 Phase 10 is now closed with optimization plotting plus deterministic static
-bundle export over successful pipeline runs.
+bundle export over successful pipeline runs. These helpers require loading the
+optional CairoMakie extension.
 
 ```@docs
 Epsilon.budget_optimization_plot

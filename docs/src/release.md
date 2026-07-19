@@ -87,7 +87,7 @@ support expansion.
 | Optimization | `OPT-TS-MCMC`, `OPT-P-MCMC` | Fixed-budget `:total_response` only; panel optimization allocates channel totals and preserves historical within-channel panel-cell spend shares |
 | Scenario planner | solved time-series and bounded panel optimization results; evaluated time-series manual allocations; local scenario-store artifacts | Non-UI comparison tables over existing optimizer outputs and existing time-series response surfaces; typed current, manual-allocation, and fixed-budget optimized scenario specs are supported. Compatible evaluated manual scenarios can be compared with one solved optimization result, and existing `ScenarioPlanResult` tables can be written to a local typed `scenario_store.jls` payload with CSV inspection sidecars. The store artifact is Epsilon/Julia-version-bound and should not be treated as a portable or untrusted interchange format. Panel manual allocation, automatic scenario refits, future-path simulation, pipeline scenario-store emission, hosted/background stores, and Dash workflows remain deferred |
 | Pipeline | bounded time-series MCMC Stage `00`-`70` path, including optional Stage `05` prior-sensitivity planning; panel Stage `00` metadata, optional Stage `05` prior-sensitivity planning, Stage `20` fit, Stage `30` assessment, Stage `40` decomposition, Stage `50` diagnostics, Stage `60` response-curve path, and explicitly enabled Stage `70` historical-share optimization | `run_pipeline(config)` and `epsilon run config.yml`, with stage-local plot artifacts; Phase 14 validates reference-compatible Stage `00` through Stage `70` artifact keys against an exported reference `timeseries` pipeline contract, and validates `geo_panel` / `geo_brand_panel` Stage `00`-`60` keys plus `geo_panel` and `geo_brand_panel` Stage `70` historical-share optimization artifacts against exported reference panel contracts where semantics match. Stage `05` writes resolved prior-sensitivity scenario configs and human/LLM-safe manifests; it does not refit every scenario automatically. Julia-native serialized artifacts are used where the reference implementation uses PyMC/NetCDF-specific files |
-| Plotting | grouped diagnostics, time-series post-model, channel-level time-series and panel optimization, deterministic plot bundle | Direct plots return Makie `Figure` objects; `write_plot_bundle(run)` is the optional curated export |
+| Plotting | grouped diagnostics, time-series post-model, channel-level time-series and panel optimization, deterministic plot bundle | Optional CairoMakie extension; load `using Epsilon, CairoMakie` for direct Makie `Figure` plots, plotted pipeline stage artifacts, and `write_plot_bundle(run)` |
 
 ## Explicit Unsupported Rows
 
@@ -211,8 +211,8 @@ from a clean tagged worktree for the final release artifact.
   unsupported constraint/objective families.
 - [x] The Phase 9 pipeline contract is closed on the bounded time-series MCMC
   Stage `00`-`70` path, including stage-local plot artifacts.
-- [x] The Phase 10 plotting surface is documented as a bounded CairoMakie layer
-  with deterministic static bundle export.
+- [x] The Phase 10 plotting surface is documented as a bounded optional
+  CairoMakie extension with deterministic static bundle export.
 - [x] The Phase 11 release-gate harness passes locally.
 - [x] `make test` passes on the current repo state.
 - [x] `make docs` passes on the current repo state.
@@ -267,8 +267,8 @@ the full reference scope:
 - Variational inference is permanently retired; no compatibility API or runtime
   backend is retained.
 - The pipeline remains time-series-first and MCMC-only.
-- Plotting is static and Makie-based rather than a replicated Dash product
-  layer; Dash/dashboard parity remains explicitly deferred.
+- Plotting is optional, static, and CairoMakie-based rather than a replicated
+  Dash product layer; Dash/dashboard parity remains explicitly deferred.
 
 These are documented release boundaries, not hidden follow-up tasks inside the
 closed v1 gate.

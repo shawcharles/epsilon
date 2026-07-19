@@ -651,33 +651,46 @@ function _run_validation_stage!(context::PipelineContext)
         report_path,
         _holdout_predictive_report_dict(validation_result, predictive_matrix),
     )
-    _save_bundle_figure(residuals_acf_plot_path, _residuals_acf_plot(residuals))
-    _save_bundle_figure(
+    artifact_paths = Dict{String, String}(
+        "holdout_fitted" => _pipeline_relative_stage_artifact("validation", "holdout_fitted.csv"),
+        "holdout_observed" => _pipeline_relative_stage_artifact("validation", "holdout_observed.csv"),
+        "holdout_posterior_predictive" => _pipeline_relative_stage_artifact("validation", "holdout_posterior_predictive.jls"),
+        "holdout_predictive_report" => _pipeline_relative_stage_artifact("validation", "holdout_predictive_report.json"),
+        "holdout_predictive_summary" => _pipeline_relative_stage_artifact("validation", "holdout_predictive_summary.csv"),
+        "holdout_residuals" => _pipeline_relative_stage_artifact("validation", "holdout_residuals.csv"),
+        "validation_metadata" => _pipeline_relative_stage_artifact("validation", "validation_metadata.json"),
+        "validation_results" => _pipeline_relative_stage_artifact("validation", "validation_results.jls"),
+        "holdout_summary" => _pipeline_relative_stage_artifact("validation", "holdout_summary.csv"),
+    )
+    warnings = isempty(state.message) ? String[] : [state.message]
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "validation",
+        "holdout_residuals_acf_plot",
+        residuals_acf_plot_path,
+        _pipeline_relative_stage_artifact("validation", "holdout_residuals_acf.png"),
+        :residuals_acf,
+        residuals,
+    )
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "validation",
+        "holdout_timeseries_plot",
         plot_path,
-        _holdout_validation_plot(
-            holdout_data,
-            fitted_mean,
-            fitted_lower,
-            fitted_upper,
-            context.model_config.target_column,
-        ),
+        _pipeline_relative_stage_artifact("validation", "holdout_timeseries.png"),
+        :holdout_validation,
+        holdout_data,
+        fitted_mean,
+        fitted_lower,
+        fitted_upper,
+        context.model_config.target_column,
     )
 
     return (
-        artifact_paths = Dict{String, String}(
-            "holdout_fitted" => _pipeline_relative_stage_artifact("validation", "holdout_fitted.csv"),
-            "holdout_observed" => _pipeline_relative_stage_artifact("validation", "holdout_observed.csv"),
-            "holdout_posterior_predictive" => _pipeline_relative_stage_artifact("validation", "holdout_posterior_predictive.jls"),
-            "holdout_predictive_report" => _pipeline_relative_stage_artifact("validation", "holdout_predictive_report.json"),
-            "holdout_predictive_summary" => _pipeline_relative_stage_artifact("validation", "holdout_predictive_summary.csv"),
-            "holdout_residuals" => _pipeline_relative_stage_artifact("validation", "holdout_residuals.csv"),
-            "holdout_residuals_acf_plot" => _pipeline_relative_stage_artifact("validation", "holdout_residuals_acf.png"),
-            "holdout_timeseries_plot" => _pipeline_relative_stage_artifact("validation", "holdout_timeseries.png"),
-            "validation_metadata" => _pipeline_relative_stage_artifact("validation", "validation_metadata.json"),
-            "validation_results" => _pipeline_relative_stage_artifact("validation", "validation_results.jls"),
-            "holdout_summary" => _pipeline_relative_stage_artifact("validation", "holdout_summary.csv"),
-        ),
-        warnings = isempty(state.message) ? String[] : [state.message],
+        artifact_paths = artifact_paths,
+        warnings = warnings,
     )
 end
 
@@ -716,31 +729,70 @@ function _run_decomposition_stage!(context::PipelineContext)
     _write_pipeline_csv(baseline_contributions_path, _component_partition_table(contribution_summary, false))
     _write_pipeline_csv(channel_contributions_path, _component_partition_table(contribution_summary, true))
     _write_pipeline_csv(mean_contributions_path, contribution_summary)
-    contribution_figure = contribution_plot(contributions)
-    area_figure = contribution_area_plot(contributions)
-    decomposition_figure = decomposition_plot(decomposition)
-    _save_bundle_figure(contributions_plot_path, contribution_figure)
-    _save_bundle_figure(contributions_area_plot_path, area_figure)
-    _save_bundle_figure(decomposition_plot_path, decomposition_figure)
-    _save_bundle_figure(waterfall_plot_path, decomposition_figure)
-    _save_bundle_figure(weekly_media_plot_path, area_figure)
+    artifact_paths = Dict{String, String}(
+        "baseline_contributions" => _pipeline_relative_stage_artifact("decomposition", "baseline_contributions.csv"),
+        "channel_contributions" => _pipeline_relative_stage_artifact("decomposition", "channel_contributions.csv"),
+        "contribution_results" => _pipeline_relative_stage_artifact("decomposition", "contribution_results.jls"),
+        "decomposition_results" => _pipeline_relative_stage_artifact("decomposition", "decomposition_results.jls"),
+        "contribution_summary" => _pipeline_relative_stage_artifact("decomposition", "contribution_summary.csv"),
+        "decomposition_summary" => _pipeline_relative_stage_artifact("decomposition", "decomposition_summary.csv"),
+        "mean_contributions_over_time" => _pipeline_relative_stage_artifact("decomposition", "mean_contributions_over_time.csv"),
+    )
+    warnings = String[]
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "decomposition",
+        "contributions_plot",
+        contributions_plot_path,
+        _pipeline_relative_stage_artifact("decomposition", "contributions.png"),
+        :contribution,
+        contributions,
+    )
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "decomposition",
+        "contributions_area_plot",
+        contributions_area_plot_path,
+        _pipeline_relative_stage_artifact("decomposition", "contributions_area.png"),
+        :contribution_area,
+        contributions,
+    )
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "decomposition",
+        "decomposition_plot",
+        decomposition_plot_path,
+        _pipeline_relative_stage_artifact("decomposition", "decomposition.png"),
+        :decomposition,
+        decomposition,
+    )
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "decomposition",
+        "waterfall_plot",
+        waterfall_plot_path,
+        _pipeline_relative_stage_artifact("decomposition", "waterfall_components_decomposition.png"),
+        :decomposition,
+        decomposition,
+    )
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "decomposition",
+        "weekly_media_contribution_plot",
+        weekly_media_plot_path,
+        _pipeline_relative_stage_artifact("decomposition", "weekly_media_contribution.png"),
+        :contribution_area,
+        contributions,
+    )
 
     return (
-        artifact_paths = Dict{String, String}(
-            "baseline_contributions" => _pipeline_relative_stage_artifact("decomposition", "baseline_contributions.csv"),
-            "channel_contributions" => _pipeline_relative_stage_artifact("decomposition", "channel_contributions.csv"),
-            "contribution_results" => _pipeline_relative_stage_artifact("decomposition", "contribution_results.jls"),
-            "decomposition_results" => _pipeline_relative_stage_artifact("decomposition", "decomposition_results.jls"),
-            "contribution_summary" => _pipeline_relative_stage_artifact("decomposition", "contribution_summary.csv"),
-            "decomposition_summary" => _pipeline_relative_stage_artifact("decomposition", "decomposition_summary.csv"),
-            "contributions_plot" => _pipeline_relative_stage_artifact("decomposition", "contributions.png"),
-            "contributions_area_plot" => _pipeline_relative_stage_artifact("decomposition", "contributions_area.png"),
-            "decomposition_plot" => _pipeline_relative_stage_artifact("decomposition", "decomposition.png"),
-            "mean_contributions_over_time" => _pipeline_relative_stage_artifact("decomposition", "mean_contributions_over_time.csv"),
-            "waterfall_plot" => _pipeline_relative_stage_artifact("decomposition", "waterfall_components_decomposition.png"),
-            "weekly_media_contribution_plot" => _pipeline_relative_stage_artifact("decomposition", "weekly_media_contribution.png"),
-        ),
-        warnings = String[],
+        artifact_paths = artifact_paths,
+        warnings = warnings,
     )
 end
 
@@ -779,31 +831,70 @@ function _run_panel_decomposition_stage!(context::PipelineContext)
     _write_pipeline_csv(baseline_contributions_path, _component_partition_table(contribution_summary, false))
     _write_pipeline_csv(channel_contributions_path, _component_partition_table(contribution_summary, true))
     _write_pipeline_csv(mean_contributions_path, contribution_summary)
-    contribution_figure = _panel_contribution_plot(contributions)
-    area_figure = _panel_contribution_area_plot(contributions)
-    decomposition_figure = _panel_decomposition_plot(decomposition)
-    _save_bundle_figure(contributions_plot_path, contribution_figure)
-    _save_bundle_figure(contributions_area_plot_path, area_figure)
-    _save_bundle_figure(decomposition_plot_path, decomposition_figure)
-    _save_bundle_figure(waterfall_plot_path, decomposition_figure)
-    _save_bundle_figure(weekly_media_plot_path, area_figure)
+    artifact_paths = Dict{String, String}(
+        "baseline_contributions" => _pipeline_relative_stage_artifact("decomposition", "baseline_contributions.csv"),
+        "channel_contributions" => _pipeline_relative_stage_artifact("decomposition", "channel_contributions.csv"),
+        "contribution_results" => _pipeline_relative_stage_artifact("decomposition", "contribution_results.jls"),
+        "decomposition_results" => _pipeline_relative_stage_artifact("decomposition", "decomposition_results.jls"),
+        "contribution_summary" => _pipeline_relative_stage_artifact("decomposition", "contribution_summary.csv"),
+        "decomposition_summary" => _pipeline_relative_stage_artifact("decomposition", "decomposition_summary.csv"),
+        "mean_contributions_over_time" => _pipeline_relative_stage_artifact("decomposition", "mean_contributions_over_time.csv"),
+    )
+    warnings = String[]
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "decomposition",
+        "contributions_plot",
+        contributions_plot_path,
+        _pipeline_relative_stage_artifact("decomposition", "contributions.png"),
+        :panel_contribution,
+        contributions,
+    )
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "decomposition",
+        "contributions_area_plot",
+        contributions_area_plot_path,
+        _pipeline_relative_stage_artifact("decomposition", "contributions_area.png"),
+        :panel_contribution_area,
+        contributions,
+    )
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "decomposition",
+        "decomposition_plot",
+        decomposition_plot_path,
+        _pipeline_relative_stage_artifact("decomposition", "decomposition.png"),
+        :panel_decomposition,
+        decomposition,
+    )
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "decomposition",
+        "waterfall_plot",
+        waterfall_plot_path,
+        _pipeline_relative_stage_artifact("decomposition", "waterfall_components_decomposition.png"),
+        :panel_decomposition,
+        decomposition,
+    )
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "decomposition",
+        "weekly_media_contribution_plot",
+        weekly_media_plot_path,
+        _pipeline_relative_stage_artifact("decomposition", "weekly_media_contribution.png"),
+        :panel_contribution_area,
+        contributions,
+    )
 
     return (
-        artifact_paths = Dict{String, String}(
-            "baseline_contributions" => _pipeline_relative_stage_artifact("decomposition", "baseline_contributions.csv"),
-            "channel_contributions" => _pipeline_relative_stage_artifact("decomposition", "channel_contributions.csv"),
-            "contribution_results" => _pipeline_relative_stage_artifact("decomposition", "contribution_results.jls"),
-            "decomposition_results" => _pipeline_relative_stage_artifact("decomposition", "decomposition_results.jls"),
-            "contribution_summary" => _pipeline_relative_stage_artifact("decomposition", "contribution_summary.csv"),
-            "decomposition_summary" => _pipeline_relative_stage_artifact("decomposition", "decomposition_summary.csv"),
-            "contributions_plot" => _pipeline_relative_stage_artifact("decomposition", "contributions.png"),
-            "contributions_area_plot" => _pipeline_relative_stage_artifact("decomposition", "contributions_area.png"),
-            "decomposition_plot" => _pipeline_relative_stage_artifact("decomposition", "decomposition.png"),
-            "mean_contributions_over_time" => _pipeline_relative_stage_artifact("decomposition", "mean_contributions_over_time.csv"),
-            "waterfall_plot" => _pipeline_relative_stage_artifact("decomposition", "waterfall_components_decomposition.png"),
-            "weekly_media_contribution_plot" => _pipeline_relative_stage_artifact("decomposition", "weekly_media_contribution.png"),
-        ),
-        warnings = String[],
+        artifact_paths = artifact_paths,
+        warnings = warnings,
     )
 end
 
@@ -882,12 +973,7 @@ function _run_diagnostics_stage!(context::PipelineContext)
     _write_pipeline_json(predictive_report_path, _predictive_report_dict(context.flat_results, model.data))
     _write_pipeline_csv(predictive_summary_path, _pipeline_predictive_summary_table(context.flat_results, model.data))
     _write_pipeline_csv(residual_diagnostics_path, _pipeline_residual_diagnostics_table(context.flat_results, model.data))
-    _save_bundle_figure(
-        residuals_acf_plot_path,
-        _residuals_acf_plot(_pipeline_residual_vector(context.flat_results, model.data)),
-    )
     _write_pipeline_csv(vif_report_path, _vif_report_table(model.data))
-    _save_bundle_figure(posterior_density_path, posterior_density_plot(grouped))
 
     artifact_paths = Dict{String, String}(
         "chain_diagnostics" => _pipeline_relative_stage_artifact("diagnostics", "chain_diagnostics.txt"),
@@ -902,36 +988,65 @@ function _run_diagnostics_stage!(context::PipelineContext)
         "predictive_report" => _pipeline_relative_stage_artifact("diagnostics", "predictive_report.json"),
         "predictive_summary" => _pipeline_relative_stage_artifact("diagnostics", "predictive_summary.csv"),
         "residual_diagnostics" => _pipeline_relative_stage_artifact("diagnostics", "residual_diagnostics.csv"),
-        "residuals_acf_plot" => _pipeline_relative_stage_artifact("diagnostics", "residuals_acf.png"),
         "vif_report" => _pipeline_relative_stage_artifact("diagnostics", "vif_report.csv"),
         "convergence_report" => _pipeline_relative_stage_artifact("diagnostics", "convergence_report.json"),
         "warnings_summary" => _pipeline_relative_stage_artifact("diagnostics", "warnings_summary.json"),
-        "posterior_density_plot" => _pipeline_relative_stage_artifact("diagnostics", "posterior_density.png"),
+    )
+    warnings = String[]
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "diagnostics",
+        "residuals_acf_plot",
+        residuals_acf_plot_path,
+        _pipeline_relative_stage_artifact("diagnostics", "residuals_acf.png"),
+        :residuals_acf,
+        _pipeline_residual_vector(context.flat_results, model.data),
+    )
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "diagnostics",
+        "posterior_density_plot",
+        posterior_density_path,
+        _pipeline_relative_stage_artifact("diagnostics", "posterior_density.png"),
+        :posterior_density,
+        grouped,
     )
 
-    posterior = _require_plot_posterior(grouped, "_run_diagnostics_stage!")
-    selected = _select_plot_parameters(
-        posterior;
-        parameters = nothing,
-        max_parameters = 8,
-        action = "_run_diagnostics_stage!",
-    )
-    prior_available = isnothing(grouped.prior) ? Set{Symbol}() :
-        Set(Symbol.(names(grouped.prior, :parameters)))
-    for parameter in selected
-        parameter in prior_available || continue
-        filename = "prior_posterior_$(_plot_parameter_slug(parameter)).png"
-        _save_bundle_figure(
-            joinpath(stage_dir, filename),
-            prior_posterior_plot(grouped; parameter),
+    if _plotting_backend_loaded()
+        posterior = Base.get_extension(@__MODULE__, _PLOTTING_EXTENSION_NAME)._require_plot_posterior(
+            grouped,
+            "_run_diagnostics_stage!",
         )
-        artifact_paths["$(splitext(filename)[1])_plot"] =
-            _pipeline_relative_stage_artifact("diagnostics", filename)
+        selected = Base.get_extension(@__MODULE__, _PLOTTING_EXTENSION_NAME)._select_plot_parameters(
+            posterior;
+            parameters = nothing,
+            max_parameters = 8,
+            action = "_run_diagnostics_stage!",
+        )
+        prior_available = isnothing(grouped.prior) ? Set{Symbol}() :
+            Set(Symbol.(names(grouped.prior, :parameters)))
+        for parameter in selected
+            parameter in prior_available || continue
+            filename = "prior_posterior_$(Base.get_extension(@__MODULE__, _PLOTTING_EXTENSION_NAME)._plot_parameter_slug(parameter)).png"
+            _save_pipeline_plot!(
+                artifact_paths,
+                warnings,
+                "diagnostics",
+                "$(splitext(filename)[1])_plot",
+                joinpath(stage_dir, filename),
+                _pipeline_relative_stage_artifact("diagnostics", filename),
+                :prior_posterior,
+                grouped;
+                parameter,
+            )
+        end
     end
 
     return (
         artifact_paths = artifact_paths,
-        warnings = String[],
+        warnings = warnings,
     )
 end
 
@@ -1007,34 +1122,50 @@ function _run_panel_diagnostics_stage!(context::PipelineContext)
     _write_pipeline_json(predictive_report_path, _predictive_report_dict(context.flat_results, model.data))
     _write_pipeline_csv(predictive_summary_path, _pipeline_predictive_summary_table(context.flat_results, model.data))
     _write_pipeline_csv(residual_diagnostics_path, _pipeline_residual_diagnostics_table(context.flat_results, model.data))
-    _save_bundle_figure(
-        residuals_acf_plot_path,
-        _residuals_acf_plot(_pipeline_residual_vector(context.flat_results, model.data)),
-    )
     _write_pipeline_csv(vif_report_path, _vif_report_table(model.data))
-    _save_bundle_figure(posterior_density_path, posterior_density_plot(grouped))
+
+    artifact_paths = Dict{String, String}(
+        "chain_diagnostics" => _pipeline_relative_stage_artifact("diagnostics", "chain_diagnostics.txt"),
+        "design_report" => _pipeline_relative_stage_artifact("diagnostics", "design_report.json"),
+        "design_summary" => _pipeline_relative_stage_artifact("diagnostics", "design_summary.csv"),
+        "diagnostics_report" => _pipeline_relative_stage_artifact("diagnostics", "diagnostics_report.csv"),
+        "diagnostics_summary" => _pipeline_relative_stage_artifact("diagnostics", "diagnostics_summary.txt"),
+        "model_diagnostics" => _pipeline_relative_stage_artifact("diagnostics", "model_diagnostics.jls"),
+        "sampler_diagnostics" => _pipeline_relative_stage_artifact("diagnostics", "sampler_diagnostics.jls"),
+        "mcmc_report" => _pipeline_relative_stage_artifact("diagnostics", "mcmc_report.json"),
+        "mcmc_summary" => _pipeline_relative_stage_artifact("diagnostics", "mcmc_summary.csv"),
+        "predictive_report" => _pipeline_relative_stage_artifact("diagnostics", "predictive_report.json"),
+        "predictive_summary" => _pipeline_relative_stage_artifact("diagnostics", "predictive_summary.csv"),
+        "residual_diagnostics" => _pipeline_relative_stage_artifact("diagnostics", "residual_diagnostics.csv"),
+        "vif_report" => _pipeline_relative_stage_artifact("diagnostics", "vif_report.csv"),
+        "convergence_report" => _pipeline_relative_stage_artifact("diagnostics", "convergence_report.json"),
+        "warnings_summary" => _pipeline_relative_stage_artifact("diagnostics", "warnings_summary.json"),
+    )
+    warnings = String[]
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "diagnostics",
+        "residuals_acf_plot",
+        residuals_acf_plot_path,
+        _pipeline_relative_stage_artifact("diagnostics", "residuals_acf.png"),
+        :residuals_acf,
+        _pipeline_residual_vector(context.flat_results, model.data),
+    )
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "diagnostics",
+        "posterior_density_plot",
+        posterior_density_path,
+        _pipeline_relative_stage_artifact("diagnostics", "posterior_density.png"),
+        :posterior_density,
+        grouped,
+    )
 
     return (
-        artifact_paths = Dict{String, String}(
-            "chain_diagnostics" => _pipeline_relative_stage_artifact("diagnostics", "chain_diagnostics.txt"),
-            "design_report" => _pipeline_relative_stage_artifact("diagnostics", "design_report.json"),
-            "design_summary" => _pipeline_relative_stage_artifact("diagnostics", "design_summary.csv"),
-            "diagnostics_report" => _pipeline_relative_stage_artifact("diagnostics", "diagnostics_report.csv"),
-            "diagnostics_summary" => _pipeline_relative_stage_artifact("diagnostics", "diagnostics_summary.txt"),
-            "model_diagnostics" => _pipeline_relative_stage_artifact("diagnostics", "model_diagnostics.jls"),
-            "sampler_diagnostics" => _pipeline_relative_stage_artifact("diagnostics", "sampler_diagnostics.jls"),
-            "mcmc_report" => _pipeline_relative_stage_artifact("diagnostics", "mcmc_report.json"),
-            "mcmc_summary" => _pipeline_relative_stage_artifact("diagnostics", "mcmc_summary.csv"),
-            "predictive_report" => _pipeline_relative_stage_artifact("diagnostics", "predictive_report.json"),
-            "predictive_summary" => _pipeline_relative_stage_artifact("diagnostics", "predictive_summary.csv"),
-            "residual_diagnostics" => _pipeline_relative_stage_artifact("diagnostics", "residual_diagnostics.csv"),
-            "residuals_acf_plot" => _pipeline_relative_stage_artifact("diagnostics", "residuals_acf.png"),
-            "vif_report" => _pipeline_relative_stage_artifact("diagnostics", "vif_report.csv"),
-            "convergence_report" => _pipeline_relative_stage_artifact("diagnostics", "convergence_report.json"),
-            "warnings_summary" => _pipeline_relative_stage_artifact("diagnostics", "warnings_summary.json"),
-            "posterior_density_plot" => _pipeline_relative_stage_artifact("diagnostics", "posterior_density.png"),
-        ),
-        warnings = String[],
+        artifact_paths = artifact_paths,
+        warnings = warnings,
     )
 end
 
@@ -1047,6 +1178,7 @@ function _run_curves_stage!(context::PipelineContext)
     curve_tables = DataFrame[]
     metric_tables = DataFrame[]
     artifact_paths = Dict{String, String}()
+    warnings = String[]
     stage_dir = _stage_directory_path(context, "curves")
 
     for channel in grouped.spec.channel_columns
@@ -1093,15 +1225,36 @@ function _run_curves_stage!(context::PipelineContext)
         response_plot = "response_curve_$(channel).png"
         saturation_plot = "saturation_curve_$(channel).png"
         adstock_plot = "adstock_curve_$(channel).png"
-        _save_bundle_figure(joinpath(stage_dir, response_plot), response_curve_plot(response))
-        _save_bundle_figure(joinpath(stage_dir, saturation_plot), saturation_curve_plot(saturation))
-        _save_bundle_figure(joinpath(stage_dir, adstock_plot), adstock_curve_plot(adstock))
-        artifact_paths["response_curve_$(channel)_plot"] =
-            _pipeline_relative_stage_artifact("curves", response_plot)
-        artifact_paths["saturation_curve_$(channel)_plot"] =
-            _pipeline_relative_stage_artifact("curves", saturation_plot)
-        artifact_paths["adstock_curve_$(channel)_plot"] =
-            _pipeline_relative_stage_artifact("curves", adstock_plot)
+        _save_pipeline_plot!(
+            artifact_paths,
+            warnings,
+            "curves",
+            "response_curve_$(channel)_plot",
+            joinpath(stage_dir, response_plot),
+            _pipeline_relative_stage_artifact("curves", response_plot),
+            :response_curve,
+            response,
+        )
+        _save_pipeline_plot!(
+            artifact_paths,
+            warnings,
+            "curves",
+            "saturation_curve_$(channel)_plot",
+            joinpath(stage_dir, saturation_plot),
+            _pipeline_relative_stage_artifact("curves", saturation_plot),
+            :saturation_curve,
+            saturation,
+        )
+        _save_pipeline_plot!(
+            artifact_paths,
+            warnings,
+            "curves",
+            "adstock_curve_$(channel)_plot",
+            joinpath(stage_dir, adstock_plot),
+            _pipeline_relative_stage_artifact("curves", adstock_plot),
+            :adstock_curve,
+            adstock,
+        )
     end
 
     metrics_path = joinpath(stage_dir, "metric_results.jls")
@@ -1143,20 +1296,43 @@ function _run_curves_stage!(context::PipelineContext)
     _write_pipeline_csv(saturation_summary_path, _curve_bundle_summary_table(saturation_results, "saturation"))
     _write_pipeline_csv(adstock_summary_path, _curve_bundle_summary_table(adstock_results, "adstock"))
     first_channel = first(grouped.spec.channel_columns)
-    _save_bundle_figure(response_plot_path, response_curve_plot(response_results[first_channel]))
-    _save_bundle_figure(saturation_plot_path, saturation_curve_plot(saturation_results[first_channel]))
-    _save_bundle_figure(adstock_plot_path, adstock_curve_plot(adstock_results[first_channel]))
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "curves",
+        "forward_pass_contribution_curve_plot",
+        response_plot_path,
+        _pipeline_relative_stage_artifact("curves", "forward_pass_contribution_curve.png"),
+        :response_curve,
+        response_results[first_channel],
+    )
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "curves",
+        "saturation_curve_plot",
+        saturation_plot_path,
+        _pipeline_relative_stage_artifact("curves", "saturation_curve.png"),
+        :saturation_curve,
+        saturation_results[first_channel],
+    )
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "curves",
+        "adstock_curve_plot",
+        adstock_plot_path,
+        _pipeline_relative_stage_artifact("curves", "adstock_curve.png"),
+        :adstock_curve,
+        adstock_results[first_channel],
+    )
 
     artifact_paths["adstock_curve"] =
         _pipeline_relative_stage_artifact("curves", "adstock_curve.jls")
-    artifact_paths["adstock_curve_plot"] =
-        _pipeline_relative_stage_artifact("curves", "adstock_curve.png")
     artifact_paths["adstock_curve_summary"] =
         _pipeline_relative_stage_artifact("curves", "adstock_curve_summary.csv")
     artifact_paths["forward_pass_contribution_curve"] =
         _pipeline_relative_stage_artifact("curves", "response_curve.jls")
-    artifact_paths["forward_pass_contribution_curve_plot"] =
-        _pipeline_relative_stage_artifact("curves", "forward_pass_contribution_curve.png")
     artifact_paths["forward_pass_contribution_curve_summary"] =
         _pipeline_relative_stage_artifact("curves", "forward_pass_contribution_curve_summary.csv")
     artifact_paths["metric_results"] =
@@ -1167,14 +1343,12 @@ function _run_curves_stage!(context::PipelineContext)
         _pipeline_relative_stage_artifact("curves", "metric_summary.csv")
     artifact_paths["saturation_curve"] =
         _pipeline_relative_stage_artifact("curves", "saturation_curve.jls")
-    artifact_paths["saturation_curve_plot"] =
-        _pipeline_relative_stage_artifact("curves", "saturation_curve.png")
     artifact_paths["saturation_curve_summary"] =
         _pipeline_relative_stage_artifact("curves", "saturation_curve_summary.csv")
 
     return (
         artifact_paths = artifact_paths,
-        warnings = String[],
+        warnings = warnings,
     )
 end
 
@@ -1190,6 +1364,7 @@ function _run_panel_curves_stage!(context::PipelineContext)
     curve_tables = DataFrame[]
     metric_tables = DataFrame[]
     artifact_paths = Dict{String, String}()
+    warnings = String[]
     stage_dir = _stage_directory_path(context, "curves")
     delta_grid = _pipeline_panel_delta_grid(context.config.curve_points)
 
@@ -1236,15 +1411,39 @@ function _run_panel_curves_stage!(context::PipelineContext)
         response_plot = "response_curve_$(channel).png"
         saturation_plot = "saturation_curve_$(channel).png"
         adstock_plot = "adstock_curve_$(channel).png"
-        _save_bundle_figure(joinpath(stage_dir, response_plot), _panel_curve_plot(response, "Panel response curve"))
-        _save_bundle_figure(joinpath(stage_dir, saturation_plot), _panel_curve_plot(saturation, "Panel saturation curve"))
-        _save_bundle_figure(joinpath(stage_dir, adstock_plot), _panel_curve_plot(adstock, "Panel adstock curve"))
-        artifact_paths["response_curve_$(channel)_plot"] =
-            _pipeline_relative_stage_artifact("curves", response_plot)
-        artifact_paths["saturation_curve_$(channel)_plot"] =
-            _pipeline_relative_stage_artifact("curves", saturation_plot)
-        artifact_paths["adstock_curve_$(channel)_plot"] =
-            _pipeline_relative_stage_artifact("curves", adstock_plot)
+        _save_pipeline_plot!(
+            artifact_paths,
+            warnings,
+            "curves",
+            "response_curve_$(channel)_plot",
+            joinpath(stage_dir, response_plot),
+            _pipeline_relative_stage_artifact("curves", response_plot),
+            :panel_curve,
+            response,
+            "Panel response curve",
+        )
+        _save_pipeline_plot!(
+            artifact_paths,
+            warnings,
+            "curves",
+            "saturation_curve_$(channel)_plot",
+            joinpath(stage_dir, saturation_plot),
+            _pipeline_relative_stage_artifact("curves", saturation_plot),
+            :panel_curve,
+            saturation,
+            "Panel saturation curve",
+        )
+        _save_pipeline_plot!(
+            artifact_paths,
+            warnings,
+            "curves",
+            "adstock_curve_$(channel)_plot",
+            joinpath(stage_dir, adstock_plot),
+            _pipeline_relative_stage_artifact("curves", adstock_plot),
+            :panel_curve,
+            adstock,
+            "Panel adstock curve",
+        )
     end
 
     metrics_path = joinpath(stage_dir, "metric_results.jls")
@@ -1286,20 +1485,46 @@ function _run_panel_curves_stage!(context::PipelineContext)
     _write_pipeline_csv(saturation_summary_path, _curve_bundle_summary_table(saturation_results, "saturation"))
     _write_pipeline_csv(adstock_summary_path, _curve_bundle_summary_table(adstock_results, "adstock"))
     first_channel = first(grouped.spec.channel_columns)
-    _save_bundle_figure(response_plot_path, _panel_curve_plot(response_results[first_channel], "Panel response curve"))
-    _save_bundle_figure(saturation_plot_path, _panel_curve_plot(saturation_results[first_channel], "Panel saturation curve"))
-    _save_bundle_figure(adstock_plot_path, _panel_curve_plot(adstock_results[first_channel], "Panel adstock curve"))
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "curves",
+        "forward_pass_contribution_curve_plot",
+        response_plot_path,
+        _pipeline_relative_stage_artifact("curves", "forward_pass_contribution_curve.png"),
+        :panel_curve,
+        response_results[first_channel],
+        "Panel response curve",
+    )
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "curves",
+        "saturation_curve_plot",
+        saturation_plot_path,
+        _pipeline_relative_stage_artifact("curves", "saturation_curve.png"),
+        :panel_curve,
+        saturation_results[first_channel],
+        "Panel saturation curve",
+    )
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "curves",
+        "adstock_curve_plot",
+        adstock_plot_path,
+        _pipeline_relative_stage_artifact("curves", "adstock_curve.png"),
+        :panel_curve,
+        adstock_results[first_channel],
+        "Panel adstock curve",
+    )
 
     artifact_paths["adstock_curve"] =
         _pipeline_relative_stage_artifact("curves", "adstock_curve.jls")
-    artifact_paths["adstock_curve_plot"] =
-        _pipeline_relative_stage_artifact("curves", "adstock_curve.png")
     artifact_paths["adstock_curve_summary"] =
         _pipeline_relative_stage_artifact("curves", "adstock_curve_summary.csv")
     artifact_paths["forward_pass_contribution_curve"] =
         _pipeline_relative_stage_artifact("curves", "response_curve.jls")
-    artifact_paths["forward_pass_contribution_curve_plot"] =
-        _pipeline_relative_stage_artifact("curves", "forward_pass_contribution_curve.png")
     artifact_paths["forward_pass_contribution_curve_summary"] =
         _pipeline_relative_stage_artifact("curves", "forward_pass_contribution_curve_summary.csv")
     artifact_paths["metric_results"] =
@@ -1310,14 +1535,12 @@ function _run_panel_curves_stage!(context::PipelineContext)
         _pipeline_relative_stage_artifact("curves", "metric_summary.csv")
     artifact_paths["saturation_curve"] =
         _pipeline_relative_stage_artifact("curves", "saturation_curve.jls")
-    artifact_paths["saturation_curve_plot"] =
-        _pipeline_relative_stage_artifact("curves", "saturation_curve.png")
     artifact_paths["saturation_curve_summary"] =
         _pipeline_relative_stage_artifact("curves", "saturation_curve_summary.csv")
 
     return (
         artifact_paths = artifact_paths,
-        warnings = String[],
+        warnings = warnings,
     )
 end
 
@@ -1410,37 +1633,42 @@ function _run_optimisation_stage!(context::PipelineContext)
         _write_pipeline_csv(panel_response_summary_path, panel_budget_response_table(result))
         _write_pipeline_csv(channel_delta_audit_path, panel_budget_delta_audit_table(result))
     end
-    optimization_figure = budget_optimization_plot(result)
-    _save_bundle_figure(plot_path, optimization_figure)
-    _save_bundle_figure(bounds_audit_plot_path, optimization_figure)
-    _save_bundle_figure(impact_plot_path, optimization_figure)
-    _save_bundle_figure(allocation_plot_path, optimization_figure)
-    _save_bundle_figure(allocated_contribution_plot_path, optimization_figure)
-    _save_bundle_figure(budget_mroi_plot_path, optimization_figure)
-    _save_bundle_figure(budget_response_curves_plot_path, optimization_figure)
-
     artifact_paths = Dict{String, String}(
-        "allocated_contribution_plot" => _pipeline_relative_stage_artifact("optimisation", "allocated_contribution_by_channel_over_time.png"),
-        "budget_allocation_plot" => _pipeline_relative_stage_artifact("optimisation", "budget_allocation.png"),
         "budget_optimization_result" => _pipeline_relative_stage_artifact("optimisation", "budget_optimization_result.jls"),
         "budget_optimisation" => _pipeline_relative_stage_artifact("optimisation", "budget_optimisation.json"),
         "budget_impact" => _pipeline_relative_stage_artifact("optimisation", "budget_impact.csv"),
-        "budget_impact_plot" => _pipeline_relative_stage_artifact("optimisation", "budget_impact.png"),
         "budget_bounds_audit" => _pipeline_relative_stage_artifact("optimisation", "budget_bounds_audit.csv"),
-        "budget_bounds_audit_plot" => _pipeline_relative_stage_artifact("optimisation", "budget_bounds_audit.png"),
         "budget_mroi" => _pipeline_relative_stage_artifact("optimisation", "budget_mroi.csv"),
         "budget_response_curves" => _pipeline_relative_stage_artifact("optimisation", "budget_response_curves.csv"),
-        "budget_response_curves_plot" => _pipeline_relative_stage_artifact("optimisation", "budget_response_curves.png"),
         "budget_response_points" => _pipeline_relative_stage_artifact("optimisation", "budget_response_points.csv"),
         "budget_roi_cpa" => _pipeline_relative_stage_artifact("optimisation", "budget_roi_cpa.csv"),
-        "budget_roi_cpa_plot" => _pipeline_relative_stage_artifact("optimisation", "budget_roi_cpa.png"),
         "budget_summary" => _pipeline_relative_stage_artifact("optimisation", "budget_summary.csv"),
         "optimize_result" => _pipeline_relative_stage_artifact("optimisation", "optimize_result.json"),
         "optimized_allocation" => _pipeline_relative_stage_artifact("optimisation", "optimized_allocation.jls"),
         "optimized_allocation_csv" => _pipeline_relative_stage_artifact("optimisation", "optimized_allocation.csv"),
         "response_distribution" => _pipeline_relative_stage_artifact("optimisation", "response_distribution.jls"),
-        "budget_optimization_plot" => _pipeline_relative_stage_artifact("optimisation", "budget_optimization.png"),
     )
+    warnings = String[]
+    for (artifact_key, absolute_path, filename) in (
+            ("budget_optimization_plot", plot_path, "budget_optimization.png"),
+            ("budget_bounds_audit_plot", bounds_audit_plot_path, "budget_bounds_audit.png"),
+            ("budget_impact_plot", impact_plot_path, "budget_impact.png"),
+            ("budget_allocation_plot", allocation_plot_path, "budget_allocation.png"),
+            ("allocated_contribution_plot", allocated_contribution_plot_path, "allocated_contribution_by_channel_over_time.png"),
+            ("budget_roi_cpa_plot", budget_mroi_plot_path, "budget_roi_cpa.png"),
+            ("budget_response_curves_plot", budget_response_curves_plot_path, "budget_response_curves.png"),
+        )
+        _save_pipeline_plot!(
+            artifact_paths,
+            warnings,
+            "optimisation",
+            artifact_key,
+            absolute_path,
+            _pipeline_relative_stage_artifact("optimisation", filename),
+            :budget_optimization,
+            result,
+        )
+    end
     if result isa PanelBudgetOptimizationResult
         merge!(
             artifact_paths,
@@ -1455,7 +1683,7 @@ function _run_optimisation_stage!(context::PipelineContext)
 
     return (
         artifact_paths = artifact_paths,
-        warnings = String[],
+        warnings = warnings,
     )
 end
 
@@ -1480,18 +1708,27 @@ function _run_preflight_stage!(context::PipelineContext)
         artifact_kind = "PriorPredictiveChain",
     )
     _write_pipeline_csv(summary_path, _predictive_summary_table(prior_predictive))
-    _save_bundle_figure(
+    artifact_paths = Dict{String, String}(
+        "prior_predictive" => _pipeline_relative_stage_artifact("preflight", "prior_predictive.jls"),
+        "prior_predictive_summary" => _pipeline_relative_stage_artifact("preflight", "prior_predictive_summary.csv"),
+    )
+    warnings = String[]
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "preflight",
+        "prior_predictive_plot",
         plot_path,
-        _prior_predictive_plot(prior_predictive, data, context.model_config.target_column),
+        _pipeline_relative_stage_artifact("preflight", "prior_predictive.png"),
+        :prior_predictive,
+        prior_predictive,
+        data,
+        context.model_config.target_column,
     )
 
     return (
-        artifact_paths = Dict{String, String}(
-            "prior_predictive" => _pipeline_relative_stage_artifact("preflight", "prior_predictive.jls"),
-            "prior_predictive_summary" => _pipeline_relative_stage_artifact("preflight", "prior_predictive_summary.csv"),
-            "prior_predictive_plot" => _pipeline_relative_stage_artifact("preflight", "prior_predictive.png"),
-        ),
-        warnings = String[],
+        artifact_paths = artifact_paths,
+        warnings = warnings,
     )
 end
 
@@ -1519,17 +1756,27 @@ function _run_fit_stage!(context::PipelineContext)
         posterior_summary_path,
         _posterior_summary_table(model.fit_state.artifact.chain, grouped.metadata, grouped.spec),
     )
-    _save_bundle_figure(trace_plot_path, trace_plot(grouped))
+    artifact_paths = Dict{String, String}(
+        "idata" => _pipeline_relative_stage_artifact("fit", "inference_results.jls"),
+        "model" => _pipeline_relative_stage_artifact("fit", "model.jls"),
+        "inference_results" => _pipeline_relative_stage_artifact("fit", "inference_results.jls"),
+        "posterior_summary" => _pipeline_relative_stage_artifact("fit", "posterior_summary.csv"),
+    )
+    warnings = isempty(state.message) ? String[] : [state.message]
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "fit",
+        "trace_plot",
+        trace_plot_path,
+        _pipeline_relative_stage_artifact("fit", "trace.png"),
+        :trace,
+        grouped,
+    )
 
     return (
-        artifact_paths = Dict{String, String}(
-            "idata" => _pipeline_relative_stage_artifact("fit", "inference_results.jls"),
-            "model" => _pipeline_relative_stage_artifact("fit", "model.jls"),
-            "inference_results" => _pipeline_relative_stage_artifact("fit", "inference_results.jls"),
-            "posterior_summary" => _pipeline_relative_stage_artifact("fit", "posterior_summary.csv"),
-            "trace_plot" => _pipeline_relative_stage_artifact("fit", "trace.png"),
-        ),
-        warnings = isempty(state.message) ? String[] : [state.message],
+        artifact_paths = artifact_paths,
+        warnings = warnings,
     )
 end
 
@@ -1601,50 +1848,90 @@ function _run_assessment_stage!(context::PipelineContext)
             ),
         ),
     )
-    observed_fitted_figure = observed_fitted_plot(grouped)
-    _save_bundle_figure(observed_fitted_plot_path, observed_fitted_figure)
-    _save_bundle_figure(fit_timeseries_plot_path, observed_fitted_figure)
-    _save_bundle_figure(posterior_predictive_plot_path, observed_fitted_figure)
-    _save_bundle_figure(
+    artifact_paths = Dict{String, String}(
+        "model_results" => _pipeline_relative_stage_artifact("assessment", "model_results.jls"),
+        "observed" => _pipeline_relative_stage_artifact("assessment", "observed.csv"),
+        "fitted" => _pipeline_relative_stage_artifact("assessment", "fitted.csv"),
+        "posterior_predictive" => _pipeline_relative_stage_artifact("assessment", "posterior_predictive.jls"),
+        "posterior_predictive_summary" => _pipeline_relative_stage_artifact("assessment", "posterior_predictive_summary.csv"),
+        "residuals" => _pipeline_relative_stage_artifact("assessment", "residuals.csv"),
+        "predictive_summary" => _pipeline_relative_stage_artifact("assessment", "predictive_summary.csv"),
+    )
+    warnings = String[]
+    for (artifact_key, absolute_path, filename) in (
+            ("observed_fitted_plot", observed_fitted_plot_path, "observed_fitted.png"),
+            ("fit_timeseries_plot", fit_timeseries_plot_path, "fit_timeseries.png"),
+            ("posterior_predictive_plot", posterior_predictive_plot_path, "posterior_predictive.png"),
+        )
+        _save_pipeline_plot!(
+            artifact_paths,
+            warnings,
+            "assessment",
+            artifact_key,
+            absolute_path,
+            _pipeline_relative_stage_artifact("assessment", filename),
+            :observed_fitted,
+            grouped,
+        )
+    end
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "assessment",
+        "fit_scatter_plot",
         fit_scatter_plot_path,
-        _fit_scatter_plot(observed, fitted_mean, context.model_config.target_column),
+        _pipeline_relative_stage_artifact("assessment", "fit_scatter.png"),
+        :fit_scatter,
+        observed,
+        fitted_mean,
+        context.model_config.target_column,
     )
-    _save_bundle_figure(
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "assessment",
+        "residual_diagnostics_plot",
         residual_diagnostics_plot_path,
-        residual_diagnostics_plot(grouped),
+        _pipeline_relative_stage_artifact("assessment", "residual_diagnostics.png"),
+        :residual_diagnostics,
+        grouped,
     )
-    _save_bundle_figure(
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "assessment",
+        "residuals_hist_plot",
         residuals_hist_plot_path,
-        _residuals_hist_plot(residuals),
+        _pipeline_relative_stage_artifact("assessment", "residuals_hist.png"),
+        :residuals_hist,
+        residuals,
     )
-    _save_bundle_figure(
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "assessment",
+        "residuals_timeseries_plot",
         residuals_timeseries_plot_path,
-        _residuals_timeseries_plot(model.data.dates, residuals),
+        _pipeline_relative_stage_artifact("assessment", "residuals_timeseries.png"),
+        :residuals_timeseries,
+        model.data.dates,
+        residuals,
     )
-    _save_bundle_figure(
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "assessment",
+        "residuals_vs_fitted_plot",
         residuals_vs_fitted_plot_path,
-        _residuals_vs_fitted_plot(fitted_mean, residuals),
+        _pipeline_relative_stage_artifact("assessment", "residuals_vs_fitted.png"),
+        :residuals_vs_fitted,
+        fitted_mean,
+        residuals,
     )
 
     return (
-        artifact_paths = Dict{String, String}(
-            "fit_scatter_plot" => _pipeline_relative_stage_artifact("assessment", "fit_scatter.png"),
-            "fit_timeseries_plot" => _pipeline_relative_stage_artifact("assessment", "fit_timeseries.png"),
-            "model_results" => _pipeline_relative_stage_artifact("assessment", "model_results.jls"),
-            "observed" => _pipeline_relative_stage_artifact("assessment", "observed.csv"),
-            "fitted" => _pipeline_relative_stage_artifact("assessment", "fitted.csv"),
-            "posterior_predictive" => _pipeline_relative_stage_artifact("assessment", "posterior_predictive.jls"),
-            "posterior_predictive_plot" => _pipeline_relative_stage_artifact("assessment", "posterior_predictive.png"),
-            "posterior_predictive_summary" => _pipeline_relative_stage_artifact("assessment", "posterior_predictive_summary.csv"),
-            "residuals" => _pipeline_relative_stage_artifact("assessment", "residuals.csv"),
-            "residuals_hist_plot" => _pipeline_relative_stage_artifact("assessment", "residuals_hist.png"),
-            "residuals_timeseries_plot" => _pipeline_relative_stage_artifact("assessment", "residuals_timeseries.png"),
-            "residuals_vs_fitted_plot" => _pipeline_relative_stage_artifact("assessment", "residuals_vs_fitted.png"),
-            "predictive_summary" => _pipeline_relative_stage_artifact("assessment", "predictive_summary.csv"),
-            "observed_fitted_plot" => _pipeline_relative_stage_artifact("assessment", "observed_fitted.png"),
-            "residual_diagnostics_plot" => _pipeline_relative_stage_artifact("assessment", "residual_diagnostics.png"),
-        ),
-        warnings = String[],
+        artifact_paths = artifact_paths,
+        warnings = warnings,
     )
 end
 
@@ -1719,127 +2006,98 @@ function _run_panel_assessment_stage!(context::PipelineContext)
         ),
     )
 
-    observed_fitted_figure = _panel_observed_fitted_plot(
-        model.data,
+    artifact_paths = Dict{String, String}(
+        "model_results" => _pipeline_relative_stage_artifact("assessment", "model_results.jls"),
+        "observed" => _pipeline_relative_stage_artifact("assessment", "observed.csv"),
+        "fitted" => _pipeline_relative_stage_artifact("assessment", "fitted.csv"),
+        "posterior_predictive" => _pipeline_relative_stage_artifact("assessment", "posterior_predictive.jls"),
+        "posterior_predictive_summary" => _pipeline_relative_stage_artifact("assessment", "posterior_predictive_summary.csv"),
+        "residuals" => _pipeline_relative_stage_artifact("assessment", "residuals.csv"),
+        "predictive_summary" => _pipeline_relative_stage_artifact("assessment", "predictive_summary.csv"),
+    )
+    warnings = String[]
+    for (artifact_key, absolute_path, filename) in (
+            ("observed_fitted_plot", observed_fitted_plot_path, "observed_fitted.png"),
+            ("fit_timeseries_plot", fit_timeseries_plot_path, "fit_timeseries.png"),
+            ("posterior_predictive_plot", posterior_predictive_plot_path, "posterior_predictive.png"),
+        )
+        _save_pipeline_plot!(
+            artifact_paths,
+            warnings,
+            "assessment",
+            artifact_key,
+            absolute_path,
+            _pipeline_relative_stage_artifact("assessment", filename),
+            :panel_observed_fitted,
+            model.data,
+            observed,
+            fitted_mean,
+            fitted_lower,
+            fitted_upper,
+            context.model_config.target_column,
+        )
+    end
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "assessment",
+        "fit_scatter_plot",
+        fit_scatter_plot_path,
+        _pipeline_relative_stage_artifact("assessment", "fit_scatter.png"),
+        :fit_scatter,
         observed,
         fitted_mean,
-        fitted_lower,
-        fitted_upper,
         context.model_config.target_column,
     )
-    _save_bundle_figure(observed_fitted_plot_path, observed_fitted_figure)
-    _save_bundle_figure(fit_timeseries_plot_path, observed_fitted_figure)
-    _save_bundle_figure(posterior_predictive_plot_path, observed_fitted_figure)
-    _save_bundle_figure(
-        fit_scatter_plot_path,
-        _fit_scatter_plot(observed, fitted_mean, context.model_config.target_column),
-    )
-    _save_bundle_figure(
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "assessment",
+        "residual_diagnostics_plot",
         residual_diagnostics_plot_path,
-        _panel_residual_diagnostics_plot(model.data, residuals, fitted_mean),
+        _pipeline_relative_stage_artifact("assessment", "residual_diagnostics.png"),
+        :panel_residual_diagnostics,
+        model.data,
+        residuals,
+        fitted_mean,
     )
-    _save_bundle_figure(residuals_hist_plot_path, _residuals_hist_plot(residuals))
-    _save_bundle_figure(
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "assessment",
+        "residuals_hist_plot",
+        residuals_hist_plot_path,
+        _pipeline_relative_stage_artifact("assessment", "residuals_hist.png"),
+        :residuals_hist,
+        residuals,
+    )
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "assessment",
+        "residuals_timeseries_plot",
         residuals_timeseries_plot_path,
-        _panel_residuals_timeseries_plot(model.data, residuals),
+        _pipeline_relative_stage_artifact("assessment", "residuals_timeseries.png"),
+        :panel_residuals_timeseries,
+        model.data,
+        residuals,
     )
-    _save_bundle_figure(
+    _save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "assessment",
+        "residuals_vs_fitted_plot",
         residuals_vs_fitted_plot_path,
-        _residuals_vs_fitted_plot(fitted_mean, residuals),
+        _pipeline_relative_stage_artifact("assessment", "residuals_vs_fitted.png"),
+        :residuals_vs_fitted,
+        fitted_mean,
+        residuals,
     )
 
     return (
-        artifact_paths = Dict{String, String}(
-            "fit_scatter_plot" => _pipeline_relative_stage_artifact("assessment", "fit_scatter.png"),
-            "fit_timeseries_plot" => _pipeline_relative_stage_artifact("assessment", "fit_timeseries.png"),
-            "model_results" => _pipeline_relative_stage_artifact("assessment", "model_results.jls"),
-            "observed" => _pipeline_relative_stage_artifact("assessment", "observed.csv"),
-            "fitted" => _pipeline_relative_stage_artifact("assessment", "fitted.csv"),
-            "posterior_predictive" => _pipeline_relative_stage_artifact("assessment", "posterior_predictive.jls"),
-            "posterior_predictive_plot" => _pipeline_relative_stage_artifact("assessment", "posterior_predictive.png"),
-            "posterior_predictive_summary" => _pipeline_relative_stage_artifact("assessment", "posterior_predictive_summary.csv"),
-            "residuals" => _pipeline_relative_stage_artifact("assessment", "residuals.csv"),
-            "residuals_hist_plot" => _pipeline_relative_stage_artifact("assessment", "residuals_hist.png"),
-            "residuals_timeseries_plot" => _pipeline_relative_stage_artifact("assessment", "residuals_timeseries.png"),
-            "residuals_vs_fitted_plot" => _pipeline_relative_stage_artifact("assessment", "residuals_vs_fitted.png"),
-            "predictive_summary" => _pipeline_relative_stage_artifact("assessment", "predictive_summary.csv"),
-            "observed_fitted_plot" => _pipeline_relative_stage_artifact("assessment", "observed_fitted.png"),
-            "residual_diagnostics_plot" => _pipeline_relative_stage_artifact("assessment", "residual_diagnostics.png"),
-        ),
-        warnings = String[],
+        artifact_paths = artifact_paths,
+        warnings = warnings,
     )
-end
-
-function _prior_predictive_plot(
-        chain,
-        data::MMMData,
-        target_label::AbstractString,
-    )
-    predictive_matrix = _target_draw_matrix(chain, nobs(data))
-    fitted_mean, fitted_lower, fitted_upper = _column_summary(predictive_matrix)
-    observed = Float64.(collect(data.target))
-    x_values = collect(1:nobs(data))
-    figure = nothing
-
-    with_theme(epsilon_theme()) do
-        figure = Figure(size = (1020, 520))
-        ax = Axis(
-            figure[1, 1];
-            title = "Prior predictive",
-            xlabel = "Observation",
-            ylabel = target_label,
-        )
-        band!(
-            ax,
-            x_values,
-            fitted_lower,
-            fitted_upper;
-            color = RGBAf(_EPSILON_NEUTRAL_COLOR.r, _EPSILON_NEUTRAL_COLOR.g, _EPSILON_NEUTRAL_COLOR.b, 0.18),
-            label = "90% prior interval",
-        )
-        lines!(ax, x_values, fitted_mean; color = _EPSILON_NEUTRAL_COLOR, label = "Prior mean")
-        scatter!(ax, x_values, observed; color = _EPSILON_POSITIVE_COLOR, label = "Observed")
-        _apply_time_axis_ticks!(ax, data.dates)
-        axislegend(ax; position = :rb)
-    end
-
-    return figure
-end
-
-function _holdout_validation_plot(
-        holdout_data::MMMData,
-        fitted_mean::AbstractVector,
-        fitted_lower::AbstractVector,
-        fitted_upper::AbstractVector,
-        target_label::AbstractString,
-    )
-    observed = Float64.(collect(holdout_data.target))
-    x_values = collect(1:nobs(holdout_data))
-    figure = nothing
-
-    with_theme(epsilon_theme()) do
-        figure = Figure(size = (1020, 520))
-        ax = Axis(
-            figure[1, 1];
-            title = "Blocked holdout validation",
-            xlabel = "Observation",
-            ylabel = target_label,
-        )
-        band!(
-            ax,
-            x_values,
-            fitted_lower,
-            fitted_upper;
-            color = RGBAf(_EPSILON_NEUTRAL_COLOR.r, _EPSILON_NEUTRAL_COLOR.g, _EPSILON_NEUTRAL_COLOR.b, 0.18),
-            label = "90% posterior interval",
-        )
-        lines!(ax, x_values, fitted_mean; color = _EPSILON_NEUTRAL_COLOR, label = "Fitted mean")
-        scatter!(ax, x_values, observed; color = _EPSILON_POSITIVE_COLOR, label = "Observed")
-        _apply_time_axis_ticks!(ax, holdout_data.dates)
-        axislegend(ax; position = :rb)
-    end
-
-    return figure
 end
 
 function _load_pipeline_dataset(context::PipelineContext)
@@ -3070,27 +3328,6 @@ function _lag_autocorrelation(values::AbstractVector, lag::Integer)
     return numerator / denominator
 end
 
-function _residuals_acf_plot(residuals::AbstractVector)
-    max_lag = max(1, min(12, length(residuals) - 1))
-    lags = collect(1:max_lag)
-    acf_values = [_lag_autocorrelation(residuals, lag) for lag in lags]
-    figure = nothing
-
-    with_theme(epsilon_theme()) do
-        figure = Figure(size = (720, 520))
-        ax = Axis(
-            figure[1, 1];
-            title = "Residual autocorrelation",
-            xlabel = "Lag",
-            ylabel = "ACF",
-        )
-        barplot!(ax, lags, acf_values; color = _EPSILON_NEUTRAL_COLOR)
-        hlines!(ax, [0.0]; color = _EPSILON_NEGATIVE_COLOR, linestyle = :dash)
-    end
-
-    return figure
-end
-
 function _optimized_allocation_table(result::_BudgetOptimizationResultLike)
     return DataFrame(;
         channel = result.spec.channel_columns,
@@ -3155,384 +3392,6 @@ function _budget_optimization_report_dict(result::_BudgetOptimizationResultLike)
         report["channel_delta"] = result.channel_delta
     end
     return report
-end
-
-function _fit_scatter_plot(
-        observed::AbstractVector,
-        fitted_mean::AbstractVector,
-        target_label::AbstractString,
-    )
-    lower = min(minimum(observed), minimum(fitted_mean))
-    upper = max(maximum(observed), maximum(fitted_mean))
-    figure = nothing
-
-    with_theme(epsilon_theme()) do
-        figure = Figure(size = (720, 560))
-        ax = Axis(
-            figure[1, 1];
-            title = "Observed vs fitted",
-            xlabel = "Observed $target_label",
-            ylabel = "Fitted $target_label",
-        )
-        lines!(ax, [lower, upper], [lower, upper]; color = _EPSILON_NEUTRAL_COLOR, linestyle = :dash)
-        scatter!(ax, observed, fitted_mean; color = _EPSILON_POSITIVE_COLOR)
-    end
-
-    return figure
-end
-
-function _residuals_hist_plot(residuals::AbstractVector)
-    figure = nothing
-
-    with_theme(epsilon_theme()) do
-        figure = Figure(size = (720, 520))
-        ax = Axis(
-            figure[1, 1];
-            title = "Residual histogram",
-            xlabel = "Residual",
-            ylabel = "Count",
-        )
-        hist!(ax, residuals; bins = max(5, min(20, length(residuals))))
-        vlines!(ax, [0.0]; color = _EPSILON_NEGATIVE_COLOR, linestyle = :dash)
-    end
-
-    return figure
-end
-
-function _residuals_timeseries_plot(dates, residuals::AbstractVector)
-    x_values = collect(eachindex(residuals))
-    figure = nothing
-
-    with_theme(epsilon_theme()) do
-        figure = Figure(size = (1020, 520))
-        ax = Axis(
-            figure[1, 1];
-            title = "Residuals over time",
-            xlabel = "Observation",
-            ylabel = "Residual",
-        )
-        hlines!(ax, [0.0]; color = _EPSILON_NEGATIVE_COLOR, linestyle = :dash)
-        lines!(ax, x_values, residuals; color = _EPSILON_NEUTRAL_COLOR)
-        scatter!(ax, x_values, residuals; color = _EPSILON_NEUTRAL_COLOR)
-        _apply_time_axis_ticks!(ax, dates)
-    end
-
-    return figure
-end
-
-function _panel_observed_fitted_plot(
-        data::PanelMMMData,
-        observed::AbstractVector,
-        fitted_mean::AbstractVector,
-        fitted_lower::AbstractVector,
-        fitted_upper::AbstractVector,
-        target_column::AbstractString,
-    )
-    ntime, npanels = size(data.target)
-    x_values = collect(1:ntime)
-    panel_count = min(npanels, 9)
-    ncols = min(3, panel_count)
-    nrows = ceil(Int, panel_count / ncols)
-    figure = nothing
-
-    with_theme(epsilon_theme()) do
-        figure = Figure(size = (360 * ncols, 280 * nrows))
-        for panel_index in 1:panel_count
-            row = cld(panel_index, ncols)
-            col = mod1(panel_index, ncols)
-            indices = ((panel_index - 1) * ntime + 1):(panel_index * ntime)
-            ax = Axis(
-                figure[row, col];
-                title = data.panel_names[panel_index],
-                xlabel = "Observation",
-                ylabel = target_column,
-            )
-            band!(
-                ax,
-                x_values,
-                fitted_lower[indices],
-                fitted_upper[indices];
-                color = RGBAf(_EPSILON_NEUTRAL_COLOR.r, _EPSILON_NEUTRAL_COLOR.g, _EPSILON_NEUTRAL_COLOR.b, 0.18),
-            )
-            lines!(ax, x_values, fitted_mean[indices]; color = _EPSILON_NEUTRAL_COLOR)
-            scatter!(ax, x_values, observed[indices]; color = _EPSILON_POSITIVE_COLOR)
-            _apply_time_axis_ticks!(ax, data.dates)
-        end
-    end
-
-    return figure
-end
-
-function _panel_residuals_timeseries_plot(data::PanelMMMData, residuals::AbstractVector)
-    ntime, npanels = size(data.target)
-    x_values = collect(1:ntime)
-    panel_count = min(npanels, 9)
-    ncols = min(3, panel_count)
-    nrows = ceil(Int, panel_count / ncols)
-    figure = nothing
-
-    with_theme(epsilon_theme()) do
-        figure = Figure(size = (360 * ncols, 260 * nrows))
-        for panel_index in 1:panel_count
-            row = cld(panel_index, ncols)
-            col = mod1(panel_index, ncols)
-            indices = ((panel_index - 1) * ntime + 1):(panel_index * ntime)
-            ax = Axis(
-                figure[row, col];
-                title = data.panel_names[panel_index],
-                xlabel = "Observation",
-                ylabel = "Residual",
-            )
-            hlines!(ax, [0.0]; color = _EPSILON_NEGATIVE_COLOR, linestyle = :dash)
-            lines!(ax, x_values, residuals[indices]; color = _EPSILON_NEUTRAL_COLOR)
-            scatter!(ax, x_values, residuals[indices]; color = _EPSILON_NEUTRAL_COLOR)
-            _apply_time_axis_ticks!(ax, data.dates)
-        end
-    end
-
-    return figure
-end
-
-function _panel_residual_diagnostics_plot(
-        data::PanelMMMData,
-        residuals::AbstractVector,
-        fitted_mean::AbstractVector,
-    )
-    ntime, npanels = size(data.target)
-    panel_mean_residuals = [mean(view(residuals, ((panel - 1) * ntime + 1):(panel * ntime))) for panel in 1:npanels]
-    figure = nothing
-
-    with_theme(epsilon_theme()) do
-        figure = Figure(size = (1180, 700))
-        ax_panel = Axis(
-            figure[1, 1];
-            title = "Mean residual by panel",
-            xlabel = "Panel",
-            ylabel = "Mean residual",
-        )
-        barplot!(ax_panel, collect(1:npanels), panel_mean_residuals; color = _EPSILON_NEUTRAL_COLOR)
-        hlines!(ax_panel, [0.0]; color = _EPSILON_NEGATIVE_COLOR, linestyle = :dash)
-        ax_panel.xticks = (collect(1:npanels), data.panel_names)
-
-        ax_fitted = Axis(
-            figure[1, 2];
-            title = "Residual vs fitted",
-            xlabel = "Fitted mean",
-            ylabel = "Residual",
-        )
-        scatter!(ax_fitted, fitted_mean, residuals; color = _EPSILON_POSITIVE_COLOR)
-        hlines!(ax_fitted, [0.0]; color = _EPSILON_NEGATIVE_COLOR, linestyle = :dash)
-
-        ax_hist = Axis(
-            figure[2, 1:2];
-            title = "Residual distribution",
-            xlabel = "Residual",
-            ylabel = "Count",
-        )
-        hist!(ax_hist, residuals; bins = max(5, min(30, length(residuals))))
-        vlines!(ax_hist, [0.0]; color = _EPSILON_NEGATIVE_COLOR, linestyle = :dash)
-    end
-
-    return figure
-end
-
-function _panel_curve_summary(results)
-    ndims(results.values) == 3 ||
-        throw(ArgumentError("panel curve plots require values with dimensions (draw, panel, point)"))
-    ndraws, npanels, npoints = size(results.values)
-    matrix = reshape(Float64.(results.values), ndraws * npanels, npoints)
-    return _column_summary(matrix)
-end
-
-function _panel_curve_plot(results, title::AbstractString)
-    mean_values, lower_values, upper_values = _panel_curve_summary(results)
-    x_values = collect(results.spend_share_grid)
-    figure = nothing
-
-    with_theme(epsilon_theme()) do
-        figure = Figure(size = (980, 560))
-        ax = Axis(
-            figure[1, 1];
-            title,
-            xlabel = "Historical spend multiplier",
-            ylabel = "Curve value",
-        )
-        band!(
-            ax,
-            x_values,
-            lower_values,
-            upper_values;
-            color = RGBAf(_EPSILON_NEUTRAL_COLOR.r, _EPSILON_NEUTRAL_COLOR.g, _EPSILON_NEUTRAL_COLOR.b, 0.18),
-            label = "90% interval",
-        )
-        lines!(ax, x_values, mean_values; color = _EPSILON_NEUTRAL_COLOR, label = results.channel)
-        scatter!(ax, x_values, mean_values; color = _EPSILON_POSITIVE_COLOR)
-        hlines!(ax, [0.0]; color = _EPSILON_NEGATIVE_COLOR, linestyle = :dash)
-        axislegend(ax; position = :rb)
-    end
-
-    return figure
-end
-
-function _panel_contribution_component_totals(results::ContributionResults)
-    ndims(results.values) == 4 ||
-        throw(ArgumentError("panel contribution plots require contribution values with dimensions (draw, time, panel, component)"))
-
-    selected = findall(==(:media), results.component_kinds)
-    isempty(selected) && (selected = collect(eachindex(results.component_names)))
-    totals = Matrix{Float64}(undef, size(results.values, 1), length(selected))
-    for (local_index, component_index) in enumerate(selected)
-        summed = sum(view(results.values, :, :, :, component_index); dims = (2, 3))
-        totals[:, local_index] .= vec(summed)
-    end
-    return selected, _column_summary(totals)
-end
-
-function _panel_media_contribution_timeseries(results::ContributionResults)
-    ndims(results.values) == 4 ||
-        throw(ArgumentError("panel media contribution plots require contribution values with dimensions (draw, time, panel, component)"))
-
-    selected = findall(==(:media), results.component_kinds)
-    isempty(selected) && (selected = collect(eachindex(results.component_names)))
-    ntime = size(results.values, 2)
-    means = Matrix{Float64}(undef, ntime, length(selected))
-    lowers = similar(means)
-    uppers = similar(means)
-    for (local_index, component_index) in enumerate(selected)
-        summed = dropdims(
-            sum(view(results.values, :, :, :, component_index); dims = 3);
-            dims = 3,
-        )
-        mean_values, lower_values, upper_values = _column_summary(summed)
-        means[:, local_index] .= mean_values
-        lowers[:, local_index] .= lower_values
-        uppers[:, local_index] .= upper_values
-    end
-    return selected, means, lowers, uppers
-end
-
-function _panel_contribution_plot(results::ContributionResults)
-    selected, summaries = _panel_contribution_component_totals(results)
-    total_mean, total_lower, total_upper = summaries
-    x_positions = collect(1:length(selected))
-    colors = [_signed_component_color(value) for value in total_mean]
-    figure = nothing
-
-    with_theme(epsilon_theme()) do
-        figure = Figure(size = (1080, 560))
-        ax = Axis(
-            figure[1, 1];
-            title = "Panel media contributions",
-            xlabel = "Component",
-            ylabel = "Total contribution",
-        )
-        barplot!(ax, x_positions, total_mean; color = colors)
-        errorbars!(
-            ax,
-            x_positions,
-            total_mean,
-            total_mean .- total_lower,
-            total_upper .- total_mean;
-            whiskerwidth = 14,
-            color = :black,
-        )
-        hlines!(ax, [0.0]; color = _EPSILON_NEGATIVE_COLOR, linestyle = :dash)
-        ax.xticks = (x_positions, _component_labels(results.component_names[selected]))
-        ax.xticklabelrotation = pi / 8
-    end
-
-    return figure
-end
-
-function _panel_contribution_area_plot(results::ContributionResults)
-    selected, means, lowers, uppers = _panel_media_contribution_timeseries(results)
-    x_values = collect(1:size(means, 1))
-    figure = nothing
-
-    with_theme(epsilon_theme()) do
-        figure = Figure(size = (1120, 620))
-        ax = Axis(
-            figure[1, 1];
-            title = "Panel media contribution over time",
-            xlabel = "Observation",
-            ylabel = "Contribution",
-        )
-        for (local_index, component_index) in enumerate(selected)
-            color = _component_color(local_index)
-            band!(
-                ax,
-                x_values,
-                view(lowers, :, local_index),
-                view(uppers, :, local_index);
-                color = _transparent_color(color, 0.16),
-            )
-            lines!(
-                ax,
-                x_values,
-                view(means, :, local_index);
-                color = color,
-                label = _component_label(results.component_names[component_index]),
-            )
-        end
-        hlines!(ax, [0.0]; color = _EPSILON_NEGATIVE_COLOR, linestyle = :dash)
-        _apply_time_axis_ticks!(ax, results.dates)
-        length(selected) <= 8 && axislegend(ax; position = :rb)
-    end
-
-    return figure
-end
-
-function _panel_decomposition_plot(results::DecompositionResults)
-    mean_totals, lower_totals, upper_totals = _draw_level_summary(results.totals)
-    total_mean = vec(mean_totals)
-    total_lower = vec(lower_totals)
-    total_upper = vec(upper_totals)
-    x_positions = collect(1:length(results.component_names))
-    colors = [_signed_component_color(value) for value in total_mean]
-    figure = nothing
-
-    with_theme(epsilon_theme()) do
-        figure = Figure(size = (1080, 560))
-        ax = Axis(
-            figure[1, 1];
-            title = "Panel decomposition",
-            xlabel = "Component",
-            ylabel = "Total contribution",
-        )
-        barplot!(ax, x_positions, total_mean; color = colors)
-        errorbars!(
-            ax,
-            x_positions,
-            total_mean,
-            total_mean .- total_lower,
-            total_upper .- total_mean;
-            whiskerwidth = 14,
-            color = :black,
-        )
-        hlines!(ax, [0.0]; color = _EPSILON_NEGATIVE_COLOR, linestyle = :dash)
-        ax.xticks = (x_positions, _component_labels(results.component_names))
-        ax.xticklabelrotation = pi / 8
-    end
-
-    return figure
-end
-
-function _residuals_vs_fitted_plot(fitted_mean::AbstractVector, residuals::AbstractVector)
-    figure = nothing
-
-    with_theme(epsilon_theme()) do
-        figure = Figure(size = (720, 560))
-        ax = Axis(
-            figure[1, 1];
-            title = "Residuals vs fitted",
-            xlabel = "Fitted",
-            ylabel = "Residual",
-        )
-        hlines!(ax, [0.0]; color = _EPSILON_NEGATIVE_COLOR, linestyle = :dash)
-        scatter!(ax, fitted_mean, residuals; color = _EPSILON_POSITIVE_COLOR)
-    end
-
-    return figure
 end
 
 function _pipeline_curve_grid(

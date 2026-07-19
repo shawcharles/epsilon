@@ -654,6 +654,37 @@ end
     @test missing_docs_entries == Symbol[]
 end
 
+@testset "plotting remains optional in the base package" begin
+    @test Base.get_extension(Epsilon, :EpsilonCairoMakieExt) === nothing
+
+    plotting_error = try
+        trace_plot(nothing)
+        nothing
+    catch caught
+        caught
+    end
+    @test plotting_error isa ArgumentError
+    @test occursin("optional plotting support", sprint(showerror, plotting_error))
+
+    artifact_paths = Dict{String, String}()
+    warnings = String[]
+    returned = Epsilon._save_pipeline_plot!(
+        artifact_paths,
+        warnings,
+        "fit",
+        "trace_plot",
+        joinpath(tempdir(), "trace.png"),
+        "20_model_fit/trace.png",
+        :trace,
+        nothing,
+    )
+
+    @test returned === artifact_paths
+    @test isempty(artifact_paths)
+    @test length(warnings) == 1
+    @test occursin("optional plotting support is unavailable", only(warnings))
+end
+
 @testset "public API lifecycle triage matches inventory" begin
     exported_symbols = _api_exports_current_symbols()
     inventory_rows = _api_exports_inventory_rows()

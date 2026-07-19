@@ -5,6 +5,15 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ## Unreleased
 
+### Changed
+
+- Moved the CairoMakie-backed plotting implementation behind the optional
+  `EpsilonCairoMakieExt` package extension. `using Epsilon` no longer loads
+  CairoMakie; load `using Epsilon, CairoMakie` for direct plot functions,
+  plotted pipeline stage artifacts, and `write_plot_bundle(run)`. Headless
+  pipeline runs keep non-plot artifacts and omit plot artifact paths with
+  explicit stage warnings.
+
 ### Removed
 
 - Permanently removed the pre-release variational-inference API and runtime

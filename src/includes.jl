@@ -43,19 +43,16 @@ include("optimization/optimizer.jl")
 include("optimization/panel.jl")
 include("optimization/summary.jl")
 include("scenario_planner.jl")
+include("plotting/api.jl")
 include("pipeline/config.jl")
 include("pipeline/context.jl")
 include("pipeline/stages.jl")
 include("pipeline/run.jl")
 include("pipeline/cli.jl")
-include("plotting/theme.jl")
-include("plotting/diagnostics.jl")
-include("plotting/postmodel.jl")
-include("plotting/optimization.jl")
-include("plotting/bundle.jl")
 
-# Existing load order is preserved exactly. Transforms remain here after
-# plotting because Phase 57 documents the current order without reordering it.
+# Existing load order is preserved exactly except that Phase 68 keeps only the
+# plotting API stubs in the core package. CairoMakie-backed methods load through
+# the optional EpsilonCairoMakieExt extension.
 include("transforms/convolution.jl")
 include("transforms/adstock.jl")
 include("transforms/saturation.jl")

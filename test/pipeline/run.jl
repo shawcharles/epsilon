@@ -1,4 +1,5 @@
 using CSV
+using CairoMakie
 using Dates
 using Epsilon
 using JSON3

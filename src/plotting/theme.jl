@@ -16,14 +16,14 @@ const _EPSILON_NEUTRAL_COLOR = colorant"#33658A"
 const _EPSILON_GRID_COLOR = RGBAf(0.0, 0.0, 0.0, 0.08)
 
 """
-    epsilon_theme() -> Theme
+    _epsilon_theme_impl() -> Theme
 
 Return the bounded Phase 10 Makie theme for Epsilon plots.
 
-`epsilon_theme()` is a pure helper: it returns a `Makie.Theme` and does not
+`_epsilon_theme_impl()` is a pure helper: it returns a `Makie.Theme` and does not
 mutate Makie's global active theme.
 """
-function epsilon_theme()
+function _epsilon_theme_impl()
     return Theme(
         palette = (
             color = _EPSILON_CATEGORICAL_PALETTE,

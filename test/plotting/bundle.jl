@@ -77,7 +77,9 @@ end
             include_posterior_predictive = true,
             include_prior_predictive = false,
         )
-        selected = Epsilon._select_plot_parameters(
+        extension = Base.get_extension(Epsilon, :EpsilonCairoMakieExt)
+        @test !isnothing(extension)
+        selected = extension._select_plot_parameters(
             grouped.posterior;
             parameters = nothing,
             max_parameters = 8,
@@ -86,7 +88,7 @@ end
         prior_parameters = Set(Symbol.(names(grouped.prior, :parameters)))
         expected_prior_posteriors = sort(
             [
-                "prior_posterior_$(Epsilon._plot_parameter_slug(parameter)).png" for
+                "prior_posterior_$(extension._plot_parameter_slug(parameter)).png" for
                     parameter in selected if parameter in prior_parameters
             ]
         )

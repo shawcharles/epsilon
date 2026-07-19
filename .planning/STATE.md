@@ -8,25 +8,39 @@ See: .planning/PROJECT.md
 Julia by using validated reference behavior where it is methodologically
 meaningful, proving comparison claims only where semantics genuinely match, and
 letting Epsilon stand as an independent Julia MMM library.
-**Current focus:** Phase 66 Planning Truth Reconciliation is complete. The
-project-control docs now reflect the actual landed sequence through Phase 65,
-and the next recommended slice should return to release-path usability or
-evidence rather than internal submodules or broad parity reopening.
+**Current focus:** Phase 68 Plotting Extension Boundary is complete. CairoMakie
+plotting now lives behind an optional package extension while the core package
+keeps modelling, inference, post-model, optimisation, scenario, and non-plot
+pipeline workflows available in headless installs.
 
 ## Current Position
 
-**Current Phase:** 66
-**Current Phase Name:** Planning Truth Reconciliation
-**Total Phases:** 66
-**Current Plan:** `.planning/phases/66-planning-truth-reconciliation/PLAN.md`
-**Total Plans in Phase:** 1 planning-state reconciliation slice
-**Status:** Phase 66 is complete. `.planning/STATE.md` and
-`.planning/ROADMAP.md` now record the landed Phase 53 through Phase 65 sequence
-instead of presenting Phase 52 as current. This is internal planning-state
-hygiene only: no runtime source, tests, docs-site inputs, public API, parity
-ledger, changelog, dependencies, fixtures, examples, benchmark assets, or
-release claims changed. No Julia tests were run because the change is limited
-to planning documents.
+**Current Phase:** 68
+**Current Phase Name:** Plotting Extension Boundary
+**Total Phases:** 68
+**Current Plan:** `.planning/phases/68-plotting-extension-boundary/PLAN.md`
+**Total Plans in Phase:** 1 dependency-boundary implementation slice
+**Status:** Phase 68 is complete. CairoMakie moved from a mandatory runtime
+dependency to the optional `EpsilonCairoMakieExt` extension while exported
+plotting names keep base-package docstrings and deterministic no-backend
+fallback errors. Pipeline plot emission now routes through an optional hook:
+loaded-backend runs keep the existing stage-local PNG keys/files, and headless
+runs keep non-plot artifacts while omitting plot paths with explicit stage
+warnings.
+
+Phase 67 is complete. The copied `data/demo/{timeseries,geo_panel,geo_brand_panel}`
+bundles now have Epsilon-native configs and a local data README documenting the
+supported config-driven workflow. The phase adapted copied configs only; it did
+not add runtime parser shims, new modelling features, panel holdout validation,
+panel calibration, free channel-by-panel optimisation, dashboard/UI, VI,
+benchmark, release-evidence, or parity-ledger changes.
+
+Phase 66 is complete. `.planning/STATE.md` and `.planning/ROADMAP.md` now record
+the landed Phase 53 through Phase 65 sequence instead of presenting Phase 52 as
+current. This is internal planning-state hygiene only: no runtime source, tests,
+docs-site inputs, public API, parity ledger, changelog, dependencies, fixtures,
+examples, benchmark assets, or release claims changed. No Julia tests were run
+because the change is limited to planning documents.
 
 Phase 65 is complete. `src/exports.jl` now groups the flat public export list
 by API-domain comments while preserving one `export SymbolName` declaration per

@@ -146,8 +146,9 @@ Stage `40` decomposition, Stage `50` diagnostics, and Stage `60` response-curve
 keys plus explicitly enabled Stage `70` historical-share optimization keys are
 validated against exported reference pipeline manifest contracts.
 
-Phase 10 is now closed: the bounded `CairoMakie` plotting surface is in the
-package through `epsilon_theme()`, `trace_plot`,
+Phase 10 is now closed and Phase 68 makes plotting an optional extension: the
+bounded `CairoMakie` plotting surface is available after loading
+`using Epsilon, CairoMakie` through `epsilon_theme()`, `trace_plot`,
 `posterior_density_plot`, `prior_posterior_plot`, `observed_fitted_plot`,
 `residual_diagnostics_plot`, `contribution_plot`, `contribution_area_plot`,
 `decomposition_plot`, `response_curve_plot`, `saturation_curve_plot`,
@@ -156,12 +157,16 @@ Those direct plotting APIs return Makie `Figure` objects and save through
 direct `png`, `svg`, or `pdf` exports; the bounded bundle helper is a
 deterministic `png`-only export over successful pipeline runs after the
 pipeline has already written stage-local plots into the Stage `10`-`70`
-directories. The frozen plotting support matrix remains intentionally narrower than
-Dash/dashboard parity: diagnostics consume grouped `InferenceResults`, post-model
-visuals consume the closed Phase 7 typed result surfaces, optimization visuals
-consume `BudgetOptimizationResult`, variational plotting is permanently retired, and panel
-post-model/optimization plotting is not yet supported on the current bounded
-slice.
+directories when the plotting backend is loaded. Without `CairoMakie`, core
+model, inference, post-model, optimization, scenario, and pipeline non-plot
+artifacts remain available; direct plot calls fail with a clear optional-backend
+message, and plotted pipeline artifact paths are omitted with stage warnings.
+The frozen plotting support matrix remains intentionally narrower than
+Dash/dashboard parity: diagnostics consume grouped `InferenceResults`,
+post-model visuals consume the closed Phase 7 typed result surfaces,
+optimization visuals consume `BudgetOptimizationResult`, variational plotting is
+permanently retired, and panel post-model/optimization plotting is not yet
+supported on the current bounded slice.
 
 Phase 11 landed the release-gate infrastructure: the harness distinguishes
 reference-backed time-series MCMC rows from bounded Epsilon-only panel,
