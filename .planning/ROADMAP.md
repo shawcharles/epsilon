@@ -15,7 +15,7 @@ free channel-by-panel optimization, dashboard/UI, AI advisor behaviour, and any
 future HSGP/TVP expansion require separate explicit plans rather than being the
 automatic next milestone.
 
-Current planning has subsequently landed through Phase 65. The recent sequence
+Current planning has subsequently landed through Phase 66. The recent sequence
 is mostly bounded hardening and governance work: optimiser API/tolerance
 cleanup, package-entry decomposition, calibration fail-fast validation,
 methodology wording, AD-safety guards, prior-domain guards, and export-list
@@ -300,6 +300,9 @@ that later closed in Phase 14:
   until after the first usable release path is stable.
 - Phase 65 is closed: `src/exports.jl` is grouped by API-domain comments while
   preserving the exact export set.
+- Phase 66 is closed: project-control docs were reconciled after Phase 65, with
+  no runtime, test, docs-site, changelog, parity-ledger, fixture, dependency,
+  benchmark, or release-claim changes.
 
 ## Phases
 
@@ -527,6 +530,9 @@ that later closed in Phase 14:
       until after the first usable release path is stable.
 - [x] **Phase 65: Export List Domain Grouping** - Group `src/exports.jl` by
       API-domain comments while preserving the exact public export set.
+- [x] **Phase 66: Planning Truth Reconciliation** - Reconcile project-control
+      docs after Phase 65 without runtime, test, docs-site, changelog,
+      parity-ledger, fixture, dependency, benchmark, or release-claim changes.
 
 ## Phase Details
 
@@ -884,7 +890,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 65
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 66
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -953,3 +959,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 65
 | 63. Prior Positive-Finiteness Guards | 1/1 | Completed | bounded prior/distribution constructors now reject non-finite or non-positive positive-parameter values |
 | 64. Flat Namespace Risk Assessment | 1/1 | Completed | planning-only assessment parks internal submodules until after the first usable release path is stable |
 | 65. Export List Domain Grouping | 1/1 | Completed | `src/exports.jl` is grouped by API-domain comments while preserving the exact public export set |
+| 66. Planning Truth Reconciliation | 1/1 | Completed | project-control docs reconciled after Phase 65 without runtime, test, docs-site, changelog, parity-ledger, fixture, dependency, benchmark, or release-claim changes |

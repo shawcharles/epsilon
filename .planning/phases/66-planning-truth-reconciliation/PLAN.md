@@ -41,8 +41,8 @@ In scope:
 - Add concise Phase 53 through Phase 65 completion summaries to
   `.planning/STATE.md`.
 - Update `.planning/ROADMAP.md` progress metadata so the phase list reaches
-  Phase 65.
-- Add progress-table rows for Phases 53 through 65.
+  Phase 66 once this reconciliation itself has landed.
+- Add progress-table rows for Phases 53 through 66.
 - Record that the next candidate after reconciliation should be a release-path
   usability/evidence slice, not internal submodules or broad parity reopening.
 - Record Phase 66's own review and landing notes.
@@ -81,7 +81,7 @@ Known unrelated local files must remain unstaged:
       concise, non-overclaiming summaries.
 - [x] `.planning/ROADMAP.md` progress no longer says execution stops at Phase
       52.
-- [x] `.planning/ROADMAP.md` contains progress rows for Phases 53 through 65.
+- [x] `.planning/ROADMAP.md` contains progress rows for Phases 53 through 66.
 - [x] The reconciliation does not change parity status, release claims, or
       runtime behaviour.
 - [x] A read-only review pass approves or corrects the plan before
@@ -106,18 +106,18 @@ state and phase-plan documentation.
 
 ## Review Result
 
-Manual boundary review completed before implementation because no callable
-subagent tool was exposed in this turn and no independent review result was
-returned before editing. The plan is appropriately bounded: it reconciles stale
-`STATE.md` and `ROADMAP.md` control-doc state from Phase 52 to the actual
-landed sequence through Phase 65, keeps the exact planning-doc allowlist, and
-does not touch runtime source, docs-site inputs, changelog, parity ledger,
-tests, fixtures, examples, dependencies, benchmarks, or release claims.
+Initial implementation proceeded after the first delegated reviewer failed to
+return within the review timeout and then incorrectly performed the
+implementation itself. A follow-up independent read-only audit was then run
+against the landed commit. That audit confirmed the plan scope was appropriate
+but found a must-fix mismatch: `STATE.md` identified Phase 66 as current while
+`ROADMAP.md` still enumerated progress only through Phase 65.
 
-Correction applied during review: the acceptance criterion was changed from
-"independent read-only review" to "read-only review pass" so the landed plan
-does not falsely claim an independent reviewer where no independent output was
-available.
+The follow-up audit-approved correction updates `ROADMAP.md` so it records
+Phase 66 in the overview, closed-phase history, checked phase list, execution
+order, and progress table. The final scope remains planning-doc only: no
+runtime source, docs-site inputs, changelog, parity ledger, tests, fixtures,
+examples, dependencies, benchmarks, or release claims changed.
 
 ## Landing Notes
 
@@ -125,8 +125,14 @@ Implemented on 2026-07-19. `.planning/STATE.md` now identifies Phase 66 as
 current/complete, records concise Phase 53 through Phase 65 summaries, and
 keeps the next recommendation focused on release-path usability/evidence rather
 than internal submodules or broad parity reopening. `.planning/ROADMAP.md` now
-records current planning through Phase 65 in both the progress-history section
-and checked phase list.
+records current planning through Phase 66 in the overview, progress-history
+section, checked phase list, execution-order note, and progress table.
+
+A follow-up read-only audit found that the first landed commit had updated
+`STATE.md` to Phase 66 but left `ROADMAP.md`'s overview, phase list, execution
+order, and progress table ending at Phase 65. The audit classified that as a
+must-fix control-doc mismatch. The follow-up correction updated `ROADMAP.md` to
+include Phase 66 everywhere the latest landed phase is enumerated.
 
 Scoped verification passed:
 
