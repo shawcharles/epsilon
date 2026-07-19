@@ -8,19 +8,34 @@ See: .planning/PROJECT.md
 Julia by using validated reference behavior where it is methodologically
 meaningful, proving comparison claims only where semantics genuinely match, and
 letting Epsilon stand as an independent Julia MMM library.
-**Current focus:** Phase 47 Public Identity Rewrite is complete. Epsilon's
-public-facing root docs, selected user docs, and example READMEs now use
-Epsilon-first identity language while preserving fixture-backed validation
-provenance.
+**Current focus:** Phase 48 Internal Provenance Rename Assessment is complete.
+Remaining Abacus-named internal provenance surfaces are classified for future
+rename work, but no fixture, exporter, demo, source, ledger, or test renames
+have started.
 
 ## Current Position
 
-**Current Phase:** 47
-**Current Phase Name:** Public Identity Rewrite
-**Total Phases:** 47
-**Current Plan:** `.planning/phases/47-public-identity-rewrite/PLAN.md`
-**Total Plans in Phase:** 1 docs-and-guardrail public identity slice
-**Status:** Phase 47 is complete. The public-facing README, contributor and
+**Current Phase:** 48
+**Current Phase Name:** Internal Provenance Rename Assessment
+**Total Phases:** 48
+**Current Plan:** `.planning/phases/48-internal-provenance-rename-assessment/PLAN.md`
+**Total Plans in Phase:** 1 planning-only internal provenance assessment
+**Status:** Phase 48 is complete. The plan classifies remaining Abacus-named
+fixture, exporter, demo, source/docstring, and planning-ledger surfaces after
+Phase 47's public identity rewrite. It records a fresh post-Phase-47 scan of
+164 tracked files and 1,734 matches, excluding `Manifest.toml`, `.jls`
+artifacts, and Phase 46/47 plan directories. The decision is deliberately
+conservative: no fixture directory, generated constant, exporter script, demo
+path, private source helper, ledger, or historical planning record should be
+renamed in this phase. Future fixture work must be alias-first with explicit
+source provenance at the alias boundary; exporter wrappers must declare Abacus
+as the sole current backend; demo path migration needs a result-sidecar policy
+first; and any ledger filename rename is post-v1 only with a compatibility
+stub. No runtime source, model semantics, tests, docs build inputs, fixtures,
+exporters, demo artifacts, benchmarks, smoke harness, full suite, dependencies,
+manifests, or parity status changed.
+
+Phase 47 is complete. The public-facing README, contributor and
 standards docs, selected Documenter pages, and example READMEs now present
 Epsilon as an independent Julia MMM library with comparison-backed validation
 where semantics match, rather than as an Abacus clone or Julia port. The
@@ -491,15 +506,12 @@ parity-ledger renames out of scope.
 - Phase 45 is complete; current-docs claim guards are in
   `test/api_exports.jl`. Keep this lane focused on current support, release,
   VI, local-workflow evidence, and trusted-local artifact wording.
-- Phase 46 is complete as that separate reviewed plan: classify public identity
-  language, public evidence boundaries, internal validation provenance,
-  historical planning records, API/test implementation details, and dead
-  scaffolding before any Abacus-reference scrub. It is now complete.
-- Recommended next identity slice: create Phase 47 for the first bounded public
-  docs rewrite over `README.md`, selected `docs/src/*.md`, selected example
-  READMEs, `CONTRIBUTING.md`, `TECHNICAL-STANDARDS.md`, planning hooks, and a
-  focused `test/api_exports.jl` guard. Do not rename fixtures, generated
-  constants, exporter scripts, or `.planning/ABACUS-PARITY-LEDGER.md` there.
+- Phase 46, Phase 47, and Phase 48 are complete as the reference-decoupling
+  sequence to date: Phase 46 classified references, Phase 47 rewrote current
+  public identity language, and Phase 48 assessed internal provenance rename
+  options without starting renames. Do not rename fixtures, generated constants,
+  exporter scripts, demo reference paths, source helpers, or
+  `.planning/ABACUS-PARITY-LEDGER.md` without a separate reviewed phase.
 - HSGP/TVP broader support remains bounded: Phase 36/37 cover only the
   TimeSeriesMMM shared-media multiplier and retained-grid contribution replay.
   Do not add new HSGP/TVP config, prediction, panel, curve, metric, optimization,

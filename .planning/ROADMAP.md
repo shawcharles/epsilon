@@ -395,6 +395,14 @@ that later closed in Phase 14:
       Abacus references so future public identity cleanup can make Epsilon
       stand as an independent MMM library without deleting internal validation
       provenance or changing runtime behavior.
+- [x] **Phase 47: Public Identity Rewrite** - Rewrite current public-facing
+      identity language so Epsilon presents as an independent Julia MMM library
+      while preserving fixture-backed validation provenance and adding a focused
+      dependent-product phrase guard.
+- [x] **Phase 48: Internal Provenance Rename Assessment** - Assess remaining
+      Abacus-named fixture, exporter, demo, source, and ledger surfaces and
+      freeze an alias-first, post-v1-ledger-rename plan without starting any
+      renames.
 
 ## Phase Details
 
@@ -752,7 +760,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 47
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 48
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -803,3 +811,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 47
 | 45. Current Docs Claim Guard | 1/1 | Completed | focused guard landed for current-facing docs claim boundaries, with future Abacus-reference decoupling preserved as separate planned identity work |
 | 46. Abacus Reference Decoupling Plan | 1/1 | Completed | inventory and classification plan landed for future Epsilon-first public identity cleanup |
 | 47. Public Identity Rewrite | 1/1 | Completed | Epsilon-first public identity wording landed across root docs, selected user docs, and example READMEs while preserving fixture-backed validation provenance and adding a focused dependent-product phrase guard |
+| 48. Internal Provenance Rename Assessment | 1/1 | Completed | planning-only assessment landed for remaining Abacus-named fixture, exporter, demo, source, and ledger surfaces; future fixture migration must be alias-first with visible provenance, demo path migration needs a result-sidecar policy, and ledger rename is post-v1 only |
