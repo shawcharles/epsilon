@@ -23,7 +23,9 @@ planner surface.
 The v1 planner accepts this type for channel-level manual allocations when the
 spec has exactly one `channel` dimension. Richer multi-dimensional allocation
 execution is intentionally deferred until the response-curve contract supports
-that policy directly.
+that policy directly. Allocation values must use the same original channel
+units and time aggregation level as the fitted model data and response
+surfaces.
 """
 struct ScenarioDataArraySpec
     values::Array{Float64}
@@ -99,7 +101,8 @@ Describe a manually specified channel-allocation scenario.
 `allocation` may be a dictionary mapping channel names to nonnegative spend, or
 a one-dimensional `ScenarioDataArraySpec` whose only dimension is `channel`.
 This type records validated planner intent; it does not fit or optimize a model
-by itself.
+by itself. Allocation values must use the same original channel units and time
+aggregation level as the fitted model data and response surfaces.
 """
 struct ManualAllocationScenarioSpec <: AbstractScenarioSpec
     name::String
@@ -138,6 +141,9 @@ The result compares observed/current spend against one evaluated
 grouped `InferenceResults` and reuses the same response-surface interpolation
 machinery as `optimize_budget`; it does not refit a model, run a new optimizer,
 simulate a future spend path, or evaluate panel allocation semantics.
+
+`current_spend` and `manual_spend` are reported in the same original channel
+units and time aggregation level as the fitted model data.
 """
 struct ManualScenarioEvaluationResult
     metadata::ModelArtifactMetadata
@@ -184,6 +190,9 @@ The actual allocation is supplied by an existing `BudgetOptimizationResult` or
 `PanelBudgetOptimizationResult` passed to `scenario_plan`. The spec preserves
 planner metadata such as the requested budget, response variable, and optional
 constraint dictionaries without re-solving the optimization problem.
+`total_budget` and any spend-like constraint dictionaries must use the same
+original channel units and time aggregation level as the fitted model data and
+optimizer result.
 """
 struct FixedBudgetOptimizedScenarioSpec <: AbstractScenarioSpec
     name::String
@@ -237,6 +246,10 @@ budget optimization result.
 business-planning store shape from Abacus. `channel_panel_allocations` is empty
 for time-series results and populated for bounded panel historical-share
 optimization results.
+
+Spend and allocation table columns are copied from existing optimizer or manual
+evaluation artifacts and remain in the fitted model's original channel units
+and time aggregation level.
 """
 struct ScenarioPlanResult
     totals::DataFrame

@@ -212,6 +212,8 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Changed
 
+- Clarified public docstrings for binomial adstock lag weights and
+  original-unit spend/budget/allocation fields; no runtime behaviour changed.
 - Documented and guarded the bounded budget optimizer's post-solve allocation
   projection tolerance: near-bound solver drift is snapped, residuals are
   rebalanced only through valid effective-bound slack, and impossible residuals

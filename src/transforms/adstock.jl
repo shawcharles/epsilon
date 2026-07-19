@@ -11,7 +11,11 @@ Kernel variants for [`weibull_adstock`](@ref).
 Apply binomial adstock along `axis`.
 
 `alpha` may be a scalar or a batch-shaped array that broadcasts against the
-non-convolved dimensions of `x`.
+non-convolved dimensions of `x`, and must satisfy `0 < alpha <= 1`.
+
+For zero-based lag `l = 0, ..., l_max - 1`, the unnormalized lag weight is
+`w_l = (1 - l / (l_max + 1))^(1 / alpha - 1)`. When `normalize=true`, Epsilon
+normalizes those lag weights after constructing the kernel.
 """
 function binomial_adstock(
         x::AbstractArray,

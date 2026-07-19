@@ -2,7 +2,9 @@
     BudgetChannelConstraint
 
 Typed per-channel constraint audit record for the bounded Phase 8 optimization
-surface.
+surface. `observed_spend`, absolute bounds, and effective bounds are all in
+the same original channel units and time aggregation level as the fitted input
+data.
 """
 struct BudgetChannelConstraint
     channel::String
@@ -30,7 +32,9 @@ end
     BudgetConstraintAudit
 
 Typed normalized constraint bundle for one bounded Phase 8 optimization
-problem.
+problem. `total_budget` and all nested spend-like constraint values use the
+same original channel units and time aggregation level as the fitted input
+data.
 """
 struct BudgetConstraintAudit
     total_budget::Float64
@@ -50,7 +54,9 @@ end
     BudgetChannelSurface
 
 Typed posterior-mean response surface for one optimized media channel over the
-bounded Phase 8 spend domain.
+bounded Phase 8 spend domain. `observed_spend`, `spend_grid`, and effective
+bounds are expressed in the original units of that channel, matching the fitted
+input data and optimizer budget units.
 """
 struct BudgetChannelSurface
     channel::String
@@ -79,6 +85,12 @@ Typed bounded optimization problem assembled from canonical grouped
 This is the solver-agnostic output of the `08-01` contract layer. Later
 optimizer orchestration should consume this problem surface rather than
 re-parsing public optimization kwargs.
+
+All spend-like fields (`total_budget`, `current_spend`, `fixed_spend`, channel
+surface spend grids, and constraint bounds) use the same original channel units
+and time aggregation level as the fitted input data. Epsilon does not convert
+currencies, weekly/monthly aggregation, or thousands/millions scaling inside
+this typed problem.
 """
 struct BudgetOptimizationProblem
     metadata::ModelArtifactMetadata
@@ -120,7 +132,10 @@ end
 Typed canonical result surface for the public Phase 8 optimizer.
 
 This typed artifact preserves the bounded optimizer output without exposing
-solver-specific details in the public API.
+solver-specific details in the public API. `current_spend`,
+`optimized_spend`, and nested constraint audit spend values are reported in the
+same original channel units and time aggregation level as the fitted input
+data.
 """
 struct BudgetOptimizationResult
     metadata::ModelArtifactMetadata
@@ -170,6 +185,11 @@ optimizing channel-level budget totals and applying each channel's historical
 panel-cell spend shares to the optimized total. The result therefore exposes
 the same channel-level allocation fields as `BudgetOptimizationResult` plus
 panel-cell audit matrices for downstream reporting.
+
+Channel-level and panel-cell spend fields use the same original channel units
+and time aggregation level as the fitted `PanelMMMData` channels. Historical
+panel shares distribute those channel totals; they do not perform currency,
+calendar aggregation, or unit conversion.
 """
 struct PanelBudgetOptimizationResult
     metadata::ModelArtifactMetadata
