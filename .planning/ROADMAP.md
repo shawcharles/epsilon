@@ -407,6 +407,10 @@ that later closed in Phase 14:
       even-kernel `Overlap` behavioural bug against the local reference,
       preserve current numerics, add an explicit length-4 parity-lock test, and
       remove the dead source-index parameter.
+- [x] **Phase 50: Trend And Holiday Prediction-State Lock** - Add focused
+      integration evidence that fitted time-series prediction uses stored trend
+      origin/scale and automatic-holiday period state for future data, even
+      after mutable live config drift.
 
 ## Phase Details
 
@@ -764,7 +768,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 49
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 50
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -817,3 +821,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 49
 | 47. Public Identity Rewrite | 1/1 | Completed | Epsilon-first public identity wording landed across root docs, selected user docs, and example READMEs while preserving fixture-backed validation provenance and adding a focused dependent-product phrase guard |
 | 48. Internal Provenance Rename Assessment | 1/1 | Completed | planning-only assessment landed for remaining Abacus-named fixture, exporter, demo, source, and ledger surfaces; future fixture migration must be alias-first with visible provenance, demo path migration needs a result-sidecar policy, and ledger rename is post-v1 only |
 | 49. Convolution Overlap Parity Lock | 1/1 | Completed | suspected even-length `Overlap` bug was disproved against local Abacus; current numerics preserved, explicit length-4 parity-lock test added, and the dead `overlap_shift` source-index parameter removed |
+| 50. Trend And Holiday Prediction-State Lock | 1/1 | Completed | fitted `TimeSeriesMMM` future prediction now has focused integration evidence that trend origin/scale and automatic-holiday default period state are read from the fitted artifact spec rather than recomputed from holdout data or mutable live config |

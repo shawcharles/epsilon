@@ -319,6 +319,50 @@ end
     @test size(predictive, 1) == model.sampler_config.draws
 end
 
+@testset "post-fit future prediction uses fitted trend and holiday date state" begin
+    holidays_path = _write_test_holidays_csv()
+    fitted_dates = Date(2023, 12, 18):Day(7):Date(2024, 1, 22)
+    future_data = MMMData(
+        dates = [Date(2024, 1, 29)],
+        target = [1.0],
+        channels = [1.0 1.0],
+        channel_names = ["tv", "search"],
+        controls = [0.7][:, :],
+        control_names = ["price_index"],
+    )
+    model = sample_time_series_model(;
+        trend = Dict("type" => "linear"),
+        holidays = Dict(
+            "mode" => "auto",
+            "path" => holidays_path,
+            "countries" => ["UK"],
+        ),
+        dates = fitted_dates,
+    )
+    state = fit!(model)
+    spec = state.artifact.spec
+    future_runtime, _ = Epsilon._turing_runtime(spec, future_data)
+    fitted_holidays = Epsilon._holiday_design_matrix(spec.holidays, future_data)
+    reset_trend = Epsilon._trend_features(Dict{String, Any}("type" => "linear"), future_data.dates)
+    reset_holidays = Epsilon._holiday_design_matrix(model.config.holidays, future_data)
+
+    @test spec.trend["__epsilon_state"]["origin"] == first(fitted_dates)
+    @test spec.trend["__epsilon_state"]["scale"] ≈ 35.0
+    @test future_runtime.trend_features[:, 1] ≈ [1.2]
+    @test reset_trend[:, 1] ≈ [0.0]
+    @test future_runtime.trend_features != reset_trend
+    @test spec.holidays["__epsilon_state"]["default_period_days"] == 7
+    @test fitted_holidays[1, 1] ≈ 1 / 7
+    @test reset_holidays[1, 1] ≈ 1.0
+
+    model.config.trend["type"] = "unsupported"
+    model.config.holidays["mode"] = "unsupported"
+
+    predictive = Epsilon.predict(model, future_data)
+    @test size(predictive, 1) == model.sampler_config.draws
+    @test Symbol("target[1]") in predictive.name_map.parameters
+end
+
 @testset "fit! allows pooled holidays and manual events to coexist" begin
     holidays_path = _write_test_holidays_csv()
     model = sample_time_series_model(;

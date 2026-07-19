@@ -8,19 +8,35 @@ See: .planning/PROJECT.md
 Julia by using validated reference behavior where it is methodologically
 meaningful, proving comparison claims only where semantics genuinely match, and
 letting Epsilon stand as an independent Julia MMM library.
-**Current focus:** Phase 49 Convolution Overlap Parity Lock is complete. The
-suspected even-kernel `Overlap` behavioural bug was disproved against local
-Abacus; current numerics are preserved, and the dead source-index parameter is
-removed.
+**Current focus:** Phase 50 Trend And Holiday Prediction-State Lock is
+complete. Fitted `TimeSeriesMMM` future prediction now has focused integration
+evidence that trend origin/scale and automatic-holiday period state are read
+from the fitted artifact spec rather than recomputed from holdout data or
+mutable live config.
 
 ## Current Position
 
-**Current Phase:** 49
-**Current Phase Name:** Convolution Overlap Parity Lock
-**Total Phases:** 49
-**Current Plan:** `.planning/phases/49-convolution-overlap-correctness/PLAN.md`
-**Total Plans in Phase:** 1 narrow transform correctness hardening slice
-**Status:** Phase 49 is complete. The engineering review's suspected
+**Current Phase:** 50
+**Current Phase Name:** Trend And Holiday Prediction-State Lock
+**Total Phases:** 50
+**Current Plan:** `.planning/phases/50-trend-holiday-prediction-state-lock/PLAN.md`
+**Total Plans in Phase:** 1 narrow model-builder regression-lock slice
+**Status:** Phase 50 is complete. The engineering review found that Phase 13's
+trend and automatic-holiday prediction-state source fixes appeared present but
+needed integration evidence. The landed test fits a weekly `TimeSeriesMMM`,
+predicts a future holiday row, verifies fitted trend state carries the
+2023-12-18 training origin and 35-day scale into a future trend value of `1.2`
+instead of holdout-only `0.0`, verifies fitted holiday state carries the weekly
+default period into exposure `1 / 7` instead of holdout-only `1.0`, then poisons
+the mutable live trend/holiday config and confirms `predict(model, new_data)`
+still emits future target draws from the fitted artifact spec. Scoped
+verification passed: `make test-file FILE=test/model/builder.jl` (`313 / 313`,
+`3m49.4s`). This is a test/planning-only regression-lock checkpoint: no source
+runtime semantics, public API, exports, dependencies, manifests, pipeline
+runtime, docs build inputs, generated fixtures, changelog, parity ledger status,
+release-prep, benchmarks, smoke harness, or full-suite gate changed.
+
+Phase 49 is complete. The engineering review's suspected
 even-length `batched_convolution(..., mode = Overlap)` behavioural bug was
 checked against the real local Abacus implementation and disproved:
 `x = [0, 0, 1, 0, 0]`, `w = [10, 20, 30, 40]` returns
@@ -427,20 +443,21 @@ parity-ledger renames out of scope.
 | 44 | 1/1 | Completed | current-facing docs reconciled with Phase 43 state without runtime or release-surface changes |
 | 45 | 1/1 | Completed | focused current-docs claim guard landed; future Abacus-reference decoupling noted as separate identity work |
 | 46 | 1/1 | Completed | tracked-file inventory and classification plan landed for future Epsilon-first public identity cleanup |
+| 47 | 1/1 | Completed | public identity language rewritten around Epsilon as an independent Julia MMM library while preserving validation provenance |
+| 48 | 1/1 | Completed | internal provenance rename assessment landed without renaming fixtures, exporters, source helpers, or ledgers |
+| 49 | 1/1 | Completed | convolution even-kernel `Overlap` parity lock landed without changing public numerics |
+| 50 | 1/1 | Completed | fitted trend and holiday prediction-state integration lock landed in the model-builder test lane |
 
 **Recent Trend:**
-- Last 5 completed phases: 42, 43, 44, 45, 46.
+- Last 5 completed phases: 46, 47, 48, 49, 50.
 - Trend: the recent work narrowed rather than widened the library contract.
-  Phase 41 made the supported-path sidecar
-  output contract more inspectable and better tested. Phase 42 guarded
-  trusted-local fitted-model and grouped-results roundtrips. Phase 43 documented
-  the supported local workflow without widening runtime support, and Phase 44
-  reconciled current-facing docs so they no longer point future work at stale
-  Phase 12/40 status. Phase 45 added a focused guard over those claims rather
-  than another docs rewrite.
-  Phase 46 converted the Abacus public-identity concern into a reviewed
-  tracked-file inventory and future rewrite plan, without touching runtime or
-  validation provenance.
+  Phase 46 classified remaining reference/provenance wording, Phase 47 rewrote
+  public identity language around Epsilon as an independent library, Phase 48
+  deferred internal provenance renames until compatibility policy exists, Phase
+  49 disproved and locked a suspected transform bug without changing numerics,
+  and Phase 50 locked fitted trend/holiday prediction state with scoped
+  integration evidence rather than reopening release-prep or broad prediction
+  work.
 
 ## Decisions Made
 
@@ -540,6 +557,9 @@ parity-ledger renames out of scope.
   constraints, or aggregate panel budget semantics into the pipeline before a
   separate validity contract exists.
 - Keep Phase 13 remediation behavior protected by focused regression tests.
+- Phase 50 added the focused fitted trend/holiday prediction-state integration
+  lock; keep any further Phase 13 remediation work similarly narrow unless a
+  source bug is exposed.
 - Treat release-branch/tag work and benchmark refreshes as explicit future
   decisions, not as the automatic next action.
 
