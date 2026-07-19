@@ -1,6 +1,11 @@
-# Demo Data And Runner
+# Historical Reference Demo Surface
 
-This directory provides a bounded, release-honest demo surface for Epsilon.
+This directory is retained as historical/reference comparison material for
+Epsilon. For the current Epsilon-native config-driven demo workflow, use
+`data/demo/*` and `make smoke-demo-configs` from the repository root.
+
+The helper here remains useful when comparing older copied reference inputs
+with Epsilon's time-series pipeline, but it is not the canonical demo path.
 
 ## What Is Included
 
@@ -12,18 +17,19 @@ This directory provides a bounded, release-honest demo surface for Epsilon.
     - `geo_panel`
     - `geo_brand_panel`
 - `epsilon/timeseries/config.yml`
-  - an Epsilon-native runnable config over the same reference time-series demo
-    dataset
+  - a legacy Epsilon-native runnable config over the same reference
+    time-series demo dataset
   - kept intentionally lighter than the full reference pipeline example:
     validation and optimization are off by default so the first runnable Epsilon
-    demo stays fast and truthful to the shipped support matrix
+    comparison helper stays fast and truthful to the shipped support matrix
 - `run_demo.jl`
-  - a thin orchestrator over Epsilon's shipped pipeline entry point
+  - a time-series-only legacy comparison helper over Epsilon's shipped pipeline
+    entry point
 
 ## Supported Demo Rows
 
 - `timeseries`
-  - runnable through `run_demo.jl`
+  - runnable through the legacy `run_demo.jl` helper
   - uses the bounded Epsilon v1 time-series MCMC pipeline contract
 - `geo_panel`
   - reference-only dataset and raw reference config
@@ -41,28 +47,28 @@ This directory provides a bounded, release-honest demo surface for Epsilon.
 The raw reference holiday CSV is included so comparisons with other MMM
 frameworks can use the same reference inputs.
 
-The shipped runnable Epsilon time-series demo uses this same copied holiday CSV
-as a reference input through the native `holidays.mode = "auto"` path, which
-builds one pooled automatic holiday component. This is the coherent Epsilon
-native holiday design, not a claim of end-to-end reference parity on the
-holiday-bearing row. The pipeline remains time-series-only, and broader holiday
-feature expansion is still out of scope.
+The legacy runnable Epsilon time-series helper uses this same copied holiday
+CSV as a reference input through the native `holidays.mode = "auto"` path,
+which builds one pooled automatic holiday component. This is the coherent
+Epsilon native holiday design, not a claim of end-to-end reference parity on
+the holiday-bearing row. The helper remains time-series-only, and broader
+holiday feature expansion is still out of scope.
 
 ## Runner Commands
 
-List available demo bundles:
+List available historical/reference bundles:
 
 ```bash
 julia --project=. examples/demo/run_demo.jl list
 ```
 
-Show the canonical paths for one bundle:
+Show the historical/reference paths for one bundle:
 
 ```bash
 julia --project=. examples/demo/run_demo.jl paths timeseries
 ```
 
-Run the Epsilon time-series demo:
+Run the legacy Epsilon time-series comparison helper:
 
 ```bash
 julia --project=. examples/demo/run_demo.jl run timeseries
@@ -77,7 +83,7 @@ julia --project=. examples/demo/run_demo.jl run timeseries \
   --prior-samples 10 --curve-points 32
 ```
 
-By default the runner writes results under `examples/demo/results/`.
-Successful runs include stage-local `png` plots directly inside the
-corresponding Stage `10`-`70` subdirectories, with `write_plot_bundle(run)`
-remaining available as a separate curated export if needed.
+By default the helper writes results under `examples/demo/results/`. In a
+headless install, successful runs write non-plot pipeline artifacts and record
+omitted-plot warnings. Load optional plotting support for stage-local `png`
+artifacts before using plotted outputs.

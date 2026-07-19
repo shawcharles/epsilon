@@ -8,11 +8,10 @@ See: .planning/PROJECT.md
 Julia by using validated reference behavior where it is methodologically
 meaningful, proving comparison claims only where semantics genuinely match, and
 letting Epsilon stand as an independent Julia MMM library.
-**Current focus:** Phase 70 Demo Surface Reconciliation is planned. The next
-implementation slice should reconcile `data/demo/*` as the canonical
-Epsilon-native config-driven demo workflow and `examples/demo/*` as
-historical/reference comparison material, with independent review before any
-docs or runner changes.
+**Current focus:** Phase 70 Demo Surface Reconciliation is complete.
+`data/demo/*` is now the canonical documented Epsilon-native config-driven demo
+workflow, and `examples/demo/*` is framed as historical/reference comparison
+material with a time-series-only legacy helper.
 
 ## Current Position
 
@@ -21,10 +20,13 @@ docs or runner changes.
 **Total Phases:** 70
 **Current Plan:** `.planning/phases/70-demo-surface-reconciliation/PLAN.md`
 **Total Plans in Phase:** 1 planned docs/runner reconciliation slice
-**Status:** Phase 70 is planned only. No implementation has started. The plan
-keeps modelling, sampling, pipeline stages, panel MCMC demos, benchmarks,
-release claims, dashboard/UI, VI, and internal reference/provenance renames out
-of scope. It should be independently reviewed before edits begin.
+**Status:** Phase 70 is complete. Public docs now route users first to
+`data/demo/*` and `make smoke-demo-configs` for Epsilon-native config-driven
+demos, while `examples/demo/*` is described as historical/reference comparison
+material. The legacy `examples/demo/run_demo.jl` helper remains
+time-series-only; no model semantics, sampler settings, pipeline stages, panel
+MCMC demos, benchmarks, release claims, dashboard/UI, VI, fixture moves,
+internal reference/provenance renames, or ledger status changed.
 
 Phase 69 is complete. `make smoke-demo-configs` now runs the
 shipped `data/demo/timeseries/config.yml` through a tiny headless pipeline,

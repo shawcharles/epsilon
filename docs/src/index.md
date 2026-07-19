@@ -220,24 +220,37 @@ The canonical local runbook for the toy example, the fixed-schema CSV
 quickstart, compact sidecars, trusted-local artifact roundtrips, and
 `make smoke` is [Supported Local Workflows](supported_paths.md).
 
-## Demo Data And Runner
+## Demo Data
 
-The repo also ships a bounded demo/comparison surface under
-`examples/demo/`:
+The canonical Epsilon-native config-driven demo bundles live under
+`data/demo/`. Maintainers can check them locally with:
+
+```bash
+make smoke-demo-configs
+```
+
+That command runs the time-series demo config through a tiny headless pipeline,
+including validation, and checks the panel configs through
+config/data/model-spec construction without panel MCMC sampling. It is local
+workflow evidence only, not a benchmark, release gate, or reference-parity
+claim.
+
+The older comparison surface under `examples/demo/` is retained for
+historical/reference comparison material:
 
 - copied reference datasets for `timeseries`, `geo_panel`, and
   `geo_brand_panel`
 - one shared copied `holidays.csv` file for cross-framework comparisons
-- an Epsilon-native runnable time-series config over the same reference data
+- a legacy Epsilon-native runnable time-series config over the same reference
+  data
 - `julia --project=. examples/demo/run_demo.jl run timeseries`
 
-This does not reopen the support matrix. The runner is time-series-only, while
-the panel bundles are included as reference data/configs for comparison work.
-Successful demo runs write stage-local plots directly into the run directory.
-The copied time-series demo remains a useful reference baseline. The
-runnable Epsilon demo now uses the coherent native automatic holiday path, so
-it should be treated as a bounded Epsilon reference workflow rather than as a
-proof of end-to-end reference parity on the holiday-bearing row.
+This does not reopen the support matrix. The legacy helper is time-series-only,
+while the panel bundles are included as reference data/configs for comparison
+work. The copied time-series demo remains a useful reference baseline. The
+helper uses the coherent native automatic holiday path, so it should be treated
+as a bounded Epsilon comparison workflow rather than as proof of end-to-end
+reference parity on the holiday-bearing row.
 
 ## Phase 7 Post-Model Matrix
 

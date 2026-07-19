@@ -7,6 +7,10 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Changed
 
+- Reconciled the demo-surface routing: `data/demo/*` is now documented as the
+  canonical Epsilon-native config-driven demo workflow, while
+  `examples/demo/*` is framed as historical/reference comparison material with
+  a time-series-only legacy helper.
 - Moved the CairoMakie-backed plotting implementation behind the optional
   `EpsilonCairoMakieExt` package extension. `using Epsilon` no longer loads
   CairoMakie; load `using Epsilon, CairoMakie` for direct plot functions,

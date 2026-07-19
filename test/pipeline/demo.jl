@@ -42,6 +42,7 @@
     @test occursin("timeseries\trunnable", list_output)
     @test occursin("geo_panel\treference-only", list_output)
     @test occursin("geo_brand_panel\treference-only", list_output)
+    @test occursin("use data/demo for current config-driven demos", list_output)
 
     paths_output = read(
         `$julia --project=$repo_root $script paths timeseries`,
@@ -62,6 +63,6 @@
     manifest_path = split(manifest_line, '='; limit = 2)[2]
     @test isfile(manifest_path)
     run_dir = dirname(manifest_path)
-    @test isfile(joinpath(run_dir, "20_model_fit", "trace.png"))
-    @test isfile(joinpath(run_dir, "40_decomposition", "contributions.png"))
+    @test isfile(joinpath(run_dir, "20_model_fit", "model.jls"))
+    @test isfile(joinpath(run_dir, "40_decomposition", "contribution_summary.csv"))
 end

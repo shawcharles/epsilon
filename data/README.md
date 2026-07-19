@@ -1,6 +1,7 @@
 # Epsilon Demo Data
 
-This directory contains Epsilon-native config-driven demo bundles:
+This directory contains the canonical Epsilon-native config-driven demo
+bundles:
 
 - `demo/timeseries/`
 - `demo/geo_panel/`

@@ -8,7 +8,7 @@ const _DEFAULT_RESULTS_DIR = joinpath(_DEMO_ROOT, "results")
 const _DEMO_SPECS = Dict(
     "timeseries" => (
         mode = :runnable,
-        description = "Abacus-aligned time-series demo with an Epsilon-native runnable config",
+        description = "Legacy time-series comparison helper; use data/demo for current config-driven demos",
         dataset = joinpath(_DEMO_ROOT, "reference", "abacus", "timeseries", "dataset.csv"),
         holidays = joinpath(_DEMO_ROOT, "reference", "abacus", "holidays.csv"),
         abacus_config = joinpath(_DEMO_ROOT, "reference", "abacus", "timeseries", "config.yml"),
@@ -16,7 +16,7 @@ const _DEMO_SPECS = Dict(
     ),
     "geo_panel" => (
         mode = :reference_only,
-        description = "Reference-only Abacus geo panel demo bundle",
+        description = "Historical/reference geo panel comparison bundle",
         dataset = joinpath(_DEMO_ROOT, "reference", "abacus", "geo_panel", "dataset.csv"),
         holidays = joinpath(_DEMO_ROOT, "reference", "abacus", "holidays.csv"),
         abacus_config = joinpath(_DEMO_ROOT, "reference", "abacus", "geo_panel", "config.yml"),
@@ -24,7 +24,7 @@ const _DEMO_SPECS = Dict(
     ),
     "geo_brand_panel" => (
         mode = :reference_only,
-        description = "Reference-only Abacus geo-brand panel demo bundle",
+        description = "Historical/reference geo-brand panel comparison bundle",
         dataset = joinpath(_DEMO_ROOT, "reference", "abacus", "geo_brand_panel", "dataset.csv"),
         holidays = joinpath(_DEMO_ROOT, "reference", "abacus", "holidays.csv"),
         abacus_config = joinpath(_DEMO_ROOT, "reference", "abacus", "geo_brand_panel", "config.yml"),
@@ -46,7 +46,10 @@ Demo IDs:
 
 Notes:
   - `run` is supported only for `timeseries` in the bounded Epsilon v1 surface.
-  - `paths` is useful when comparing the same reference data/configs across Epsilon,
+  - For current Epsilon-native config-driven demos, use `data/demo/*` or
+    `make smoke-demo-configs`.
+  - This helper is retained for historical/reference comparison work. `paths`
+    is useful when comparing the same reference data/configs across Epsilon,
     Abacus, Meridian, or PyMC-Marketing.
   - All extra flags after `run <demo>` are forwarded to `epsilon run ...`.
 """

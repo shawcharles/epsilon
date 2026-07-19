@@ -152,7 +152,8 @@ outputs when it exits.
 a benchmark, not release evidence, not a reference-parity gate, and not a
 replacement for focused tests when code behavior changes.
 
-For a local check of the shipped config-driven demo bundles under `data/demo/`:
+For a local check of the canonical Epsilon-native config-driven demo bundles
+under `data/demo/`:
 
 ```bash
 make smoke-demo-configs

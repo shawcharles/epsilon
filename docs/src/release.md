@@ -77,7 +77,7 @@ does not persist generated artifacts in the repository. It is not release
 evidence, not a benchmark, not a reference-parity claim, and not a broader
 support expansion.
 
-For the bundled config-driven demo files, maintainers can run:
+For the bundled Epsilon-native config-driven demo files, maintainers can run:
 
 ```bash
 make smoke-demo-configs

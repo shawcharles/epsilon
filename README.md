@@ -230,10 +230,10 @@ pipeline support, benchmark evidence, release evidence, or a reference-parity
 claim. The synthetic toy command above remains the faster supported-path smoke
 check.
 
-## Demo Data And Runner
+## Demo Data
 
-The Epsilon-native demo configs under [`data/demo/`](data/README.md) can be
-checked with:
+The canonical Epsilon-native config-driven demo bundles live under
+[`data/demo/`](data/README.md). Check them with:
 
 ```bash
 make smoke-demo-configs
@@ -244,26 +244,26 @@ headless pipeline, including validation, and checks the panel configs through
 config/data/model-spec construction without panel MCMC sampling. It is not a
 benchmark, release gate, or reference-parity claim.
 
-The repo now ships a bounded demo/comparison surface under
+The older comparison surface under
 [`examples/demo/`](examples/demo/README.md):
 
 - copied reference datasets for `timeseries`, `geo_panel`, and
   `geo_brand_panel`
 - a shared copied `holidays.csv` reference file for cross-framework
   comparisons
-- an Epsilon-native runnable time-series config on the same reference data
-- a thin Julia runner:
+- a legacy Epsilon-native runnable time-series config on the same reference data
+- a time-series-only legacy helper:
   `julia --project=. examples/demo/run_demo.jl run timeseries`
 
-This stays truthful to the closed v1 support matrix. The copied panel bundles
-are included as reference datasets/configs for comparison work, but the shipped
-demo runner is time-series-only because the public pipeline remains
-time-series-first. Successful demo runs write stage-local plots directly into
-the run directory. The copied time-series demo remains a useful reference
-baseline. The shipped Epsilon demo now uses the coherent native
-automatic holiday path (`holidays.mode = "auto"` with one pooled holiday
-component), but that native design should not be described as reference parity
-unless a separate compatibility mode with matching semantics is introduced.
+This stays truthful to the closed v1 support matrix and should be treated as
+historical/reference comparison material, not the primary Epsilon demo route.
+The copied panel bundles are included as reference datasets/configs for
+comparison work, but the legacy helper is time-series-only. The copied
+time-series demo remains a useful reference baseline. The helper uses the
+coherent native automatic holiday path (`holidays.mode = "auto"` with one
+pooled holiday component), but that native design should not be described as
+reference parity unless a separate compatibility mode with matching semantics
+is introduced.
 
 ## Supported Phase 5 Matrix
 

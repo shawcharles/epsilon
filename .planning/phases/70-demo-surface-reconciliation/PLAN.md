@@ -2,7 +2,7 @@
 
 ## Status
 
-Planned.
+Implemented.
 
 ## Objective
 
@@ -146,42 +146,66 @@ Do not stage unrelated local drift:
 
 ### 70-01: Freeze Demo Surface Contract
 
-- [ ] Inventory current public references to `data/demo`, `examples/demo`,
+- [x] Inventory current public references to `data/demo`, `examples/demo`,
       `run_demo.jl`, and demo-smoke commands.
-- [ ] Identify exact wording that makes `examples/demo` look primary.
-- [ ] Acceptance: the implementation diff has a narrow text/runner contract
+- [x] Identify exact wording that makes `examples/demo` look primary.
+- [x] Acceptance: the implementation diff has a narrow text/runner contract
       before edits begin.
 
 ### 70-02: Reword User-Facing Demo Routing
 
-- [ ] Update root, data, and Documenter docs so `data/demo/*` is the primary
+- [x] Update root, data, and Documenter docs so `data/demo/*` is the primary
       config-driven demo route.
-- [ ] Update `examples/demo/README.md` so its role is historical/reference
+- [x] Update `examples/demo/README.md` so its role is historical/reference
       comparison material plus a time-series-only legacy helper.
-- [ ] Acceptance: a new user can tell which command to run for current
+- [x] Acceptance: a new user can tell which command to run for current
       Epsilon-native config-driven demos.
 
 ### 70-03: Align Runner Output And Focused Tests
 
-- [ ] Update `examples/demo/run_demo.jl` help/list/path descriptions only if
+- [x] Update `examples/demo/run_demo.jl` help/list/path descriptions only if
       they currently imply primary-demo status.
-- [ ] Update `test/pipeline/demo.jl` for any intentionally changed output.
-- [ ] Add a focused string guard only if needed.
-- [ ] Acceptance: existing demo runner behaviour stays time-series-only, but
+- [x] Update `test/pipeline/demo.jl` for any intentionally changed output.
+- [x] Add a focused string guard only if needed.
+- [x] Acceptance: existing demo runner behaviour stays time-series-only, but
       its text no longer competes with `data/demo` as the canonical route.
 
 ### 70-04: Planning, Verification, And Commit
 
-- [ ] Mark this plan implemented.
-- [ ] Update `.planning/ROADMAP.md` and `.planning/STATE.md`.
-- [ ] Run scoped verification only:
+- [x] Mark this plan implemented.
+- [x] Update `.planning/ROADMAP.md` and `.planning/STATE.md`.
+- [x] Run scoped verification only:
       - `make test-file FILE=test/pipeline/demo.jl` if runner strings change;
       - any focused docs-claim guard if added;
       - `make format-check-touched` if Julia files change;
       - `git diff --check`.
-- [ ] Audit changed files against the Phase 70 allowlist before staging:
+- [x] Audit changed files against the Phase 70 allowlist before staging:
       `{ git diff --name-only; git ls-files --others --exclude-standard; } | sort`.
-- [ ] Commit reviewed changes.
+- [x] Commit reviewed changes.
+
+Scoped verification completed:
+
+```bash
+make test-file FILE=test/pipeline/demo.jl
+# passed: 18 / 18
+
+make format-check-touched
+# passed
+
+git diff --check
+# passed
+
+{ git diff --name-only; git ls-files --others --exclude-standard; } | sort
+# showed only Phase 70 allowlist files plus known unrelated local drift:
+# .gitignore
+# .planning/CRITICAL-REVIEW-2026-07-19.md
+```
+
+Independent implementation review cleared the change with no Must Fix or
+Should Fix items. The reviewer confirmed that `data/demo/*` is canonical,
+`examples/demo/*` is secondary/historical, `run_demo.jl` remains
+time-series-only, and the updated non-plot artifact assertions match the
+optional plotting boundary.
 
 ## Risks
 
