@@ -128,13 +128,18 @@ surface:
   time-series trend and automatic-holiday date-basis state is carried in model
   specs and reused for prediction/replay, unfitted prior prediction resolves
   scale and date-derived feature state from `model.data`, media/channel arrays
-  must be finite and nonnegative, `hill_function` rejects negative inputs with
-  `ArgumentError`, and pipeline YAML rejects unsupported top-level keys. Public
-  model config parsing now also rejects unsupported top-level keys instead of
-  silently storing typo-like entries in `ModelConfig.extras`; the retained
-  `validation` extra is a narrow compatibility allowance, not a general YAML
-  extension escape hatch. Opaque local state should be supplied
-  programmatically through `ModelConfig(extras = ...)`.
+  must be finite and nonnegative, spend-domain saturation primitives reject
+  negative `x` with `ArgumentError`, and pipeline YAML rejects unsupported
+  top-level keys. `tanh_saturation` remains a signed low-level transform
+  primitive, but public MMM media/spend surfaces reject negative values before
+  replay. Specifically, `centered_logistic_saturation`,
+  `logistic_saturation`, `michaelis_menten`, and `hill_function` require
+  nonnegative `x`. Public model config parsing now also rejects unsupported
+  top-level keys instead of silently storing typo-like entries in
+  `ModelConfig.extras`; the retained `validation` extra is a narrow
+  compatibility allowance, not a general YAML extension escape hatch. Opaque
+  local state should be supplied programmatically through
+  `ModelConfig(extras = ...)`.
 - Epsilon now explicitly prioritizes the most methodologically coherent bounded
   Julia design over literal upstream fidelity when those goals conflict.
 - current backend coverage: geometric, delayed, binomial, or Weibull adstock with centered logistic, tanh, Michaelis-Menten, or hill saturation, plus Fourier seasonality, bounded `linear` and `changepoint` trend paths, manual `events.columns` and generated `events.windows` event matrices, and a bounded `controls.transform = "standardize"` path on `TimeSeriesMMM`; plus a bounded `PanelMMM` path that can represent one or more declared panel dimensions through a deterministic flat panel-cell axis, shared media coefficients, hierarchical panel intercept offsets, contribution/decomposition replay, panel-cell response/metric surfaces with explicit `delta_grid` historical scaling, pipeline Stage `00` metadata artifacts, Stage `20` fit artifacts, Stage `30` assessment artifacts, Stage `40` decomposition artifacts, Stage `50` diagnostics artifacts, Stage `60` response-curve artifacts, and explicitly enabled Stage `70` historical-share optimization. The public config value `media.saturation.type = "logistic"` maps to Epsilon's centered logistic curve for compatibility. Panel seasonality, trend, events, richer controls, and free panel allocation are not yet exposed on that panel path; Stage `35` panel holdout validation is deliberately deferred for v1.

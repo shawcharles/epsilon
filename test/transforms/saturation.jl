@@ -6,6 +6,16 @@ include(joinpath(@__DIR__, "..", "fixtures", "abacus", "hill_function_cases.jl")
 using Epsilon
 using Test
 
+function _argument_error_message(f)
+    try
+        f()
+    catch err
+        err isa ArgumentError || rethrow()
+        return err.msg
+    end
+    error("expected ArgumentError")
+end
+
 @testset "centered_logistic_saturation" begin
     @testset "abacus parity" begin
         for case in ABACUS_LOGISTIC_SATURATION_CASES
@@ -24,15 +34,18 @@ using Test
         @test minimum(centered_logistic_saturation(range(0.0, 10.0; length = 25), 100.0)) >= 0.0
     end
 
-    @testset "large negative inputs stay finite" begin
-        actual = centered_logistic_saturation([-1.0e6, 0.0, 1.0e6], 1.0)
+    @testset "large positive inputs stay finite" begin
+        actual = centered_logistic_saturation([0.0, 1.0e6], 1.0)
         @test all(isfinite, actual)
-        @test actual[1] ≈ -1.0 atol = 1.0e-12 rtol = 1.0e-12
-        @test actual[2] == 0.0
-        @test actual[3] ≈ 1.0 atol = 1.0e-12 rtol = 1.0e-12
+        @test actual[1] == 0.0
+        @test actual[2] ≈ 1.0 atol = 1.0e-12 rtol = 1.0e-12
     end
 
     @testset "parameter validation" begin
+        @test _argument_error_message(() -> centered_logistic_saturation(-1.0, 0.5)) ==
+            "x must be nonnegative"
+        @test _argument_error_message(() -> logistic_saturation([0.0, -1.0], 0.5)) ==
+            "x must be nonnegative"
         @test_throws ArgumentError centered_logistic_saturation([1.0, 2.0], -0.1)
         @test_throws ArgumentError centered_logistic_saturation([1.0, 2.0], [0.5, -0.2])
     end
@@ -62,6 +75,13 @@ end
         @test (b * c) .* atanh.(y ./ b) ≈ x atol = 1.0e-10 rtol = 1.0e-10
     end
 
+    @testset "signed primitive contract" begin
+        x = [-2.0, -1.0, 0.0, 1.0, 2.0]
+        y = tanh_saturation(x, 1.0, 0.5)
+        @test y[1:2] == -reverse(y[4:5])
+        @test y[3] == 0.0
+    end
+
     @testset "parameter validation" begin
         @test_throws ArgumentError tanh_saturation([1.0, 2.0], 0.0, 1.0)
         @test_throws ArgumentError tanh_saturation([1.0, 2.0], 1.0, 0.0)
@@ -85,6 +105,8 @@ end
     end
 
     @testset "parameter validation" begin
+        @test _argument_error_message(() -> michaelis_menten([-1.0, 2.0], 1.0, 1.0)) ==
+            "x must be nonnegative"
         @test_throws ArgumentError michaelis_menten([1.0, 2.0], 0.0, 1.0)
         @test_throws ArgumentError michaelis_menten([1.0, 2.0], 1.0, 0.0)
         @test_throws ArgumentError michaelis_menten([1.0, 2.0], [1.0, -0.5], 1.0)

@@ -212,6 +212,12 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Changed
 
+- Hardened the saturation/media-domain contract: `centered_logistic_saturation`
+  / `logistic_saturation` and `michaelis_menten` now reject negative `x` as
+  spend-domain primitives, while `tanh_saturation` remains a signed low-level
+  primitive because committed reference fixtures include negative inputs. MMM
+  media containers and public curve grids continue to reject negative spend at
+  their own boundaries.
 - Public model config parsing now rejects unsupported top-level keys instead
   of silently storing typo-like or pipeline-runner-only entries in
   `ModelConfig.extras`. The direct parser preserves only the documented

@@ -18,6 +18,16 @@ function _deprecated_argument_error_message(warning::AbstractString, thunk::Func
     return err.msg
 end
 
+function _types_argument_error_message(thunk::Function)
+    try
+        thunk()
+    catch err
+        err isa ArgumentError || rethrow()
+        return err.msg
+    end
+    error("expected ArgumentError")
+end
+
 @testset "SamplerConfig" begin
     config = @test_logs SamplerConfig(; draws = 1500, tune = 500, chains = 2, cores = 1, target_accept = 0.9, random_seed = 42)
     @test config.draws == 1500
@@ -229,12 +239,14 @@ end
         channels = [1.0 Inf; 2.0 3.0],
         channel_names = ["tv", "search"],
     )
-    @test_throws ArgumentError MMMData(
-        dates = 1:2,
-        target = [1.0, 2.0],
-        channels = [1.0 -0.1; 2.0 3.0],
-        channel_names = ["tv", "search"],
-    )
+    @test _types_argument_error_message(
+        () -> MMMData(
+            dates = 1:2,
+            target = [1.0, 2.0],
+            channels = [1.0 -0.1; 2.0 3.0],
+            channel_names = ["tv", "search"],
+        ),
+    ) == "channels must contain only nonnegative values"
     @test_throws ArgumentError MMMData(
         dates = 1:2,
         target = [1.0, 2.0],
@@ -343,13 +355,15 @@ end
     )
     negative_channels = copy(channels)
     negative_channels[1, 1, 1] = -0.1
-    @test_throws ArgumentError PanelMMMData(
-        dates = 1:3,
-        target = [1.0 2.0; 3.0 4.0; 5.0 6.0],
-        channels = negative_channels,
-        panel_names = ["north", "south"],
-        channel_names = ["tv", "search"],
-    )
+    @test _types_argument_error_message(
+        () -> PanelMMMData(
+            dates = 1:3,
+            target = [1.0 2.0; 3.0 4.0; 5.0 6.0],
+            channels = negative_channels,
+            panel_names = ["north", "south"],
+            channel_names = ["tv", "search"],
+        ),
+    ) == "channels must contain only nonnegative values"
     @test_throws ArgumentError PanelMMMData(
         dates = 1:3,
         target = [1.0 2.0; 3.0 4.0; 5.0 6.0],

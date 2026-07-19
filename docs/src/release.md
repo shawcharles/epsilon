@@ -23,9 +23,13 @@ Phase 13 also closes the accepted contract-remediation issues from the external
 review: time-series prediction and replay now use fitted trend and
 automatic-holiday date-basis state from the model spec, unfitted prior
 prediction resolves scale and date-derived feature state from `model.data`,
-media/channel arrays must be finite and nonnegative, `hill_function` rejects
-negative inputs with a clear `ArgumentError`, and pipeline YAML fails on
-unsupported top-level keys.
+media/channel arrays must be finite and nonnegative, spend-domain saturation
+primitives reject negative `x` with clear `ArgumentError`s, and pipeline YAML
+fails on unsupported top-level keys. `tanh_saturation` remains a signed
+low-level transform primitive, but public MMM media/spend surfaces reject
+negative values before replay. Specifically,
+`centered_logistic_saturation`, `logistic_saturation`,
+`michaelis_menten`, and `hill_function` require nonnegative `x`.
 
 ## Quickstart
 

@@ -8,20 +8,40 @@ See: .planning/PROJECT.md
 Julia by using validated reference behavior where it is methodologically
 meaningful, proving comparison claims only where semantics genuinely match, and
 letting Epsilon stand as an independent Julia MMM library.
-**Current focus:** Phase 51 Public Config Top-Level Typo Guard is complete.
-Direct public model config parsing now fails closed on unsupported top-level
-keys instead of silently storing typo-like or pipeline-runner-only blocks in
-`ModelConfig.extras`, while preserving narrow `effects` and `validation`
-allowances plus programmatic `ModelConfig(extras = ...)`.
+**Current focus:** Phase 52 Saturation Media Domain Contract is complete.
+Spend-domain saturation primitives now reject negative `x` where they model
+media spend/exposure, `tanh_saturation` remains a signed low-level primitive
+because committed fixtures require it, and MMM media/curve surfaces keep
+nonnegative spend guardrails.
 
 ## Current Position
 
-**Current Phase:** 51
-**Current Phase Name:** Public Config Top-Level Typo Guard
-**Total Phases:** 51
-**Current Plan:** `.planning/phases/51-public-config-top-level-typo-guard/PLAN.md`
-**Total Plans in Phase:** 1 narrow public config contract-hardening slice
-**Status:** Phase 51 is complete. `model_config_from_dict` and
+**Current Phase:** 52
+**Current Phase Name:** Saturation Media Domain Contract
+**Total Phases:** 52
+**Current Plan:** `.planning/phases/52-saturation-media-domain-contract/PLAN.md`
+**Total Plans in Phase:** 1 narrow saturation/media-domain contract-lock slice
+**Status:** Phase 52 is complete. `centered_logistic_saturation` and its
+compatibility alias `logistic_saturation` now reject negative `x`, and
+`michaelis_menten` now rejects negative `x`; `tanh_saturation` remains signed
+because committed reference fixtures include negative inputs. `MMMData` and
+`PanelMMMData` negative-channel rejection now assert the concrete
+`channels must contain only nonnegative values` message, and all four public
+curve/metric entry points reject negative time-series `grid` and panel
+`delta_grid` values before replay. `test/postmodel/response_curves.jl` is now
+self-contained under `make test-file` by defining its tiny feature-matrix
+helper locally when the full model layer has not already loaded it. Scoped
+verification passed: `make test-file FILE=test/transforms/saturation.jl`
+(`78 / 78`, `8.4s`), `make test-file FILE=test/model/types.jl`
+(`72 / 72`, `13.6s`), and
+`make test-file FILE=test/postmodel/response_curves.jl` (`57 / 57`,
+`1m48.2s`). This is a bounded pre-v1 domain-contract hardening change only:
+no generated fixtures, fixture exporter scripts, model graph construction,
+MCMC sampler contract, HSGP, calibration, optimisation, pipeline stages,
+exports, dependencies, manifests, benchmarks, release gate, full-suite gate,
+or parity-ledger status changed.
+
+Phase 51 is complete. `model_config_from_dict` and
 `load_public_config` now reject unsupported top-level keys with deterministic
 sorted-key errors instead of placing arbitrary keys into `ModelConfig.extras`.
 The direct parser preserves only the existing `effects` yearly-Fourier
@@ -463,17 +483,17 @@ parity-ledger renames out of scope.
 | 49 | 1/1 | Completed | convolution even-kernel `Overlap` parity lock landed without changing public numerics |
 | 50 | 1/1 | Completed | fitted trend and holiday prediction-state integration lock landed in the model-builder test lane |
 | 51 | 1/1 | Completed | direct public model config top-level typo guard landed with pipeline runner-key strip compatibility |
+| 52 | 1/1 | Completed | saturation/media-domain contract lock landed without changing valid nonnegative media numerics |
 
 **Recent Trend:**
-- Last 5 completed phases: 47, 48, 49, 50, 51.
+- Last 5 completed phases: 48, 49, 50, 51, 52.
 - Trend: the recent work narrowed rather than widened the library contract.
-  Phase 47 rewrote public identity language around Epsilon as an independent
-  library, Phase 48 deferred internal provenance renames until compatibility
-  policy exists, Phase 49 disproved and locked a suspected transform bug
-  without changing numerics, Phase 50 locked fitted trend/holiday prediction
-  state with scoped integration evidence, and Phase 51 closed the direct public
-  config typo gap without widening model, pipeline-stage, release, benchmark, or
-  parity scope.
+  Phase 48 deferred internal provenance renames until compatibility policy
+  exists, Phase 49 disproved and locked a suspected transform bug without
+  changing numerics, Phase 50 locked fitted trend/holiday prediction state with
+  scoped integration evidence, Phase 51 closed the direct public config typo
+  gap, and Phase 52 made the saturation/media spend-domain contract explicit
+  without widening model, pipeline-stage, release, benchmark, or parity scope.
 
 ## Decisions Made
 
@@ -579,13 +599,15 @@ parity-ledger renames out of scope.
 - Phase 51 added a direct public config top-level guard. Keep `validation` as a
   narrow compatibility extra and use programmatic `ModelConfig(extras = ...)`
   for opaque local state rather than reopening arbitrary YAML extras.
+- Phase 52 locked the saturation/media-domain split. Keep MMM media and public
+  curve grids nonnegative; do not remove signed `tanh_saturation` support
+  unless a separate fixture/parity contract explicitly supersedes it.
 - Treat release-branch/tag work and benchmark refreshes as explicit future
   decisions, not as the automatic next action.
 
 ## Blockers
 
-- There is no current blocker for the completed Phase 40 planning reconciliation
-  slice.
+- There is no current blocker for the completed Phase 52 domain-contract slice.
 - Release branch/tag work remains unstarted and should only proceed after an
   explicit release-prep decision.
 - Broad Abacus parity claims beyond the ledger-backed `timeseries`,

@@ -7,12 +7,16 @@ This curve is `2 / (1 + exp(-lam * x)) - 1`, computed as the numerically
 stable equivalent `tanh(lam * x / 2)`. It maps zero input to zero output and
 approaches one for large nonnegative input.
 
+`x` is interpreted as media spend or exposure and must be nonnegative. Use
+[`tanh_saturation`](@ref) only when a signed low-level transform is required.
+
 `lam` may be a scalar or an array that broadcasts against `x`.
 """
 function centered_logistic_saturation(
         x::Union{Real, AbstractArray},
         lam::Union{Real, AbstractArray} = 0.5,
     )
+    _validate_nonnegative(x, "x")
     _validate_nonnegative(lam, "lam")
     target_ndims = max(_input_ndims(x), _input_ndims(lam))
     x_array = _reshape_for_broadcast(_parameter_array(x), target_ndims)
@@ -29,6 +33,9 @@ Legacy compatibility alias for [`centered_logistic_saturation`](@ref).
 New code should call `centered_logistic_saturation` directly. The public config
 value `media.saturation.type = "logistic"` currently uses this centered
 logistic curve for compatibility with existing Epsilon model semantics.
+
+Like `centered_logistic_saturation`, this alias interprets `x` as media spend
+or exposure and rejects negative inputs.
 """
 function logistic_saturation(
         x::Union{Real, AbstractArray},
@@ -41,6 +48,10 @@ end
     tanh_saturation(x, b=0.5, c=0.5)
 
 Apply tanh saturation elementwise.
+
+This is the only signed low-level saturation primitive: reference fixtures
+include negative `x` values. Public MMM media containers and response grids
+still reject negative media spend before model replay.
 
 `b` and `c` may be scalars or arrays that broadcast against `x`.
 """
@@ -63,6 +74,8 @@ end
 
 Apply the Michaelis-Menten saturation curve elementwise.
 
+`x` is interpreted as media spend or exposure and must be nonnegative.
+
 `alpha` and `lam` may be scalars or arrays that broadcast against `x`.
 """
 function michaelis_menten(
@@ -70,6 +83,7 @@ function michaelis_menten(
         alpha::Union{Real, AbstractArray},
         lam::Union{Real, AbstractArray},
     )
+    _validate_nonnegative(x, "x")
     _validate_positive_parameter(alpha, "alpha")
     _validate_positive_parameter(lam, "lam")
     target_ndims = max(_input_ndims(x), _input_ndims(alpha), _input_ndims(lam))

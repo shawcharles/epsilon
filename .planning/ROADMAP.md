@@ -414,6 +414,10 @@ that later closed in Phase 14:
 - [x] **Phase 51: Public Config Top-Level Typo Guard** - Harden direct public
       model config parsing so unsupported top-level keys fail closed while
       preserving narrow compatibility extras and pipeline runner-key stripping.
+- [x] **Phase 52: Saturation Media Domain Contract** - Lock the pre-v1
+      saturation/media-domain split: spend-domain saturation primitives reject
+      negative `x`, signed tanh remains a low-level reference-backed primitive,
+      and MMM media/curve surfaces keep nonnegative spend guardrails.
 
 ## Phase Details
 
@@ -771,7 +775,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 51
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 52
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -826,3 +830,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 51
 | 49. Convolution Overlap Parity Lock | 1/1 | Completed | suspected even-length `Overlap` bug was disproved against local Abacus; current numerics preserved, explicit length-4 parity-lock test added, and the dead `overlap_shift` source-index parameter removed |
 | 50. Trend And Holiday Prediction-State Lock | 1/1 | Completed | fitted `TimeSeriesMMM` future prediction now has focused integration evidence that trend origin/scale and automatic-holiday default period state are read from the fitted artifact spec rather than recomputed from holdout data or mutable live config |
 | 51. Public Config Top-Level Typo Guard | 1/1 | Completed | direct public model config parsing now rejects unsupported top-level keys with deterministic errors, preserves only narrow `effects`/`validation` allowances, and pipeline config strips already allowed runner-only blocks before model parsing |
+| 52. Saturation Media Domain Contract | 1/1 | Completed | spend-domain centred-logistic/logistic and Michaelis-Menten saturation reject negative `x`, signed tanh remains reference-backed, and MMM media/curve boundaries keep nonnegative spend checks |

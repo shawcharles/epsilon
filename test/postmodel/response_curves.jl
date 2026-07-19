@@ -2,6 +2,61 @@ using Dates
 using Epsilon
 using Test
 
+include(joinpath(@__DIR__, "..", "model", "sample_models.jl"))
+
+if !isdefined(@__MODULE__, :feature_matrix_time_series_model)
+    function feature_matrix_time_series_model(;
+            seasonality = Dict{String, Any}(),
+            trend = Dict{String, Any}(),
+            events = Dict{String, Any}(),
+            holidays = Dict{String, Any}(),
+            controls_config = Dict{String, Any}(),
+            include_controls::Bool = false,
+            event_values = nothing,
+            dates = 1:6,
+            random_seed::Int = 41,
+        )
+        control_columns = include_controls ? ["price_index"] : String[]
+        config = ModelConfig(
+            date_column = "date",
+            target_column = "revenue",
+            target_type = "revenue",
+            channel_columns = ["tv", "search"],
+            control_columns = control_columns,
+            dims = ("geo",),
+            adstock = Dict("type" => "geometric", "l_max" => 8),
+            saturation = Dict("type" => "logistic"),
+            seasonality = seasonality,
+            trend = trend,
+            events = events,
+            holidays = holidays,
+            controls = controls_config,
+            priors = Dict("intercept" => EpsilonPrior("Normal"; mu = 0.0, sigma = 1.0)),
+        )
+        sampler = SamplerConfig(;
+            draws = 10,
+            tune = 10,
+            chains = 1,
+            cores = 1,
+            target_accept = 0.8,
+            random_seed = random_seed,
+            progressbar = false,
+            compute_convergence_checks = false,
+        )
+        data = MMMData(
+            dates = dates,
+            target = [5.0, 6.5, 7.5, 9.0, 10.0, 11.5],
+            channels = [1.0 0.5; 2.0 1.0; 2.5 1.5; 3.0 2.0; 3.5 2.5; 4.0 3.0],
+            channel_names = ["tv", "search"],
+            controls = include_controls ? [0.2; 0.4; 0.3; 0.6; 0.5; 0.8][:, :] : nothing,
+            control_names = include_controls ? ["price_index"] : String[],
+            events = event_values,
+            event_names = haskey(events, "columns") ? String.(events["columns"]) : String[],
+        )
+        return TimeSeriesMMM(config, sampler, data)
+    end
+end
+
 function _grouped_results_for_response_curves(model; new_data = model.data)
     return inference_results(
         model;
@@ -16,6 +71,16 @@ function _metric_index(results::MetricResults, name::AbstractString)
     index = findfirst(==(String(name)), results.metric_names)
     isnothing(index) && error("missing marketing metric $(name)")
     return index
+end
+
+function _postmodel_argument_error_message(thunk::Function)
+    try
+        thunk()
+    catch err
+        err isa ArgumentError || rethrow()
+        return err.msg
+    end
+    error("expected ArgumentError")
 end
 
 @testset "response_curve_results supports TS-00 media-only grouped artifacts" begin
@@ -208,6 +273,20 @@ end
     fit!(model)
     grouped = _grouped_results_for_response_curves(model)
 
+    negative_grid = [-1.0, 0.0]
+    @test _postmodel_argument_error_message(
+        () -> response_curve_results(grouped; channel = "tv", grid = negative_grid),
+    ) == "response_curve_results requires a nonnegative spend grid"
+    @test _postmodel_argument_error_message(
+        () -> saturation_curve_results(grouped; channel = "tv", grid = negative_grid),
+    ) == "saturation_curve_results requires a nonnegative spend grid"
+    @test _postmodel_argument_error_message(
+        () -> adstock_curve_results(grouped; channel = "tv", grid = negative_grid),
+    ) == "adstock_curve_results requires a nonnegative spend grid"
+    @test _postmodel_argument_error_message(
+        () -> metric_results(grouped; channel = "tv", grid = negative_grid),
+    ) == "response_curve_results requires a nonnegative spend grid"
+
     @test_throws ArgumentError response_curve_results(grouped; channel = "radio", grid = [0.0, 1.0])
     @test_throws ArgumentError response_curve_results(grouped; channel = "tv", grid = [0.0, 1.0, 1.0])
     @test_throws ArgumentError saturation_curve_results(grouped; channel = "radio", grid = [0.0, 1.0])
@@ -223,4 +302,18 @@ end
     @test_throws ArgumentError saturation_curve_results(panel_grouped; channel = "tv", grid = [0.0, 1.0])
     @test_throws ArgumentError adstock_curve_results(panel_grouped; channel = "tv", grid = [0.0, 1.0])
     @test_throws ArgumentError metric_results(panel_grouped; channel = "tv", grid = [0.0, 1.0])
+
+    negative_delta_grid = [-1.0, 0.0]
+    @test _postmodel_argument_error_message(
+        () -> response_curve_results(panel_grouped; channel = "tv", delta_grid = negative_delta_grid),
+    ) == "response_curve_results requires a nonnegative spend grid"
+    @test _postmodel_argument_error_message(
+        () -> saturation_curve_results(panel_grouped; channel = "tv", delta_grid = negative_delta_grid),
+    ) == "saturation_curve_results requires a nonnegative spend grid"
+    @test _postmodel_argument_error_message(
+        () -> adstock_curve_results(panel_grouped; channel = "tv", delta_grid = negative_delta_grid),
+    ) == "adstock_curve_results requires a nonnegative spend grid"
+    @test _postmodel_argument_error_message(
+        () -> metric_results(panel_grouped; channel = "tv", delta_grid = negative_delta_grid),
+    ) == "response_curve_results requires a nonnegative spend grid"
 end
