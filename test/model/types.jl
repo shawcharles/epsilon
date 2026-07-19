@@ -1,4 +1,5 @@
 using Epsilon
+using ForwardDiff
 using Test
 
 const _SAMPLER_CONFIG_DEPRECATION =
@@ -255,6 +256,22 @@ end
     )
 end
 
+@testset "MMMData validation preserves AD scalar types" begin
+    objective(params) = begin
+        data = MMMData(
+            dates = 1:2,
+            target = params[1:2],
+            channels = reshape(params[3:4], 2, 1),
+            channel_names = ["tv"],
+        )
+        sum(data.target) + 2sum(data.channels)
+    end
+    gradient = ForwardDiff.gradient(objective, [1.0, 2.0, 3.0, 4.0])
+
+    @test all(isfinite, gradient)
+    @test gradient == [1.0, 1.0, 2.0, 2.0]
+end
+
 @testset "Config loaders do not warn for replacement workflows" begin
     mktempdir() do dir
         path = joinpath(dir, "config.yml")
@@ -283,6 +300,23 @@ end
         @test (@test_logs load_model_config(path)) isa ModelConfig
         @test (@test_logs load_sampler_config(path)) isa SamplerConfig
     end
+end
+
+@testset "PanelMMMData validation preserves AD scalar types" begin
+    objective(params) = begin
+        data = PanelMMMData(
+            dates = 1:2,
+            target = reshape(params[1:4], 2, 2),
+            channels = reshape(params[5:8], 2, 1, 2),
+            panel_names = ["north", "south"],
+            channel_names = ["tv"],
+        )
+        sum(data.target) + 3sum(data.channels)
+    end
+    gradient = ForwardDiff.gradient(objective, collect(1.0:8.0))
+
+    @test all(isfinite, gradient)
+    @test gradient == vcat(ones(4), fill(3.0, 4))
 end
 
 @testset "PanelMMMData" begin

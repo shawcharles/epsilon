@@ -705,13 +705,13 @@ function _validate_unique_strings(values, name::AbstractString)
 end
 
 function _validate_numeric_values(values, name::AbstractString)
-    all(value -> value isa Real && isfinite(Float64(value)), values) ||
+    all(value -> value isa Real && isfinite(value), values) ||
         throw(ArgumentError("$name must contain only finite numeric values"))
     return nothing
 end
 
 function _validate_nonnegative_values(values, name::AbstractString)
-    all(value -> Float64(value) >= 0.0, values) ||
+    all(value -> value isa Real && value >= zero(value), values) ||
         throw(ArgumentError("$name must contain only nonnegative values"))
     return nothing
 end

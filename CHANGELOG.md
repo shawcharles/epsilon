@@ -212,6 +212,9 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Changed
 
+- Hardened `MMMData` and `PanelMMMData` numeric validation so finite and
+  nonnegative checks preserve generic AD scalar types instead of narrowing
+  values through `Float64` solely for validation.
 - Clarified public docstrings for binomial adstock lag weights and
   original-unit spend/budget/allocation fields; no runtime behaviour changed.
 - Documented and guarded the bounded budget optimizer's post-solve allocation
