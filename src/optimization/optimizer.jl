@@ -207,6 +207,10 @@ function _project_to_constraint_bounds(
         constraints::AbstractVector{BudgetChannelConstraint},
         total_budget::Real,
     )
+    # Projection is post-solve hygiene, not a second optimizer. The 1e-6
+    # tolerance snaps near-bound solver drift and accepts only the final
+    # leftover residual; any larger residual is rebalanced solely through valid
+    # effective-bound slack or fails closed.
     projected = Float64.(collect(allocation))
     tolerance = _bound_projection_tolerance()
 

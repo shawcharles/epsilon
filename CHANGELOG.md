@@ -212,6 +212,10 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Changed
 
+- Documented and guarded the bounded budget optimizer's post-solve allocation
+  projection tolerance: near-bound solver drift is snapped, residuals are
+  rebalanced only through valid effective-bound slack, and impossible residuals
+  fail closed without changing optimisation semantics.
 - Migrated the bounded budget optimizer's internal JuMP nonlinear construction
   from legacy `JuMP.register` / `set_nonlinear_objective` calls to current
   nonlinear operator objects and `@objective`, without changing allocation

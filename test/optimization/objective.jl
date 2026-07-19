@@ -269,6 +269,64 @@ end
     @test projected[3] <= 2.0 + 1.0e-12
 end
 
+@testset "post-solve bound projection rebalances residuals only through valid slack" begin
+    positive_constraints = [
+        Epsilon.BudgetChannelConstraint("tv", 1.0, nothing, 1.0, nothing, nothing, 0.0, 1.0),
+        Epsilon.BudgetChannelConstraint("search", 1.0, nothing, 2.0, nothing, nothing, 0.0, 2.0),
+        Epsilon.BudgetChannelConstraint("radio", 1.0, nothing, 2.0, nothing, nothing, 0.0, 2.0),
+    ]
+    positive_projected = Epsilon._project_to_constraint_bounds(
+        [1.0, 2.0, 1.0],
+        positive_constraints,
+        4.5,
+    )
+
+    @test positive_projected[1] == 1.0
+    @test positive_projected[2] == 2.0
+    @test positive_projected[3] == 1.5
+    @test sum(positive_projected) ≈ 4.5 atol = 1.0e-12 rtol = 0.0
+    @test all(positive_projected .>= [constraint.effective_lower for constraint in positive_constraints])
+    @test all(positive_projected .<= Float64[something(constraint.effective_upper, Inf) for constraint in positive_constraints])
+
+    negative_constraints = [
+        Epsilon.BudgetChannelConstraint("tv", 1.0, nothing, 2.0, nothing, nothing, 1.0, 2.0),
+        Epsilon.BudgetChannelConstraint("search", 1.0, nothing, 2.0, nothing, nothing, 0.5, 2.0),
+        Epsilon.BudgetChannelConstraint("radio", 1.0, nothing, 2.0, nothing, nothing, 0.0, 2.0),
+    ]
+    negative_projected = Epsilon._project_to_constraint_bounds(
+        [1.0, 0.5, 1.0],
+        negative_constraints,
+        2.0,
+    )
+
+    @test negative_projected[1] == 1.0
+    @test negative_projected[2] == 0.5
+    @test negative_projected[3] == 0.5
+    @test sum(negative_projected) ≈ 2.0 atol = 1.0e-12 rtol = 0.0
+    @test all(negative_projected .>= [constraint.effective_lower for constraint in negative_constraints])
+    @test all(negative_projected .<= Float64[something(constraint.effective_upper, Inf) for constraint in negative_constraints])
+end
+
+@testset "post-solve bound projection fails closed when residual cannot fit bounds" begin
+    constraints = [
+        Epsilon.BudgetChannelConstraint("tv", 1.0, nothing, 1.0, nothing, nothing, 0.0, 1.0),
+        Epsilon.BudgetChannelConstraint("search", 1.0, nothing, 2.0, nothing, nothing, 0.0, 2.0),
+        Epsilon.BudgetChannelConstraint("radio", 1.0, nothing, 2.0, nothing, nothing, 0.0, 2.0),
+    ]
+
+    @test_throws ErrorException Epsilon._project_to_constraint_bounds(
+        [1.0, 2.0, 2.0],
+        constraints,
+        5.25,
+    )
+
+    @test_throws ErrorException Epsilon._project_to_constraint_bounds(
+        [0.0, 0.0, 0.0],
+        constraints,
+        -0.25,
+    )
+end
+
 @testset "feasible initial allocation does not exceed bounded channels for tolerance residuals" begin
     model = sample_time_series_model()
     fit!(model)
