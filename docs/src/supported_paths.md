@@ -6,7 +6,7 @@ quickstart, compact output inspection, trusted-local artifact roundtrips, and
 the local smoke command.
 
 These workflows are maintenance and teaching evidence for the supported
-Turing/NUTS MCMC path. They are not benchmarks, release evidence, Abacus parity
+Turing/NUTS MCMC path. They are not benchmarks, release evidence, reference-parity
 claims, dashboard workflows, or a broader ingestion API.
 
 ## Toy MCMC Example
@@ -148,5 +148,5 @@ and verifies `status=fit` plus `backend=turing`. It removes its temporary
 outputs when it exits.
 
 `make smoke` is useful before or after small supported-path changes. It is not
-a benchmark, not release evidence, not an Abacus parity gate, and not a
+a benchmark, not release evidence, not a reference-parity gate, and not a
 replacement for focused tests when code behavior changes.

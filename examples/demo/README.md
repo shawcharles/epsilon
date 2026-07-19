@@ -5,16 +5,16 @@ This directory provides a bounded, release-honest demo surface for Epsilon.
 ## What Is Included
 
 - `reference/abacus/`
-  - the canonical Abacus demo datasets copied into the Epsilon repo
-  - one de-duplicated `holidays.csv` file shared by all copied Abacus configs
-  - raw Abacus `config.yml` files for:
+  - canonical reference demo datasets copied into the Epsilon repo
+  - one de-duplicated `holidays.csv` file shared by all copied reference configs
+  - raw reference `config.yml` files for:
     - `timeseries`
     - `geo_panel`
     - `geo_brand_panel`
 - `epsilon/timeseries/config.yml`
-  - an Epsilon-native runnable config over the same Abacus time-series demo
+  - an Epsilon-native runnable config over the same reference time-series demo
     dataset
-  - kept intentionally lighter than the full Abacus pipeline example:
+  - kept intentionally lighter than the full reference pipeline example:
     validation and optimization are off by default so the first runnable Epsilon
     demo stays fast and truthful to the shipped support matrix
 - `run_demo.jl`
@@ -26,25 +26,25 @@ This directory provides a bounded, release-honest demo surface for Epsilon.
   - runnable through `run_demo.jl`
   - uses the bounded Epsilon v1 time-series MCMC pipeline contract
 - `geo_panel`
-  - reference-only dataset and raw Abacus config
+  - reference-only dataset and raw reference config
   - useful for cross-framework comparisons
   - not runnable through the Epsilon pipeline because the shipped pipeline is
     time-series-first
 - `geo_brand_panel`
-  - reference-only dataset and raw Abacus config
+  - reference-only dataset and raw reference config
   - useful for cross-framework comparisons
   - not runnable through the Epsilon pipeline because the shipped pipeline is
     time-series-first and the bounded panel path supports one panel dimension
 
 ## Holiday File
 
-The raw Abacus holiday CSV is included so comparisons with Abacus and other MMM
+The raw reference holiday CSV is included so comparisons with other MMM
 frameworks can use the same reference inputs.
 
 The shipped runnable Epsilon time-series demo uses this same copied holiday CSV
 as a reference input through the native `holidays.mode = "auto"` path, which
 builds one pooled automatic holiday component. This is the coherent Epsilon
-native holiday design, not a claim of end-to-end Abacus parity on the
+native holiday design, not a claim of end-to-end reference parity on the
 holiday-bearing row. The pipeline remains time-series-only, and broader holiday
 feature expansion is still out of scope.
 

@@ -61,8 +61,9 @@ runtime. Generated outputs belong in user-specified locations.
 ### 6. Testing Standard
 
 - Every public feature gets tests.
-- Statistical behavior gets comparison tests against Abacus fixtures where the
-  semantics of the Epsilon surface and the Abacus reference genuinely match.
+- Statistical behavior gets comparison tests against committed reference
+  fixtures where the semantics of the Epsilon surface and the reference
+  implementation genuinely match.
 - `runtests.jl` stays thin and delegates to focused test files.
 - `Aqua.jl` is part of the default quality gate.
 - `Documenter.doctest` is part of the test suite for public examples.
@@ -115,9 +116,9 @@ Deferred until the model core exists:
 - Keep hot-path functions type-stable.
 - Avoid mutation in autodiff-sensitive transforms unless we have proof it is safe.
 - Benchmark before micro-optimizing.
-- Honest numerical comparison against Abacus is more important than aesthetic
-  refactors, but methodological coherence wins if literal upstream fidelity
-  would produce a weaker or less truthful bounded design.
+- Honest numerical comparison against reference fixtures is more important than
+  aesthetic refactors, but methodological coherence wins if literal upstream
+  fidelity would produce a weaker or less truthful bounded design.
 
 ### 10. Configuration and Reproducibility
 
@@ -133,7 +134,7 @@ If a reviewer asks whether a change is "the Epsilon way", the default checks are
 1. Is it idiomatic Julia?
 2. Does it follow SciML-style naming and structure?
 3. Is it testable and autodiff-safe?
-4. Does it preserve or improve methodological coherence, and is any Abacus
+4. Does it preserve or improve methodological coherence, and is any reference
    comparison claim still honest?
 5. Is the public API still small and intentional?
 

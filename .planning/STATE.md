@@ -8,22 +8,36 @@ See: .planning/PROJECT.md
 Julia by using validated reference behavior where it is methodologically
 meaningful, proving comparison claims only where semantics genuinely match, and
 letting Epsilon stand as an independent Julia MMM library.
-**Current focus:** Phase 46 Abacus Reference Decoupling Plan is complete. The
-repo now has a reviewed tracked-file inventory and classification contract for
-future Epsilon-first public identity cleanup.
+**Current focus:** Phase 47 Public Identity Rewrite is complete. Epsilon's
+public-facing root docs, selected user docs, and example READMEs now use
+Epsilon-first identity language while preserving fixture-backed validation
+provenance.
 
 ## Current Position
 
-**Current Phase:** 46
-**Current Phase Name:** Abacus Reference Decoupling Plan
-**Total Phases:** 46
-**Current Plan:** `.planning/phases/46-abacus-reference-decoupling/PLAN.md`
-**Total Plans in Phase:** 1 planning-only reference-decoupling audit
-**Status:** Phase 46 is complete. The phase inventories and classifies current
-Abacus references so Epsilon can move towards Epsilon-first public identity
-language without prematurely deleting or renaming fixture, exporter, parity
-ledger, or historical validation provenance. The authoritative tracked-file
-inventory records 172 files and 1821 matches, excluding `Manifest.toml`, `.jls`
+**Current Phase:** 47
+**Current Phase Name:** Public Identity Rewrite
+**Total Phases:** 47
+**Current Plan:** `.planning/phases/47-public-identity-rewrite/PLAN.md`
+**Total Plans in Phase:** 1 docs-and-guardrail public identity slice
+**Status:** Phase 47 is complete. The public-facing README, contributor and
+standards docs, selected Documenter pages, and example READMEs now present
+Epsilon as an independent Julia MMM library with comparison-backed validation
+where semantics match, rather than as an Abacus clone or Julia port. The
+release-gate docs still preserve `VAL-TS-00-MCMC`, committed Abacus-derived
+fixture provenance, and the Epsilon-native/reference-row distinction.
+`test/api_exports.jl` now guards against reintroducing active dependent-product
+phrasing such as "Abacus Julia port" while still allowing fixture paths and
+validation provenance. The Phase 46 inventory table was corrected to stop
+counting ignored `docs/build/` output. No runtime source, model semantics,
+benchmarks, smoke harness, full suite, dependencies, manifests, or parity
+status changed.
+
+Phase 46 is complete. The phase inventories and classifies current Abacus
+references so Epsilon can move towards Epsilon-first public identity language
+without prematurely deleting or renaming fixture, exporter, parity ledger, or
+historical validation provenance. The authoritative tracked-file inventory
+records 172 files and 1821 matches, excluding `Manifest.toml`, `.jls`
 artifacts, and the Phase 46 plan itself. No runtime, example, benchmark, smoke,
 full suite, release, runtime-source, dependency, manifest, model-semantics, or
 parity-status changes were made.

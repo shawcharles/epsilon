@@ -2,7 +2,7 @@
 
 Calibration support is intentionally bounded. Epsilon currently supports
 calibration likelihood terms for `TimeSeriesMMM` fitted with MCMC through
-`fit!`; the implementation is fixture-backed against comparable Abacus
+`fit!`; the implementation is fixture-backed against comparable reference
 preprocessing and log-density semantics.
 
 ## Supported Surface
@@ -24,7 +24,7 @@ Lift-test calibration is computed in scaled model space as
 saturation only. Adstock is not inserted into the lift-test calibration term.
 
 Cost-per-target calibration uses caller-supplied gathered, target, and `sigma`
-values, scaled with the model target scale, and adds the Abacus-style soft
+values, scaled with the model target scale, and adds the reference-style soft
 penalty. It does not infer calibration values from posterior predictive,
 optimization, or pipeline artifacts.
 
@@ -85,12 +85,12 @@ The following remain outside the current supported surface:
 Unsupported calibration paths fail closed with explicit errors rather than
 silently dropping calibration.
 
-## Parity Status
+## Validation Status
 
 The calibration/lift-test ledger row remains `scaffolded`, not `ported`.
 Epsilon has fixture-backed evidence for the bounded `TimeSeriesMMM` MCMC slice,
 including combined lift-test plus cost-per-target model integration. That does
-not imply broad Abacus calibration parity across panel models, VI, broader
+not imply broad reference calibration parity across panel models, VI, broader
 saturation families, hosted/UI workflows, or AI-advisor behaviour.
 
 ```@docs

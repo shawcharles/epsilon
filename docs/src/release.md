@@ -8,11 +8,11 @@ permanent variational-inference retirement and Phase 43's canonical
 [Supported Local Workflows](supported_paths.md) runbook, did not rerun the
 release gate or refresh benchmark artifacts.
 
-The package should still avoid blanket “Abacus parity” claims: the guaranteed
-Abacus-reference row is `VAL-TS-00-MCMC`, while the holiday-bearing automatic
+The package should still avoid blanket reference-parity claims: the guaranteed
+reference-backed row is `VAL-TS-00-MCMC`, while the holiday-bearing automatic
 holiday row remains an Epsilon-native/reference row unless a separate
-compatibility mode is added. More importantly, Epsilon now treats Abacus as a
-major reference and comparison baseline rather than a source of literal
+compatibility mode is added. More importantly, Epsilon now treats the external
+reference implementation as validation provenance rather than a source of literal
 implementation obligations: methodological coherence wins when strict upstream
 fidelity would produce a weaker or less honest bounded design. Treat this page
 as the canonical release-gate summary for the closed bounded v1 surface and not
@@ -70,7 +70,7 @@ make smoke
 That command runs the synthetic toy model and fixed-schema CSV quickstart with
 small MCMC settings, verifies compact summaries in temporary directories, and
 does not persist generated artifacts in the repository. It is not release
-evidence, not a benchmark, not an Abacus parity claim, and not a broader
+evidence, not a benchmark, not a reference-parity claim, and not a broader
 support expansion.
 
 ## Supported v1 Surface
@@ -82,7 +82,7 @@ support expansion.
 | Post-model | `POST-TS-MCMC`, `POST-P-MCMC` | Deterministic replay from grouped MCMC `InferenceResults`; post-model result arrays have validated axis-order contracts, and panel response/metric curves are panel-cell/channel artifacts with explicit `delta_grid` historical-scaling semantics |
 | Optimization | `OPT-TS-MCMC`, `OPT-P-MCMC` | Fixed-budget `:total_response` only; panel optimization allocates channel totals and preserves historical within-channel panel-cell spend shares |
 | Scenario planner | solved time-series and bounded panel optimization results; evaluated time-series manual allocations; local scenario-store artifacts | Non-UI comparison tables over existing optimizer outputs and existing time-series response surfaces; typed current, manual-allocation, and fixed-budget optimized scenario specs are supported. Compatible evaluated manual scenarios can be compared with one solved optimization result, and existing `ScenarioPlanResult` tables can be written to a local typed `scenario_store.jls` payload with CSV inspection sidecars. The store artifact is Epsilon/Julia-version-bound and should not be treated as a portable or untrusted interchange format. Panel manual allocation, automatic scenario refits, future-path simulation, pipeline scenario-store emission, hosted/background stores, and Dash workflows remain deferred |
-| Pipeline | bounded time-series MCMC Stage `00`-`70` path, including optional Stage `05` prior-sensitivity planning; panel Stage `00` metadata, optional Stage `05` prior-sensitivity planning, Stage `20` fit, Stage `30` assessment, Stage `40` decomposition, Stage `50` diagnostics, Stage `60` response-curve path, and explicitly enabled Stage `70` historical-share optimization | `run_pipeline(config)` and `epsilon run config.yml`, with stage-local plot artifacts; Phase 14 validates Abacus-compatible Stage `00` through Stage `70` artifact keys against an exported Abacus `timeseries` pipeline contract, and validates `geo_panel` / `geo_brand_panel` Stage `00`-`60` keys plus `geo_panel` and `geo_brand_panel` Stage `70` historical-share optimization artifacts against exported Abacus panel contracts where semantics match. Stage `05` writes resolved prior-sensitivity scenario configs and human/LLM-safe manifests; it does not refit every scenario automatically. Julia-native serialized artifacts are used where Abacus uses PyMC/NetCDF-specific files |
+| Pipeline | bounded time-series MCMC Stage `00`-`70` path, including optional Stage `05` prior-sensitivity planning; panel Stage `00` metadata, optional Stage `05` prior-sensitivity planning, Stage `20` fit, Stage `30` assessment, Stage `40` decomposition, Stage `50` diagnostics, Stage `60` response-curve path, and explicitly enabled Stage `70` historical-share optimization | `run_pipeline(config)` and `epsilon run config.yml`, with stage-local plot artifacts; Phase 14 validates reference-compatible Stage `00` through Stage `70` artifact keys against an exported reference `timeseries` pipeline contract, and validates `geo_panel` / `geo_brand_panel` Stage `00`-`60` keys plus `geo_panel` and `geo_brand_panel` Stage `70` historical-share optimization artifacts against exported reference panel contracts where semantics match. Stage `05` writes resolved prior-sensitivity scenario configs and human/LLM-safe manifests; it does not refit every scenario automatically. Julia-native serialized artifacts are used where the reference implementation uses PyMC/NetCDF-specific files |
 | Plotting | grouped diagnostics, time-series post-model, channel-level time-series and panel optimization, deterministic plot bundle | Direct plots return Makie `Figure` objects; `write_plot_bundle(run)` is the optional curated export |
 
 ## Explicit Unsupported Rows
@@ -115,22 +115,22 @@ The release gate keeps the unsupported surface explicit:
 
 ## Validation Contract
 
-Phase 12 does not widen the Abacus-reference row set. The guaranteed
-Abacus-reference row remains:
+Phase 12 does not widen the reference-backed row set. The guaranteed
+reference-backed row remains:
 
 - `VAL-TS-00-MCMC`
 
 `VAL-TS-04-MCMC` now runs on Epsilon’s coherent native automatic holiday path.
 Unless Epsilon later ships a separate compatibility mode with matching Prophet
 semantics, this row should remain a bounded Epsilon-native/reference row rather
-than an Abacus-reference row.
+than a reference-backed row.
 
 All other rows remain bounded Epsilon-only validation rows unless Phase 12
 changes that explicitly in docs and tests.
 
 Phase 11 uses one explicit release gate with two kinds of checks.
 
-### Abacus-Reference Rows
+### Reference-Backed Rows
 
 These rows are validated against compact committed Abacus-derived fixtures:
 
@@ -147,12 +147,12 @@ The final harness checks:
 Detailed numeric comparison for the transform layer and the retained Phase 7 / 8
 post-model and optimization surfaces stays on the committed phase-local fixture
 gates. These checks justify parity claims only where the semantics of the
-underlying Epsilon surface still genuinely match the Abacus reference.
+underlying Epsilon surface still genuinely match the reference implementation.
 
 ### Bounded Epsilon-Only Rows
 
 These rows are validated through explicit contract-regression checks rather
-than false Abacus parity claims:
+than false reference-parity claims:
 
 - `VAL-TS-04-MCMC`
 - `VAL-P-00-MCMC`
@@ -182,7 +182,7 @@ The benchmark methodology and published reference-machine results live in the
 [Benchmarks](benchmarks.md) page and in the committed `benchmark/results/`
 artifacts.
 
-Phase 11 does not require a universal faster-than-Abacus claim. The benchmark
+Phase 11 does not require a universal faster-than-reference claim. The benchmark
 gate is honest publication of:
 
 - workload identities
@@ -225,8 +225,8 @@ reconciled the release-facing methodology claim.
 
 Closed Phase 12 items:
 
-- [x] The guaranteed Abacus-reference row `VAL-TS-00-MCMC` fits in the same
-  scaling/model space as Abacus.
+- [x] The guaranteed reference-backed row `VAL-TS-00-MCMC` fits in the same
+  scaling/model space as the reference implementation.
 - [x] Original-scale predictive and contribution outputs are reconstructed on
   top of that repaired scaled-space contract.
 - [x] Stage 60 exposes the repaired comparable curve families:
@@ -235,7 +235,7 @@ Closed Phase 12 items:
   curve/model-space contract.
 - [x] The shipped time-series demo and holiday/trend/seasonality design are
   reconciled with the final bounded methodology decision.
-- [x] Release-facing docs can truthfully distinguish repaired Abacus-reference
+- [x] Release-facing docs can truthfully distinguish repaired reference-backed
   rows from Epsilon-native rows.
 
 Release preparation may resume from this narrowed claim set. Maintainers should
@@ -246,7 +246,7 @@ still records `git_dirty = true`.
 ## Known Residual Limitations
 
 Even after Phase 12, the bounded v1 surface remains intentionally smaller than
-full Abacus scope:
+the full reference scope:
 
 - HSGP is not yet implemented on the bounded v1 surface.
 - The panel path can represent one or more declared panel dimensions through a

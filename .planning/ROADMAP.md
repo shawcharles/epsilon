@@ -752,7 +752,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 46
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 47
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -802,3 +802,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 46
 | 44. Current Docs Truth Reconciliation | 1/1 | Completed | docs-only reconciliation of stale current-facing status wording landed after Phase 43 |
 | 45. Current Docs Claim Guard | 1/1 | Completed | focused guard landed for current-facing docs claim boundaries, with future Abacus-reference decoupling preserved as separate planned identity work |
 | 46. Abacus Reference Decoupling Plan | 1/1 | Completed | inventory and classification plan landed for future Epsilon-first public identity cleanup |
+| 47. Public Identity Rewrite | 1/1 | Completed | Epsilon-first public identity wording landed across root docs, selected user docs, and example READMEs while preserving fixture-backed validation provenance and adding a focused dependent-product phrase guard |

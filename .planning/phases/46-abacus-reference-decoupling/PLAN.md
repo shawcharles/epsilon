@@ -36,7 +36,6 @@ and this Phase 46 plan directory itself:
 |---|---:|---|
 | Root docs (`README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `TECHNICAL-STANDARDS.md`) | 4 | Public identity, historical release notes, contributor guidance |
 | Source docs (`docs/src/`) | 6 | Public user documentation, benchmark/release/support pages |
-| Built docs (`docs/build/`) | 7 | Generated documentation output; rebuild, do not hand-edit |
 | Planning docs (`.planning/`) | 90 | Historical plans, parity ledger, methodology reviews, state, roadmap |
 | Source files (`src/`) | 6 | Public docstrings, compatibility comments, method naming rationale |
 | Fixture exporter scripts (`scripts/`) | 1 | Internal fixture-generation machinery |

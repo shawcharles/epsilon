@@ -2,10 +2,11 @@
 
 `Epsilon.jl` is a Julia-native framework for Bayesian marketing mix modeling.
 It is now a bounded, ledger-governed Julia MMM library rather than an initial
-package scaffold. Abacus remains the main reference and comparison baseline for
-validated statistical and methodological behavior, but parity is claimed only
-where the committed evidence and `.planning/ABACUS-PARITY-LEDGER.md` support
-that claim.
+package scaffold. It stands as an independent Julia MMM library with
+comparison-backed validation where an external reference implementation has
+matching statistical and methodological behavior. Parity is claimed only where
+the committed evidence and `.planning/ABACUS-PARITY-LEDGER.md` support that
+claim.
 
 ## Current Status
 
@@ -15,7 +16,7 @@ Phase 38. Phases 39 through 43 added local supported-path confidence evidence
 and documentation for the toy MCMC and fixed-schema CSV quickstart workflows,
 including compact sidecars, trusted-local artifact roundtrips, and the canonical
 [Supported Local Workflows](supported_paths.md) runbook. Those workflows are
-not benchmarks, release evidence, or Abacus parity evidence.
+not benchmarks, release evidence, or reference-parity evidence.
 
 The historical phase detail below remains useful context for the current
 surface:
@@ -62,7 +63,7 @@ surface:
   MCMC-only, runs the fixed Stage `00`-`70` sequence, preserves blocked
   holdout validation as a side branch off the full-sample fit path, writes
   stage-local `png` plots beside the corresponding stage artifacts, and rejects
-  retired variational-shaped configuration keys. The pipeline also supports Abacus-style
+  retired variational-shaped configuration keys. The pipeline also supports reference-style
   optional Stage `05` prior-sensitivity planning: it writes resolved scenario
   configs plus human and LLM-safe manifests, but does not refit every scenario
   automatically. Panel pipeline orchestration is currently bounded to metadata,
@@ -119,7 +120,7 @@ surface:
   fixtures, a maintainer-facing release harness, a frozen benchmark runner,
   and published reference-machine results for the bounded v1 workload matrix.
 - Phase 12 is now closed: the final validation harness has been rerun on the
-  repaired methodology, the guaranteed Abacus-reference row remains
+  repaired methodology, the guaranteed reference-backed row remains
   `VAL-TS-00-MCMC`, and the holiday-bearing automatic-holiday row is now
   documented honestly as an Epsilon-native/reference row unless a separate
   compatibility mode is added.
@@ -129,13 +130,12 @@ surface:
   scale and date-derived feature state from `model.data`, media/channel arrays
   must be finite and nonnegative, `hill_function` rejects negative inputs with
   `ArgumentError`, and pipeline YAML rejects unsupported top-level keys.
-- Abacus remains a major reference library and comparison baseline, but
-  Epsilon now explicitly prioritizes the most methodologically coherent bounded
+- Epsilon now explicitly prioritizes the most methodologically coherent bounded
   Julia design over literal upstream fidelity when those goals conflict.
 - current backend coverage: geometric, delayed, binomial, or Weibull adstock with centered logistic, tanh, Michaelis-Menten, or hill saturation, plus Fourier seasonality, bounded `linear` and `changepoint` trend paths, manual `events.columns` and generated `events.windows` event matrices, and a bounded `controls.transform = "standardize"` path on `TimeSeriesMMM`; plus a bounded `PanelMMM` path that can represent one or more declared panel dimensions through a deterministic flat panel-cell axis, shared media coefficients, hierarchical panel intercept offsets, contribution/decomposition replay, panel-cell response/metric surfaces with explicit `delta_grid` historical scaling, pipeline Stage `00` metadata artifacts, Stage `20` fit artifacts, Stage `30` assessment artifacts, Stage `40` decomposition artifacts, Stage `50` diagnostics artifacts, Stage `60` response-curve artifacts, and explicitly enabled Stage `70` historical-share optimization. The public config value `media.saturation.type = "logistic"` maps to Epsilon's centered logistic curve for compatibility. Panel seasonality, trend, events, richer controls, and free panel allocation are not yet exposed on that panel path; Stage `35` panel holdout validation is deliberately deferred for v1.
-- the time-series pipeline now validates Abacus-compatible Stage `00` through
-  Stage `70` artifact keys against an exported local Abacus `timeseries`
-  manifest contract; backend-specific Abacus NetCDF/PyMC artifacts are mapped
+- the time-series pipeline now validates reference-compatible Stage `00`
+  through Stage `70` artifact keys against an exported local reference
+  `timeseries` manifest contract; backend-specific NetCDF/PyMC artifacts are mapped
   to Epsilon's typed Julia-native serialized artifacts rather than treated as
   byte-for-byte file-format parity. Optional Stage `05` prior-sensitivity
   planning is supported as a scenario-config and manifest stage, not as an
@@ -144,11 +144,11 @@ surface:
   metadata/manifest keys, Stage `20` fit artifact keys, Stage `30` assessment
   artifact keys, Stage `40` decomposition artifact keys, Stage `50`
   diagnostics artifact keys, and Stage `60` response-curve artifact keys
-  against exported local Abacus manifest contracts, and both also validate
+  against exported local reference manifest contracts, and both also validate
   Stage `70` historical-share optimization artifacts (including the
   multidimensional `geo`/`brand` coordinate columns in the
   `channel_panel_allocation` table for `geo_brand_panel`) against exported
-  local Abacus panel manifest contracts, with unsupported panel stages
+  local reference panel manifest contracts, with unsupported panel stages
   explicitly skipped
 - the bounded non-UI scenario planner surface now provides typed current,
   manual-allocation, and fixed-budget optimized scenario specs plus
@@ -158,12 +158,12 @@ surface:
   `ScenarioPlanResult` tables without refitting or re-optimizing. Compatible
   evaluated manual scenarios and one solved fixed-budget optimization result
   can also be compared in a single deterministic plan. The surface
-  mirrors Abacus's reusable business-planning store semantics without Dash UI,
+  mirrors reusable business-planning store semantics without Dash UI,
   background jobs, automatic scenario refits, or free panel allocation
 - the bounded calibration surface now supports `TimeSeriesMMM` MCMC
   calibration likelihood terms for centered-logistic lift-test measurements and
   cost-per-target soft penalties. Calibration terms are optional, additive,
-  scaled into model space, and fixture-backed against comparable Abacus helper
+  scaled into model space, and fixture-backed against comparable reference helper
   semantics. Public dict/YAML configs and the bounded time-series MCMC pipeline
   path can now carry those calibration terms into model construction.
   `PanelMMM` calibration, non-logistic lift-test saturation
@@ -186,7 +186,7 @@ defines the Phase 11 infrastructure and the now-closed Phase 12 reconciliation:
 
 - the supported v1 surface
 - explicit unsupported rows
-- the Phase 11 validation split between Abacus-reference rows and Epsilon-only
+- the Phase 11 validation split between reference-backed rows and Epsilon-only
   contract-validation
 - the `v1.0.0-rc1` readiness checklist
 
@@ -204,7 +204,7 @@ julia --project=. examples/toy_mmm/run_toy_mmm.jl --draws 8 --tune 8 --output-di
 This fits a tiny `TimeSeriesMMM` through the supported Turing/NUTS MCMC path,
 extracts grouped inference results without prior or predictive groups, and
 writes compact contribution and metric summaries when an output directory is
-provided. It is not release evidence, not a benchmark, not an Abacus parity
+provided. It is not release evidence, not a benchmark, not a reference-parity
 claim, and not a broader support expansion.
 
 The canonical local runbook for the toy example, the fixed-schema CSV
@@ -216,7 +216,7 @@ quickstart, compact sidecars, trusted-local artifact roundtrips, and
 The repo also ships a bounded demo/comparison surface under
 `examples/demo/`:
 
-- copied Abacus reference datasets for `timeseries`, `geo_panel`, and
+- copied reference datasets for `timeseries`, `geo_panel`, and
   `geo_brand_panel`
 - one shared copied `holidays.csv` file for cross-framework comparisons
 - an Epsilon-native runnable time-series config over the same reference data
@@ -225,10 +225,10 @@ The repo also ships a bounded demo/comparison surface under
 This does not reopen the support matrix. The runner is time-series-only, while
 the panel bundles are included as reference data/configs for comparison work.
 Successful demo runs write stage-local plots directly into the run directory.
-The copied Abacus time-series demo remains a useful reference baseline. The
+The copied time-series demo remains a useful reference baseline. The
 runnable Epsilon demo now uses the coherent native automatic holiday path, so
 it should be treated as a bounded Epsilon reference workflow rather than as a
-proof of end-to-end Abacus parity on the holiday-bearing row.
+proof of end-to-end reference parity on the holiday-bearing row.
 
 ## Phase 7 Post-Model Matrix
 
@@ -389,10 +389,10 @@ Epsilon._evaluate_budget_objective
 
 Phase 9 is now closed. The bounded pipeline contract is frozen through the
 fixed Stage `00`-`70` surface, with stage-local plot artifacts emitted into
-the corresponding run directories. Phase 14 now also exports the Abacus
+the corresponding run directories. Phase 14 now also exports the reference
 `timeseries` pipeline manifest contract as a Julia fixture and checks the
-supported Stage `00` through Stage `70` artifact keys against Abacus names,
-with Julia-native artifact formats retained where Abacus uses
+supported Stage `00` through Stage `70` artifact keys against reference names,
+with Julia-native artifact formats retained where the reference implementation uses
 PyMC/NetCDF-specific files.
 
 ```@docs

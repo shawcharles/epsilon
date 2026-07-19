@@ -4,41 +4,43 @@
 
 Epsilon.jl is a Julia-native Bayesian Marketing Mix Modeling library built on
 [Turing.jl](https://turing.ml/) and the Julia scientific computing ecosystem.
-[Abacus](https://github.com/tandpds/abacus) is the major reference and
-comparison baseline for the statistical MMM core, but Epsilon prioritizes
-methodologically coherent Julia APIs over literal upstream fidelity.
+It is developed as an independent Julia MMM library with comparison-backed
+evidence where an external reference implementation has matching statistical
+semantics. Epsilon prioritizes methodologically coherent Julia APIs over
+literal upstream fidelity.
 
-> *A Julia-native MMM library informed by [Abacus](https://github.com/tandpds/abacus) - comparable statistical rigour where semantics match, with methodological coherence taking priority over literal upstream fidelity.*
+> *A Julia-native MMM library with comparable statistical rigour where semantics match, and methodological coherence where they do not.*
 
 ## Status
 
-**Abacus Julia port in progress** - Epsilon has substantial Julia
-implementation work and fixture-backed parity in key layers, but broad Abacus
-parity is not yet certified. Release preparation is paused until parity is
-demonstrated against concrete Abacus demo-style runs rather than inferred from
-module coverage.
+**Independent Julia MMM library, comparison-backed where semantics match** -
+Epsilon has substantial implemented surface area and fixture-backed validation
+in key layers, but broad product/API parity with any reference implementation
+is not certified. Release preparation is paused until claims are demonstrated
+against concrete demo-style runs rather than inferred from module coverage.
 
 The current implementation should be read with these labels:
 
-- `ported`: implemented and parity-tested against Abacus semantics
+- `ported`: implemented and parity-tested against reference semantics
 - `native`: implemented intentionally differently in Julia
-- `scaffolded`: API or module exists, but Abacus parity is not proven
-- `missing`: Abacus behavior is not implemented yet, but remains in scope
-  unless explicitly deferred
+- `scaffolded`: API or module exists, but broad validation is not proven
+- `missing`: reference behavior is not implemented yet, but remains in scope
+  only when the ledger or a later methodology plan says so
 - `deferred`: intentionally not part of the current statistical/methodological
-  port scope. Current explicit deferrals are AI advisor and Dash/dashboard
-  parity; variational inference is permanently retired.
+  scope. Current explicit deferrals are AI advisor and Dash/dashboard parity;
+  variational inference is permanently retired.
 
 The active implementation plan is tracked in
-[`ABACUS-PARITY-LEDGER.md`](.planning/ABACUS-PARITY-LEDGER.md). The first
-release-quality target is not full Abacus product parity; it is the statistical
-MMM core on the bundled `timeseries`, `geo_panel`, and `geo_brand_panel`
-demo-style paths. Beyond explicitly deferred surfaces, Abacus statistical and
-methodological functionality should be treated as in scope for the Julia port.
+[`ABACUS-PARITY-LEDGER.md`](.planning/ABACUS-PARITY-LEDGER.md), whose file name
+reflects the original validation programme. The first release-quality target is
+not broad upstream product parity; it is the statistical MMM core on the
+bundled `timeseries`, `geo_panel`, and `geo_brand_panel` demo-style paths.
+Future statistical and methodological expansion should be accepted through
+explicit plans and ledger evidence, not by implied cloning obligations.
 
 Current high-confidence parity is strongest in the lowest layers: convolution,
 scaling, and selected adstock/transform behavior remain `ported` against
-Abacus fixtures. Phase 14 has additionally closed ledger-backed fixture and
+committed reference fixtures. Phase 14 has additionally closed ledger-backed fixture and
 demo-replay parity for the `timeseries`, `geo_panel`, and `geo_brand_panel`
 acceptance targets: config/data ingestion, model-spec metadata, deterministic
 posterior replay, contribution/decomposition outputs, response/saturation/
@@ -46,7 +48,7 @@ adstock curves, marketing metrics, and pipeline Stage `00` through Stage `70`
 artifact-key parity (where each stage is enabled) all pass the fixture/demo
 gates recorded in
 [`ABACUS-PARITY-LEDGER.md`](.planning/ABACUS-PARITY-LEDGER.md). This is not
-full Abacus product parity: HSGP/time-varying parameters, Mundlak/correlated
+broad product/API parity: HSGP/time-varying parameters, Mundlak/correlated
 random effects, calibration/lift tests, permanently retired variational
 inference,
 panel holdout validation, and free channel-by-panel optimization remain
@@ -56,7 +58,7 @@ gate should still be treated as `scaffolded` until it has its own fixture or
 demo acceptance test.
 
 Historical phase notes below describe implemented Epsilon surfaces and past
-methodology work. They are not, by themselves, Abacus parity claims.
+methodology work. They are not, by themselves, reference-parity claims.
 
 The historical config value `media.saturation.type = "logistic"` currently
 maps to Epsilon's centered logistic saturation curve,
@@ -86,11 +88,11 @@ response curves in target units, saturation-only curves in target units, and
 adstock-only carryover curves in original channel-spend-equivalent units. Phase
 14 has additionally landed bounded panel contribution/decomposition replay for
 the `geo_panel` and `geo_brand_panel` gates, with `geo_brand_panel` preserving
-Abacus `("geo", "brand")` dimension ordering on a deterministic flattened
+the reference `("geo", "brand")` dimension ordering on a deterministic flattened
 panel-cell axis. Panel response,
 saturation, adstock, and marketing-metric surfaces are now available as
 panel-cell/channel artifacts: panel curves require an explicit `delta_grid`
-and use Abacus-style historical-scaling semantics rather than an implicit
+and use reference-style historical-scaling semantics rather than an implicit
 aggregate allocation rule. Panel optimization is supported on the bounded
 historical-share policy: optimize channel totals while preserving each
 channel's historical within-panel-cell spend shares. Free channel-by-panel
@@ -130,19 +132,19 @@ Stage `50` diagnostics artifacts, Stage `60` response-curve artifacts, and
 Stage `70` historical-share optimization artifacts, while unsupported panel
 stages are explicitly skipped until their artifact semantics are fixture-backed.
 Phase 14 has begun
-fixture-backed Abacus pipeline parity on the `timeseries`, `geo_panel`, and
+fixture-backed pipeline comparison on the `timeseries`, `geo_panel`, and
 `geo_brand_panel` paths: Epsilon now
-exports Abacus-compatible Stage `00` metadata files, records the Abacus `idata`
+exports reference-compatible Stage `00` metadata files, records the reference `idata`
 fit artifact key as a Julia-native grouped `InferenceResults` artifact, and
-writes Stage `30` through Stage `70` artifacts under Abacus-compatible names
+writes Stage `30` through Stage `70` artifacts under reference-compatible names
 for assessment, holdout validation, decomposition, diagnostics, response
-curves, and optimization. PyMC/NetCDF-specific Abacus artifacts map to
+curves, and optimization. PyMC/NetCDF-specific reference artifacts map to
 Julia-native serialized artifacts where direct file identity would be
 misleading. These time-series pipeline keys and the `geo_panel` /
 `geo_brand_panel` Stage `00` metadata, Stage `20` fit, Stage `30` assessment,
 Stage `40` decomposition, Stage `50` diagnostics, and Stage `60` response-curve
 keys plus explicitly enabled Stage `70` historical-share optimization keys are
-validated against exported Abacus pipeline manifest contracts.
+validated against exported reference pipeline manifest contracts.
 
 Phase 10 is now closed: the bounded `CairoMakie` plotting surface is in the
 package through `epsilon_theme()`, `trace_plot`,
@@ -162,7 +164,7 @@ post-model/optimization plotting is not yet supported on the current bounded
 slice.
 
 Phase 11 landed the release-gate infrastructure: the harness distinguishes
-Abacus-reference time-series MCMC rows from bounded Epsilon-only panel,
+reference-backed time-series MCMC rows from bounded Epsilon-only panel,
 pipeline, and plotting rows. Historical variational validation scaffolding was
 superseded by the Phase 38 removal. The compact final validation fixtures provide one
 explicit maintainer-facing harness over the closed surface, the retained
@@ -170,7 +172,7 @@ Phase 7/8 comparison fixtures remain the hard numeric gate for detailed
 post-model and optimization cross-checks where semantics actually match, and
 the frozen benchmark suite now publishes its methodology plus the committed
 `benchmark/results/reference_machine.*` snapshot without making a blanket
-faster-than-Abacus claim. Phase 12 has now closed the methodology gap on the
+faster-than-reference claim. Phase 12 has now closed the methodology gap on the
 bounded release story and narrowed the parity claim where semantics still
 diverge.
 
@@ -204,7 +206,7 @@ The toy fits a tiny `TimeSeriesMMM` through the supported Turing/NUTS MCMC
 path, builds grouped inference results without prior or predictive groups, and
 writes compact contribution and metric summaries when an output directory is
 provided. It is a local smoke demo only: not release evidence, not a benchmark,
-not an Abacus parity claim, and not a broader support expansion.
+not a reference-parity claim, and not a broader support expansion.
 
 ## CSV Time-Series MCMC Quickstart
 
@@ -219,7 +221,7 @@ julia --project=. examples/csv_mmm/run_csv_mmm.jl --draws 8 --tune 8 --output-di
 chronological sorting, duplicate-date rejection, and `--data PATH` override.
 This example uses the same small supported Turing/NUTS path as the toy demo,
 but it remains a fixed-schema teaching path only: not general CSV ingestion,
-pipeline support, benchmark evidence, release evidence, or an Abacus parity
+pipeline support, benchmark evidence, release evidence, or a reference-parity
 claim. The synthetic toy command above remains the faster supported-path smoke
 check.
 
@@ -228,7 +230,7 @@ check.
 The repo now ships a bounded demo/comparison surface under
 [`examples/demo/`](examples/demo/README.md):
 
-- copied Abacus reference datasets for `timeseries`, `geo_panel`, and
+- copied reference datasets for `timeseries`, `geo_panel`, and
   `geo_brand_panel`
 - a shared copied `holidays.csv` reference file for cross-framework
   comparisons
@@ -240,10 +242,10 @@ This stays truthful to the closed v1 support matrix. The copied panel bundles
 are included as reference datasets/configs for comparison work, but the shipped
 demo runner is time-series-only because the public pipeline remains
 time-series-first. Successful demo runs write stage-local plots directly into
-the run directory. The copied Abacus time-series demo remains a useful
-reference baseline. The shipped Epsilon demo now uses the coherent native
+the run directory. The copied time-series demo remains a useful reference
+baseline. The shipped Epsilon demo now uses the coherent native
 automatic holiday path (`holidays.mode = "auto"` with one pooled holiday
-component), but that native design should not be described as Abacus parity
+component), but that native design should not be described as reference parity
 unless a separate compatibility mode with matching semantics is introduced.
 
 ## Supported Phase 5 Matrix
@@ -331,9 +333,9 @@ Current key-level contract:
 | `OPT-U3` | Constraint families beyond total-budget equality, absolute bounds, and reference-relative guardrails | Unsupported | Pairwise ratios, pacing, and multi-objective trade-offs are not yet implemented |
 | `OPT-U4` | Retired-backend optimisation | Retired | Retired backend artifacts are rejected before optimisation |
 
-## Why Julia?
+## Julia Stack
 
-| | Python (Abacus) | Julia (Epsilon) |
+| | Reference Python stack | Epsilon Julia stack |
 |---|---|---|
 | Probabilistic Programming | PyMC / PyTensor | Turing.jl |
 | MCMC Sampling | NUTS (via PyMC/nutpie/NumPyro) | DynamicHMC.jl / AdvancedHMC.jl |

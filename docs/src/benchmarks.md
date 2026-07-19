@@ -1,7 +1,8 @@
 # Benchmarks
 
 Phase 11 freezes one bounded benchmark suite for the supported v1 surface. The
-goal is honest measurement, not a blanket “faster than Abacus” claim.
+goal is honest measurement, not a blanket “faster than reference
+implementation” claim.
 
 The canonical benchmark entry point is:
 
@@ -60,9 +61,9 @@ Workflow protocol:
   - median peak RSS when `/usr/bin/time` is available
   - median bulk ESS/sec when the workload includes MCMC output
 
-No direct Abacus timings are part of this frozen `11-02` suite. The published
-snapshot therefore documents measured Epsilon performance only and avoids a
-false universal speed claim.
+No direct external-reference timings are part of this frozen `11-02` suite.
+The published snapshot therefore documents measured Epsilon performance only
+and avoids a false universal speed claim.
 
 ## Reference Machine
 

@@ -1,8 +1,8 @@
 # Public API
 
 This page inventories the symbols currently exported by `Epsilon`. It is a
-support-status map, not a claim of broad Abacus package or API parity. Use the
-Abacus parity ledger for method-specific evidence.
+support-status map, not a claim of broad upstream package or API parity. Use
+the validation ledger for method-specific evidence.
 
 Support bands:
 
@@ -11,7 +11,7 @@ Support bands:
 - `compatibility`: retained for migration, legacy naming, or Julia package
   conventions.
 - `scaffolded`: public because implementation exists, but broader support or
-  Abacus parity evidence is incomplete.
+  reference-parity evidence is incomplete.
 
 Support status is the current documented scope. Lifecycle triage is tracked
 separately in `.planning/API-EXPORT-TRIAGE.md`; it records whether an export is
@@ -231,7 +231,7 @@ export must appear exactly once.
 
 Several domains are intentionally still `scaffolded`. That label means the
 symbol is exported today and has some implementation behind it; it does not
-mean that the whole corresponding Abacus area has been proven equivalent.
+mean that the whole corresponding reference area has been proven equivalent.
 
 The strongest parity evidence is concentrated in lower-level transforms and in
 the bounded post-model result surfaces already tracked in the parity ledger.

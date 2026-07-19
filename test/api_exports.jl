@@ -27,6 +27,20 @@ const API_EXPORTS_CURRENT_DOCS_CLAIM_GUARD_PATHS = Dict(
     "supported paths" => joinpath(@__DIR__, "..", "docs", "src", "supported_paths.md"),
     "project brief" => joinpath(@__DIR__, "..", ".planning", "PROJECT.md"),
 )
+const API_EXPORTS_PUBLIC_IDENTITY_GUARD_PATHS = Dict(
+    "readme" => joinpath(@__DIR__, "..", "README.md"),
+    "contributing" => joinpath(@__DIR__, "..", "CONTRIBUTING.md"),
+    "technical standards" => joinpath(@__DIR__, "..", "TECHNICAL-STANDARDS.md"),
+    "docs index" => joinpath(@__DIR__, "..", "docs", "src", "index.md"),
+    "release gate" => joinpath(@__DIR__, "..", "docs", "src", "release.md"),
+    "api docs" => joinpath(@__DIR__, "..", "docs", "src", "api.md"),
+    "calibration docs" => joinpath(@__DIR__, "..", "docs", "src", "calibration.md"),
+    "benchmark docs" => joinpath(@__DIR__, "..", "docs", "src", "benchmarks.md"),
+    "supported paths" => joinpath(@__DIR__, "..", "docs", "src", "supported_paths.md"),
+    "toy example" => joinpath(@__DIR__, "..", "examples", "toy_mmm", "README.md"),
+    "csv example" => joinpath(@__DIR__, "..", "examples", "csv_mmm", "README.md"),
+    "demo example" => joinpath(@__DIR__, "..", "examples", "demo", "README.md"),
+)
 const API_EXPORTS_INVENTORY_BEGIN = "<!-- BEGIN PUBLIC API INVENTORY -->"
 const API_EXPORTS_INVENTORY_END = "<!-- END PUBLIC API INVENTORY -->"
 const API_EXPORTS_TRIAGE_BEGIN = "<!-- BEGIN PUBLIC API TRIAGE -->"
@@ -94,6 +108,14 @@ const API_EXPORTS_LOCAL_WORKFLOW_EVIDENCE_PATTERNS = Regex[
     r"\brelease\s+evidence\b"i,
     r"\brelease\s+gate(?:s)?\b"i,
     r"\babacus\s+parity\b"i,
+    r"\breference[- ]parity\b"i,
+]
+const API_EXPORTS_PUBLIC_DEPENDENT_PRODUCT_PATTERNS = Regex[
+    r"\babacus\s+julia\s+port\b"i,
+    r"\bjulia\s+port\s+of\s+abacus\b"i,
+    r"\bbuilt\s+on\s+abacus\b"i,
+    r"\binformed\s+by\s+\[?abacus\]?\b"i,
+    r"\bfull\s+abacus\s+product\s+parity\b"i,
 ]
 const API_EXPORTS_TRUSTED_LOCAL_ARTIFACT_PATTERNS = Regex[
     r"\.jls\b"i,
@@ -586,6 +608,10 @@ function _api_exports_has_active_portable_or_untrusted_artifact_claim(line::Abst
     return !_api_exports_has_negated_boundary_context(line)
 end
 
+function _api_exports_has_public_dependent_product_claim(line::AbstractString)
+    return _api_exports_has_any_pattern(line, API_EXPORTS_PUBLIC_DEPENDENT_PRODUCT_PATTERNS)
+end
+
 @testset "public API inventory matches exports" begin
     exported_symbols = _api_exports_current_symbols()
     inventory_symbols = _api_exports_inventory_symbols()
@@ -901,15 +927,15 @@ end
     @test occursin("Epsilon is documented through Phase 43.", docs_claims["docs index"])
     @test occursin("current supported fitting contract is MCMC/Turing only", docs_claims["docs index"])
     @test occursin("former variational surface was permanently retired", docs_claims["docs index"])
-    @test occursin("not benchmarks, release evidence, or Abacus parity evidence", docs_claims["docs index"])
+    @test occursin("not benchmarks, release evidence, or reference-parity evidence", docs_claims["docs index"])
 
     @test occursin("Phase 13 later revalidated the accepted release-gate contract fixes", docs_claims["release gate"])
     @test occursin("did not rerun the release gate or refresh benchmark artifacts", docs_claims["release gate"])
     @test occursin("permanent variational-inference retirement", docs_claims["release gate"])
-    @test occursin("not release evidence, not a benchmark, not an Abacus parity claim", docs_claims["release gate"])
+    @test occursin("not release evidence, not a benchmark, not a reference-parity claim", docs_claims["release gate"])
 
     @test occursin("trusted-local artifact roundtrips", docs_claims["supported paths"])
-    @test occursin("They are not benchmarks, release evidence, Abacus parity claims", docs_claims["supported paths"])
+    @test occursin("They are not benchmarks, release evidence, reference-parity claims", docs_claims["supported paths"])
     @test occursin("trusted-local Julia serialization artifacts", docs_claims["supported paths"])
     @test occursin(
         "not portable interchange files and must not be loaded from untrusted input",
@@ -931,4 +957,36 @@ end
     @test active_vi_claims == String[]
     @test active_local_workflow_evidence_claims == String[]
     @test active_portable_or_untrusted_artifact_claims == String[]
+end
+
+@testset "public docs avoid dependent-product identity claims" begin
+    docs_claims = _api_exports_current_docs_claims()
+    public_identity_claims = _api_exports_matching_claim_lines(
+        API_EXPORTS_PUBLIC_IDENTITY_GUARD_PATHS,
+        _api_exports_has_public_dependent_product_claim,
+    )
+    allowed_lines = [
+        "These rows are validated against compact committed Abacus-derived fixtures.",
+        "Fixture regeneration commands remain documented in test/fixtures/abacus/README.md.",
+        "The reference directory is examples/demo/reference/abacus/.",
+    ]
+    rejected_lines = [
+        "Abacus Julia port in progress.",
+        "Epsilon is a Julia port of Abacus.",
+        "Epsilon is built on Abacus.",
+        "A Julia-native MMM library informed by [Abacus].",
+        "The first target is full Abacus product parity.",
+    ]
+
+    @test occursin(
+        "Independent Julia MMM library, comparison-backed where semantics match",
+        _api_exports_normalized_text(joinpath(@__DIR__, "..", "README.md")),
+    )
+    @test occursin("reference-backed row is `VAL-TS-00-MCMC`", docs_claims["release gate"])
+    @test occursin("Abacus-derived fixtures", docs_claims["release gate"])
+    @test [_api_exports_has_public_dependent_product_claim(line) for line in allowed_lines] ==
+        fill(false, length(allowed_lines))
+    @test [_api_exports_has_public_dependent_product_claim(line) for line in rejected_lines] ==
+        fill(true, length(rejected_lines))
+    @test public_identity_claims == String[]
 end

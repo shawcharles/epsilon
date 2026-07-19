@@ -26,4 +26,4 @@ make docs
 - Formatting passes with Runic.
 - Local tests and docs pass before review.
 - Public APIs are documented.
-- Any deviation from Abacus behavior is explicit and justified.
+- Any deviation from reference-validated behavior is explicit and justified.
