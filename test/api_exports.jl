@@ -21,6 +21,12 @@ const API_EXPORTS_V1_SCOPE_GUARD_PATHS = [
     joinpath(@__DIR__, "..", ".planning", "STATE.md"),
     joinpath(@__DIR__, "..", ".planning", "ABACUS-PARITY-LEDGER.md"),
 ]
+const API_EXPORTS_CURRENT_DOCS_CLAIM_GUARD_PATHS = Dict(
+    "docs index" => joinpath(@__DIR__, "..", "docs", "src", "index.md"),
+    "release gate" => joinpath(@__DIR__, "..", "docs", "src", "release.md"),
+    "supported paths" => joinpath(@__DIR__, "..", "docs", "src", "supported_paths.md"),
+    "project brief" => joinpath(@__DIR__, "..", ".planning", "PROJECT.md"),
+)
 const API_EXPORTS_INVENTORY_BEGIN = "<!-- BEGIN PUBLIC API INVENTORY -->"
 const API_EXPORTS_INVENTORY_END = "<!-- END PUBLIC API INVENTORY -->"
 const API_EXPORTS_TRIAGE_BEGIN = "<!-- BEGIN PUBLIC API TRIAGE -->"
@@ -69,6 +75,42 @@ const API_EXPORTS_ALLOWED_VI_CONTEXT_PATTERNS = Regex[
     r"\bpre-v1\s+review\b"i,
     r"\bhistorical\b"i,
     r"\bsuperseded\b"i,
+]
+const API_EXPORTS_STALE_CURRENT_DOCS_PATTERNS = Regex[
+    r"\bphases?\s+1\s*[-–—]\s*12\b"i,
+    r"\bafter\s+phase\s+40\b"i,
+]
+const API_EXPORTS_LOCAL_WORKFLOW_CLAIM_SUBJECT_PATTERNS = Regex[
+    r"\bworkflow(?:s)?\b"i,
+    r"\bsupported[- ]path\b"i,
+    r"\blocal\s+workflow\b"i,
+    r"\btoy\s+mcmc\b"i,
+    r"\bcsv\s+quickstart\b"i,
+    r"\bmake\s+smoke\b"i,
+    r"\bsmoke\s+command\b"i,
+]
+const API_EXPORTS_LOCAL_WORKFLOW_EVIDENCE_PATTERNS = Regex[
+    r"\bbenchmark(?:s)?\b"i,
+    r"\brelease\s+evidence\b"i,
+    r"\brelease\s+gate(?:s)?\b"i,
+    r"\babacus\s+parity\b"i,
+]
+const API_EXPORTS_TRUSTED_LOCAL_ARTIFACT_PATTERNS = Regex[
+    r"\.jls\b"i,
+    r"\bseriali[sz]ation\s+artifacts\b"i,
+    r"\bscenario_store\.jls\b"i,
+]
+const API_EXPORTS_PORTABLE_OR_UNTRUSTED_ARTIFACT_PATTERNS = Regex[
+    r"\bportable\b"i,
+    r"\buntrusted\s+input\b"i,
+    r"\buntrusted\s+interchange\b"i,
+]
+const API_EXPORTS_NEGATED_BOUNDARY_CONTEXT_PATTERNS = Regex[
+    r"\bnot\b"i,
+    r"\bwithout\b"i,
+    r"\bno\b"i,
+    r"\bseparate\b"i,
+    r"\brather\s+than\b"i,
 ]
 const API_EXPORTS_DEPRECATED_VALIDATION_HELPERS = Set(
     [
@@ -495,6 +537,55 @@ function _api_exports_legacy_vi_release_claims()
     return sort(claims)
 end
 
+function _api_exports_normalized_text(path::AbstractString)
+    return replace(read(path, String), r"\s+" => " ")
+end
+
+function _api_exports_current_docs_claims()
+    return Dict(label => _api_exports_normalized_text(path) for (label, path) in API_EXPORTS_CURRENT_DOCS_CLAIM_GUARD_PATHS)
+end
+
+function _api_exports_matching_claim_lines(
+        paths,
+        predicate::Function,
+    )
+    matches = String[]
+    repo_root = normpath(joinpath(@__DIR__, ".."))
+
+    for path in values(paths)
+        for (line_number, line) in enumerate(eachline(path))
+            predicate(line) || continue
+            push!(matches, "$(relpath(path, repo_root)):$(line_number):$(strip(line))")
+        end
+    end
+
+    return sort(matches)
+end
+
+function _api_exports_has_any_pattern(line::AbstractString, patterns)
+    return any(pattern -> occursin(pattern, line), patterns)
+end
+
+function _api_exports_has_negated_boundary_context(line::AbstractString)
+    return _api_exports_has_any_pattern(line, API_EXPORTS_NEGATED_BOUNDARY_CONTEXT_PATTERNS)
+end
+
+function _api_exports_has_stale_current_docs_claim(line::AbstractString)
+    return _api_exports_has_any_pattern(line, API_EXPORTS_STALE_CURRENT_DOCS_PATTERNS)
+end
+
+function _api_exports_has_active_local_workflow_evidence_claim(line::AbstractString)
+    _api_exports_has_any_pattern(line, API_EXPORTS_LOCAL_WORKFLOW_CLAIM_SUBJECT_PATTERNS) || return false
+    _api_exports_has_any_pattern(line, API_EXPORTS_LOCAL_WORKFLOW_EVIDENCE_PATTERNS) || return false
+    return !_api_exports_has_negated_boundary_context(line)
+end
+
+function _api_exports_has_active_portable_or_untrusted_artifact_claim(line::AbstractString)
+    _api_exports_has_any_pattern(line, API_EXPORTS_TRUSTED_LOCAL_ARTIFACT_PATTERNS) || return false
+    _api_exports_has_any_pattern(line, API_EXPORTS_PORTABLE_OR_UNTRUSTED_ARTIFACT_PATTERNS) || return false
+    return !_api_exports_has_negated_boundary_context(line)
+end
+
 @testset "public API inventory matches exports" begin
     exported_symbols = _api_exports_current_symbols()
     inventory_symbols = _api_exports_inventory_symbols()
@@ -786,4 +877,58 @@ end
     @test [_api_exports_has_active_vi_release_claim(line) for line in allowed_vi_lines] == fill(false, length(allowed_vi_lines))
     @test [_api_exports_has_active_vi_release_claim(line) for line in rejected_vi_lines] == fill(true, length(rejected_vi_lines))
     @test legacy_vi_claims == String[]
+end
+
+@testset "current docs claim boundaries remain truthful" begin
+    docs_claims = _api_exports_current_docs_claims()
+    stale_current_claims = _api_exports_matching_claim_lines(
+        API_EXPORTS_CURRENT_DOCS_CLAIM_GUARD_PATHS,
+        _api_exports_has_stale_current_docs_claim,
+    )
+    active_vi_claims = _api_exports_matching_claim_lines(
+        API_EXPORTS_CURRENT_DOCS_CLAIM_GUARD_PATHS,
+        _api_exports_has_active_vi_release_claim,
+    )
+    active_local_workflow_evidence_claims = _api_exports_matching_claim_lines(
+        API_EXPORTS_CURRENT_DOCS_CLAIM_GUARD_PATHS,
+        _api_exports_has_active_local_workflow_evidence_claim,
+    )
+    active_portable_or_untrusted_artifact_claims = _api_exports_matching_claim_lines(
+        API_EXPORTS_CURRENT_DOCS_CLAIM_GUARD_PATHS,
+        _api_exports_has_active_portable_or_untrusted_artifact_claim,
+    )
+
+    @test occursin("Epsilon is documented through Phase 43.", docs_claims["docs index"])
+    @test occursin("current supported fitting contract is MCMC/Turing only", docs_claims["docs index"])
+    @test occursin("former variational surface was permanently retired", docs_claims["docs index"])
+    @test occursin("not benchmarks, release evidence, or Abacus parity evidence", docs_claims["docs index"])
+
+    @test occursin("Phase 13 later revalidated the accepted release-gate contract fixes", docs_claims["release gate"])
+    @test occursin("did not rerun the release gate or refresh benchmark artifacts", docs_claims["release gate"])
+    @test occursin("permanent variational-inference retirement", docs_claims["release gate"])
+    @test occursin("not release evidence, not a benchmark, not an Abacus parity claim", docs_claims["release gate"])
+
+    @test occursin("trusted-local artifact roundtrips", docs_claims["supported paths"])
+    @test occursin("They are not benchmarks, release evidence, Abacus parity claims", docs_claims["supported paths"])
+    @test occursin("trusted-local Julia serialization artifacts", docs_claims["supported paths"])
+    @test occursin(
+        "not portable interchange files and must not be loaded from untrusted input",
+        docs_claims["supported paths"],
+    )
+
+    @test occursin("Variational inference - permanently retired", docs_claims["project brief"])
+    @test occursin("MCMC/Turing is the sole inference contract", docs_claims["project brief"])
+    @test occursin(
+        "not benchmarks, release evidence, portable interchange formats, or Abacus parity evidence",
+        docs_claims["project brief"],
+    )
+    @test occursin(
+        "Last updated: 2026-07-19 after Phase 44 current docs truth reconciliation",
+        docs_claims["project brief"],
+    )
+
+    @test stale_current_claims == String[]
+    @test active_vi_claims == String[]
+    @test active_local_workflow_evidence_claims == String[]
+    @test active_portable_or_untrusted_artifact_claims == String[]
 end

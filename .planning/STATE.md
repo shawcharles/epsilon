@@ -5,30 +5,30 @@
 See: .planning/PROJECT.md
 
 **Core value:** Deliver a methodologically coherent Bayesian MMM library in
-Julia by porting the validated Abacus statistical and methodological
-functionality bottom-up and proving parity only where semantics genuinely
-match.
-**Current focus:** Phase 44 Current Docs Truth Reconciliation is complete. The
-current-facing docs now reflect the Phase 43 state without runtime behavior,
-tests, examples, artifact format, benchmark, release, or parity changes.
+Julia by using validated reference behavior where it is methodologically
+meaningful, proving comparison claims only where semantics genuinely match, and
+letting Epsilon stand as an independent Julia MMM library.
+**Current focus:** Phase 45 Current Docs Claim Guard is complete. Focused
+regression guards now protect current-facing documentation claims without
+runtime behavior, examples, artifact format, benchmark, release, or parity
+changes.
 
 ## Current Position
 
-**Current Phase:** 44
-**Current Phase Name:** Current Docs Truth Reconciliation
-**Total Phases:** 44
-**Current Plan:** `.planning/phases/44-current-docs-truth-reconciliation/PLAN.md`
-**Total Plans in Phase:** 1 bounded current-docs truth-reconciliation slice
-**Status:** Phase 44 is complete. `docs/src/index.md` no longer frames the
-current project state as stopped at Phase 12, `docs/src/release.md` now
-distinguishes historical Phase 11/12 release-gate infrastructure from later
-support-boundary and local workflow hardening, and `.planning/PROJECT.md` now
-records the canonical supported local workflow runbook plus the current Phase
-44 last-updated marker. Verification passed with `make docs`,
-`make format-check-touched`, `git diff --check`, `git diff --cached --check`,
-stale-phrase content guards, a no-widening guard, and the explicit Phase 44
-changed-file allowlist. No full suite, smoke run, benchmark, release, source,
-test, example, dependency, manifest, model-semantics, or parity-status changes
+**Current Phase:** 45
+**Current Phase Name:** Current Docs Claim Guard
+**Total Phases:** 45
+**Current Plan:** `.planning/phases/45-current-docs-claim-guard/PLAN.md`
+**Total Plans in Phase:** 1 bounded current-docs claim-guard slice
+**Status:** Phase 45 is complete. `test/api_exports.jl` now guards current-facing
+docs against stale Phase 12/40 current-state wording, disappearing positive
+anchors for Phase 43 supported-workflow state and Phase 13 release-gate
+revalidation, accidental VI support claims, local supported-path evidence
+widening, and unsafe/portable `.jls` artifact wording. The phase also records
+the future strategic need to scrub or reframe public Abacus mentions once an
+independent Epsilon validation narrative replaces the current reference-led
+wording. No runtime, example, benchmark, smoke, full suite, release,
+runtime-source, dependency, manifest, model-semantics, or parity-status changes
 were made.
 
 Phase 40 is complete. It reconciled `.planning/PROJECT.md`,
@@ -323,17 +323,13 @@ evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
 are landed for both accepted calibration terms, but the wider Abacus
 calibration surface is not complete.
 **Last Activity:** 2026-07-19
-**Last Activity Description:** Phase 44 completed current-facing docs truth
-reconciliation. The docs home page now describes the project through Phase 43
-instead of stale Phase 12 framing; release docs now preserve Phase 13 release
-contract revalidation while making clear that later support-boundary/workflow
-hardening did not rerun release gates or refresh benchmark artifacts; and
-`.planning/PROJECT.md` now points to the supported local workflow runbook and
-has a Phase 44 last-updated marker. Scoped verification passed with `make docs`,
-`make format-check-touched`, whitespace checks, stale-phrase guards,
-no-widening guard, and the explicit Phase 44 changed-file allowlist.
+**Last Activity Description:** Phase 45 landed focused `test/api_exports.jl`
+guards for current-facing docs claim boundaries and recorded the future Abacus
+public-identity scrub as separate planned work. Scoped verification passed with
+`make test-file FILE=test/api_exports.jl` (`5583 / 5583`), plus formatter,
+whitespace, cached-whitespace, status, and changed-file allowlist checks.
 **Progress:** 100%
-**Paused At:** `.planning/phases/44-current-docs-truth-reconciliation/PLAN.md`
+**Paused At:** `.planning/phases/45-current-docs-claim-guard/PLAN.md`
 
 ## Performance Metrics
 
@@ -389,16 +385,18 @@ no-widening guard, and the explicit Phase 44 changed-file allowlist.
 | 42 | 1/1 | Completed | supported-path fitted-model and grouped-results roundtrips guarded for toy MCMC and CSV quickstart examples |
 | 43 | 1/1 | Completed | canonical supported local workflow runbook landed with docs navigation and example README links |
 | 44 | 1/1 | Completed | current-facing docs reconciled with Phase 43 state without runtime or release-surface changes |
+| 45 | 1/1 | Completed | focused current-docs claim guard landed; future Abacus-reference decoupling noted as separate identity work |
 
 **Recent Trend:**
-- Last 5 completed phases: 40, 41, 42, 43, 44.
+- Last 5 completed phases: 41, 42, 43, 44, 45.
 - Trend: the recent work narrowed rather than widened the library contract.
-  Phase 40 reconciled planning truth. Phase 41 made the supported-path sidecar
+  Phase 41 made the supported-path sidecar
   output contract more inspectable and better tested. Phase 42 guarded
   trusted-local fitted-model and grouped-results roundtrips. Phase 43 documented
   the supported local workflow without widening runtime support, and Phase 44
   reconciled current-facing docs so they no longer point future work at stale
-  Phase 12/40 status.
+  Phase 12/40 status. Phase 45 added a focused guard over those claims rather
+  than another docs rewrite.
 
 ## Decisions Made
 
@@ -448,6 +446,7 @@ no-widening guard, and the explicit Phase 44 changed-file allowlist.
 | 42 | Guard trusted-local example artifact roundtrips rather than promise portability | The supported examples should prove fitted objects can survive Epsilon's existing Julia serialization path, but that is not a portable interchange, release, benchmark, or Abacus parity claim |
 | 43 | Give supported local workflows one canonical runbook | The toy, CSV, compact-output, artifact-roundtrip, and smoke paths are mature enough to document together, but still must not be recast as release, benchmark, or parity evidence |
 | 44 | Keep current-facing docs aligned with state | Stale docs can misdirect future work into false release-prep, benchmark, or parity assumptions even when runtime code is sound |
+| 45 | Guard current docs before widening work | Current-facing claim drift is cheap to prevent with a focused test and expensive to untangle after future phases rely on stale wording |
 
 ## Pending Todos
 
@@ -474,6 +473,14 @@ no-widening guard, and the explicit Phase 44 changed-file allowlist.
 - Phase 44 is complete; current-facing docs now describe the Phase 43 state
   without implying a new release gate, benchmark refresh, or Abacus parity
   certification.
+- Phase 45 is complete; current-docs claim guards are in
+  `test/api_exports.jl`. Keep this lane focused on current support, release,
+  VI, local-workflow evidence, and trusted-local artifact wording.
+- Future independent-identity work is needed: Epsilon should eventually scrub
+  or reframe public Abacus mentions and stand on its own as a unique MMM
+  library. Do this under a separate reviewed plan that replaces the current
+  reference-led validation narrative before removing provenance, fixture, or
+  ledger language.
 - HSGP/TVP broader support remains bounded: Phase 36/37 cover only the
   TimeSeriesMMM shared-media multiplier and retained-grid contribution replay.
   Do not add new HSGP/TVP config, prediction, panel, curve, metric, optimization,
@@ -522,12 +529,11 @@ no-widening guard, and the explicit Phase 44 changed-file allowlist.
   roundtrips for the supported toy and CSV examples.
 - Phase 43 added the canonical supported local workflow runbook and cross-links.
 - Phase 44 reconciled current-facing docs after Phase 43.
+- Phase 45 added focused guards for current-facing docs claims.
 
 ## Session
 
 **Last Date:** 2026-07-19
-**Stopped At:** Phase 44 is complete. Current-facing docs now align with the
-Phase 43 state and no longer present stale Phase 12/40 status as current.
-Choose the next bounded slice from the reconciled roadmap/state, with
-plan/review before implementation.
-**Resume File:** `.planning/phases/44-current-docs-truth-reconciliation/PLAN.md`
+**Stopped At:** Phase 45 is complete. Choose the next bounded slice from the
+reconciled roadmap/state, with plan/review before implementation.
+**Resume File:** `.planning/phases/45-current-docs-claim-guard/PLAN.md`

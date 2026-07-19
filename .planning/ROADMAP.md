@@ -386,6 +386,11 @@ that later closed in Phase 14:
 - [x] **Phase 44: Current Docs Truth Reconciliation** - Reconcile current-facing
       docs with the Phase 43 state without changing runtime behavior, tests,
       examples, benchmarks, release artifacts, or Abacus parity status.
+- [x] **Phase 45: Current Docs Claim Guard** - Add focused regression guards
+      for stale current-status wording, VI retirement, supported local workflow
+      evidence boundaries, and trusted-local `.jls` wording without changing
+      runtime behavior, examples, benchmarks, release artifacts, or Abacus
+      parity status.
 
 ## Phase Details
 
@@ -743,7 +748,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 44
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 45
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -791,3 +796,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 44
 | 42. Supported-Path Artifact Roundtrip Audit | 1/1 | Completed | bounded toy and CSV fitted-model/grouped-results roundtrip audit landed using existing trusted-local persistence APIs only |
 | 43. Supported-Path User Workflow Runbook | 1/1 | Completed | docs-only canonical runbook landed for toy, CSV, compact-output, trusted-local artifact roundtrip, and local smoke workflows |
 | 44. Current Docs Truth Reconciliation | 1/1 | Completed | docs-only reconciliation of stale current-facing status wording landed after Phase 43 |
+| 45. Current Docs Claim Guard | 1/1 | Completed | focused guard landed for current-facing docs claim boundaries, with future Abacus-reference decoupling preserved as separate planned identity work |
