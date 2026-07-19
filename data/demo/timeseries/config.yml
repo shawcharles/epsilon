@@ -1,0 +1,82 @@
+data:
+  dataset_path: dataset.csv
+  date_column: date
+
+target:
+  column: revenue
+  type: revenue
+
+media:
+  channels:
+    - channel_1
+    - channel_2
+    - channel_3
+    - channel_4
+    - channel_5
+    - channel_6
+  adstock:
+    type: geometric
+    l_max: 4
+    priors:
+      alpha:
+        distribution: Beta
+        alpha: 1
+        beta: 3
+        dims: ["channel"]
+  saturation:
+    type: logistic
+    priors:
+      lam:
+        distribution: Gamma
+        alpha: 3
+        beta: 1
+        dims: ["channel"]
+
+seasonality:
+  type: fourier
+  n_order: 2
+
+priors:
+  intercept:
+    distribution: Normal
+    mu: 0
+    sigma: 2
+  beta_media:
+    distribution: HalfNormal
+    sigma: 1
+    dims: ["channel"]
+  likelihood:
+    distribution: Normal
+    sigma:
+      distribution: HalfNormal
+      sigma: 2
+    dims: ["date"]
+
+fit:
+  backend: turing
+  tune: 250
+  draws: 250
+  chains: 2
+  cores: 2
+  random_seed: 42
+  target_accept: 0.85
+  progressbar: false
+  compute_convergence_checks: false
+
+holidays:
+  mode: auto
+  path: holidays.csv
+  countries: UK
+  priors:
+    beta:
+      distribution: Normal
+      mu: 0
+      sigma: 1
+      dims: ["holiday"]
+
+validation:
+  enabled: true
+  holdout_rows: 8
+
+optimization:
+  enabled: false
