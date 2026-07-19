@@ -15,18 +15,29 @@ dataset.csv
 holidays.csv
 ```
 
-Run a bundle through the Epsilon pipeline from the repository root:
+Run the canonical time-series bundle through the Epsilon runner from the
+repository root:
 
 ```bash
-julia --project=. -e 'using Epsilon; run_pipeline(PipelineRunConfig(config_path = "data/demo/timeseries/config.yml", output_dir = "results"))'
+julia --project=. runme.jl data/demo/timeseries/config.yml
 ```
 
-For quick local checks, override sampler size at runtime instead of editing the
-config:
+For quick local checks, use the runner's small local overrides instead of
+editing the config:
 
 ```bash
-julia --project=. -e 'using Epsilon; run_pipeline(PipelineRunConfig(config_path = "data/demo/timeseries/config.yml", output_dir = "results", draws = 20, tune = 20, chains = 1, cores = 1, prior_samples = 5, curve_points = 12))'
+julia --project=. runme.jl data/demo/timeseries/config.yml --quick
 ```
+
+The no-argument form is a shorthand for the same bundled time-series demo with
+quick local settings:
+
+```bash
+julia --project=. runme.jl
+```
+
+For programmatic use, call `run_pipeline(PipelineRunConfig(...))` directly.
+The runner delegates to that same pipeline path.
 
 To check all bundled demo configs through the maintained local smoke harness,
 run:

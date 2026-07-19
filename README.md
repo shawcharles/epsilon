@@ -118,8 +118,8 @@ scenario refits, and Dash/UI workflows remain outside this surface.
 
 Phase 9 is now closed: `run_pipeline(PipelineRunConfig(...))` and
 `pipeline_main(args = ARGS)` are the canonical bounded pipeline entry points,
-and the repo now ships a thin `bin/epsilon` wrapper for the same `epsilon run
-config.yml` path. The closed pipeline surface is time-series-first and
+and the repo now ships a thin root `runme.jl` runner for the same config-driven
+pipeline path. The closed pipeline surface is time-series-first and
 MCMC-only, runs the full fixed Stage `00`-`70` sequence, preserves blocked
 holdout validation as a side branch off the full-sample fit path, writes
 stage-local `png` plots alongside the corresponding stage artifacts, and rejects
@@ -233,7 +233,20 @@ check.
 ## Demo Data
 
 The canonical Epsilon-native config-driven demo bundles live under
-[`data/demo/`](data/README.md). Check them with:
+[`data/demo/`](data/README.md). Run the canonical time-series bundle with:
+
+```bash
+julia --project=. runme.jl data/demo/timeseries/config.yml --quick
+```
+
+The no-argument runner form uses that same bundled time-series config with
+quick local settings:
+
+```bash
+julia --project=. runme.jl
+```
+
+For a maintained smoke check across all bundled demo configs, run:
 
 ```bash
 make smoke-demo-configs

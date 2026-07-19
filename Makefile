@@ -1,8 +1,10 @@
 JULIA ?= julia
 RUNIC ?= $(JULIA) --project=@runic -m Runic
+DEMO ?= timeseries
+RUNME_FLAGS ?= --quick
 export JULIA_PKG_SERVER_REGISTRY_PREFERENCE ?= eager
 
-.PHONY: instantiate smoke smoke-demo-configs test test-full test-file test-model test-optimization test-validation \
+.PHONY: instantiate smoke smoke-demo-configs run-demo-config test test-full test-file test-model test-optimization test-validation \
 	format format-check format-check-touched docs check check-optimization \
 	check-validation check-full check-release quality parity-check
 
@@ -14,6 +16,9 @@ smoke:
 
 smoke-demo-configs:
 	JULIA="$(JULIA)" bash scripts/smoke_demo_configs.sh
+
+run-demo-config:
+	$(JULIA) --project=. runme.jl demo $(DEMO) $(RUNME_FLAGS)
 
 test: test-full
 

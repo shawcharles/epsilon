@@ -8,19 +8,40 @@ See: .planning/PROJECT.md
 Julia by using validated reference behavior where it is methodologically
 meaningful, proving comparison claims only where semantics genuinely match, and
 letting Epsilon stand as an independent Julia MMM library.
-**Current focus:** Phase 71 Local Drift And Resume-State Cleanup is complete.
-The July critical review is tracked as historical evidence, the narrow
-`graphify-out/` ignore rule is committed, and the repo has no intended local
-drift after push.
+**Current focus:** Phase 72 Config-Driven Runner Contract is complete. Epsilon
+now has a root `runme.jl` runner for the config/data/holidays bundle workflow,
+delegating to `pipeline_main` rather than creating a second pipeline control
+plane.
 
 ## Current Position
 
-**Current Phase:** 71
-**Current Phase Name:** Local Drift And Resume-State Cleanup
-**Total Phases:** 71
-**Current Plan:** `.planning/phases/71-local-drift-resume-state-cleanup/PLAN.md`
-**Total Plans in Phase:** 1 planned local hygiene slice
-**Status:** Phase 71 is complete. `.planning/CRITICAL-REVIEW-2026-07-19.md`
+**Current Phase:** 72
+**Current Phase Name:** Config-Driven Runner Contract
+**Total Phases:** 72
+**Current Plan:** `.planning/phases/72-config-driven-runner-contract/PLAN.md`
+**Total Plans in Phase:** 1 planned runner workflow slice
+**Status:** Phase 72 is complete. Root `runme.jl` now supports
+`julia --project=. runme.jl`, `julia --project=. runme.jl <config_path>`, and
+`julia --project=. runme.jl demo timeseries`, with `--quick` injecting bounded
+local runtime overrides while preserving user-supplied flags and delegating all
+real pipeline execution to `pipeline_main`. `make run-demo-config` provides a
+thin Make wrapper around the same runner. Docs now present `runme.jl` as the
+minimum-code Epsilon-native config-driven workflow while keeping
+`run_pipeline(PipelineRunConfig(...))` as the programmatic API. The
+config-owned `dataset.csv` / `holidays.csv` bundle contract is preserved; no
+holiday override, new package binary, model semantics, sampler defaults, panel
+MCMC test, panel validation, panel calibration, dashboard/UI, VI, benchmark,
+release gate, fixture, parity-ledger, dependency, manifest, or internal
+reference/provenance change was made. Scoped verification passed:
+`make test-file FILE=test/pipeline/demo_configs_smoke.jl` (`43 / 43`,
+`3m00.8s`), `make format-check-touched`, and `git diff --check`.
+
+Known unrelated local drift at implementation time: `.gitignore` has an
+unstaged `.codex/` ignore addition, and `assets/ascii.txt` is untracked. These
+are outside Phase 72 and should not be staged with the runner commit unless the
+user explicitly chooses to keep them.
+
+Phase 71 is complete. `.planning/CRITICAL-REVIEW-2026-07-19.md`
 is now tracked with a historical-snapshot note pointing future readers to
 `.planning/STATE.md` and `.planning/ROADMAP.md` for current status, and the
 narrow `graphify-out/` generated-output ignore rule is committed. No runtime

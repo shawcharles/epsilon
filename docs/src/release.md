@@ -80,14 +80,22 @@ support expansion.
 For the bundled Epsilon-native config-driven demo files, maintainers can run:
 
 ```bash
+julia --project=. runme.jl data/demo/timeseries/config.yml --quick
+```
+
+or run the maintained smoke check across all bundled demo configs:
+
+```bash
 make smoke-demo-configs
 ```
 
-That command runs the shipped time-series demo config through a tiny headless
+The root `runme.jl` runner delegates to `pipeline_main` and keeps
+`dataset.csv` / `holidays.csv` paths owned by the config bundle. The smoke
+command runs the shipped time-series demo config through a tiny headless
 pipeline, including its default validation stage, and checks the panel demo
 configs through config/data/model-spec construction without panel MCMC
-sampling. It is local workflow evidence only, not release evidence or a
-benchmark.
+sampling. These commands are local workflow evidence only, not release evidence
+or a benchmark.
 
 ## Supported v1 Surface
 

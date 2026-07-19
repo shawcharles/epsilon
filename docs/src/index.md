@@ -223,7 +223,15 @@ quickstart, compact sidecars, trusted-local artifact roundtrips, and
 ## Demo Data
 
 The canonical Epsilon-native config-driven demo bundles live under
-`data/demo/`. Maintainers can check them locally with:
+`data/demo/`. Run the canonical time-series bundle with:
+
+```bash
+julia --project=. runme.jl data/demo/timeseries/config.yml --quick
+```
+
+The runner delegates to `pipeline_main`; bundle-local `dataset.csv` and
+`holidays.csv` paths stay owned by the YAML config. Maintainers can check all
+bundled demo configs locally with:
 
 ```bash
 make smoke-demo-configs

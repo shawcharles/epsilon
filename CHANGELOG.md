@@ -30,6 +30,12 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Added
 
+- Added root `runme.jl`, a thin Epsilon-native config-driven runner over
+  `pipeline_main`, plus `make run-demo-config`. Users can run
+  `julia --project=. runme.jl data/demo/timeseries/config.yml --quick` or the
+  no-argument bundled demo shorthand while keeping `dataset.csv` and
+  `holidays.csv` owned by the YAML config bundle. This is workflow convenience,
+  not a new modelling surface, benchmark, release gate, or parity claim.
 - Added `make smoke-demo-configs`, a local smoke harness for the
   Epsilon-native `data/demo/*` bundles. The command runs the time-series demo
   config through a tiny headless pipeline including its default validation

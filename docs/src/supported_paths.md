@@ -135,6 +135,37 @@ The `.jls` files are trusted-local Julia serialization artifacts. Treat them as
 bound to the local Julia, Epsilon, and dependency versions that wrote them. They
 are not portable interchange files and must not be loaded from untrusted input.
 
+## Config-Driven Demo Runner
+
+The repo-root runner is the shortest path for running an Epsilon-native
+config/data/holidays bundle:
+
+```bash
+julia --project=. runme.jl data/demo/timeseries/config.yml
+```
+
+For a small local run without editing the YAML, add `--quick`:
+
+```bash
+julia --project=. runme.jl data/demo/timeseries/config.yml --quick
+```
+
+With no arguments, the runner uses `data/demo/timeseries/config.yml` and quick
+local settings:
+
+```bash
+julia --project=. runme.jl
+```
+
+The bundled config owns its local `dataset.csv` and `holidays.csv` paths. The
+runner delegates to `pipeline_main`, so normal pipeline flags such as
+`--output-dir`, `--run-name`, `--dataset-path`, `--draws`, `--tune`,
+`--chains`, `--cores`, `--prior-samples`, `--curve-points`, and
+`--random-seed` use the same validation as `run_pipeline(PipelineRunConfig(...))`.
+
+For programmatic use, call `run_pipeline(PipelineRunConfig(...))` directly. The
+runner is only a convenience control plane.
+
 ## Local Smoke Commands
 
 For a fast local confidence check of both supported example paths:
