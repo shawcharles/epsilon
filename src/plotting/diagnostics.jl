@@ -188,6 +188,83 @@ function observed_fitted_plot(results::InferenceResults)
     return figure
 end
 
+function _fit_timeseries_plot(results::InferenceResults)
+    data = _require_time_series_plot_results(results, "_fit_timeseries_plot")
+    fitted_mean, fitted_lower, fitted_upper = _predictive_summary(
+        results.posterior_predictive,
+        nobs(data),
+    )
+    observed = Float64.(collect(data.target))
+    x_values = collect(1:nobs(data))
+    figure = nothing
+
+    with_theme(epsilon_theme()) do
+        figure = Figure(size = (1020, 520))
+        ax = Axis(
+            figure[1, 1];
+            title = "Fit over time",
+            xlabel = "Observation",
+            ylabel = results.spec.target_column,
+        )
+        band!(
+            ax,
+            x_values,
+            fitted_lower,
+            fitted_upper;
+            color = RGBAf(_EPSILON_NEUTRAL_COLOR.r, _EPSILON_NEUTRAL_COLOR.g, _EPSILON_NEUTRAL_COLOR.b, 0.16),
+            label = "90% fitted interval",
+        )
+        lines!(ax, x_values, observed; color = _EPSILON_POSITIVE_COLOR, label = "Observed")
+        lines!(ax, x_values, fitted_mean; color = _EPSILON_NEUTRAL_COLOR, label = "Fitted mean")
+        _apply_time_axis_ticks!(ax, data.dates)
+        axislegend(ax; position = :rb)
+    end
+
+    return figure
+end
+
+function _posterior_predictive_plot(results::InferenceResults)
+    data = _require_time_series_plot_results(results, "_posterior_predictive_plot")
+    predictive_matrix = _predictive_matrix(results.posterior_predictive, nobs(data))
+    predictive_mean, lower_90, upper_90 = _column_mean_interval(predictive_matrix)
+    _, lower_50, upper_50 = _column_mean_interval(predictive_matrix; lower = 0.25, upper = 0.75)
+    observed = Float64.(collect(data.target))
+    x_values = collect(1:nobs(data))
+    figure = nothing
+
+    with_theme(epsilon_theme()) do
+        figure = Figure(size = (1020, 520))
+        ax = Axis(
+            figure[1, 1];
+            title = "Posterior predictive check",
+            xlabel = "Observation",
+            ylabel = results.spec.target_column,
+        )
+        band!(
+            ax,
+            x_values,
+            lower_90,
+            upper_90;
+            color = RGBAf(_EPSILON_NEUTRAL_COLOR.r, _EPSILON_NEUTRAL_COLOR.g, _EPSILON_NEUTRAL_COLOR.b, 0.14),
+            label = "90% predictive interval",
+        )
+        band!(
+            ax,
+            x_values,
+            lower_50,
+            upper_50;
+            color = RGBAf(_EPSILON_NEUTRAL_COLOR.r, _EPSILON_NEUTRAL_COLOR.g, _EPSILON_NEUTRAL_COLOR.b, 0.24),
+            label = "50% predictive interval",
+        )
+        lines!(ax, x_values, predictive_mean; color = _EPSILON_NEUTRAL_COLOR, label = "Predictive mean")
+        scatter!(ax, x_values, observed; color = _EPSILON_POSITIVE_COLOR, label = "Observed")
+        _apply_time_axis_ticks!(ax, data.dates)
+        axislegend(ax; position = :rb)
+    end
+
+    return figure
+end
+
 """
     residual_diagnostics_plot(results::InferenceResults)
 
@@ -366,26 +443,30 @@ function _parameter_draws(chain, parameter::Symbol, error_prefix::AbstractString
     return vec(view(values, :, 1, :))
 end
 
-function _predictive_summary(chain, nobs::Integer)
+function _predictive_matrix(chain, nobs::Integer)
     parameter_names = [Symbol("target[$index]") for index in 1:Int(nobs)]
     values = _parameter_cube(chain, parameter_names)
-    flattened = reshape(
+    return reshape(
         permutedims(values, (1, 3, 2)),
         size(values, 1) * size(values, 3),
         size(values, 2),
     )
+end
+
+function _predictive_summary(chain, nobs::Integer)
+    flattened = _predictive_matrix(chain, nobs)
     return _column_mean_interval(flattened)
 end
 
-function _column_mean_interval(matrix::AbstractMatrix)
+function _column_mean_interval(matrix::AbstractMatrix; lower = 0.05, upper = 0.95)
     means = Vector{Float64}(undef, size(matrix, 2))
     lowers = similar(means)
     uppers = similar(means)
     for column in axes(matrix, 2)
         values = view(matrix, :, column)
         means[column] = mean(values)
-        lowers[column] = quantile(values, 0.05)
-        uppers[column] = quantile(values, 0.95)
+        lowers[column] = quantile(values, lower)
+        uppers[column] = quantile(values, upper)
     end
     return means, lowers, uppers
 end

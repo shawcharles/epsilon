@@ -1865,10 +1865,10 @@ function _run_assessment_stage!(context::PipelineContext)
         "predictive_summary" => _pipeline_relative_stage_artifact("assessment", "predictive_summary.csv"),
     )
     warnings = String[]
-    for (artifact_key, absolute_path, filename) in (
-            ("observed_fitted_plot", observed_fitted_plot_path, "observed_fitted.png"),
-            ("fit_timeseries_plot", fit_timeseries_plot_path, "fit_timeseries.png"),
-            ("posterior_predictive_plot", posterior_predictive_plot_path, "posterior_predictive.png"),
+    for (artifact_key, absolute_path, filename, plot_kind) in (
+            ("observed_fitted_plot", observed_fitted_plot_path, "observed_fitted.png", :observed_fitted),
+            ("fit_timeseries_plot", fit_timeseries_plot_path, "fit_timeseries.png", :fit_timeseries),
+            ("posterior_predictive_plot", posterior_predictive_plot_path, "posterior_predictive.png", :posterior_predictive),
         )
         _save_pipeline_plot!(
             artifact_paths,
@@ -1877,7 +1877,7 @@ function _run_assessment_stage!(context::PipelineContext)
             artifact_key,
             absolute_path,
             _pipeline_relative_stage_artifact("assessment", filename),
-            :observed_fitted,
+            plot_kind,
             grouped,
         )
     end
@@ -2023,10 +2023,10 @@ function _run_panel_assessment_stage!(context::PipelineContext)
         "predictive_summary" => _pipeline_relative_stage_artifact("assessment", "predictive_summary.csv"),
     )
     warnings = String[]
-    for (artifact_key, absolute_path, filename) in (
-            ("observed_fitted_plot", observed_fitted_plot_path, "observed_fitted.png"),
-            ("fit_timeseries_plot", fit_timeseries_plot_path, "fit_timeseries.png"),
-            ("posterior_predictive_plot", posterior_predictive_plot_path, "posterior_predictive.png"),
+    for (artifact_key, absolute_path, filename, plot_kind) in (
+            ("observed_fitted_plot", observed_fitted_plot_path, "observed_fitted.png", :panel_observed_fitted),
+            ("fit_timeseries_plot", fit_timeseries_plot_path, "fit_timeseries.png", :panel_fit_timeseries),
+            ("posterior_predictive_plot", posterior_predictive_plot_path, "posterior_predictive.png", :panel_posterior_predictive),
         )
         _save_pipeline_plot!(
             artifact_paths,
@@ -2035,7 +2035,7 @@ function _run_panel_assessment_stage!(context::PipelineContext)
             artifact_key,
             absolute_path,
             _pipeline_relative_stage_artifact("assessment", filename),
-            :panel_observed_fitted,
+            plot_kind,
             model.data,
             observed,
             fitted_mean,

@@ -171,7 +171,15 @@ end
         manifest_path = joinpath(run_dir, "run_manifest.json")
         @test isfile(manifest_path)
         @test isfile(joinpath(run_dir, "20_model_fit", "trace.png"))
-        @test isfile(joinpath(run_dir, "30_model_assessment", "observed_fitted.png"))
+        observed_fitted_plot = joinpath(run_dir, "30_model_assessment", "observed_fitted.png")
+        fit_timeseries_plot = joinpath(run_dir, "30_model_assessment", "fit_timeseries.png")
+        posterior_predictive_plot = joinpath(run_dir, "30_model_assessment", "posterior_predictive.png")
+        @test isfile(observed_fitted_plot)
+        @test isfile(fit_timeseries_plot)
+        @test isfile(posterior_predictive_plot)
+        @test read(observed_fitted_plot) != read(fit_timeseries_plot)
+        @test read(observed_fitted_plot) != read(posterior_predictive_plot)
+        @test read(fit_timeseries_plot) != read(posterior_predictive_plot)
 
         manifest = JSON3.read(read(manifest_path, String))
         @test manifest["status"] == "completed"

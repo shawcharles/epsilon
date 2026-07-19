@@ -5,6 +5,12 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ## Unreleased
 
+### Fixed
+
+- Fixed Stage `30` assessment plot generation so `observed_fitted.png`,
+  `fit_timeseries.png`, and `posterior_predictive.png` are distinct diagnostic
+  plots instead of three copies of the same observed/fitted figure.
+
 ### Changed
 
 - Promoted `CairoMakie` into the root runtime dependency surface so the

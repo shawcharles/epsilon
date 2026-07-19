@@ -49,6 +49,8 @@ end
 function _pipeline_plot_figure(plot_kind::Symbol, args...; kwargs...)
     plot_kind === :trace && return trace_plot(args...; kwargs...)
     plot_kind === :observed_fitted && return observed_fitted_plot(args...; kwargs...)
+    plot_kind === :fit_timeseries && return _fit_timeseries_plot(args...; kwargs...)
+    plot_kind === :posterior_predictive && return _posterior_predictive_plot(args...; kwargs...)
     plot_kind === :residual_diagnostics && return residual_diagnostics_plot(args...; kwargs...)
     plot_kind === :contribution && return contribution_plot(args...; kwargs...)
     plot_kind === :contribution_area && return contribution_area_plot(args...; kwargs...)
@@ -67,6 +69,8 @@ function _pipeline_plot_figure(plot_kind::Symbol, args...; kwargs...)
     plot_kind === :residuals_timeseries && return _residuals_timeseries_plot(args...; kwargs...)
     plot_kind === :residuals_vs_fitted && return _residuals_vs_fitted_plot(args...; kwargs...)
     plot_kind === :panel_observed_fitted && return _panel_observed_fitted_plot(args...; kwargs...)
+    plot_kind === :panel_fit_timeseries && return _panel_fit_timeseries_plot(args...; kwargs...)
+    plot_kind === :panel_posterior_predictive && return _panel_posterior_predictive_plot(args...; kwargs...)
     plot_kind === :panel_residuals_timeseries && return _panel_residuals_timeseries_plot(args...; kwargs...)
     plot_kind === :panel_residual_diagnostics && return _panel_residual_diagnostics_plot(args...; kwargs...)
     plot_kind === :panel_curve && return _panel_curve_plot(args...; kwargs...)
@@ -239,6 +243,10 @@ function _panel_observed_fitted_plot(
         fitted_lower::AbstractVector,
         fitted_upper::AbstractVector,
         target_column::AbstractString,
+        ;
+        title_prefix::AbstractString = "",
+        point_observed::Bool = true,
+        fitted_label::AbstractString = "Fitted mean",
     )
     ntime_value, npanels_value = size(data.target)
     x_values = collect(1:ntime_value)
@@ -255,7 +263,7 @@ function _panel_observed_fitted_plot(
             indices = ((panel_index - 1) * ntime_value + 1):(panel_index * ntime_value)
             ax = Axis(
                 figure[row, col];
-                title = data.panel_names[panel_index],
+                title = "$(title_prefix)$(data.panel_names[panel_index])",
                 xlabel = "Observation",
                 ylabel = target_column,
             )
@@ -266,13 +274,59 @@ function _panel_observed_fitted_plot(
                 fitted_upper[indices];
                 color = RGBAf(_EPSILON_NEUTRAL_COLOR.r, _EPSILON_NEUTRAL_COLOR.g, _EPSILON_NEUTRAL_COLOR.b, 0.18),
             )
-            lines!(ax, x_values, fitted_mean[indices]; color = _EPSILON_NEUTRAL_COLOR)
-            scatter!(ax, x_values, observed[indices]; color = _EPSILON_POSITIVE_COLOR)
+            if point_observed
+                lines!(ax, x_values, fitted_mean[indices]; color = _EPSILON_NEUTRAL_COLOR, label = fitted_label)
+                scatter!(ax, x_values, observed[indices]; color = _EPSILON_POSITIVE_COLOR, label = "Observed")
+            else
+                lines!(ax, x_values, observed[indices]; color = _EPSILON_POSITIVE_COLOR, label = "Observed")
+                lines!(ax, x_values, fitted_mean[indices]; color = _EPSILON_NEUTRAL_COLOR, label = fitted_label)
+            end
             _apply_time_axis_ticks!(ax, data.dates)
         end
     end
 
     return figure
+end
+
+function _panel_fit_timeseries_plot(
+        data::PanelMMMData,
+        observed::AbstractVector,
+        fitted_mean::AbstractVector,
+        fitted_lower::AbstractVector,
+        fitted_upper::AbstractVector,
+        target_column::AbstractString,
+    )
+    return _panel_observed_fitted_plot(
+        data,
+        observed,
+        fitted_mean,
+        fitted_lower,
+        fitted_upper,
+        target_column;
+        title_prefix = "Fit over time: ",
+        point_observed = false,
+    )
+end
+
+function _panel_posterior_predictive_plot(
+        data::PanelMMMData,
+        observed::AbstractVector,
+        fitted_mean::AbstractVector,
+        fitted_lower::AbstractVector,
+        fitted_upper::AbstractVector,
+        target_column::AbstractString,
+    )
+    return _panel_observed_fitted_plot(
+        data,
+        observed,
+        fitted_mean,
+        fitted_lower,
+        fitted_upper,
+        target_column;
+        title_prefix = "Posterior predictive: ",
+        point_observed = true,
+        fitted_label = "Predictive mean",
+    )
 end
 
 function _panel_residuals_timeseries_plot(data::PanelMMMData, residuals::AbstractVector)
