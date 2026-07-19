@@ -418,6 +418,89 @@ end
     @test_throws ModelConfigError sampler_config_from_dict(Dict("fit" => Dict("draws" => "many")))
 end
 
+@testset "public model config rejects unsupported top-level keys" begin
+    base = Dict(
+        "data" => Dict("date_column" => "date"),
+        "target" => Dict("column" => "revenue"),
+        "media" => Dict("channels" => ["tv"]),
+    )
+
+    for key in (
+            "validaton",
+            "optimisation",
+            "optimization",
+            "prior_sensitivity",
+            "ai_advisor",
+            "original_scale_vars",
+            "surprise",
+        )
+        err = try
+            model_config_from_dict(merge(copy(base), Dict(key => Dict())))
+        catch caught
+            caught
+        end
+        @test err isa ModelConfigError
+        @test occursin("unsupported top-level keys: $key", sprint(showerror, err))
+    end
+
+    multi_key_error = try
+        model_config_from_dict(
+            merge(copy(base), Dict("zzz_unknown" => true, "aaa_unknown" => true)),
+        )
+    catch caught
+        caught
+    end
+    @test multi_key_error isa ModelConfigError
+    @test occursin("aaa_unknown, zzz_unknown", sprint(showerror, multi_key_error))
+
+    model_with_validation = model_config_from_dict(
+        merge(copy(base), Dict("validation" => Dict("enabled" => true))),
+    )
+    @test model_with_validation.extras["validation"] == Dict("enabled" => true)
+
+    model_with_effects = model_config_from_dict(
+        merge(
+            copy(base),
+            Dict("effects" => [Dict("type" => "yearly_fourier", "order" => 2)]),
+        ),
+    )
+    @test model_with_effects.seasonality["type"] == "fourier"
+    @test model_with_effects.seasonality["n_order"] == 2
+
+    programmatic = ModelConfig(
+        date_column = "date",
+        target_column = "revenue",
+        channel_columns = ["tv"],
+        extras = Dict("local_state" => Dict("enabled" => true)),
+    )
+    @test programmatic.extras["local_state"] == Dict("enabled" => true)
+
+    mktempdir() do tmpdir
+        config_path = joinpath(tmpdir, "bad_top_level.yml")
+        write(
+            config_path,
+            """
+            data:
+              date_column: date
+            target:
+              column: revenue
+            media:
+              channels: [tv]
+            validaton:
+              enabled: true
+            """,
+        )
+
+        err = try
+            load_public_config(config_path)
+        catch caught
+            caught
+        end
+        @test err isa ModelConfigError
+        @test occursin("unsupported top-level keys: validaton", sprint(showerror, err))
+    end
+end
+
 @testset "generated events window config" begin
     raw = Dict(
         "data" => Dict("date_column" => "date"),

@@ -212,6 +212,13 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Changed
 
+- Public model config parsing now rejects unsupported top-level keys instead
+  of silently storing typo-like or pipeline-runner-only entries in
+  `ModelConfig.extras`. The direct parser preserves only the documented
+  comparison shim `effects` and the narrow compatibility extra `validation`;
+  opaque local state remains available through programmatic
+  `ModelConfig(extras = ...)`. Pipeline configs still accept their own
+  runner-only blocks and strip them before model parsing.
 - Hardened the toy MCMC smoke demo CLI: malformed integer values for `--draws`,
   `--tune`, and `--seed` now fail with option-specific `ArgumentError`
   messages, the help/include-safe paths are covered without running MCMC, and

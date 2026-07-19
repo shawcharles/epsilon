@@ -543,6 +543,8 @@ end
 
 function _strip_pipeline_runner_keys(config::Dict{String, Any})
     stripped = _normalize_config_value(config)
+    delete!(stripped, "ai_advisor")
+    delete!(stripped, "original_scale_vars")
     delete!(stripped, "prior_sensitivity")
     delete!(stripped, "validation")
     delete!(stripped, "optimization")

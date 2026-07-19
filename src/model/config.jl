@@ -18,8 +18,9 @@ function model_config_from_dict(
 
     merged = _normalize_abacus_config_surface(merged)
     _reject_retired_inference_config_keys(merged)
-    _validate_mcmc_fit_backend(merged)
     _reject_time_varying_media_yaml(merged)
+    _validate_mcmc_fit_backend(merged)
+    _validate_model_config_top_level_contract(merged)
 
     data_cfg = _required_mapping(merged, :data)
     target_cfg = _required_mapping(merged, :target)
@@ -337,24 +338,43 @@ function _deserialize_holidays_config(config::AbstractDict)
     return output
 end
 
-function _top_level_extras(config::AbstractDict)
-    known = Set(
-        (
-            "calibration",
-            "data",
-            "target",
-            "media",
-            "dimensions",
-            "seasonality",
-            "trend",
-            "events",
-            "holidays",
-            "controls",
-            "priors",
-            "fit",
+const _MODEL_CONFIG_CORE_TOP_LEVEL_KEYS = Set(
+    (
+        "calibration",
+        "data",
+        "target",
+        "media",
+        "dimensions",
+        "seasonality",
+        "trend",
+        "events",
+        "holidays",
+        "controls",
+        "priors",
+        "fit",
+    )
+)
+const _MODEL_CONFIG_COMPAT_TOP_LEVEL_KEYS = Set(("effects", "validation"))
+const _MODEL_CONFIG_ALLOWED_TOP_LEVEL_KEYS =
+    union(_MODEL_CONFIG_CORE_TOP_LEVEL_KEYS, _MODEL_CONFIG_COMPAT_TOP_LEVEL_KEYS)
+
+function _validate_model_config_top_level_contract(config::AbstractDict)
+    top_level_keys = Set(String(key) for key in keys(config))
+    unsupported = setdiff(top_level_keys, _MODEL_CONFIG_ALLOWED_TOP_LEVEL_KEYS)
+    isempty(unsupported) && return nothing
+
+    throw(
+        ModelConfigError(
+            "model configuration received unsupported top-level keys: $(join(sort!(collect(unsupported)), ", ")); use supported public keys or construct ModelConfig(extras = ...) programmatically for opaque local state",
         ),
     )
-    return Dict{String, Any}(String(key) => value for (key, value) in config if !(String(key) in known))
+end
+
+function _top_level_extras(config::AbstractDict)
+    return Dict{String, Any}(
+        String(key) => value for
+            (key, value) in config if !(String(key) in _MODEL_CONFIG_CORE_TOP_LEVEL_KEYS)
+    )
 end
 
 function _parse_model_calibration_config(

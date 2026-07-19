@@ -8,20 +8,35 @@ See: .planning/PROJECT.md
 Julia by using validated reference behavior where it is methodologically
 meaningful, proving comparison claims only where semantics genuinely match, and
 letting Epsilon stand as an independent Julia MMM library.
-**Current focus:** Phase 50 Trend And Holiday Prediction-State Lock is
-complete. Fitted `TimeSeriesMMM` future prediction now has focused integration
-evidence that trend origin/scale and automatic-holiday period state are read
-from the fitted artifact spec rather than recomputed from holdout data or
-mutable live config.
+**Current focus:** Phase 51 Public Config Top-Level Typo Guard is complete.
+Direct public model config parsing now fails closed on unsupported top-level
+keys instead of silently storing typo-like or pipeline-runner-only blocks in
+`ModelConfig.extras`, while preserving narrow `effects` and `validation`
+allowances plus programmatic `ModelConfig(extras = ...)`.
 
 ## Current Position
 
-**Current Phase:** 50
-**Current Phase Name:** Trend And Holiday Prediction-State Lock
-**Total Phases:** 50
-**Current Plan:** `.planning/phases/50-trend-holiday-prediction-state-lock/PLAN.md`
-**Total Plans in Phase:** 1 narrow model-builder regression-lock slice
-**Status:** Phase 50 is complete. The engineering review found that Phase 13's
+**Current Phase:** 51
+**Current Phase Name:** Public Config Top-Level Typo Guard
+**Total Phases:** 51
+**Current Plan:** `.planning/phases/51-public-config-top-level-typo-guard/PLAN.md`
+**Total Plans in Phase:** 1 narrow public config contract-hardening slice
+**Status:** Phase 51 is complete. `model_config_from_dict` and
+`load_public_config` now reject unsupported top-level keys with deterministic
+sorted-key errors instead of placing arbitrary keys into `ModelConfig.extras`.
+The direct parser preserves only the existing `effects` yearly-Fourier
+migration shim and narrow `validation` compatibility extra; opaque local state
+remains available through programmatic `ModelConfig(extras = ...)`. `run_pipeline`
+continues to accept already allowed runner-only blocks by stripping
+`ai_advisor`, `original_scale_vars`, `validation`, `prior_sensitivity`, and
+`optimization` before direct model parsing. Scoped verification passed:
+`make test-file FILE=test/model/config.jl` (`143 / 143`, `19.4s`) and
+`make test-file FILE=test/pipeline/config.jl` (`66 / 66`, `12.6s`). This is a
+public config hygiene change only: no model runtime semantics, MCMC, pipeline
+stage execution, exports, dependencies, manifests, generated fixtures,
+benchmarks, smoke harness, full-suite gate, or parity-ledger status changed.
+
+Phase 50 is complete. The engineering review found that Phase 13's
 trend and automatic-holiday prediction-state source fixes appeared present but
 needed integration evidence. The landed test fits a weekly `TimeSeriesMMM`,
 predicts a future holiday row, verifies fitted trend state carries the
@@ -447,17 +462,18 @@ parity-ledger renames out of scope.
 | 48 | 1/1 | Completed | internal provenance rename assessment landed without renaming fixtures, exporters, source helpers, or ledgers |
 | 49 | 1/1 | Completed | convolution even-kernel `Overlap` parity lock landed without changing public numerics |
 | 50 | 1/1 | Completed | fitted trend and holiday prediction-state integration lock landed in the model-builder test lane |
+| 51 | 1/1 | Completed | direct public model config top-level typo guard landed with pipeline runner-key strip compatibility |
 
 **Recent Trend:**
-- Last 5 completed phases: 46, 47, 48, 49, 50.
+- Last 5 completed phases: 47, 48, 49, 50, 51.
 - Trend: the recent work narrowed rather than widened the library contract.
-  Phase 46 classified remaining reference/provenance wording, Phase 47 rewrote
-  public identity language around Epsilon as an independent library, Phase 48
-  deferred internal provenance renames until compatibility policy exists, Phase
-  49 disproved and locked a suspected transform bug without changing numerics,
-  and Phase 50 locked fitted trend/holiday prediction state with scoped
-  integration evidence rather than reopening release-prep or broad prediction
-  work.
+  Phase 47 rewrote public identity language around Epsilon as an independent
+  library, Phase 48 deferred internal provenance renames until compatibility
+  policy exists, Phase 49 disproved and locked a suspected transform bug
+  without changing numerics, Phase 50 locked fitted trend/holiday prediction
+  state with scoped integration evidence, and Phase 51 closed the direct public
+  config typo gap without widening model, pipeline-stage, release, benchmark, or
+  parity scope.
 
 ## Decisions Made
 
@@ -560,6 +576,9 @@ parity-ledger renames out of scope.
 - Phase 50 added the focused fitted trend/holiday prediction-state integration
   lock; keep any further Phase 13 remediation work similarly narrow unless a
   source bug is exposed.
+- Phase 51 added a direct public config top-level guard. Keep `validation` as a
+  narrow compatibility extra and use programmatic `ModelConfig(extras = ...)`
+  for opaque local state rather than reopening arbitrary YAML extras.
 - Treat release-branch/tag work and benchmark refreshes as explicit future
   decisions, not as the automatic next action.
 

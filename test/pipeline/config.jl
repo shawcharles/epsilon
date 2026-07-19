@@ -79,6 +79,49 @@ end
     @test loaded.optimization_config["enabled"] == false
 end
 
+@testset "_load_pipeline_configuration strips accepted runner-only keys before model parsing" begin
+    mktempdir() do tmpdir
+        config_path = joinpath(tmpdir, "runner_keys.yml")
+        write(
+            config_path,
+            """
+            data:
+              date_column: date
+              dataset_path: data.csv
+            target:
+              column: revenue
+            media:
+              channels: [tv]
+            ai_advisor:
+              enabled: false
+            original_scale_vars:
+              - revenue
+              - tv
+            validation:
+              enabled: false
+            prior_sensitivity:
+              enabled: false
+            optimization:
+              enabled: false
+            """,
+        )
+
+        loaded = Epsilon._load_pipeline_configuration(PipelineRunConfig(config_path = config_path))
+
+        @test haskey(loaded.resolved_config, "ai_advisor")
+        @test haskey(loaded.resolved_config, "original_scale_vars")
+        @test !haskey(loaded.model_config_dict, "ai_advisor")
+        @test !haskey(loaded.model_config_dict, "original_scale_vars")
+        @test !haskey(loaded.model_config_dict, "validation")
+        @test !haskey(loaded.model_config_dict, "prior_sensitivity")
+        @test !haskey(loaded.model_config_dict, "optimization")
+        @test loaded.validation_config["enabled"] == false
+        @test loaded.prior_sensitivity_config["enabled"] == false
+        @test loaded.optimization_config["enabled"] == false
+        @test loaded.model_config.channel_columns == ["tv"]
+    end
+end
+
 @testset "_load_pipeline_configuration accepts bounded calibration payloads" begin
     mktempdir() do tmpdir
         config_path = joinpath(tmpdir, "calibrated.yml")
