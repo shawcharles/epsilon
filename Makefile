@@ -2,7 +2,7 @@ JULIA ?= julia
 RUNIC ?= $(JULIA) --project=@runic -m Runic
 export JULIA_PKG_SERVER_REGISTRY_PREFERENCE ?= eager
 
-.PHONY: instantiate smoke test test-full test-file test-model test-optimization test-validation \
+.PHONY: instantiate smoke smoke-demo-configs test test-full test-file test-model test-optimization test-validation \
 	format format-check format-check-touched docs check check-optimization \
 	check-validation check-full check-release quality parity-check
 
@@ -11,6 +11,9 @@ instantiate:
 
 smoke:
 	JULIA="$(JULIA)" bash scripts/smoke_supported_paths.sh
+
+smoke-demo-configs:
+	JULIA="$(JULIA)" bash scripts/smoke_demo_configs.sh
 
 test: test-full
 

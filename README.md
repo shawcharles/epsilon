@@ -232,6 +232,18 @@ check.
 
 ## Demo Data And Runner
 
+The Epsilon-native demo configs under [`data/demo/`](data/README.md) can be
+checked with:
+
+```bash
+make smoke-demo-configs
+```
+
+That local smoke command runs the time-series demo config through a tiny
+headless pipeline, including validation, and checks the panel configs through
+config/data/model-spec construction without panel MCMC sampling. It is not a
+benchmark, release gate, or reference-parity claim.
+
 The repo now ships a bounded demo/comparison surface under
 [`examples/demo/`](examples/demo/README.md):
 

@@ -77,6 +77,18 @@ does not persist generated artifacts in the repository. It is not release
 evidence, not a benchmark, not a reference-parity claim, and not a broader
 support expansion.
 
+For the bundled config-driven demo files, maintainers can run:
+
+```bash
+make smoke-demo-configs
+```
+
+That command runs the shipped time-series demo config through a tiny headless
+pipeline, including its default validation stage, and checks the panel demo
+configs through config/data/model-spec construction without panel MCMC
+sampling. It is local workflow evidence only, not release evidence or a
+benchmark.
+
 ## Supported v1 Surface
 
 | Surface | Supported Rows | Notes |

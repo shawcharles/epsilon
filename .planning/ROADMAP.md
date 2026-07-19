@@ -890,7 +890,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 68
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 69
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -962,3 +962,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 68
 | 66. Planning Truth Reconciliation | 1/1 | Completed | project-control docs reconciled after Phase 65 without runtime, test, docs-site, changelog, parity-ledger, fixture, dependency, benchmark, or release-claim changes |
 | 67. Epsilon-Native Demo Configs | 1/1 | Completed | copied `data/demo` configs adapted to Epsilon-native config-driven workflows for time-series, geo-panel, and geo-brand-panel demo bundles |
 | 68. Plotting Extension Boundary | 1/1 | Completed | CairoMakie-backed plotting moved behind an optional package extension while preserving public plot names, backend-loaded plot artifacts, and headless non-plot pipeline outputs |
+| 69. Config-Driven Demo Smoke Harness | 1/1 | Completed | local `make smoke-demo-configs` harness landed for the Epsilon-native `data/demo` workflow: tiny headless time-series pipeline including validation plus panel config/data/model-spec checks |

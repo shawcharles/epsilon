@@ -26,6 +26,13 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Added
 
+- Added `make smoke-demo-configs`, a local smoke harness for the
+  Epsilon-native `data/demo/*` bundles. The command runs the time-series demo
+  config through a tiny headless pipeline including its default validation
+  stage, checks required non-plot artifacts and omitted-plot warnings, and
+  verifies the panel demo configs through config/data/model-spec construction
+  without panel MCMC sampling. This is local workflow evidence only, not a
+  benchmark, release gate, or reference-parity claim.
 - Added `make smoke`, a local supported-path smoke harness that runs the
   synthetic toy MCMC example and fixed-schema CSV quickstart with tiny MCMC
   settings, verifies compact summary outputs in temporary directories, and

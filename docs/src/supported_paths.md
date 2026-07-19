@@ -1,9 +1,10 @@
 # Supported Local Workflows
 
 This page is the canonical runbook for Epsilon's currently supported local
-MCMC example paths. It covers the synthetic toy example, the fixed-schema CSV
-quickstart, compact output inspection, trusted-local artifact roundtrips, and
-the local smoke command.
+MCMC example and demo-config paths. It covers the synthetic toy example, the
+fixed-schema CSV quickstart, compact output inspection, trusted-local artifact
+roundtrips, the local supported-path smoke command, and the local demo-config
+smoke command.
 
 These workflows are maintenance and teaching evidence for the supported
 Turing/NUTS MCMC path. They are not benchmarks, release evidence, reference-parity
@@ -134,7 +135,7 @@ The `.jls` files are trusted-local Julia serialization artifacts. Treat them as
 bound to the local Julia, Epsilon, and dependency versions that wrote them. They
 are not portable interchange files and must not be loaded from untrusted input.
 
-## Local Smoke Command
+## Local Smoke Commands
 
 For a fast local confidence check of both supported example paths:
 
@@ -150,3 +151,28 @@ outputs when it exits.
 `make smoke` is useful before or after small supported-path changes. It is not
 a benchmark, not release evidence, not a reference-parity gate, and not a
 replacement for focused tests when code behavior changes.
+
+For a local check of the shipped config-driven demo bundles under `data/demo/`:
+
+```bash
+make smoke-demo-configs
+```
+
+That command runs `data/demo/timeseries/config.yml` through a tiny headless
+pipeline with runtime sampler overrides. It preserves the config's default
+validation stage, so the smoke run performs the main fit and the validation
+holdout fit with deliberately small chains. It checks required non-plot Stage
+`00`, `10`, `20`, `30`, `35`, `40`, `50`, and `60` artifacts and verifies that
+headless plot omissions are explicit rather than recorded as missing PNG
+paths.
+
+The same command checks `data/demo/geo_panel/config.yml` and
+`data/demo/geo_brand_panel/config.yml` through config loading, CSV loading,
+`PanelMMM` construction, model-spec construction, and coordinate-metadata
+checks. It does not run panel MCMC sampling.
+
+`make smoke-demo-configs` writes only to temporary directories by default. Set
+`KEEP_SMOKE_OUTPUTS=1` when inspecting the generated run directory manually.
+This command is local workflow evidence only; it is not a benchmark, release
+gate, reference-parity claim, dashboard workflow, or substitute for focused
+tests.

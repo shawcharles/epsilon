@@ -8,19 +8,30 @@ See: .planning/PROJECT.md
 Julia by using validated reference behavior where it is methodologically
 meaningful, proving comparison claims only where semantics genuinely match, and
 letting Epsilon stand as an independent Julia MMM library.
-**Current focus:** Phase 68 Plotting Extension Boundary is complete. CairoMakie
-plotting now lives behind an optional package extension while the core package
-keeps modelling, inference, post-model, optimisation, scenario, and non-plot
-pipeline workflows available in headless installs.
+**Current focus:** Phase 69 Config-Driven Demo Smoke Harness is complete.
+Maintainers can now run `make smoke-demo-configs` to check the Epsilon-native
+`data/demo` workflow locally: a tiny headless time-series pipeline including
+validation, plus panel config/data/model-spec construction for `geo_panel` and
+`geo_brand_panel`.
 
 ## Current Position
 
-**Current Phase:** 68
-**Current Phase Name:** Plotting Extension Boundary
-**Total Phases:** 68
-**Current Plan:** `.planning/phases/68-plotting-extension-boundary/PLAN.md`
-**Total Plans in Phase:** 1 dependency-boundary implementation slice
-**Status:** Phase 68 is complete. CairoMakie moved from a mandatory runtime
+**Current Phase:** 69
+**Current Phase Name:** Config-Driven Demo Smoke Harness
+**Total Phases:** 69
+**Current Plan:** `.planning/phases/69-config-driven-demo-smoke-harness/PLAN.md`
+**Total Plans in Phase:** 1 local smoke-harness implementation slice
+**Status:** Phase 69 is complete. `make smoke-demo-configs` now runs the
+shipped `data/demo/timeseries/config.yml` through a tiny headless pipeline,
+including the config's default validation stage, checks required non-plot
+artifacts and omitted-plot warnings, and verifies `geo_panel` /
+`geo_brand_panel` demo configs through config/data/model-spec construction
+without panel MCMC sampling. The command writes only to temporary directories
+by default and remains local workflow evidence only: not a benchmark, release
+gate, reference-parity claim, dashboard workflow, or broader modelling-surface
+expansion.
+
+Phase 68 is complete. CairoMakie moved from a mandatory runtime
 dependency to the optional `EpsilonCairoMakieExt` extension while exported
 plotting names keep base-package docstrings and deterministic no-backend
 fallback errors. Pipeline plot emission now routes through an optional hook:

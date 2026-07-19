@@ -27,6 +27,19 @@ config:
 julia --project=. -e 'using Epsilon; run_pipeline(PipelineRunConfig(config_path = "data/demo/timeseries/config.yml", output_dir = "results", draws = 20, tune = 20, chains = 1, cores = 1, prior_samples = 5, curve_points = 12))'
 ```
 
+To check all bundled demo configs through the maintained local smoke harness,
+run:
+
+```bash
+make smoke-demo-configs
+```
+
+That command runs the time-series demo through a tiny full pipeline, including
+the default validation stage, and checks the panel demo configs through
+config/data/model-spec construction without MCMC sampling. It writes outputs to
+temporary directories and removes them when it exits. It is local smoke
+evidence only, not a benchmark, release gate, or parity claim.
+
 The panel bundles use the bounded `PanelMMM` surface:
 
 - `geo_panel` maps to `dimensions.panel = ["geo"]`.
