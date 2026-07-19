@@ -8,19 +8,33 @@ See: .planning/PROJECT.md
 Julia by using validated reference behavior where it is methodologically
 meaningful, proving comparison claims only where semantics genuinely match, and
 letting Epsilon stand as an independent Julia MMM library.
-**Current focus:** Phase 48 Internal Provenance Rename Assessment is complete.
-Remaining Abacus-named internal provenance surfaces are classified for future
-rename work, but no fixture, exporter, demo, source, ledger, or test renames
-have started.
+**Current focus:** Phase 49 Convolution Overlap Parity Lock is complete. The
+suspected even-kernel `Overlap` behavioural bug was disproved against local
+Abacus; current numerics are preserved, and the dead source-index parameter is
+removed.
 
 ## Current Position
 
-**Current Phase:** 48
-**Current Phase Name:** Internal Provenance Rename Assessment
-**Total Phases:** 48
-**Current Plan:** `.planning/phases/48-internal-provenance-rename-assessment/PLAN.md`
-**Total Plans in Phase:** 1 planning-only internal provenance assessment
-**Status:** Phase 48 is complete. The plan classifies remaining Abacus-named
+**Current Phase:** 49
+**Current Phase Name:** Convolution Overlap Parity Lock
+**Total Phases:** 49
+**Current Plan:** `.planning/phases/49-convolution-overlap-correctness/PLAN.md`
+**Total Plans in Phase:** 1 narrow transform correctness hardening slice
+**Status:** Phase 49 is complete. The engineering review's suspected
+even-length `batched_convolution(..., mode = Overlap)` behavioural bug was
+checked against the real local Abacus implementation and disproved:
+`x = [0, 0, 1, 0, 0]`, `w = [10, 20, 30, 40]` returns
+`[0, 10, 20, 30, 40]` in both Epsilon and Abacus. The landed change preserves
+the current source-index arithmetic, adds an explicit length-4 overlap
+parity-lock test, removes the dead/misleading `overlap_shift` local/parameter,
+and documents the PyTensor convolution-orientation mapping in the source.
+Focused verification passed: `make test-file FILE=test/transforms/convolution.jl`
+(`22 / 22`) and `make test-file FILE=test/transforms/adstock.jl` (`101 / 101`).
+No public behaviour, generated fixtures, adstock formulas, models, pipelines,
+benchmarks, docs build inputs, dependencies, manifests, or parity status
+changed.
+
+Phase 48 is complete. The plan classifies remaining Abacus-named
 fixture, exporter, demo, source/docstring, and planning-ledger surfaces after
 Phase 47's public identity rewrite. It records a fresh post-Phase-47 scan of
 164 tracked files and 1,734 matches, excluding `Manifest.toml`, `.jls`

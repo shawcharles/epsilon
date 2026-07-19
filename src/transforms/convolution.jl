@@ -40,7 +40,6 @@ function batched_convolution(
     out_type = promote_type(eltype(x), eltype(w))
     result = Array{out_type}(undef, out_batch_shape..., time_length)
 
-    overlap_shift = fld(lag_length, 2)
     for out_index in CartesianIndices(out_batch_shape)
         x_index = _broadcast_batch_index(x_batch_shape, out_index, length(out_batch_shape))
         w_index = _broadcast_batch_index(w_batch_shape, out_index, length(out_batch_shape))
@@ -51,7 +50,7 @@ function batched_convolution(
         for t in eachindex(y_slice)
             acc = zero(out_type)
             for lag in eachindex(w_slice)
-                x_t = _source_index(t, lag, lag_length, overlap_shift, parsed_mode)
+                x_t = _source_index(t, lag, lag_length, parsed_mode)
                 if 1 <= x_t <= time_length
                     acc += w_slice[lag] * x_slice[x_t]
                 end
@@ -116,7 +115,6 @@ function _source_index(
         t::Integer,
         lag::Integer,
         lag_length::Integer,
-        overlap_shift::Integer,
         mode::ConvMode,
     )
     if mode === After
@@ -124,6 +122,8 @@ function _source_index(
     elseif mode === Before
         return t + lag_length - lag
     else
+        # PyTensor's convolve1d orientation makes Abacus's lags ÷ 2 left
+        # padding equivalent to this source-index shift for even kernels.
         return t + ((lag_length - 1) ÷ 2) - lag + 1
     end
 end
