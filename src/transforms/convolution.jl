@@ -7,7 +7,7 @@ Boundary handling modes for [`batched_convolution`](@ref).
 
 @doc "Trailing carryover mode for [`batched_convolution`](@ref)." After
 @doc "Leading carryover mode for [`batched_convolution`](@ref)." Before
-@doc "Centered overlap mode for [`batched_convolution`](@ref)." Overlap
+@doc "Parity-preserving overlap mode for [`batched_convolution`](@ref)." Overlap
 
 """
     batched_convolution(x, w, axis=1, mode=After)
@@ -19,7 +19,12 @@ dimensions in `w` against the non-convolved dimensions of `x`.
 
 - `After`: trailing carryover
 - `Before`: leading carryover
-- `Overlap`: centered overlap
+- `Overlap`: parity-preserving overlap orientation. With source index
+  `t + ((lag_length - 1) ÷ 2) - lag + 1`, an impulse at index 3 with weights
+  `[10, 20, 30]` returns `[0, 10, 20, 30, 0]`; with weights
+  `[10, 20, 30, 40]` it returns `[0, 10, 20, 30, 40]`. The even-length case
+  preserves Epsilon's reference-locked orientation, not the opposite
+  half-sample shift.
 """
 function batched_convolution(
         x::AbstractArray,

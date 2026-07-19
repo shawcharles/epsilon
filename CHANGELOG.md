@@ -212,6 +212,9 @@ All notable project changes are recorded here. Epsilon is still on the
 
 ### Changed
 
+- Clarified the public `batched_convolution(..., mode = Overlap)` odd/even
+  alignment contract and added focused impulse tests without changing
+  convolution numerics.
 - Hardened `MMMData` and `PanelMMMData` numeric validation so finite and
   nonnegative checks preserve generic AD scalar types instead of narrowing
   values through `Float64` solely for validation.

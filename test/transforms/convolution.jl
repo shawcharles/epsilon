@@ -12,11 +12,13 @@ using Test
         end
     end
 
-    @testset "even-length overlap parity lock" begin
+    @testset "overlap impulse alignment for odd and even kernels" begin
         x = [0.0, 0.0, 1.0, 0.0, 0.0]
-        w = [10.0, 20.0, 30.0, 40.0]
 
-        @test batched_convolution(x, w, 1, Overlap) == [0.0, 10.0, 20.0, 30.0, 40.0]
+        @test batched_convolution(x, [10.0, 20.0, 30.0], 1, Overlap) ==
+            [0.0, 10.0, 20.0, 30.0, 0.0]
+        @test batched_convolution(x, [10.0, 20.0, 30.0, 40.0], 1, Overlap) ==
+            [0.0, 10.0, 20.0, 30.0, 40.0]
     end
 
     @testset "invalid mode" begin
