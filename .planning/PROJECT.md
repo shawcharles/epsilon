@@ -86,6 +86,12 @@ genuinely match. `.planning/ABACUS-PARITY-LEDGER.md` remains the source of truth
 for which surfaces are `ported`, `native`, `scaffolded`, `missing`, or
 `deferred`.
 
+The supported local toy and fixed-schema CSV workflows now have a canonical
+runbook at `docs/src/supported_paths.md`. Those workflows, their compact
+sidecars, `make smoke`, and trusted-local `.jls` artifact roundtrips are local
+confidence and teaching evidence only; they are not benchmarks, release
+evidence, portable interchange formats, or Abacus parity evidence.
+
 The port strategy remains bottom-up, but acceptance is vertical: broad release
 claims must be backed by the ledger and by concrete `timeseries`, `geo_panel`,
 and `geo_brand_panel` evidence rather than by the presence of matching module
@@ -129,6 +135,8 @@ names.
 | Permanently retire VI before release in Phase 38 | Epsilon will not own an approximate-inference contract; MCMC/Turing is the sole fitting path | Good |
 | Keep local smoke certification separate from release evidence in Phase 39 | Toy and CSV supported-path smoke checks are useful maintenance commands, but they are not benchmarks, release gates, or Abacus parity claims | Good |
 | Reconcile planning truth in Phase 40 before choosing more feature work | Stale control docs can misdirect future agents into reopened release-prep or benchmark work despite the current scoped-test and MCMC-only boundaries | Good |
+| Document supported local workflows in one canonical runbook | The toy, CSV, compact-output, artifact-roundtrip, and smoke paths are mature enough to document together without recasting them as release, benchmark, or parity evidence | Good |
+| Keep current-facing docs aligned with planning state | Stale phase-count or last-updated markers create false resume points and bad next-action recommendations | Good |
 
 ---
-*Last updated: 2026-07-18 after Phase 40 planning truth reconciliation*
+*Last updated: 2026-07-19 after Phase 44 current docs truth reconciliation*

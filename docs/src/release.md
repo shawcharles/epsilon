@@ -1,15 +1,23 @@
 # Release Gate
 
 Phase 11 landed the bounded v1 release-gate infrastructure for Epsilon, and
-Phase 12 has now closed the methodology-remediation pass on top of it. The
-package should still avoid blanket “Abacus parity” claims: the guaranteed
+Phase 12 closed the methodology-remediation pass on top of it. Phase 13 later
+revalidated the accepted release-gate contract fixes. The later
+support-boundary and supported-path workflow phases, including Phase 38's
+permanent variational-inference retirement and Phase 43's canonical
+[Supported Local Workflows](supported_paths.md) runbook, did not rerun the
+release gate or refresh benchmark artifacts.
+
+The package should still avoid blanket “Abacus parity” claims: the guaranteed
 Abacus-reference row is `VAL-TS-00-MCMC`, while the holiday-bearing automatic
 holiday row remains an Epsilon-native/reference row unless a separate
 compatibility mode is added. More importantly, Epsilon now treats Abacus as a
 major reference and comparison baseline rather than a source of literal
 implementation obligations: methodological coherence wins when strict upstream
 fidelity would produce a weaker or less honest bounded design. Treat this page
-as the canonical release-gate summary for the closed bounded v1 surface.
+as the canonical release-gate summary for the closed bounded v1 surface and not
+as evidence that a new release-prep pass has run after the documented Phase 13
+revalidation.
 
 Phase 13 also closes the accepted contract-remediation issues from the external
 review: time-series prediction and replay now use fitted trend and

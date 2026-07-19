@@ -8,31 +8,28 @@ See: .planning/PROJECT.md
 Julia by porting the validated Abacus statistical and methodological
 functionality bottom-up and proving parity only where semantics genuinely
 match.
-**Current focus:** Phase 43 Supported-Path User Workflow Runbook is complete.
-The supported toy, CSV, compact-output, artifact-roundtrip, and local smoke
-paths now have one canonical docs-backed runbook with minimal cross-links,
-without runtime behavior, artifact format, benchmark, release, or parity
-changes.
+**Current focus:** Phase 44 Current Docs Truth Reconciliation is complete. The
+current-facing docs now reflect the Phase 43 state without runtime behavior,
+tests, examples, artifact format, benchmark, release, or parity changes.
 
 ## Current Position
 
-**Current Phase:** 43
-**Current Phase Name:** Supported-Path User Workflow Runbook
-**Total Phases:** 43
-**Current Plan:** `.planning/phases/43-supported-path-user-workflow-runbook/PLAN.md`
-**Total Plans in Phase:** 1 bounded supported-path workflow-runbook slice
-**Status:** Phase 43 is complete. `docs/src/supported_paths.md` is now the
-canonical supported local workflow runbook for the toy MCMC example, the
-fixed-schema CSV quickstart, compact sidecar inspection, trusted-local
-`save_model` / `load_model` and `save_inference_results` /
-`load_inference_results` roundtrips, and `make smoke`. The page is in
-Documenter navigation, `docs/src/index.md` links to it, and both example
-READMEs point to it with short cross-references. It keeps `.jls` wording
-strictly local Julia/Epsilon-version-bound and not portable or untrusted
-interchange. Verification passed with `make docs`, `make format-check-touched`,
-`git diff --check`, and the explicit Phase 43 changed-file allowlist. No full
-suite, smoke run, benchmark, release, source, dependency, manifest,
-model-semantics, or parity-status changes were made.
+**Current Phase:** 44
+**Current Phase Name:** Current Docs Truth Reconciliation
+**Total Phases:** 44
+**Current Plan:** `.planning/phases/44-current-docs-truth-reconciliation/PLAN.md`
+**Total Plans in Phase:** 1 bounded current-docs truth-reconciliation slice
+**Status:** Phase 44 is complete. `docs/src/index.md` no longer frames the
+current project state as stopped at Phase 12, `docs/src/release.md` now
+distinguishes historical Phase 11/12 release-gate infrastructure from later
+support-boundary and local workflow hardening, and `.planning/PROJECT.md` now
+records the canonical supported local workflow runbook plus the current Phase
+44 last-updated marker. Verification passed with `make docs`,
+`make format-check-touched`, `git diff --check`, `git diff --cached --check`,
+stale-phrase content guards, a no-widening guard, and the explicit Phase 44
+changed-file allowlist. No full suite, smoke run, benchmark, release, source,
+test, example, dependency, manifest, model-semantics, or parity-status changes
+were made.
 
 Phase 40 is complete. It reconciled `.planning/PROJECT.md`,
 `.planning/ROADMAP.md`, `.planning/STATE.md`, and its own phase plan so the
@@ -325,20 +322,18 @@ Calibration/lift-test parity remains a `scaffolded` ledger row after Phase 17:
 evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
 are landed for both accepted calibration terms, but the wider Abacus
 calibration surface is not complete.
-**Last Activity:** 2026-07-18
-**Last Activity Description:** Phase 43 completed the supported-path user
-workflow runbook. `docs/src/supported_paths.md` is now the canonical docs page
-for running the toy MCMC example, running the fixed-schema CSV quickstart,
-inspecting compact sidecars, roundtripping returned fitted models and grouped
-inference results through existing trusted-local APIs, and using `make smoke`
-as local confidence evidence. The docs page is in Documenter navigation, linked
-from `docs/src/index.md`, and cross-linked from both example READMEs. It did
-not change `src/`, tests, dependencies, manifests, CLI flags, artifact formats,
-benchmarks, release files, parity ledgers, model semantics, or support claims.
-Scoped verification passed with `make docs`, `make format-check-touched`,
-`git diff --check`, and the explicit Phase 43 changed-file allowlist.
+**Last Activity:** 2026-07-19
+**Last Activity Description:** Phase 44 completed current-facing docs truth
+reconciliation. The docs home page now describes the project through Phase 43
+instead of stale Phase 12 framing; release docs now preserve Phase 13 release
+contract revalidation while making clear that later support-boundary/workflow
+hardening did not rerun release gates or refresh benchmark artifacts; and
+`.planning/PROJECT.md` now points to the supported local workflow runbook and
+has a Phase 44 last-updated marker. Scoped verification passed with `make docs`,
+`make format-check-touched`, whitespace checks, stale-phrase guards,
+no-widening guard, and the explicit Phase 44 changed-file allowlist.
 **Progress:** 100%
-**Paused At:** `.planning/phases/43-supported-path-user-workflow-runbook/PLAN.md`
+**Paused At:** `.planning/phases/44-current-docs-truth-reconciliation/PLAN.md`
 
 ## Performance Metrics
 
@@ -393,16 +388,17 @@ Scoped verification passed with `make docs`, `make format-check-touched`,
 | 41 | 1/1 | Completed | supported-path example output sidecars audited, documented, and guarded with focused content-contract tests |
 | 42 | 1/1 | Completed | supported-path fitted-model and grouped-results roundtrips guarded for toy MCMC and CSV quickstart examples |
 | 43 | 1/1 | Completed | canonical supported local workflow runbook landed with docs navigation and example README links |
+| 44 | 1/1 | Completed | current-facing docs reconciled with Phase 43 state without runtime or release-surface changes |
 
 **Recent Trend:**
-- Last 5 completed phases: 39, 40, 41, 42, 43.
+- Last 5 completed phases: 40, 41, 42, 43, 44.
 - Trend: the recent work narrowed rather than widened the library contract.
-  Phase 39 added a local supported-path smoke command for the toy and CSV
-  examples without turning it into release or benchmark evidence. Phase 40
-  reconciled planning truth. Phase 41 made the supported-path sidecar output
-  contract more inspectable and better tested. Phase 42 guarded trusted-local
-  fitted-model and grouped-results roundtrips, and Phase 43 documented the
-  supported local workflow without widening runtime support.
+  Phase 40 reconciled planning truth. Phase 41 made the supported-path sidecar
+  output contract more inspectable and better tested. Phase 42 guarded
+  trusted-local fitted-model and grouped-results roundtrips. Phase 43 documented
+  the supported local workflow without widening runtime support, and Phase 44
+  reconciled current-facing docs so they no longer point future work at stale
+  Phase 12/40 status.
 
 ## Decisions Made
 
@@ -451,6 +447,7 @@ Scoped verification passed with `make docs`, `make format-check-touched`,
 | 41 | Guard example output structure rather than posterior values | Tiny MCMC examples are useful for supported-path confidence, but their tests should stabilise keys, columns, and row counts instead of brittle posterior numerics |
 | 42 | Guard trusted-local example artifact roundtrips rather than promise portability | The supported examples should prove fitted objects can survive Epsilon's existing Julia serialization path, but that is not a portable interchange, release, benchmark, or Abacus parity claim |
 | 43 | Give supported local workflows one canonical runbook | The toy, CSV, compact-output, artifact-roundtrip, and smoke paths are mature enough to document together, but still must not be recast as release, benchmark, or parity evidence |
+| 44 | Keep current-facing docs aligned with state | Stale docs can misdirect future work into false release-prep, benchmark, or parity assumptions even when runtime code is sound |
 
 ## Pending Todos
 
@@ -474,6 +471,9 @@ Scoped verification passed with `make docs`, `make format-check-touched`,
 - Phase 43 is complete; use `docs/src/supported_paths.md` as the canonical
   supported local workflow runbook for toy, CSV, compact sidecars,
   trusted-local artifact roundtrips, and `make smoke`.
+- Phase 44 is complete; current-facing docs now describe the Phase 43 state
+  without implying a new release gate, benchmark refresh, or Abacus parity
+  certification.
 - HSGP/TVP broader support remains bounded: Phase 36/37 cover only the
   TimeSeriesMMM shared-media multiplier and retained-grid contribution replay.
   Do not add new HSGP/TVP config, prediction, panel, curve, metric, optimization,
@@ -521,13 +521,13 @@ Scoped verification passed with `make docs`, `make format-check-touched`,
 - Phase 42 audited and guarded trusted-local fitted-model and grouped-results
   roundtrips for the supported toy and CSV examples.
 - Phase 43 added the canonical supported local workflow runbook and cross-links.
+- Phase 44 reconciled current-facing docs after Phase 43.
 
 ## Session
 
-**Last Date:** 2026-07-18
-**Stopped At:** Phase 43 is complete. The supported local toy, CSV,
-compact-output, trusted-local artifact roundtrip, and `make smoke` workflows
-are now documented in one canonical runbook and linked from the example READMEs
-and docs home page. Choose the next bounded slice from the reconciled
-roadmap/state, with plan/review before implementation.
-**Resume File:** `.planning/phases/43-supported-path-user-workflow-runbook/PLAN.md`
+**Last Date:** 2026-07-19
+**Stopped At:** Phase 44 is complete. Current-facing docs now align with the
+Phase 43 state and no longer present stale Phase 12/40 status as current.
+Choose the next bounded slice from the reconciled roadmap/state, with
+plan/review before implementation.
+**Resume File:** `.planning/phases/44-current-docs-truth-reconciliation/PLAN.md`

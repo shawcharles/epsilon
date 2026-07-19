@@ -383,6 +383,9 @@ that later closed in Phase 14:
       roundtrip, and local smoke workflow without changing runtime behavior,
       widening artifacts, running benchmarks, making release claims, or changing
       Abacus parity status.
+- [x] **Phase 44: Current Docs Truth Reconciliation** - Reconcile current-facing
+      docs with the Phase 43 state without changing runtime behavior, tests,
+      examples, benchmarks, release artifacts, or Abacus parity status.
 
 ## Phase Details
 
@@ -740,7 +743,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 43
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 44
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -787,3 +790,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 43
 | 41. Supported-Path Output Usability Audit | 1/1 | Completed | toy and CSV example sidecar outputs audited, documented, and guarded with focused content-contract tests without model, source, benchmark, release, or parity-status changes |
 | 42. Supported-Path Artifact Roundtrip Audit | 1/1 | Completed | bounded toy and CSV fitted-model/grouped-results roundtrip audit landed using existing trusted-local persistence APIs only |
 | 43. Supported-Path User Workflow Runbook | 1/1 | Completed | docs-only canonical runbook landed for toy, CSV, compact-output, trusted-local artifact roundtrip, and local smoke workflows |
+| 44. Current Docs Truth Reconciliation | 1/1 | Completed | docs-only reconciliation of stale current-facing status wording landed after Phase 43 |

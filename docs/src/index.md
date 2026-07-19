@@ -1,13 +1,24 @@
 # Epsilon.jl
 
 `Epsilon.jl` is a Julia-native framework for Bayesian marketing mix modeling.
-The initial package scaffold follows standard Julia package conventions so the
-package can grow in layers without fighting the toolchain.
+It is now a bounded, ledger-governed Julia MMM library rather than an initial
+package scaffold. Abacus remains the main reference and comparison baseline for
+validated statistical and methodological behavior, but parity is claimed only
+where the committed evidence and `.planning/ABACUS-PARITY-LEDGER.md` support
+that claim.
 
 ## Current Status
 
-Epsilon has landed Phases 1-12. Phase 12 has now closed the methodology
-remediation pass on the bounded reference time-series story:
+Epsilon is documented through Phase 43. The current supported fitting contract
+is MCMC/Turing only; the former variational surface was permanently retired in
+Phase 38. Phases 39 through 43 added local supported-path confidence evidence
+and documentation for the toy MCMC and fixed-schema CSV quickstart workflows,
+including compact sidecars, trusted-local artifact roundtrips, and the canonical
+[Supported Local Workflows](supported_paths.md) runbook. Those workflows are
+not benchmarks, release evidence, or Abacus parity evidence.
+
+The historical phase detail below remains useful context for the current
+surface:
 
 - package entry point
 - test harness
