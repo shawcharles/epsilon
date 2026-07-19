@@ -22,50 +22,6 @@ end
 prior_predict(model::PanelMMM, new_data::PanelMMMData = model.data) =
     _prior_predict_panel_mmm(model, new_data)
 
-panel_coordinates(results::InferenceResults) = panel_coordinates(results.coordinate_metadata)
-panel_coordinates(results::ContributionResults) = panel_coordinates(results.coordinate_metadata)
-panel_coordinates(results::DecompositionResults) = panel_coordinates(results.coordinate_metadata)
-panel_coordinates(results::ResponseCurveResults) = panel_coordinates(results.coordinate_metadata)
-panel_coordinates(results::SaturationCurveResults) = panel_coordinates(results.coordinate_metadata)
-panel_coordinates(results::AdstockCurveResults) = panel_coordinates(results.coordinate_metadata)
-panel_coordinates(results::MetricResults) = panel_coordinates(results.coordinate_metadata)
-panel_coordinates(result::PanelBudgetOptimizationResult) = panel_coordinates(result.coordinate_metadata)
-
-panel_axes(results::InferenceResults) = panel_axes(results.coordinate_metadata)
-panel_axes(results::ContributionResults) = panel_axes(results.coordinate_metadata)
-panel_axes(results::DecompositionResults) = panel_axes(results.coordinate_metadata)
-panel_axes(results::ResponseCurveResults) = panel_axes(results.coordinate_metadata)
-panel_axes(results::SaturationCurveResults) = panel_axes(results.coordinate_metadata)
-panel_axes(results::AdstockCurveResults) = panel_axes(results.coordinate_metadata)
-panel_axes(results::MetricResults) = panel_axes(results.coordinate_metadata)
-panel_axes(result::PanelBudgetOptimizationResult) = panel_axes(result.coordinate_metadata)
-
-panel_axis(results::InferenceResults) = panel_axis(results.coordinate_metadata)
-panel_axis(results::ContributionResults) = panel_axis(results.coordinate_metadata)
-panel_axis(results::DecompositionResults) = panel_axis(results.coordinate_metadata)
-panel_axis(results::ResponseCurveResults) = panel_axis(results.coordinate_metadata)
-panel_axis(results::SaturationCurveResults) = panel_axis(results.coordinate_metadata)
-panel_axis(results::AdstockCurveResults) = panel_axis(results.coordinate_metadata)
-panel_axis(results::MetricResults) = panel_axis(results.coordinate_metadata)
-panel_axis(result::PanelBudgetOptimizationResult) = panel_axis(result.coordinate_metadata)
-
-panel_coordinate(results::InferenceResults, flat_index::Integer) =
-    panel_coordinate(results.coordinate_metadata, flat_index)
-panel_coordinate(results::ContributionResults, flat_index::Integer) =
-    panel_coordinate(results.coordinate_metadata, flat_index)
-panel_coordinate(results::DecompositionResults, flat_index::Integer) =
-    panel_coordinate(results.coordinate_metadata, flat_index)
-panel_coordinate(results::ResponseCurveResults, flat_index::Integer) =
-    panel_coordinate(results.coordinate_metadata, flat_index)
-panel_coordinate(results::SaturationCurveResults, flat_index::Integer) =
-    panel_coordinate(results.coordinate_metadata, flat_index)
-panel_coordinate(results::AdstockCurveResults, flat_index::Integer) =
-    panel_coordinate(results.coordinate_metadata, flat_index)
-panel_coordinate(results::MetricResults, flat_index::Integer) =
-    panel_coordinate(results.coordinate_metadata, flat_index)
-panel_coordinate(result::PanelBudgetOptimizationResult, flat_index::Integer) =
-    panel_coordinate(result.coordinate_metadata, flat_index)
-
 """
     fit!(model::TimeSeriesMMM)
     fit!(model::PanelMMM)

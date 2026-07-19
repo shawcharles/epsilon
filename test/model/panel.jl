@@ -125,6 +125,149 @@ end
     @test model.built_model == spec
 end
 
+@testset "panel coordinate result forwarders cover supported result shells" begin
+    model = sample_panel_model()
+    spec = build_model(model)
+    metadata = ModelArtifactMetadata(
+        1,
+        epsilon_version(),
+        VERSION,
+        "2026-07-19T00:00:00Z",
+        "PanelMMM",
+        :fixture,
+        :success,
+    )
+    coordinate_metadata = spec.coordinate_metadata
+    expected_coordinates = panel_coordinates(coordinate_metadata)
+    expected_axes = panel_axes(coordinate_metadata)
+    expected_axis = panel_axis(coordinate_metadata)
+    expected_coordinate = panel_coordinate(coordinate_metadata, 1)
+    npanel_cells = length(expected_coordinates)
+    dates = model.data.dates
+    ntime_rows = length(dates)
+    spend_grid = ones(npanel_cells, 2)
+    observed_spend = ones(npanel_cells)
+    panel_coordinate_columns = Dict(
+        dim => copy(coordinate_metadata.coordinates[dim])
+            for dim in coordinate_metadata.panel_dims
+    )
+    audit = Epsilon.BudgetConstraintAudit(
+        1.0,
+        ["tv"],
+        String[],
+        [
+            Epsilon.BudgetChannelConstraint(
+                "tv",
+                1.0,
+                nothing,
+                nothing,
+                nothing,
+                nothing,
+                0.0,
+                nothing,
+            ),
+        ],
+    )
+    result_shells = Any[
+        InferenceResults(metadata, spec),
+        ContributionResults(
+            metadata,
+            spec,
+            coordinate_metadata,
+            dates,
+            model.data.target,
+            ["intercept"],
+            [:intercept],
+            ones(1, ntime_rows, npanel_cells, 1),
+        ),
+        DecompositionResults(
+            metadata,
+            spec,
+            coordinate_metadata,
+            ["intercept"],
+            [:intercept],
+            ones(1, 1),
+            ones(1, 1),
+        ),
+        ResponseCurveResults(
+            metadata,
+            spec,
+            coordinate_metadata,
+            "tv",
+            spend_grid,
+            [0.0, 1.0],
+            observed_spend,
+            ones(1, npanel_cells, 2),
+        ),
+        SaturationCurveResults(
+            metadata,
+            spec,
+            coordinate_metadata,
+            "tv",
+            spend_grid,
+            [0.0, 1.0],
+            observed_spend,
+            ones(1, npanel_cells, 2),
+        ),
+        AdstockCurveResults(
+            metadata,
+            spec,
+            coordinate_metadata,
+            "tv",
+            spend_grid,
+            [0.0, 1.0],
+            observed_spend,
+            ones(1, npanel_cells, 2),
+        ),
+        MetricResults(
+            metadata,
+            spec,
+            coordinate_metadata,
+            "tv",
+            spend_grid,
+            ["roas"],
+            :roas,
+            ones(1, npanel_cells, 2, 1),
+        ),
+        PanelBudgetOptimizationResult(
+            metadata,
+            spec,
+            coordinate_metadata,
+            :response,
+            ["tv"],
+            String[],
+            Dict("tv" => 1.0),
+            Dict("tv" => 1.1),
+            1.0,
+            1.1,
+            1.0,
+            1.1,
+            :fixture,
+            0.0,
+            Dict{String, Any}(),
+            audit,
+            :historical_shares,
+            copy(expected_axis.values),
+            panel_coordinate_columns,
+            ones(1, npanel_cells),
+            ones(1, npanel_cells),
+            ones(1, npanel_cells),
+            ones(1, npanel_cells),
+            ones(1, npanel_cells),
+            Dict("tv" => 0.1),
+        ),
+    ]
+
+    @test length(result_shells) == 8
+    for result in result_shells
+        @test panel_coordinates(result) == expected_coordinates
+        @test panel_axes(result) == expected_axes
+        @test panel_axis(result) == expected_axis
+        @test panel_coordinate(result, 1) == expected_coordinate
+        @test_throws BoundsError panel_coordinate(result, npanel_cells + 1)
+    end
+end
+
 @testset "PanelMMM respects panel-indexed prior dimensions" begin
     model = sample_panel_model()
     config = ModelConfig(

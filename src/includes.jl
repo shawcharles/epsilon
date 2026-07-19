@@ -36,6 +36,7 @@ include("postmodel/summary.jl")
 
 # Optimization, scenario planning, pipeline, and plotting surfaces.
 include("optimization/types.jl")
+include("model/coordinate_forwarders.jl")
 include("optimization/constraints.jl")
 include("optimization/objective.jl")
 include("optimization/optimizer.jl")
