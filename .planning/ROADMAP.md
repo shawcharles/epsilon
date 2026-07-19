@@ -391,6 +391,10 @@ that later closed in Phase 14:
       evidence boundaries, and trusted-local `.jls` wording without changing
       runtime behavior, examples, benchmarks, release artifacts, or Abacus
       parity status.
+- [x] **Phase 46: Abacus Reference Decoupling Plan** - Audit and classify
+      Abacus references so future public identity cleanup can make Epsilon
+      stand as an independent MMM library without deleting internal validation
+      provenance or changing runtime behavior.
 
 ## Phase Details
 
@@ -748,7 +752,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 45
+Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 46
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -797,3 +801,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> ... -> 45
 | 43. Supported-Path User Workflow Runbook | 1/1 | Completed | docs-only canonical runbook landed for toy, CSV, compact-output, trusted-local artifact roundtrip, and local smoke workflows |
 | 44. Current Docs Truth Reconciliation | 1/1 | Completed | docs-only reconciliation of stale current-facing status wording landed after Phase 43 |
 | 45. Current Docs Claim Guard | 1/1 | Completed | focused guard landed for current-facing docs claim boundaries, with future Abacus-reference decoupling preserved as separate planned identity work |
+| 46. Abacus Reference Decoupling Plan | 1/1 | Completed | inventory and classification plan landed for future Epsilon-first public identity cleanup |

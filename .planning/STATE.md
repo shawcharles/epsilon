@@ -8,28 +8,25 @@ See: .planning/PROJECT.md
 Julia by using validated reference behavior where it is methodologically
 meaningful, proving comparison claims only where semantics genuinely match, and
 letting Epsilon stand as an independent Julia MMM library.
-**Current focus:** Phase 45 Current Docs Claim Guard is complete. Focused
-regression guards now protect current-facing documentation claims without
-runtime behavior, examples, artifact format, benchmark, release, or parity
-changes.
+**Current focus:** Phase 46 Abacus Reference Decoupling Plan is complete. The
+repo now has a reviewed tracked-file inventory and classification contract for
+future Epsilon-first public identity cleanup.
 
 ## Current Position
 
-**Current Phase:** 45
-**Current Phase Name:** Current Docs Claim Guard
-**Total Phases:** 45
-**Current Plan:** `.planning/phases/45-current-docs-claim-guard/PLAN.md`
-**Total Plans in Phase:** 1 bounded current-docs claim-guard slice
-**Status:** Phase 45 is complete. `test/api_exports.jl` now guards current-facing
-docs against stale Phase 12/40 current-state wording, disappearing positive
-anchors for Phase 43 supported-workflow state and Phase 13 release-gate
-revalidation, accidental VI support claims, local supported-path evidence
-widening, and unsafe/portable `.jls` artifact wording. The phase also records
-the future strategic need to scrub or reframe public Abacus mentions once an
-independent Epsilon validation narrative replaces the current reference-led
-wording. No runtime, example, benchmark, smoke, full suite, release,
-runtime-source, dependency, manifest, model-semantics, or parity-status changes
-were made.
+**Current Phase:** 46
+**Current Phase Name:** Abacus Reference Decoupling Plan
+**Total Phases:** 46
+**Current Plan:** `.planning/phases/46-abacus-reference-decoupling/PLAN.md`
+**Total Plans in Phase:** 1 planning-only reference-decoupling audit
+**Status:** Phase 46 is complete. The phase inventories and classifies current
+Abacus references so Epsilon can move towards Epsilon-first public identity
+language without prematurely deleting or renaming fixture, exporter, parity
+ledger, or historical validation provenance. The authoritative tracked-file
+inventory records 172 files and 1821 matches, excluding `Manifest.toml`, `.jls`
+artifacts, and the Phase 46 plan itself. No runtime, example, benchmark, smoke,
+full suite, release, runtime-source, dependency, manifest, model-semantics, or
+parity-status changes were made.
 
 Phase 40 is complete. It reconciled `.planning/PROJECT.md`,
 `.planning/ROADMAP.md`, `.planning/STATE.md`, and its own phase plan so the
@@ -323,13 +320,13 @@ evidence, public dict/YAML parsing, and bounded time-series pipeline fitting
 are landed for both accepted calibration terms, but the wider Abacus
 calibration surface is not complete.
 **Last Activity:** 2026-07-19
-**Last Activity Description:** Phase 45 landed focused `test/api_exports.jl`
-guards for current-facing docs claim boundaries and recorded the future Abacus
-public-identity scrub as separate planned work. Scoped verification passed with
-`make test-file FILE=test/api_exports.jl` (`5583 / 5583`), plus formatter,
-whitespace, cached-whitespace, status, and changed-file allowlist checks.
+**Last Activity Description:** Phase 46 landed a reviewed planning-only
+Abacus-reference decoupling plan. The plan records a tracked-file inventory,
+classification contract, and future implementation sequence for public identity
+cleanup, while keeping actual scrubbing, fixture renames, exporter changes, and
+parity-ledger renames out of scope.
 **Progress:** 100%
-**Paused At:** `.planning/phases/45-current-docs-claim-guard/PLAN.md`
+**Paused At:** `.planning/phases/46-abacus-reference-decoupling/PLAN.md`
 
 ## Performance Metrics
 
@@ -386,9 +383,10 @@ whitespace, cached-whitespace, status, and changed-file allowlist checks.
 | 43 | 1/1 | Completed | canonical supported local workflow runbook landed with docs navigation and example README links |
 | 44 | 1/1 | Completed | current-facing docs reconciled with Phase 43 state without runtime or release-surface changes |
 | 45 | 1/1 | Completed | focused current-docs claim guard landed; future Abacus-reference decoupling noted as separate identity work |
+| 46 | 1/1 | Completed | tracked-file inventory and classification plan landed for future Epsilon-first public identity cleanup |
 
 **Recent Trend:**
-- Last 5 completed phases: 41, 42, 43, 44, 45.
+- Last 5 completed phases: 42, 43, 44, 45, 46.
 - Trend: the recent work narrowed rather than widened the library contract.
   Phase 41 made the supported-path sidecar
   output contract more inspectable and better tested. Phase 42 guarded
@@ -397,6 +395,9 @@ whitespace, cached-whitespace, status, and changed-file allowlist checks.
   reconciled current-facing docs so they no longer point future work at stale
   Phase 12/40 status. Phase 45 added a focused guard over those claims rather
   than another docs rewrite.
+  Phase 46 converted the Abacus public-identity concern into a reviewed
+  tracked-file inventory and future rewrite plan, without touching runtime or
+  validation provenance.
 
 ## Decisions Made
 
@@ -476,11 +477,15 @@ whitespace, cached-whitespace, status, and changed-file allowlist checks.
 - Phase 45 is complete; current-docs claim guards are in
   `test/api_exports.jl`. Keep this lane focused on current support, release,
   VI, local-workflow evidence, and trusted-local artifact wording.
-- Future independent-identity work is needed: Epsilon should eventually scrub
-  or reframe public Abacus mentions and stand on its own as a unique MMM
-  library. Do this under a separate reviewed plan that replaces the current
-  reference-led validation narrative before removing provenance, fixture, or
-  ledger language.
+- Phase 46 is complete as that separate reviewed plan: classify public identity
+  language, public evidence boundaries, internal validation provenance,
+  historical planning records, API/test implementation details, and dead
+  scaffolding before any Abacus-reference scrub. It is now complete.
+- Recommended next identity slice: create Phase 47 for the first bounded public
+  docs rewrite over `README.md`, selected `docs/src/*.md`, selected example
+  READMEs, `CONTRIBUTING.md`, `TECHNICAL-STANDARDS.md`, planning hooks, and a
+  focused `test/api_exports.jl` guard. Do not rename fixtures, generated
+  constants, exporter scripts, or `.planning/ABACUS-PARITY-LEDGER.md` there.
 - HSGP/TVP broader support remains bounded: Phase 36/37 cover only the
   TimeSeriesMMM shared-media multiplier and retained-grid contribution replay.
   Do not add new HSGP/TVP config, prediction, panel, curve, metric, optimization,
@@ -530,10 +535,12 @@ whitespace, cached-whitespace, status, and changed-file allowlist checks.
 - Phase 43 added the canonical supported local workflow runbook and cross-links.
 - Phase 44 reconciled current-facing docs after Phase 43.
 - Phase 45 added focused guards for current-facing docs claims.
+- Phase 46 landed the Abacus-reference decoupling plan.
 
 ## Session
 
 **Last Date:** 2026-07-19
-**Stopped At:** Phase 45 is complete. Choose the next bounded slice from the
-reconciled roadmap/state, with plan/review before implementation.
-**Resume File:** `.planning/phases/45-current-docs-claim-guard/PLAN.md`
+**Stopped At:** Phase 46 is complete. The next recommended slice is a reviewed
+Phase 47 public identity rewrite plan using the Phase 46 classification
+contract.
+**Resume File:** `.planning/phases/46-abacus-reference-decoupling/PLAN.md`
