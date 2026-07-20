@@ -157,6 +157,7 @@ end
         @test occursin("Config", output)
         @test occursin("Output root", output)
         @test occursin("Quick mode", output)
+        @test occursin("Julia threads", output)
         @test occursin("Plots        : enabled (PNG)", output)
         @test occursin("RUNNING", output)
         @test occursin("DONE", output)

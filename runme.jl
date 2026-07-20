@@ -201,6 +201,7 @@ function _runme_print_context(io::IO, config_path::AbstractString, plan, plot_st
     println(io, "Output root  : $(plan.output_dir)")
     println(io, "Run name     : $(plan.run_name)")
     println(io, "Quick mode   : $(plan.quick ? "yes" : "no")")
+    println(io, "Julia threads: $(Base.Threads.nthreads())")
     println(io, "Plots        : $(plot_status)")
     println(io, "Data bundle  : dataset.csv and holidays.csv are resolved from the config")
     println(io, repeat("=", 72))
