@@ -10,6 +10,9 @@
 # Local run outputs
 /results/
 
+# Local planning state
+/.planning/
+
 # Local agent state
 /AGENTS.md
 /.codex/
