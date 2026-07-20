@@ -30,10 +30,10 @@ Supported adstock families in the maintained model path are:
 
 | Type | Lag weights |
 |---|---|
-| `none` | `A_j(x)_t = x_{t,j}` |
-| `geometric` | `w_{\ell} = \alpha^\ell` |
-| `delayed` | `w_{\ell} = \alpha^{(\ell - \theta)^2}` |
-| `binomial` | `w_{\ell} = (1 - \ell / (L + 1))^{1 / \alpha - 1}` |
+| `none` | $A_j(x)_t = x_{t,j}$ |
+| `geometric` | $w_{\ell} = \alpha^\ell$ |
+| `delayed` | $w_{\ell} = \alpha^{(\ell - \theta)^2}$ |
+| `binomial` | $w_{\ell} = (1 - \ell / (L + 1))^{1 / \alpha - 1}$ |
 | `weibull_pdf` | Weibull-PDF-shaped finite-lag kernel |
 | `weibull_cdf` | Weibull-survival-style finite-lag kernel with a leading self-retention term |
 
@@ -50,11 +50,11 @@ Supported saturation families in the maintained model path are:
 
 | Type | Functional form |
 |---|---|
-| `none` | `S(x) = x` |
-| `logistic` | `S(x; \lambda) = \tanh(\lambda x / 2)` |
-| `tanh` | `S(x; b, c) = b \tanh(x / (bc))` |
-| `michaelis_menten` | `S(x; a, \lambda) = ax / (\lambda + x)` |
-| `hill` | `S(x; s, \kappa) = 1 - \kappa^s / (\kappa^s + x^s)` |
+| `none` | $S(x) = x$ |
+| `logistic` | $S(x; \lambda) = \tanh(\lambda x / 2)$ |
+| `tanh` | $S(x; b, c) = b \tanh(x / (bc))$ |
+| `michaelis_menten` | $S(x; a, \lambda) = ax / (\lambda + x)$ |
+| `hill` | $S(x; s, \kappa) = 1 - \kappa^s / (\kappa^s + x^s)$ |
 
 Media spend must be nonnegative at public model boundaries. The low-level tanh
 primitive can accept signed values, but the MMM media path treats negative
@@ -110,7 +110,7 @@ The practical checks are:
 
 - inspect the posterior for the saturation parameter,
 - compare observed spend with the grid range used by the response plot,
-- check whether the channel was scaled to a range where `\lambda x` remains
+- check whether the channel was scaled to a range where $\lambda x$ remains
   small,
 - compare marginal response curves, not just total response curves.
 
