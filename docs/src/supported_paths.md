@@ -94,6 +94,16 @@ the validation run is a workflow check rather than the primary inferential run.
 Reducing runtime for larger MCMC runs is one of the current engineering
 priorities for the library.
 
+For local profiling of the main fit only, use:
+
+```bash
+make profile-fit PROFILE_FIT_FLAGS="data/demo/timeseries/config.yml --draws 20 --tune 20 --chains 1 --cores 1"
+```
+
+This writes timing summaries and an optional Julia profile tree under
+`results/performance/`. It is intended for local performance diagnosis, not as
+a statistical adequacy run.
+
 ## Trusted-Local Artifacts
 
 Pipeline runs write structured stage directories under `results/` or the
