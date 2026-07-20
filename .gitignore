@@ -8,7 +8,11 @@
 /docs/Manifest.toml
 
 # Local run outputs
-#/results/
+/results/*
+!/results/canonical_demo_geo_panel_20260720_094259/
+!/results/canonical_demo_geo_panel_20260720_094259/**
+!/results/canonical_demo_timeseries_20260720_093619/
+!/results/canonical_demo_timeseries_20260720_093619/**
 
 # Local planning state
 /.planning/
