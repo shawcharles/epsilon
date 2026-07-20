@@ -68,6 +68,29 @@ no optimisation artifacts were produced.
 For programmatic use, call `run_pipeline(PipelineRunConfig(...))` directly. The
 runner is only a convenience control plane over the same pipeline path.
 
+## Runtime Expectations
+
+MCMC runtime depends on the machine, Julia thread count, sampler settings,
+model geometry, validation settings, and whether plots are enabled. The runner
+prints `Julia threads: N` in its startup context; use a threaded Julia process
+when running multiple chains, for example:
+
+```bash
+JULIA_NUM_THREADS=4 julia --project=. runme.jl path/to/config.yml
+```
+
+As a local reference point, a six-channel time-series model with
+`draws=3000`, `tune=2000`, and `chains=4` currently takes approximately:
+
+- **34 minutes** for the main fit and deterministic post-fit pipeline with
+  validation disabled,
+- **62 minutes** for the full pipeline when blocked holdout validation is
+  enabled, because validation currently performs a second model fit.
+
+These figures are approximate local timings, not a performance guarantee.
+Reducing runtime for larger MCMC runs is one of the current engineering
+priorities for the library.
+
 ## Trusted-Local Artifacts
 
 Pipeline runs write structured stage directories under `results/` or the
