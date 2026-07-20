@@ -55,6 +55,8 @@ See [Supported Local Workflows](supported_paths.md) for the full runbook,
 compact output inspection, trusted-local artifact roundtrips, and smoke
 commands.
 
+See [Configuration](configuration.md) for the supported YAML structure.
+
 For the fitted regression structure and media-response equations, see
 [Model Form](methodology/model.md) and
 [Media Transforms](methodology/media_transforms.md).
