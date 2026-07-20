@@ -1,29 +1,27 @@
+# Julia package state
 /Manifest.toml
+/LocalPreferences.toml
+
+# Documentation builds
 /docs/build/
 /docs/site/
 /docs/Manifest.toml
-/benchmark/results/
+
+# Local run outputs
+/results/
+
+# Local agent and planning state
+/.planning/
+/AGENTS.md
+/.codex/
+/.agents/
+
+# Coverage and profiling artifacts
 *.jl.cov
 *.jl.*.cov
 *.jl.mem
+
+# Tool and OS noise
 .DS_Store
-/LocalPreferences.toml
-
-/.planning/*
-!/.planning/*.md
-!/.planning/config.json
-!/.planning/prompts/
-!/.planning/prompts/*.md
-!/.planning/reviews/
-!/.planning/reviews/*.md
-!/.planning/phases/
-!/.planning/phases/**/
-!/.planning/phases/**/PLAN.md
-!/.planning/phases/**/.gitkeep
-
-AGENTS.md
-
-/scripts/*
-!/scripts/smoke_supported_paths.sh
-
 graphify-out/
+scripts/__pycache__/

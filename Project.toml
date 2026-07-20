@@ -1,6 +1,6 @@
 name = "Epsilon"
 uuid = "33b2dd05-ff3d-4242-aa99-18d797ba20c2"
-version = "0.1.0-dev"
+version = "0.1.0-beta.1"
 authors = ["Epsilon contributors"]
 
 [deps]

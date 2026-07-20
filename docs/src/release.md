@@ -1,8 +1,8 @@
 # Support Boundaries
 
-This page defines the current public support boundaries for Epsilon. It is not
-a release certification page. Epsilon is still on the `0.1.0-dev` line, so the
-supported surface is intentionally narrower than the full public export list.
+This page defines the current public support boundaries for Epsilon. The
+`0.1.0-beta.1` support surface is intentionally narrower than the full public
+export list.
 
 ## Supported
 

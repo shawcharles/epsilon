@@ -35,7 +35,6 @@ const API_EXPORTS_PUBLIC_IDENTITY_GUARD_PATHS = Dict(
     "release gate" => joinpath(@__DIR__, "..", "docs", "src", "release.md"),
     "api docs" => joinpath(@__DIR__, "..", "docs", "src", "api.md"),
     "calibration docs" => joinpath(@__DIR__, "..", "docs", "src", "calibration.md"),
-    "benchmark docs" => joinpath(@__DIR__, "..", "docs", "src", "benchmarks.md"),
     "supported paths" => joinpath(@__DIR__, "..", "docs", "src", "supported_paths.md"),
     "demo index" => joinpath(@__DIR__, "..", "data", "demo", "README.md"),
     "timeseries demo" => joinpath(@__DIR__, "..", "data", "demo", "timeseries", "README.md"),

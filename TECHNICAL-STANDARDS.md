@@ -1,142 +1,125 @@
 # Technical Standards
 
-This document sets the engineering baseline for `Epsilon.jl`. The goal is a
-codebase that feels like a serious Julia package for scientific computing.
+This document defines the public engineering baseline for `Epsilon.jl`. It is
+kept at the repository root so contributors can see the package standards
+before opening code, documentation, or release changes.
 
-## Decisions
+## Scope
 
-### 1. Style Guide Baseline
+Epsilon is a Julia-native Bayesian marketing mix modelling library. The package
+focuses on local, config-driven MMM workflows, structured analysis artifacts,
+and plain Julia APIs.
 
-Yes: we should adopt the official Julia style guide as the foundation and use the
-SciML Style Guide as the operational default for day-to-day code review.
+Epsilon does not ship a dashboard, hosted UI, AI advisor, or variational
+inference path. The maintained fitting backend is Turing/NUTS MCMC.
 
-That gives us two useful properties:
+## Style And Formatting
 
-- Julia-manual compatibility for broad ecosystem conventions.
-- SciML-grade discipline for scientific and numerically sensitive code.
+- Follow the Julia manual style guide and SciML style guide where they apply.
+- Use `Runic.jl` for Julia source formatting.
+- Prefer readable, type-stable Julia over clever compactness.
+- Keep comments short and reserve them for non-obvious intent.
 
-When the two are both silent, we optimize for readability, type stability, and
-maintainability over cleverness.
+Run formatting checks locally:
 
-### 2. Formatting
+```bash
+make format-check
+```
 
-We will use `Runic.jl` as the enforced formatter.
-
-Rationale:
-
-- It is the formatter recommended by the current SciML Style Guide.
-- Zero-configuration formatting reduces repository-level style drift.
-- Local formatting checks avoid debating whitespace in reviews.
-
-### 3. Naming and API Conventions
+## Naming And API Design
 
 - Modules, structs, and abstract types use `CamelCase`.
 - Functions and variables use `snake_case`.
 - Mutating functions end in `!`.
 - Abstract types begin with `Abstract`.
-- Internal APIs stay unexported until intentionally promoted.
+- Internal APIs stay unexported until deliberately promoted.
 - Avoid type piracy.
+- Keep the public API small, documented, and stable enough for real users.
 
-### 4. Package Structure
+## Repository Layout
 
-The package follows the standard Julia library layout:
+- `Project.toml` is the package manifest with tight `[compat]` bounds.
+- `src/Epsilon.jl` is the package entry point.
+- `test/` contains focused unit, integration, and workflow tests.
+- `docs/` contains the Documenter.jl source.
+- `data/demo/` contains maintained demo datasets and configs.
+- `scripts/` contains local maintenance scripts.
 
-- `Project.toml` at the root with tight `[compat]` bounds.
-- `src/Epsilon.jl` as the only package entry point.
-- `test/` for unit, integration, and parity checks.
-- `docs/` for `Documenter.jl`.
-- `benchmark/` for performance tracking.
-- `.planning/` for project-management artifacts, not user documentation.
+Generated model outputs belong under a user-selected output directory, not in
+package source.
 
-We will not write package state into the repository or package directory at
-runtime. Generated outputs belong in user-specified locations.
+## Dependencies
 
-### 5. Dependency Policy
+- Prefer Julia stdlib functionality before adding dependencies.
+- Every non-trivial dependency must have a clear owner and purpose.
+- Add or update `[compat]` bounds with dependency changes.
+- Keep the core package lean; optional feature surfaces should use extensions
+  where practical.
 
-- Prefer stdlib before adding third-party packages.
-- Every non-trivial dependency must have a clear architectural owner.
-- Add tight `[compat]` bounds from the start.
-- Keep the main package lean; optional features can become extensions later.
+## Testing
 
-### 6. Testing Standard
+- Every public feature needs behaviour-focused tests.
+- Randomised tests must set explicit seeds.
+- `test/runtests.jl` should stay thin and delegate to focused test files.
+- `Aqua.jl` and `Documenter.doctest` are part of the local quality gate.
+- Use scoped checks for routine work; reserve full-suite checks for broad
+  release, namespace, or cross-subsystem changes.
 
-- Every public feature gets tests.
-- Statistical behavior gets comparison tests against committed reference
-  fixtures where the semantics of the Epsilon surface and the reference
-  implementation genuinely match.
-- `runtests.jl` stays thin and delegates to focused test files.
-- `Aqua.jl` is part of the default quality gate.
-- `Documenter.doctest` is part of the test suite for public examples.
-- Randomized tests must set explicit seeds.
+Useful local commands:
 
-Once the test suite grows, group files by package layer:
+```bash
+make smoke
+make test-file FILE=test/api_exports.jl
+make test-model
+make docs
+```
 
-- `test/transforms/`
-- `test/distributions/`
-- `test/model/`
-- `test/mmm/`
-- `test/inference/`
-- `test/postmodel/`
-- `test/optimization/`
-- `test/pipeline/`
+## Numerics And Modelling
 
-### 7. Documentation Standard
-
-- Every exported symbol needs a docstring.
-- Usage examples should be runnable `jldoctest` blocks where practical.
-- Architecture decisions belong in `.planning/`, not scattered across PR threads.
-- Any public behavior change must update docs in the same change.
-
-### 8. Quality Gate Standard
-
-Required local quality-gate checks:
-
-- `make check` for routine scoped iteration: touched-file Runic formatting plus
-  the current high-churn model-layer test lane.
-- `make check-optimization`, `make check-validation`, or another focused test
-  lane when the active slice touches those subsystems.
-- `make check-full` before phase-closing checkpoint commits, shared namespace or
-  export-surface changes, and final pre-merge confirmation. This runs
-  touched-file Runic formatting, the full `Pkg.test()` suite, Aqua quality
-  checks, doctests, and docs build.
-- `make check-release` for the stricter release gate once repo-wide Runic drift
-  has been cleared. This adds the repo-wide `make format-check` requirement to
-  the full test/docs gate.
-
-Deferred until the model core exists:
-
-- JET static analysis
-- benchmark regression tracking
-- code coverage thresholds
-
-### 9. Performance and Numerical Rules
-
-- Prefer generic code over concrete `Array`-only APIs unless profiling proves
-  otherwise.
+- Prefer generic array code unless profiling justifies narrower types.
 - Keep hot-path functions type-stable.
-- Avoid mutation in autodiff-sensitive transforms unless we have proof it is safe.
-- Benchmark before micro-optimizing.
-- Honest numerical comparison against reference fixtures is more important than
-  aesthetic refactors, but methodological coherence wins if literal upstream
-  fidelity would produce a weaker or less truthful bounded design.
+- Validate finite inputs and domain constraints at public boundaries.
+- Be careful with mutation in autodiff-sensitive code.
+- Preserve methodological coherence over convenience when API and statistical
+  design choices conflict.
+- Benchmark before micro-optimising, and treat local timing results as
+  environment-specific engineering evidence.
 
-### 10. Configuration and Reproducibility
+## Configuration And Artifacts
 
-- YAML remains the external configuration format for migration compatibility.
-- Config schemas must be versioned once they become user-facing.
-- Example configs and fixtures should be committed and used in tests.
-- Minimum supported Julia version is `1.10`.
+- YAML is the supported external configuration format.
+- Config schemas should fail clearly on unsupported keys or invalid values.
+- CSV demo data and holidays files should remain small, inspectable, and
+  suitable for local smoke tests.
+- Julia `.jls` artifacts are trusted-local serialisation outputs, not portable
+  interchange files and not safe to load from untrusted sources.
+
+## Release Checks
+
+Before a public release candidate, run the relevant local gates:
+
+```bash
+make format-check
+make smoke
+make docs
+```
+
+Use the full test suite only for final release confirmation or changes with
+plausible cross-file effects:
+
+```bash
+make test
+```
 
 ## Short Version
 
-If a reviewer asks whether a change is "the Epsilon way", the default checks are:
+When reviewing an Epsilon change, ask:
 
 1. Is it idiomatic Julia?
-2. Does it follow SciML-style naming and structure?
-3. Is it testable and autodiff-safe?
-4. Does it preserve or improve methodological coherence, and is any reference
-   comparison claim still honest?
-5. Is the public API still small and intentional?
+2. Is the public API still small and intentional?
+3. Is the behaviour documented and tested?
+4. Is it autodiff-safe and numerically guarded?
+5. Does it improve or preserve methodological coherence?
 
 ## References
 
@@ -145,4 +128,3 @@ If a reviewer asks whether a change is "the Epsilon way", the default checks are
 - Pkg package creation guidance: <https://pkgdocs.julialang.org/v1/creating-packages/>
 - Documenter.jl: <https://documenter.juliadocs.org/stable/>
 - Aqua.jl: <https://juliatesting.github.io/Aqua.jl/v0.8/>
-- JET.jl: <https://aviatesk.github.io/JET.jl/stable/>
