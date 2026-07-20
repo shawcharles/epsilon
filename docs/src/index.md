@@ -150,6 +150,10 @@ cost-per-target soft penalties. See [Calibration](calibration.md).
 The statistical model is documented in [Model Form](methodology/model.md).
 The adstock, saturation, contribution, and response-curve mechanics are
 documented in [Media Transforms](methodology/media_transforms.md).
+Scaling and prior interpretation are documented in
+[Scaling And Priors](methodology/scaling_and_priors.md). Post-fit summaries,
+curves, decomposition, and efficiency metrics are documented in
+[Post-Model Quantities](methodology/post_model_quantities.md).
 
 ## API Reference
 

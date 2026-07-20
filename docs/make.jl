@@ -15,6 +15,8 @@ makedocs(
         "Methodology" => [
             "Model Form" => "methodology/model.md",
             "Media Transforms" => "methodology/media_transforms.md",
+            "Scaling And Priors" => "methodology/scaling_and_priors.md",
+            "Post-Model Quantities" => "methodology/post_model_quantities.md",
         ],
         "Public API" => "api.md",
         "Calibration" => "calibration.md",
