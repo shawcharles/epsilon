@@ -12,6 +12,10 @@ makedocs(
     pages = [
         "Home" => "index.md",
         "Supported Local Workflows" => "supported_paths.md",
+        "Methodology" => [
+            "Model Form" => "methodology/model.md",
+            "Media Transforms" => "methodology/media_transforms.md",
+        ],
         "Public API" => "api.md",
         "Calibration" => "calibration.md",
         "Support Boundaries" => "release.md",

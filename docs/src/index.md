@@ -55,6 +55,10 @@ See [Supported Local Workflows](supported_paths.md) for the full runbook,
 compact output inspection, trusted-local artifact roundtrips, and smoke
 commands.
 
+For the fitted regression structure and media-response equations, see
+[Model Form](methodology/model.md) and
+[Media Transforms](methodology/media_transforms.md).
+
 ## Programmatic Entry Point
 
 ```julia
@@ -140,6 +144,12 @@ remain available.
 Calibration support is intentionally bounded. The currently supported slice is
 time-series MCMC calibration through centered-logistic lift-test terms and
 cost-per-target soft penalties. See [Calibration](calibration.md).
+
+## Methodology
+
+The statistical model is documented in [Model Form](methodology/model.md).
+The adstock, saturation, contribution, and response-curve mechanics are
+documented in [Media Transforms](methodology/media_transforms.md).
 
 ## API Reference
 
