@@ -1,7 +1,7 @@
 name = "Epsilon"
 uuid = "33b2dd05-ff3d-4242-aa99-18d797ba20c2"
 version = "0.1.0-beta.1"
-authors = ["Epsilon contributors"]
+authors = ["Charles Shaw <charles@charlesshaw.net>"]
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"

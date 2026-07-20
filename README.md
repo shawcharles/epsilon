@@ -230,3 +230,10 @@ well-defined.
 
 Unsupported or deferred areas are rejected or marked explicitly rather than
 silently approximated.
+
+## Authorship And Licence
+
+Epsilon is authored by Charles Shaw <charles@charlesshaw.net>.
+
+Copyright 2026 Charles Shaw. Licensed under the Apache License, Version 2.0;
+see `LICENSE` and `NOTICE`.
