@@ -284,6 +284,12 @@ end
         @test isfile(holdout_residuals_acf_path)
         @test !isfile(holdout_summary_path)
         @test isfile(holdout_plot_path)
+        validation_metadata = JSON3.read(read(validation_metadata_path, String))
+        @test validation_metadata.sampler_draws == 5
+        @test validation_metadata.sampler_tune == 5
+        @test validation_metadata.sampler_chains == 1
+        @test validation_metadata.sampler_cores == 1
+        @test validation_metadata.sampler_random_seed == 17
         @test isfile(contribution_results_path)
         @test isfile(decomposition_results_path)
         @test isfile(contribution_summary_path)

@@ -602,7 +602,12 @@ function _run_validation_stage!(context::PipelineContext)
     data = _require_pipeline_data(context, "validation")
     holdout_rows = Int(context.validation_config["holdout_rows"])
     train_data, holdout_data = _split_validation_datasets(data, holdout_rows)
-    validation_model = TimeSeriesMMM(context.model_config, context.sampler_config, train_data)
+    validation_sampler_config = get(
+        context.validation_config,
+        "sampler_config",
+        context.sampler_config,
+    )
+    validation_model = TimeSeriesMMM(context.model_config, validation_sampler_config, train_data)
     state = fit!(validation_model)
     predictive = predict(validation_model, holdout_data)
     predictive_matrix = _target_draw_matrix(predictive, nobs(holdout_data))
@@ -648,6 +653,15 @@ function _run_validation_stage!(context::PipelineContext)
             "train_date_end" => validation_result.train_date_end,
             "holdout_date_start" => validation_result.holdout_date_start,
             "holdout_date_end" => validation_result.holdout_date_end,
+            "sampler_draws" => validation_sampler_config.draws,
+            "sampler_tune" => validation_sampler_config.tune,
+            "sampler_chains" => validation_sampler_config.chains,
+            "sampler_cores" => validation_sampler_config.cores,
+            "sampler_target_accept" => validation_sampler_config.target_accept,
+            "sampler_random_seed" => validation_sampler_config.random_seed,
+            "sampler_progressbar" => validation_sampler_config.progressbar,
+            "sampler_compute_convergence_checks" =>
+                validation_sampler_config.compute_convergence_checks,
         ),
     )
     _write_pipeline_serialized(

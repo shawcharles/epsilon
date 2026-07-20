@@ -77,6 +77,14 @@ holidays:
 validation:
   enabled: true
   holdout_rows: 8
+  sampler:
+    tune: 20
+    draws: 20
+    chains: 1
+    cores: 1
+    random_seed: 43
+    progressbar: false
+    compute_convergence_checks: false
 
 optimization:
   enabled: false

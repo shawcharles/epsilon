@@ -72,6 +72,16 @@ end
     @test loaded.sampler_config.draws == 250
     @test loaded.validation_config["enabled"] == true
     @test loaded.validation_config["holdout_rows"] == 4
+    @test loaded.validation_config["sampler_config"] == SamplerConfig(
+        draws = 5,
+        tune = 5,
+        chains = 1,
+        cores = 1,
+        target_accept = loaded.sampler_config.target_accept,
+        random_seed = 17,
+        progressbar = loaded.sampler_config.progressbar,
+        compute_convergence_checks = loaded.sampler_config.compute_convergence_checks,
+    )
     @test loaded.prior_sensitivity_config["enabled"] == true
     @test loaded.prior_sensitivity_config["scenario_policy"] == "manual"
     @test loaded.prior_sensitivity_config["reference"] == "reference"
@@ -347,6 +357,84 @@ end
         )
         @test_throws ArgumentError Epsilon._load_pipeline_configuration(
             PipelineRunConfig(config_path = typo_path),
+        )
+
+        invalid_validation_sampler_path = joinpath(tmpdir, "invalid_validation_sampler.yml")
+        write(
+            invalid_validation_sampler_path,
+            """
+            data:
+              date_column: date
+              dataset_path: data.csv
+            target:
+              column: revenue
+            media:
+              channels: [tv]
+            fit:
+              draws: 10
+              tune: 10
+              chains: 2
+              cores: 2
+            validation:
+              enabled: true
+              holdout_rows: 4
+              sampler: light
+            """,
+        )
+        @test_throws ModelConfigError Epsilon._load_pipeline_configuration(
+            PipelineRunConfig(config_path = invalid_validation_sampler_path),
+        )
+
+        invalid_validation_sampler_typo_path =
+            joinpath(tmpdir, "invalid_validation_sampler_typo.yml")
+        write(
+            invalid_validation_sampler_typo_path,
+            """
+            data:
+              date_column: date
+              dataset_path: data.csv
+            target:
+              column: revenue
+            media:
+              channels: [tv]
+            validation:
+              enabled: true
+              holdout_rows: 4
+              sampler:
+                draw: 3
+            """,
+        )
+        @test_throws ArgumentError Epsilon._load_pipeline_configuration(
+            PipelineRunConfig(config_path = invalid_validation_sampler_typo_path),
+        )
+
+        invalid_validation_sampler_key_path =
+            joinpath(tmpdir, "invalid_validation_sampler_key.yml")
+        write(
+            invalid_validation_sampler_key_path,
+            """
+            data:
+              date_column: date
+              dataset_path: data.csv
+            target:
+              column: revenue
+            media:
+              channels: [tv]
+            fit:
+              draws: 10
+              tune: 10
+              chains: 2
+              cores: 2
+            validation:
+              enabled: true
+              holdout_rows: 4
+              sampler:
+                draws: 3
+                backend: vi
+            """,
+        )
+        @test_throws ArgumentError Epsilon._load_pipeline_configuration(
+            PipelineRunConfig(config_path = invalid_validation_sampler_key_path),
         )
 
         unsupported_prior_path = joinpath(tmpdir, "unsupported_prior.yml")

@@ -20,6 +20,6 @@ With no arguments, `runme.jl` uses this bundle and quick local settings:
 julia --project=. runme.jl
 ```
 
-The default config enables time-series holdout validation and disables budget
-optimisation. To run optimisation, add an explicit Epsilon-native
-`optimization.total_budget` block.
+The default config enables time-series holdout validation with a lighter
+validation sampler, and disables budget optimisation. To run optimisation, add
+an explicit Epsilon-native `optimization.total_budget` block.

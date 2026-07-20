@@ -27,6 +27,12 @@ fit:
 validation:
   enabled: true
   holdout_rows: 4
+  sampler:
+    draws: 5
+    tune: 5
+    chains: 1
+    cores: 1
+    random_seed: 17
 
 prior_sensitivity:
   enabled: true

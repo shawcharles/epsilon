@@ -333,10 +333,20 @@ Time-series blocked holdout validation is a runner-stage setting:
 validation:
   enabled: true
   holdout_rows: 8
+  sampler:
+    draws: 250
+    tune: 250
+    chains: 1
+    cores: 1
+    progressbar: false
+    compute_convergence_checks: false
 ```
 
-When enabled, `holdout_rows` must be a positive integer. Panel holdout
-validation is outside the maintained support surface.
+When enabled, `holdout_rows` must be a positive integer. The optional
+`validation.sampler` block accepts the same MCMC keys as `fit` and inherits
+any omitted values from the main fit. This lets holdout validation use a lighter
+refit than the main model. Panel holdout validation is outside the maintained
+support surface.
 
 ## Prior Sensitivity
 

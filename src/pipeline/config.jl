@@ -82,7 +82,7 @@ const _PIPELINE_ALLOWED_FIT_KEYS = Set(
         "compute_convergence_checks",
     )
 )
-const _PIPELINE_ALLOWED_VALIDATION_KEYS = Set(("enabled", "holdout_rows"))
+const _PIPELINE_ALLOWED_VALIDATION_KEYS = Set(("enabled", "holdout_rows", "sampler"))
 const _PIPELINE_ALLOWED_OPTIMIZATION_KEYS = Set(
     (
         "enabled",
@@ -221,7 +221,8 @@ function _load_pipeline_configuration(config::PipelineRunConfig)
     sampler_config = sampler_config_from_dict(stripped)
     is_panel_config = !isempty(model_config.dims)
 
-    validation_config = is_panel_config ? nothing : _parse_pipeline_validation_config(resolved)
+    validation_config = is_panel_config ? nothing :
+        _parse_pipeline_validation_config(resolved, sampler_config)
     prior_sensitivity_config = _parse_pipeline_prior_sensitivity_config(resolved)
     optimization_config = if is_panel_config
         _parse_pipeline_panel_optimization_config(resolved)
@@ -345,7 +346,10 @@ function _validate_pipeline_fit_backend(fit_cfg::AbstractDict)
     return nothing
 end
 
-function _parse_pipeline_validation_config(config::Dict{String, Any})
+function _parse_pipeline_validation_config(
+        config::Dict{String, Any},
+        base_sampler_config::SamplerConfig,
+    )
     block = _lookup(config, :validation, nothing)
     isnothing(block) && return nothing
     block isa AbstractDict || throw(ModelConfigError("validation must be a mapping"))
@@ -356,7 +360,7 @@ function _parse_pipeline_validation_config(config::Dict{String, Any})
     isempty(extra) ||
         throw(
         ArgumentError(
-            "validation supports only enabled and holdout_rows in the bounded pipeline surface",
+            "validation supports only enabled, holdout_rows, and sampler in the bounded pipeline surface",
         ),
     )
 
@@ -374,9 +378,49 @@ function _parse_pipeline_validation_config(config::Dict{String, Any})
             throw(ArgumentError("validation.holdout_rows must be positive"))
     end
 
+    sampler = _lookup(block, :sampler, nothing)
+    validation_sampler_config = if isnothing(sampler)
+        base_sampler_config
+    else
+        sampler isa AbstractDict ||
+            throw(ModelConfigError("validation.sampler must be a mapping"))
+        _validate_pipeline_sampler_contract(sampler; path = "validation.sampler")
+        sampler_config_from_dict(
+            sampler;
+            defaults = _sampler_config_defaults_dict(base_sampler_config),
+        )
+    end
+
     return Dict{String, Any}(
         "enabled" => enabled,
         "holdout_rows" => isnothing(holdout_rows) ? nothing : Int(holdout_rows),
+        "sampler_config" => validation_sampler_config,
+    )
+end
+
+function _validate_pipeline_sampler_contract(sampler::AbstractDict; path::AbstractString)
+    sampler_keys = Set(String(key) for key in keys(sampler))
+    extra = setdiff(sampler_keys, _PIPELINE_ALLOWED_FIT_KEYS)
+    isempty(extra) ||
+        throw(
+        ArgumentError(
+            "$path does not support additional sampler keys in the bounded YAML surface: $(join(sort!(collect(extra)), ", "))",
+        ),
+    )
+    _validate_pipeline_fit_backend(sampler)
+    return nothing
+end
+
+function _sampler_config_defaults_dict(config::SamplerConfig)
+    return Dict{String, Any}(
+        "draws" => config.draws,
+        "tune" => config.tune,
+        "chains" => config.chains,
+        "cores" => config.cores,
+        "target_accept" => config.target_accept,
+        "random_seed" => config.random_seed,
+        "progressbar" => config.progressbar,
+        "compute_convergence_checks" => config.compute_convergence_checks,
     )
 end
 

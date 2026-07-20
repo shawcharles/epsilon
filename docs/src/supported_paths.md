@@ -85,9 +85,12 @@ As a local reference point, a six-channel time-series model with
 - **34 minutes** for the main fit and deterministic post-fit pipeline with
   validation disabled,
 - **62 minutes** for the full pipeline when blocked holdout validation is
-  enabled, because validation currently performs a second model fit.
+  enabled with the same sampler settings as the main fit, because validation
+  performs a second model fit.
 
 These figures are approximate local timings, not a performance guarantee.
+Use `validation.sampler` to give the holdout refit lighter MCMC settings when
+the validation run is a workflow check rather than the primary inferential run.
 Reducing runtime for larger MCMC runs is one of the current engineering
 priorities for the library.
 
