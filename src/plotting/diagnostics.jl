@@ -7,7 +7,7 @@ using Statistics
 Render a bounded posterior trace-plot figure for MCMC-backed grouped
 `InferenceResults`.
 
-This Phase 10 surface is supported only for Turing-backed MCMC artifacts.
+This surface is supported only for Turing-backed MCMC artifacts.
 """
 function trace_plot(
         results::InferenceResults;
@@ -64,7 +64,7 @@ end
 
 Render a bounded posterior-density figure for grouped `InferenceResults`.
 
-This Phase 10 surface requires grouped posterior draws on
+This surface requires grouped posterior draws on
 `InferenceResults.posterior` from a Turing-backed MCMC artifact.
 """
 function posterior_density_plot(
@@ -108,7 +108,7 @@ end
 Render a bounded prior-versus-posterior density overlay for one parameter from
 grouped `InferenceResults`.
 
-This Phase 10 surface requires both grouped posterior draws on
+This surface requires both grouped posterior draws on
 `InferenceResults.posterior` and grouped prior draws on `InferenceResults.prior`
 for the requested parameter.
 """
@@ -149,7 +149,7 @@ end
 Render the bounded observed-versus-fitted time-series diagnostic for grouped
 `InferenceResults`.
 
-This Phase 10 surface requires time-series grouped artifacts with
+This surface requires time-series grouped artifacts with
 `InferenceResults.observed_data::MMMData` and posterior predictive draws on
 `InferenceResults.posterior_predictive`.
 """
@@ -270,7 +270,7 @@ end
 
 Render the bounded residual-diagnostics figure for grouped `InferenceResults`.
 
-This Phase 10 surface requires the same time-series observed-data and posterior
+This surface requires the same time-series observed-data and posterior
 predictive contract as `observed_fitted_plot`.
 """
 function residual_diagnostics_plot(results::InferenceResults)
@@ -343,7 +343,7 @@ function _require_time_series_plot_results(
     results.spec.model_kind === :time_series_mmm ||
         throw(
         ArgumentError(
-            "$action currently supports only time-series grouped inference artifacts; panel plotting is not supported in the bounded Phase 10 surface",
+            "$action currently supports only time-series grouped inference artifacts; panel plotting is not supported in the bounded plotting surface",
         ),
     )
     results.observed_data isa MMMData ||

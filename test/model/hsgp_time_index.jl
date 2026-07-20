@@ -2,10 +2,10 @@ using Dates
 using Epsilon
 using Test
 
-include("../fixtures/abacus/hsgp_time_index_cases.jl")
+include("../fixtures/golden/hsgp_time_index_cases.jl")
 
-@testset "HSGP time-index parity" begin
-    for case in ABACUS_HSGP_TIME_INDEX_CASES
+@testset "HSGP time-index golden fixture" begin
+    for case in GOLDEN_HSGP_TIME_INDEX_CASES
         @testset "$(case.name)" begin
             if isnothing(case.expected_error)
                 actual = Epsilon._infer_hsgp_time_index(

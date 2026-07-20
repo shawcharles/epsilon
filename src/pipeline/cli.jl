@@ -6,7 +6,7 @@ Usage:
   epsilon --help
 
 Commands:
-  run      Execute the bounded Phase 9 pipeline on one YAML config.
+  run      Execute the pipeline on one YAML config.
 
 Flags:
   --output-dir <dir>
@@ -71,7 +71,7 @@ _pipeline_pretty_output_enabled() = _PIPELINE_PRETTY_OUTPUT[]
 """
     pipeline_main(args = ARGS)
 
-Run the bounded Phase 9 pipeline CLI.
+Run the Epsilon pipeline CLI.
 
 The current supported CLI surface is one thin command:
 

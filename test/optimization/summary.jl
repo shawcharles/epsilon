@@ -1,4 +1,4 @@
-include("../fixtures/abacus/optimization/cases.jl")
+include("../fixtures/golden/optimization/cases.jl")
 
 using Epsilon
 using Test
@@ -145,7 +145,7 @@ function _scaled_reference_spend(case)
     return (optimized_current ./ current_total) .* Float64(case.total_budget)
 end
 
-@testset "budget optimization summary projections follow truthful Phase 8 schemas" begin
+@testset "budget optimization summary projections follow public schemas" begin
     model = sample_time_series_model()
     fit!(model)
     grouped = _grouped_results_for_optimization(model)
@@ -201,11 +201,11 @@ end
     @test sum(audit.optimized_share) ≈ 1.0
 end
 
-@testset "optimization parity matches retained Abacus fixtures" begin
+@testset "optimization matches retained golden fixtures" begin
     atol = 1.0e-5
     rtol = 1.0e-5
 
-    for case in ABACUS_OPTIMIZATION_FIXTURES.cases
+    for case in GOLDEN_OPTIMIZATION_FIXTURES.cases
         @testset "$(case.name)" begin
             problem = _fixture_problem(case)
             result = Epsilon._solve_budget_optimization_problem(problem)

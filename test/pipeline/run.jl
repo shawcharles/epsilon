@@ -6,14 +6,14 @@ using JSON3
 using Test
 using YAML
 
-if !isdefined(@__MODULE__, :ABACUS_TIMESERIES_CONFIG_DATA)
-    include(joinpath(@__DIR__, "..", "fixtures", "abacus", "timeseries", "config_data.jl"))
+if !isdefined(@__MODULE__, :GOLDEN_TIMESERIES_CONFIG_DATA)
+    include(joinpath(@__DIR__, "..", "fixtures", "golden", "timeseries", "config_data.jl"))
 end
-if !isdefined(@__MODULE__, :ABACUS_GEO_PANEL_CONFIG_DATA)
-    include(joinpath(@__DIR__, "..", "fixtures", "abacus", "geo_panel", "config_data.jl"))
+if !isdefined(@__MODULE__, :GOLDEN_GEO_PANEL_CONFIG_DATA)
+    include(joinpath(@__DIR__, "..", "fixtures", "golden", "geo_panel", "config_data.jl"))
 end
-if !isdefined(@__MODULE__, :ABACUS_GEO_BRAND_PANEL_CONFIG_DATA)
-    include(joinpath(@__DIR__, "..", "fixtures", "abacus", "geo_brand_panel", "config_data.jl"))
+if !isdefined(@__MODULE__, :GOLDEN_GEO_BRAND_PANEL_CONFIG_DATA)
+    include(joinpath(@__DIR__, "..", "fixtures", "golden", "geo_brand_panel", "config_data.jl"))
 end
 
 const _PIPELINE_SUCCESS_SOLVER_STATUSES = Set(
@@ -24,7 +24,7 @@ const _PIPELINE_SUCCESS_SOLVER_STATUSES = Set(
         :almost_locally_solved,
     ]
 )
-const _PIPELINE_SUPPORTED_ABACUS_STAGES = Set(
+const _PIPELINE_SUPPORTED_GOLDEN_STAGES = Set(
     [
         "metadata",
         "prior_sensitivity",
@@ -38,8 +38,8 @@ const _PIPELINE_SUPPORTED_ABACUS_STAGES = Set(
         "optimisation",
     ]
 )
-const _PIPELINE_DEFERRED_ABACUS_STAGES = Set(["ai_advisor", "ai_diagnostics_advisor"])
-const _PIPELINE_PENDING_ABACUS_STAGES = Set(String[])
+const _PIPELINE_DEFERRED_GOLDEN_STAGES = Set(["ai_advisor", "ai_diagnostics_advisor"])
+const _PIPELINE_PENDING_GOLDEN_STAGES = Set(String[])
 
 _stage_record(result::PipelineRunResult, key::AbstractString) =
     only(filter(record -> record.key == key, result.stage_records))
@@ -52,7 +52,7 @@ function _duplicate_header_dataset(source_path::AbstractString, output_path::Abs
     return output_path
 end
 
-function _abacus_panel_pipeline_config(source_path::AbstractString, output_path::AbstractString)
+function _golden_panel_pipeline_config(source_path::AbstractString, output_path::AbstractString)
     config = YAML.load_file(source_path)
     fixture_dir = dirname(source_path)
     config["data"]["dataset_path"] = joinpath(fixture_dir, "dataset.csv")
@@ -360,38 +360,38 @@ end
         @test all(!haskey(scenario, "description") for scenario in llm_safe_manifest["scenarios"])
 
         manifest = JSON3.read(read(result.manifest_path, String))
-        abacus_contract = ABACUS_TIMESERIES_CONFIG_DATA.pipeline_contract
-        @test Set(keys(ABACUS_TIMESERIES_CONFIG_DATA.stage_directories)) ==
+        golden_contract = GOLDEN_TIMESERIES_CONFIG_DATA.pipeline_contract
+        @test Set(keys(GOLDEN_TIMESERIES_CONFIG_DATA.stage_directories)) ==
             union(
-            _PIPELINE_SUPPORTED_ABACUS_STAGES,
-            _PIPELINE_DEFERRED_ABACUS_STAGES,
-            _PIPELINE_PENDING_ABACUS_STAGES,
+            _PIPELINE_SUPPORTED_GOLDEN_STAGES,
+            _PIPELINE_DEFERRED_GOLDEN_STAGES,
+            _PIPELINE_PENDING_GOLDEN_STAGES,
         )
         for record in result.stage_records
-            @test record.directory == ABACUS_TIMESERIES_CONFIG_DATA.stage_directories[record.key]
+            @test record.directory == GOLDEN_TIMESERIES_CONFIG_DATA.stage_directories[record.key]
         end
-        @test Set(String.(keys(manifest["stages"]))) == _PIPELINE_SUPPORTED_ABACUS_STAGES
-        @test Set(abacus_contract.manifest_stage_artifact_keys["metadata"]) ⊆
+        @test Set(String.(keys(manifest["stages"]))) == _PIPELINE_SUPPORTED_GOLDEN_STAGES
+        @test Set(golden_contract.manifest_stage_artifact_keys["metadata"]) ⊆
             Set(keys(metadata_record.artifact_paths))
-        @test Set(abacus_contract.manifest_stage_artifact_keys["fit"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["fit"]) ⊆
             Set(keys(fit_record.artifact_paths))
-        @test Set(abacus_contract.manifest_stage_artifact_keys["assessment"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["assessment"]) ⊆
             Set(keys(assessment_record.artifact_paths))
-        @test Set(abacus_contract.manifest_stage_artifact_keys["validation"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["validation"]) ⊆
             Set(keys(validation_record.artifact_paths))
-        @test Set(abacus_contract.manifest_stage_artifact_keys["decomposition"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["decomposition"]) ⊆
             Set(keys(decomposition_record.artifact_paths))
-        @test Set(abacus_contract.manifest_stage_artifact_keys["diagnostics"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["diagnostics"]) ⊆
             Set(keys(diagnostics_record.artifact_paths))
-        @test Set(abacus_contract.manifest_stage_artifact_keys["curves"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["curves"]) ⊆
             Set(keys(curves_record.artifact_paths))
-        for filename in abacus_contract.artifact_files["metadata"]
+        for filename in golden_contract.artifact_files["metadata"]
             @test isfile(joinpath(result.run_dir, "00_run_metadata", filename))
         end
-        for key in abacus_contract.manifest_stage_artifact_keys["fit"]
+        for key in golden_contract.manifest_stage_artifact_keys["fit"]
             @test isfile(joinpath(result.run_dir, fit_record.artifact_paths[key]))
         end
-        for key in abacus_contract.manifest_stage_artifact_keys["assessment"]
+        for key in golden_contract.manifest_stage_artifact_keys["assessment"]
             @test isfile(joinpath(result.run_dir, assessment_record.artifact_paths[key]))
         end
         for (record, stage) in (
@@ -400,7 +400,7 @@ end
                 (diagnostics_record, "diagnostics"),
                 (curves_record, "curves"),
             )
-            for key in abacus_contract.manifest_stage_artifact_keys[stage]
+            for key in golden_contract.manifest_stage_artifact_keys[stage]
                 @test isfile(joinpath(result.run_dir, record.artifact_paths[key]))
             end
         end
@@ -662,12 +662,12 @@ end
     end
 end
 
-@testset "run_pipeline executes geo_panel Stage 00/20/30/40/50/60 panel parity" begin
-    fixture = ABACUS_GEO_PANEL_CONFIG_DATA
-    source_config = joinpath(@__DIR__, "..", "fixtures", "abacus", "geo_panel", "config.yml")
+@testset "run_pipeline executes geo_panel Stage 00/20/30/40/50/60 panel fixture coverage" begin
+    fixture = GOLDEN_GEO_PANEL_CONFIG_DATA
+    source_config = joinpath(@__DIR__, "..", "fixtures", "golden", "geo_panel", "config.yml")
 
     mktempdir() do tmpdir
-        config_path = _abacus_panel_pipeline_config(source_config, joinpath(tmpdir, "geo_panel.yml"))
+        config_path = _golden_panel_pipeline_config(source_config, joinpath(tmpdir, "geo_panel.yml"))
         result = run_pipeline(
             PipelineRunConfig(
                 config_path = config_path,
@@ -711,7 +711,7 @@ end
         end
 
         manifest = JSON3.read(read(result.manifest_path, String))
-        abacus_contract = fixture.pipeline_contract
+        golden_contract = fixture.pipeline_contract
         @test manifest["status"] == "completed"
         @test manifest["model_type"] == "PanelMMM"
         @test manifest["data"]["n_rows"] == fixture.nobs
@@ -719,34 +719,34 @@ end
         @test manifest["data"]["n_panels"] == fixture.npanels
         @test String.(manifest["data"]["panel_dims"]) == fixture.panel_dims
         @test String.(manifest["data"]["panel_names"]) == fixture.panel_names
-        @test Set(abacus_contract.manifest_stage_artifact_keys["metadata"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["metadata"]) ⊆
             Set(keys(metadata_record.artifact_paths))
-        @test Set(abacus_contract.manifest_stage_artifact_keys["fit"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["fit"]) ⊆
             Set(keys(fit_record.artifact_paths))
-        @test Set(abacus_contract.manifest_stage_artifact_keys["assessment"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["assessment"]) ⊆
             Set(keys(assessment_record.artifact_paths))
-        @test Set(abacus_contract.manifest_stage_artifact_keys["decomposition"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["decomposition"]) ⊆
             Set(keys(decomposition_record.artifact_paths))
-        @test Set(abacus_contract.manifest_stage_artifact_keys["diagnostics"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["diagnostics"]) ⊆
             Set(keys(diagnostics_record.artifact_paths))
-        @test Set(abacus_contract.manifest_stage_artifact_keys["curves"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["curves"]) ⊆
             Set(keys(curves_record.artifact_paths))
-        for filename in abacus_contract.artifact_files["metadata"]
+        for filename in golden_contract.artifact_files["metadata"]
             @test isfile(joinpath(result.run_dir, "00_run_metadata", filename))
         end
-        for key in abacus_contract.manifest_stage_artifact_keys["fit"]
+        for key in golden_contract.manifest_stage_artifact_keys["fit"]
             @test isfile(joinpath(result.run_dir, fit_record.artifact_paths[key]))
         end
-        for key in abacus_contract.manifest_stage_artifact_keys["assessment"]
+        for key in golden_contract.manifest_stage_artifact_keys["assessment"]
             @test isfile(joinpath(result.run_dir, assessment_record.artifact_paths[key]))
         end
-        for key in abacus_contract.manifest_stage_artifact_keys["decomposition"]
+        for key in golden_contract.manifest_stage_artifact_keys["decomposition"]
             @test isfile(joinpath(result.run_dir, decomposition_record.artifact_paths[key]))
         end
-        for key in abacus_contract.manifest_stage_artifact_keys["diagnostics"]
+        for key in golden_contract.manifest_stage_artifact_keys["diagnostics"]
             @test isfile(joinpath(result.run_dir, diagnostics_record.artifact_paths[key]))
         end
-        for key in abacus_contract.manifest_stage_artifact_keys["curves"]
+        for key in golden_contract.manifest_stage_artifact_keys["curves"]
             @test isfile(joinpath(result.run_dir, curves_record.artifact_paths[key]))
         end
 
@@ -1004,11 +1004,11 @@ end
 end
 
 @testset "run_pipeline executes geo_panel Stage 70 historical-share optimization" begin
-    fixture = ABACUS_GEO_PANEL_CONFIG_DATA
-    source_config = joinpath(@__DIR__, "..", "fixtures", "abacus", "geo_panel", "config.yml")
+    fixture = GOLDEN_GEO_PANEL_CONFIG_DATA
+    source_config = joinpath(@__DIR__, "..", "fixtures", "golden", "geo_panel", "config.yml")
 
     mktempdir() do tmpdir
-        config_path = _abacus_panel_pipeline_config(source_config, joinpath(tmpdir, "geo_panel_optimization.yml"))
+        config_path = _golden_panel_pipeline_config(source_config, joinpath(tmpdir, "geo_panel_optimization.yml"))
         config = YAML.load_file(config_path)
         optimized_channel = first(fixture.channel_columns)
         channel_index = findfirst(==(optimized_channel), fixture.channel_columns)
@@ -1040,8 +1040,8 @@ end
         optimisation_record = _stage_record(result, "optimisation")
         @test optimisation_record.status == :completed
 
-        abacus_contract = fixture.pipeline_contract
-        @test Set(abacus_contract.manifest_stage_artifact_keys["optimisation"]) ⊆
+        golden_contract = fixture.pipeline_contract
+        @test Set(golden_contract.manifest_stage_artifact_keys["optimisation"]) ⊆
             Set(keys(optimisation_record.artifact_paths))
         @test Set(
             [
@@ -1080,12 +1080,12 @@ end
     end
 end
 
-@testset "run_pipeline executes geo_brand_panel Stage 00/20/30/40/50/60 panel parity" begin
-    fixture = ABACUS_GEO_BRAND_PANEL_CONFIG_DATA
-    source_config = joinpath(@__DIR__, "..", "fixtures", "abacus", "geo_brand_panel", "config.yml")
+@testset "run_pipeline executes geo_brand_panel Stage 00/20/30/40/50/60 panel fixture coverage" begin
+    fixture = GOLDEN_GEO_BRAND_PANEL_CONFIG_DATA
+    source_config = joinpath(@__DIR__, "..", "fixtures", "golden", "geo_brand_panel", "config.yml")
 
     mktempdir() do tmpdir
-        config_path = _abacus_panel_pipeline_config(source_config, joinpath(tmpdir, "geo_brand_panel.yml"))
+        config_path = _golden_panel_pipeline_config(source_config, joinpath(tmpdir, "geo_brand_panel.yml"))
         result = run_pipeline(
             PipelineRunConfig(
                 config_path = config_path,
@@ -1129,7 +1129,7 @@ end
         end
 
         manifest = JSON3.read(read(result.manifest_path, String))
-        abacus_contract = fixture.pipeline_contract
+        golden_contract = fixture.pipeline_contract
         @test manifest["status"] == "completed"
         @test manifest["model_type"] == "PanelMMM"
         @test manifest["data"]["n_rows"] == fixture.nobs
@@ -1137,34 +1137,34 @@ end
         @test manifest["data"]["n_panels"] == fixture.npanels
         @test String.(manifest["data"]["panel_dims"]) == fixture.panel_dims
         @test String.(manifest["data"]["panel_names"]) == fixture.panel_names
-        @test Set(abacus_contract.manifest_stage_artifact_keys["metadata"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["metadata"]) ⊆
             Set(keys(metadata_record.artifact_paths))
-        @test Set(abacus_contract.manifest_stage_artifact_keys["fit"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["fit"]) ⊆
             Set(keys(fit_record.artifact_paths))
-        @test Set(abacus_contract.manifest_stage_artifact_keys["assessment"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["assessment"]) ⊆
             Set(keys(assessment_record.artifact_paths))
-        @test Set(abacus_contract.manifest_stage_artifact_keys["decomposition"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["decomposition"]) ⊆
             Set(keys(decomposition_record.artifact_paths))
-        @test Set(abacus_contract.manifest_stage_artifact_keys["diagnostics"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["diagnostics"]) ⊆
             Set(keys(diagnostics_record.artifact_paths))
-        @test Set(abacus_contract.manifest_stage_artifact_keys["curves"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["curves"]) ⊆
             Set(keys(curves_record.artifact_paths))
-        for filename in abacus_contract.artifact_files["metadata"]
+        for filename in golden_contract.artifact_files["metadata"]
             @test isfile(joinpath(result.run_dir, "00_run_metadata", filename))
         end
-        for key in abacus_contract.manifest_stage_artifact_keys["fit"]
+        for key in golden_contract.manifest_stage_artifact_keys["fit"]
             @test isfile(joinpath(result.run_dir, fit_record.artifact_paths[key]))
         end
-        for key in abacus_contract.manifest_stage_artifact_keys["assessment"]
+        for key in golden_contract.manifest_stage_artifact_keys["assessment"]
             @test isfile(joinpath(result.run_dir, assessment_record.artifact_paths[key]))
         end
-        for key in abacus_contract.manifest_stage_artifact_keys["decomposition"]
+        for key in golden_contract.manifest_stage_artifact_keys["decomposition"]
             @test isfile(joinpath(result.run_dir, decomposition_record.artifact_paths[key]))
         end
-        for key in abacus_contract.manifest_stage_artifact_keys["diagnostics"]
+        for key in golden_contract.manifest_stage_artifact_keys["diagnostics"]
             @test isfile(joinpath(result.run_dir, diagnostics_record.artifact_paths[key]))
         end
-        for key in abacus_contract.manifest_stage_artifact_keys["curves"]
+        for key in golden_contract.manifest_stage_artifact_keys["curves"]
             @test isfile(joinpath(result.run_dir, curves_record.artifact_paths[key]))
         end
 
@@ -1424,11 +1424,11 @@ end
 end
 
 @testset "run_pipeline executes geo_brand_panel Stage 70 historical-share optimization" begin
-    fixture = ABACUS_GEO_BRAND_PANEL_CONFIG_DATA
-    source_config = joinpath(@__DIR__, "..", "fixtures", "abacus", "geo_brand_panel", "config.yml")
+    fixture = GOLDEN_GEO_BRAND_PANEL_CONFIG_DATA
+    source_config = joinpath(@__DIR__, "..", "fixtures", "golden", "geo_brand_panel", "config.yml")
 
     mktempdir() do tmpdir
-        config_path = _abacus_panel_pipeline_config(
+        config_path = _golden_panel_pipeline_config(
             source_config,
             joinpath(tmpdir, "geo_brand_panel_optimization.yml"),
         )
@@ -1463,8 +1463,8 @@ end
         optimisation_record = _stage_record(result, "optimisation")
         @test optimisation_record.status == :completed
 
-        abacus_contract = fixture.pipeline_contract
-        @test Set(abacus_contract.manifest_stage_artifact_keys["optimisation"]) ⊆
+        golden_contract = fixture.pipeline_contract
+        @test Set(golden_contract.manifest_stage_artifact_keys["optimisation"]) ⊆
             Set(keys(optimisation_record.artifact_paths))
         @test Set(
             [
@@ -1549,9 +1549,9 @@ end
         manifest = JSON3.read(read(result.manifest_path, String))
         @test manifest["stages"]["validation"]["status"] == "skipped"
         @test manifest["stages"]["optimisation"]["status"] == "completed"
-        abacus_contract = ABACUS_TIMESERIES_CONFIG_DATA.pipeline_contract
+        golden_contract = GOLDEN_TIMESERIES_CONFIG_DATA.pipeline_contract
         optimisation_record = _stage_record(result, "optimisation")
-        @test Set(abacus_contract.manifest_stage_artifact_keys["optimisation"]) ⊆
+        @test Set(golden_contract.manifest_stage_artifact_keys["optimisation"]) ⊆
             Set(keys(optimisation_record.artifact_paths))
 
         optimization_result_path = joinpath(result.run_dir, "70_optimisation", "budget_optimization_result.jls")
@@ -1573,7 +1573,7 @@ end
         @test isfile(optimized_allocation_path)
         @test isfile(optimized_allocation_csv_path)
         @test isfile(response_distribution_path)
-        for key in abacus_contract.manifest_stage_artifact_keys["optimisation"]
+        for key in golden_contract.manifest_stage_artifact_keys["optimisation"]
             @test isfile(joinpath(result.run_dir, optimisation_record.artifact_paths[key]))
         end
 

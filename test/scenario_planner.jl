@@ -222,7 +222,7 @@ function _manual_evaluation_with(
     )
 end
 
-@testset "scenario planner specs validate bounded Abacus-like semantics" begin
+@testset "scenario planner specs validate bounded bounded semantics" begin
     current = CurrentScenarioSpec(name = "Status Quo FY24", start_date = "2024-01-01", end_date = Date(2024, 1, 31))
     @test current.scenario_id == "status-quo-fy24"
     @test current.start_date == Date(2024, 1, 1)

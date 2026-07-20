@@ -4,15 +4,15 @@ using ForwardDiff
 using ReverseDiff
 using Test
 
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "calibration_alignment_cases.jl"))
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "calibration_unaligned_cases.jl"))
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "calibration_monotonic_cases.jl"))
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "calibration_channel_scaling_cases.jl"))
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "calibration_target_scaling_cases.jl"))
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "calibration_combined_scaling_cases.jl"))
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "lift_test_likelihood_cases.jl"))
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "cost_per_target_cases.jl"))
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "calibration_integration_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "calibration_alignment_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "calibration_unaligned_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "calibration_monotonic_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "calibration_channel_scaling_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "calibration_target_scaling_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "calibration_combined_scaling_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "lift_test_likelihood_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "cost_per_target_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "calibration_integration_cases.jl"))
 
 _calibration_coord_dict(nt) = Dict{String, AbstractVector}(string(k) => collect(v) for (k, v) in pairs(nt))
 
@@ -70,7 +70,7 @@ end
 end
 
 @testset "exact_row_indices aligned" begin
-    for case in ABACUS_CALIBRATION_ALIGNMENT_CASES
+    for case in GOLDEN_CALIBRATION_ALIGNMENT_CASES
         coords = _calibration_coord_dict(case.coords)
         df = _calibration_coord_dict(case.df)
         @test exact_row_indices(coords, df) == case.expected_indices_1based
@@ -87,7 +87,7 @@ end
 end
 
 @testset "exact_row_indices unaligned" begin
-    for case in ABACUS_CALIBRATION_UNALIGNED_CASES
+    for case in GOLDEN_CALIBRATION_UNALIGNED_CASES
         coords = _calibration_coord_dict(case.coords)
         df = _calibration_coord_dict(case.df)
         err = nothing
@@ -102,7 +102,7 @@ end
 end
 
 @testset "assert_monotonic_lift" begin
-    for case in ABACUS_CALIBRATION_MONOTONIC_CASES
+    for case in GOLDEN_CALIBRATION_MONOTONIC_CASES
         if case.expect_error
             @test_throws NonMonotonicError assert_monotonic_lift(case.delta_x, case.delta_y)
         else
@@ -115,7 +115,7 @@ end
 end
 
 @testset "scale_channel_lift_measurements" begin
-    for case in ABACUS_CALIBRATION_CHANNEL_SCALING_CASES
+    for case in GOLDEN_CALIBRATION_CHANNEL_SCALING_CASES
         transform = matrix -> matrix .* reshape(case.scale, 1, :)
         result = scale_channel_lift_measurements(
             case.df.channel,
@@ -160,7 +160,7 @@ end
 end
 
 @testset "scale_target_for_lift_measurements" begin
-    for case in ABACUS_CALIBRATION_TARGET_SCALING_CASES
+    for case in GOLDEN_CALIBRATION_TARGET_SCALING_CASES
         result = scale_target_for_lift_measurements(case.target, matrix -> matrix ./ case.scale)
         @test result ≈ case.expected
     end
@@ -170,7 +170,7 @@ end
 end
 
 @testset "scale_lift_measurements" begin
-    for case in ABACUS_CALIBRATION_COMBINED_SCALING_CASES
+    for case in GOLDEN_CALIBRATION_COMBINED_SCALING_CASES
         result = scale_lift_measurements(
             case.df.channel,
             case.df.x,
@@ -215,7 +215,7 @@ end
 end
 
 @testset "lift_test_likelihood_terms" begin
-    for case in ABACUS_LIFT_TEST_LIKELIHOOD_CASES
+    for case in GOLDEN_LIFT_TEST_LIKELIHOOD_CASES
         saturation_fn = x -> centered_logistic_saturation(x, case.lam)
         terms = lift_test_likelihood_terms(saturation_fn, case.x, case.delta_x, case.delta_y, case.sigma)
         @test terms.mu ≈ case.expected_mu
@@ -241,7 +241,7 @@ end
 end
 
 @testset "lift_test_log_density" begin
-    for case in ABACUS_LIFT_TEST_LIKELIHOOD_CASES
+    for case in GOLDEN_LIFT_TEST_LIKELIHOOD_CASES
         saturation_fn = x -> centered_logistic_saturation(x, case.lam)
         total = lift_test_log_density(saturation_fn, case.x, case.delta_x, case.delta_y, case.sigma)
         @test total ≈ sum(case.expected_logp) atol = 1.0e-6
@@ -300,7 +300,7 @@ end
 @testset "lift_test_payload_log_density" begin
     saturation_fn = (x_row, param_row) -> centered_logistic_saturation(x_row, param_row)
 
-    for case in ABACUS_LIFT_TEST_LIKELIHOOD_CASES
+    for case in GOLDEN_LIFT_TEST_LIKELIHOOD_CASES
         payload = LiftTestCalibrationPayload(
             fill(1, length(case.x)),
             case.x,
@@ -362,7 +362,7 @@ end
 end
 
 @testset "cost_per_target penalties" begin
-    for case in ABACUS_COST_PER_TARGET_CASES
+    for case in GOLDEN_COST_PER_TARGET_CASES
         penalties = cost_per_target_penalties(case.gathered_cpt, case.targets, case.sigma)
         @test penalties ≈ case.expected_penalties
         @test cost_per_target_total_penalty(case.gathered_cpt, case.targets, case.sigma) ≈
@@ -702,7 +702,7 @@ end
 end
 
 @testset "calibration integration fixture payloads and log density" begin
-    for case in ABACUS_CALIBRATION_INTEGRATION_CASES
+    for case in GOLDEN_CALIBRATION_INTEGRATION_CASES
         channel_transform = matrix -> matrix ./ reshape(case.channel_scale, 1, :)
         target_transform = matrix -> matrix ./ case.target_scale
 

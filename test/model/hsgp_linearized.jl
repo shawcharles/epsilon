@@ -4,10 +4,10 @@ using ReverseDiff
 using Statistics
 using Test
 
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "hsgp_linearized_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "hsgp_linearized_cases.jl"))
 
-@testset "HSGP linearised geometry parity" begin
-    for case in ABACUS_HSGP_LINEARIZED_FIXTURES.geometry_cases
+@testset "HSGP linearised geometry golden fixture" begin
+    for case in GOLDEN_HSGP_LINEARIZED_FIXTURES.geometry_cases
         @testset "$(case.name)" begin
             frequencies = Epsilon._hsgp_frequencies(
                 case.m,
@@ -173,8 +173,8 @@ end
     end
 end
 
-@testset "HSGP recommendation parity and hardening" begin
-    for case in ABACUS_HSGP_LINEARIZED_FIXTURES.recommendation_cases
+@testset "HSGP recommendation golden fixture and hardening" begin
+    for case in GOLDEN_HSGP_LINEARIZED_FIXTURES.recommendation_cases
         approximation = Epsilon._approx_hsgp_hyperparams(
             case.x,
             case.x_center;

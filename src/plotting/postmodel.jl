@@ -4,7 +4,7 @@
 Render HDI-aware time-series media contribution plots from a bounded
 `ContributionResults` surface.
 
-This Phase 10 surface currently supports only time-series post-model results.
+This surface currently supports only time-series post-model results.
 By default it renders all media-channel components. `channels` may be one
 channel name or a collection of channel names.
 """
@@ -57,8 +57,8 @@ end
 Render a stacked additive contribution breakdown through time from
 `ContributionResults`.
 
-This Phase 10 surface preserves the additive interpretation of the closed Phase
-7 contribution contract. When `channels` selects a subset of media channels,
+This surface preserves the additive interpretation of the contribution
+contract. When `channels` selects a subset of media channels,
 unselected media contributions are aggregated into an `"media:other"` series
 rather than dropped.
 """
@@ -91,8 +91,7 @@ end
 Render a bounded decomposition figure in observed target units from
 `DecompositionResults`.
 
-This Phase 10 surface currently supports only time-series decomposition
-results.
+This surface currently supports only time-series decomposition results.
 """
 function decomposition_plot(results::DecompositionResults)
     _require_time_series_postmodel_plot(results, "decomposition_plot")
@@ -133,7 +132,7 @@ end
 """
     response_curve_plot(results::ResponseCurveResults)
 
-Render the bounded Phase 7 response-curve surface from `ResponseCurveResults`.
+Render the bounded response-curve surface from `ResponseCurveResults`.
 
 The plot is anchored to the stored total-spend grid in original units and
 includes a marginal-response view when at least two spend points are available.
@@ -157,8 +156,7 @@ end
 """
     saturation_curve_plot(results::SaturationCurveResults)
 
-Render the bounded Stage 60 saturation-only surface from
-`SaturationCurveResults`.
+Render the bounded saturation-only surface from `SaturationCurveResults`.
 """
 function saturation_curve_plot(results::SaturationCurveResults)
     _require_time_series_postmodel_plot(results, "saturation_curve_plot")
@@ -179,7 +177,7 @@ end
 """
     adstock_curve_plot(results::AdstockCurveResults)
 
-Render the bounded Stage 60 adstock-only surface from `AdstockCurveResults`.
+Render the bounded adstock-only surface from `AdstockCurveResults`.
 """
 function adstock_curve_plot(results::AdstockCurveResults)
     _require_time_series_postmodel_plot(results, "adstock_curve_plot")
@@ -201,7 +199,7 @@ function _require_time_series_postmodel_plot(results, action::AbstractString)
     results.spec.model_kind === :time_series_mmm ||
         throw(
         ArgumentError(
-            "$action currently supports only time-series post-model results; panel post-model plotting is unsupported in the bounded Phase 10 surface",
+            "$action currently supports only time-series post-model results; panel post-model plotting is unsupported in the bounded plotting surface",
         ),
     )
     return results

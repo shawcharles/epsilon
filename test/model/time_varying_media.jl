@@ -10,7 +10,7 @@ import Turing
 const _FORWARDDIFF_AVAILABLE = !isnothing(Base.find_package("ForwardDiff"))
 _FORWARDDIFF_AVAILABLE && @eval using ForwardDiff
 
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "hsgp_time_varying_media_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "hsgp_time_varying_media_cases.jl"))
 
 function _time_varying_media_test_config(; time_varying_media = nothing, saturation = Dict{String, Any}())
     return ModelConfig(
@@ -228,7 +228,7 @@ end
         sigma = [0.1],
     )
     calibrated_model = TimeSeriesMMM(
-        _time_varying_media_test_config(),
+        _time_varying_media_test_config(; saturation = Dict("type" => "logistic")),
         SamplerConfig(draws = 1, tune = 0, chains = 1, cores = 1),
         _time_varying_media_test_data();
         calibration_steps = [CalibrationStepConfig(method = "add_lift_test_measurements")],
@@ -434,8 +434,8 @@ end
     @test !isnothing(predict(model))
 end
 
-@testset "time-varying media Abacus placement fixture" begin
-    case = ABACUS_HSGP_TIME_VARYING_MEDIA_FIXTURES.case
+@testset "time-varying media golden placement fixture" begin
+    case = GOLDEN_HSGP_TIME_VARYING_MEDIA_FIXTURES.case
 
     @test size(case.baseline_channel_contribution) == (4, 2)
     @test size(case.final_channel_contribution) == size(case.baseline_channel_contribution)

@@ -5,11 +5,11 @@ using Test
 import Turing
 
 include("sample_models.jl")
-if !isdefined(@__MODULE__, :ABACUS_COST_PER_TARGET_CASES)
-    include(joinpath(@__DIR__, "..", "fixtures", "abacus", "cost_per_target_cases.jl"))
+if !isdefined(@__MODULE__, :GOLDEN_COST_PER_TARGET_CASES)
+    include(joinpath(@__DIR__, "..", "fixtures", "golden", "cost_per_target_cases.jl"))
 end
-if !isdefined(@__MODULE__, :ABACUS_CALIBRATION_INTEGRATION_CASES)
-    include(joinpath(@__DIR__, "..", "fixtures", "abacus", "calibration_integration_cases.jl"))
+if !isdefined(@__MODULE__, :GOLDEN_CALIBRATION_INTEGRATION_CASES)
+    include(joinpath(@__DIR__, "..", "fixtures", "golden", "calibration_integration_cases.jl"))
 end
 
 @testset "TimeSeriesMMM" begin
@@ -1180,7 +1180,7 @@ end
     scaled_channels = Epsilon._scale_channels(model.data.channels, spec.channel_scale)
     scaled_target = model.data.target ./ spec.target_scale
 
-    case = ABACUS_COST_PER_TARGET_CASES[1]
+    case = GOLDEN_COST_PER_TARGET_CASES[1]
     cost_per_target_data = CostPerTargetCalibrationRows(
         gathered_cpt = case.gathered_cpt,
         targets = case.targets,
@@ -1248,7 +1248,7 @@ end
     )
 end
 
-@testset "fixture-backed combined calibration term matches _time_series_mmm_model logjoint" begin
+@testset "fixture driven combined calibration term matches _time_series_mmm_model logjoint" begin
     model = sample_time_series_model()
     spec = build_model(model)
     runtime, controls = Epsilon._turing_runtime(model.config, model.data)
@@ -1257,7 +1257,7 @@ end
     scaled_channels = Epsilon._scale_channels(model.data.channels, spec.channel_scale)
     scaled_target = model.data.target ./ spec.target_scale
 
-    case = ABACUS_CALIBRATION_INTEGRATION_CASES[1]
+    case = GOLDEN_CALIBRATION_INTEGRATION_CASES[1]
     @test model.config.channel_columns == case.channel_columns
     @test spec.channel_scale ≈ case.channel_scale
     @test spec.target_scale ≈ case.target_scale

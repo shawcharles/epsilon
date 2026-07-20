@@ -56,8 +56,8 @@ Project the normalized bounded optimization constraints plus the solved spend
 allocation into an analyst-facing audit table.
 
 The returned `DataFrame` covers only the optimized channel subset because the
-bounded Phase 8 constraint contract applies there; held channels are exposed
-through `budget_impact_table(result)` and remain fixed at observed spend.
+bounded constraint contract applies there; held channels are exposed through
+`budget_impact_table(result)` and remain fixed at observed spend.
 """
 function budget_audit_table(result::_BudgetOptimizationResultLike)
     current_subset_total, optimized_subset_total = _optimized_subset_total_spend(result)

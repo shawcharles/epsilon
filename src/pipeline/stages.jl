@@ -49,7 +49,7 @@ function _run_all_pipeline_stages!(context::PipelineContext)
 end
 
 function _skip_panel_pipeline_stages!(context::PipelineContext)
-    warning = "PanelMMM pipeline orchestration is bounded to metadata, prior sensitivity when explicitly enabled, fit, assessment, decomposition, diagnostics, and curves in the current Phase 14 surface, with optimisation when explicitly enabled; unsupported panel stages are skipped."
+    warning = "PanelMMM pipeline orchestration is bounded to metadata, prior sensitivity when explicitly enabled, fit, assessment, decomposition, diagnostics, and curves, with optimisation when explicitly enabled; unsupported panel stages are skipped."
     _append_pipeline_warning!(context, warning)
     finished_at_utc = _pipeline_timestamp_utc()
     for record in context.stage_records

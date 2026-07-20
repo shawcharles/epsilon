@@ -2,16 +2,16 @@ using Epsilon
 using ForwardDiff
 using Test
 
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "hsgp_positive_multiplier_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "hsgp_positive_multiplier_cases.jl"))
 
-@testset "HSGP positive multiplier parity" begin
-    for case in ABACUS_HSGP_POSITIVE_MULTIPLIER_FIXTURES.softplus_cases
+@testset "HSGP positive multiplier golden fixture" begin
+    for case in GOLDEN_HSGP_POSITIVE_MULTIPLIER_FIXTURES.softplus_cases
         @testset "softplus $(case.name)" begin
             @test Epsilon._hsgp_stable_softplus.(case.values) ≈ case.expected atol = 1.0e-14 rtol = 1.0e-14
         end
     end
 
-    for case in ABACUS_HSGP_POSITIVE_MULTIPLIER_FIXTURES.projection_cases
+    for case in GOLDEN_HSGP_POSITIVE_MULTIPLIER_FIXTURES.projection_cases
         @testset "$(case.name)" begin
             latent = Epsilon._hsgp_latent(case.phi, case.sqrt_psd, case.z)
             raw = Epsilon._hsgp_stable_softplus.(latent)

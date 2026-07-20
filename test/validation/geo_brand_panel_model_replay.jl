@@ -1,21 +1,18 @@
 using MCMCChains
 
-if !isdefined(@__MODULE__, :ABACUS_GEO_BRAND_PANEL_CONFIG_DATA)
-    include(joinpath(@__DIR__, "..", "fixtures", "abacus", "geo_brand_panel", "config_data.jl"))
+if !isdefined(@__MODULE__, :GOLDEN_GEO_BRAND_PANEL_CONFIG_DATA)
+    include(joinpath(@__DIR__, "..", "fixtures", "golden", "geo_brand_panel", "config_data.jl"))
 end
 
 const _GEO_BRAND_PANEL_REPLAY_FIXTURE_DIR =
-    joinpath(@__DIR__, "..", "fixtures", "abacus", "geo_brand_panel")
+    joinpath(@__DIR__, "..", "fixtures", "golden", "geo_brand_panel")
 
 function _geo_brand_panel_fixture_model_and_data()
-    fixture = ABACUS_GEO_BRAND_PANEL_CONFIG_DATA
+    fixture = GOLDEN_GEO_BRAND_PANEL_CONFIG_DATA
     config_path = joinpath(_GEO_BRAND_PANEL_REPLAY_FIXTURE_DIR, "config.yml")
     dataset_path = joinpath(_GEO_BRAND_PANEL_REPLAY_FIXTURE_DIR, "dataset.csv")
     holidays_path = joinpath(_GEO_BRAND_PANEL_REPLAY_FIXTURE_DIR, "holidays.csv")
-    loaded = load_public_config(
-        config_path;
-        overrides = Dict("holidays" => Dict("path" => holidays_path)),
-    )
+    loaded = _load_validation_fixture_config(config_path; holidays_path)
     data = _load_validation_panel_dataset(dataset_path, loaded.model_config)
     model = PanelMMM(loaded.model_config, loaded.sampler_config, data)
     return fixture, model, data, build_model(model)
@@ -187,7 +184,7 @@ function _expected_geo_brand_panel_curve_values(spec, data, fixture, replay, cha
     return values
 end
 
-@testset "Abacus geo_brand_panel controlled model/replay fixture" begin
+@testset "geo_brand_panel golden fixture controlled model/replay" begin
     fixture, _, data, spec = _geo_brand_panel_fixture_model_and_data()
     replay = _controlled_geo_brand_panel_replay(fixture)
     grouped = _controlled_geo_brand_panel_results(spec, data, replay)

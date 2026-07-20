@@ -1,14 +1,13 @@
 """
     write_plot_bundle(run::PipelineRunResult; output_dir=nothing) -> String
 
-Write the bounded Phase 10 static plot bundle for a successful pipeline run.
+Write the bounded static plot bundle for a successful pipeline run.
 
-The bundle is a deterministic `png`-only export helper over the closed Phase 9
-run schema. The pipeline itself already writes stage-local plot artifacts into
-the relevant Stage `10`-`70` directories; `write_plot_bundle` is the optional
-post-hoc curated export that reads typed artifacts from the run directory,
-writes a separate plot directory, and never mutates pipeline stage artifacts or
-the run manifest.
+The bundle is a deterministic `png`-only export helper over the run schema. The
+pipeline itself already writes stage-local plot artifacts into the relevant
+stage directories; `write_plot_bundle` is the optional post-hoc curated export
+that reads typed artifacts from the run directory, writes a separate plot
+directory, and never mutates pipeline stage artifacts or the run manifest.
 """
 function write_plot_bundle(run::PipelineRunResult; output_dir = nothing)
     _require_completed_plot_bundle_run(run)

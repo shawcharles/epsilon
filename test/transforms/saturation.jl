@@ -1,7 +1,7 @@
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "logistic_saturation_cases.jl"))
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "michaelis_menten_cases.jl"))
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "tanh_saturation_cases.jl"))
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "hill_function_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "logistic_saturation_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "michaelis_menten_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "tanh_saturation_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "hill_function_cases.jl"))
 
 using Epsilon
 using Test
@@ -17,8 +17,8 @@ function _argument_error_message(f)
 end
 
 @testset "centered_logistic_saturation" begin
-    @testset "abacus parity" begin
-        for case in ABACUS_LOGISTIC_SATURATION_CASES
+    @testset "golden fixture" begin
+        for case in GOLDEN_LOGISTIC_SATURATION_CASES
             actual = centered_logistic_saturation(case.x, case.lam)
             @test size(actual) == size(case.expected)
             @test actual ≈ case.expected atol = 1.0e-12 rtol = 1.0e-12
@@ -57,8 +57,8 @@ end
 end
 
 @testset "tanh_saturation" begin
-    @testset "abacus parity" begin
-        for case in ABACUS_TANH_SATURATION_CASES
+    @testset "golden fixture" begin
+        for case in GOLDEN_TANH_SATURATION_CASES
             actual = tanh_saturation(case.x, case.b, case.c)
             @test size(actual) == size(case.expected)
             @test actual ≈ case.expected atol = 1.0e-12 rtol = 1.0e-12
@@ -91,8 +91,8 @@ end
 end
 
 @testset "michaelis_menten" begin
-    @testset "abacus parity" begin
-        for case in ABACUS_MICHAELIS_MENTEN_CASES
+    @testset "golden fixture" begin
+        for case in GOLDEN_MICHAELIS_MENTEN_CASES
             actual = michaelis_menten(case.x, case.alpha, case.lam)
             @test size(actual) == size(case.expected)
             @test actual ≈ case.expected atol = 1.0e-12 rtol = 1.0e-12
@@ -115,8 +115,8 @@ end
 end
 
 @testset "hill_function" begin
-    @testset "abacus parity" begin
-        for case in ABACUS_HILL_FUNCTION_CASES
+    @testset "golden fixture" begin
+        for case in GOLDEN_HILL_FUNCTION_CASES
             actual = hill_function(case.x, case.slope, case.kappa)
             @test size(actual) == size(case.expected)
             @test actual ≈ case.expected atol = 1.0e-12 rtol = 1.0e-12

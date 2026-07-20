@@ -1,10 +1,10 @@
-include("../fixtures/abacus/postmodel_summary_cases.jl")
+include("../fixtures/golden/postmodel_summary_cases.jl")
 
 using Dates
 using Epsilon
 using Test
 
-function _summary_parity_grouped_results()
+function _summary_fixture_grouped_results()
     model = feature_matrix_time_series_model(;
         seasonality = Dict("type" => "fourier", "n_order" => 2),
         dates = Date(2024, 1, 1):Day(7):Date(2024, 2, 5),
@@ -41,7 +41,7 @@ function _metric_summary_values(matrix::AbstractMatrix, metric_names::AbstractVe
     return values
 end
 
-@testset "summary_table follows truthful Phase 7 schemas" begin
+@testset "summary_table follows public schemas" begin
     model = feature_matrix_time_series_model(;
         seasonality = Dict("type" => "fourier", "n_order" => 2),
         dates = Date(2024, 1, 1):Day(7):Date(2024, 2, 5),
@@ -95,10 +95,10 @@ end
     @test names(table) == ["observation", "component", "mean", "lower_5", "upper_95"]
 end
 
-@testset "summary_table parity matches retained Abacus summary semantics on canonical draw-level surfaces" begin
-    grouped = _summary_parity_grouped_results()
+@testset "summary_table matches retained golden summary fixtures on canonical draw-level surfaces" begin
+    grouped = _summary_fixture_grouped_results()
 
-    contribution_fixture = ABACUS_POSTMODEL_SUMMARY_FIXTURES.contribution
+    contribution_fixture = GOLDEN_POSTMODEL_SUMMARY_FIXTURES.contribution
     contribution_results_fixture = ContributionResults(
         grouped.metadata,
         grouped.spec,
@@ -139,7 +139,7 @@ end
     @test decomposition_table.share_lower_5 ≈ vec(contribution_fixture.share_lower_5)
     @test decomposition_table.share_upper_95 ≈ vec(contribution_fixture.share_upper_95)
 
-    response_fixture = ABACUS_POSTMODEL_SUMMARY_FIXTURES.response
+    response_fixture = GOLDEN_POSTMODEL_SUMMARY_FIXTURES.response
     curves = ResponseCurveResults(
         grouped.metadata,
         grouped.spec,

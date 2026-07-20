@@ -1,7 +1,7 @@
 using Epsilon
 using Test
 
-@testset "Phase 6 inference matrix row TS-MCMC" begin
+@testset "inference matrix row TS-MCMC" begin
     model = sample_time_series_model()
     state = fit!(model)
 
@@ -24,7 +24,7 @@ using Test
     @test report isa ConvergenceReport
 end
 
-@testset "Phase 6 inference matrix row P-MCMC" begin
+@testset "inference matrix row P-MCMC" begin
     model = sample_panel_model()
     state = fit!(model)
 

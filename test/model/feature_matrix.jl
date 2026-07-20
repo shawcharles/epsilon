@@ -89,7 +89,7 @@ function assert_feature_matrix_bundle(
     return
 end
 
-@testset "Phase 5 Supported Feature Matrix" begin
+@testset "supported feature matrix" begin
     @testset "TS-00 media only" begin
         model = feature_matrix_time_series_model(; random_seed = 101)
         assert_feature_matrix_bundle(model)

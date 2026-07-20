@@ -269,7 +269,7 @@ end
 """
     _build_budget_optimization_problem(results; total_budget, channels=nothing, budget_bounds=nothing, relative_bounds=nothing, objective=:total_response, grid=nothing)
 
-Assemble the solver-agnostic bounded Phase 8 optimization problem from grouped
+Assemble the solver-agnostic bounded optimization problem from grouped
 `InferenceResults`.
 """
 function _build_budget_optimization_problem(
@@ -287,7 +287,7 @@ function _build_budget_optimization_problem(
     objective_symbol === :total_response ||
         throw(
         ArgumentError(
-            "$action currently supports only `objective = :total_response` in the bounded Phase 8 surface",
+            "$action currently supports only `objective = :total_response` in the bounded optimization surface",
         ),
     )
 
@@ -385,7 +385,7 @@ end
 """
     _evaluate_budget_objective(problem, allocation)
 
-Evaluate the bounded Phase 8 total-response objective at one fixed-budget
+Evaluate the bounded total-response objective at one fixed-budget
 allocation over the optimized channel set.
 """
 function _evaluate_budget_objective(

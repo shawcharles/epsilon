@@ -1,14 +1,14 @@
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "binomial_adstock_cases.jl"))
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "geometric_adstock_cases.jl"))
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "delayed_adstock_cases.jl"))
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "weibull_adstock_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "binomial_adstock_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "geometric_adstock_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "delayed_adstock_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "weibull_adstock_cases.jl"))
 
 using Epsilon
 using Test
 
 @testset "binomial_adstock" begin
-    @testset "abacus parity" begin
-        for case in ABACUS_BINOMIAL_ADSTOCK_CASES
+    @testset "golden fixture" begin
+        for case in GOLDEN_BINOMIAL_ADSTOCK_CASES
             actual = binomial_adstock(
                 case.x,
                 case.alpha,
@@ -37,8 +37,8 @@ using Test
 end
 
 @testset "geometric_adstock" begin
-    @testset "abacus parity" begin
-        for case in ABACUS_GEOMETRIC_ADSTOCK_CASES
+    @testset "golden fixture" begin
+        for case in GOLDEN_GEOMETRIC_ADSTOCK_CASES
             actual = geometric_adstock(
                 case.x,
                 case.alpha,
@@ -61,8 +61,8 @@ end
 end
 
 @testset "delayed_adstock" begin
-    @testset "abacus parity" begin
-        for case in ABACUS_DELAYED_ADSTOCK_CASES
+    @testset "golden fixture" begin
+        for case in GOLDEN_DELAYED_ADSTOCK_CASES
             actual = delayed_adstock(
                 case.x,
                 case.alpha,
@@ -92,8 +92,8 @@ end
 end
 
 @testset "weibull_adstock" begin
-    @testset "abacus parity" begin
-        for case in ABACUS_WEIBULL_ADSTOCK_CASES
+    @testset "golden fixture" begin
+        for case in GOLDEN_WEIBULL_ADSTOCK_CASES
             actual = weibull_adstock(
                 case.x,
                 case.lam,

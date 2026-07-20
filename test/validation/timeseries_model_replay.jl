@@ -1,21 +1,18 @@
 using MCMCChains
 
-if !isdefined(@__MODULE__, :ABACUS_TIMESERIES_CONFIG_DATA)
-    include(joinpath(@__DIR__, "..", "fixtures", "abacus", "timeseries", "config_data.jl"))
+if !isdefined(@__MODULE__, :GOLDEN_TIMESERIES_CONFIG_DATA)
+    include(joinpath(@__DIR__, "..", "fixtures", "golden", "timeseries", "config_data.jl"))
 end
 
 const _TIMESERIES_REPLAY_FIXTURE_DIR =
-    joinpath(@__DIR__, "..", "fixtures", "abacus", "timeseries")
+    joinpath(@__DIR__, "..", "fixtures", "golden", "timeseries")
 
 function _timeseries_fixture_model_and_data()
-    fixture = ABACUS_TIMESERIES_CONFIG_DATA
+    fixture = GOLDEN_TIMESERIES_CONFIG_DATA
     config_path = joinpath(_TIMESERIES_REPLAY_FIXTURE_DIR, "config.yml")
     dataset_path = joinpath(_TIMESERIES_REPLAY_FIXTURE_DIR, "dataset.csv")
     holidays_path = joinpath(_TIMESERIES_REPLAY_FIXTURE_DIR, "holidays.csv")
-    loaded = load_public_config(
-        config_path;
-        overrides = Dict("holidays" => Dict("path" => holidays_path)),
-    )
+    loaded = _load_validation_fixture_config(config_path; holidays_path)
     data = _load_validation_time_series_dataset(dataset_path, loaded.model_config)
     model = TimeSeriesMMM(loaded.model_config, loaded.sampler_config, data)
     return fixture, model, data, build_model(model)
@@ -32,7 +29,7 @@ function _controlled_timeseries_results(spec, data, replay)
     )
 end
 
-@testset "Abacus timeseries controlled model/replay fixture" begin
+@testset "timeseries golden fixture controlled model/replay" begin
     fixture, _, data, spec = _timeseries_fixture_model_and_data()
     replay = fixture.controlled_replay
     grouped = _controlled_timeseries_results(spec, data, replay)

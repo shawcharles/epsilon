@@ -3,13 +3,13 @@ using YAML
 """
     PipelineRunConfig(; config_path, output_dir="results", run_name=nothing, dataset_path=nothing, prior_samples=20, curve_points=100, draws=nothing, tune=nothing, chains=nothing, cores=nothing, random_seed=nothing)
 
-Bounded runtime configuration for the Phase 9 pipeline runner.
+Bounded runtime configuration for the pipeline runner.
 
 `PipelineRunConfig` owns the CLI/API override surface that may be merged onto a
 YAML pipeline config at runtime without widening the underlying MMM contract.
-The closed Phase 9 runtime contract freezes the keyword shape, runner-only YAML
-stripping, and bounded stage-execution override surface without widening the
-underlying MMM API.
+The runtime contract freezes the keyword shape, runner-only YAML stripping, and
+bounded stage-execution override surface without widening the underlying MMM
+API.
 """
 struct PipelineRunConfig
     config_path::String
@@ -323,7 +323,7 @@ function _validate_pipeline_fit_contract(config::Dict{String, Any})
     isempty(extra) ||
         throw(
         ArgumentError(
-            "run_pipeline does not support additional fit keys in the bounded Phase 9 YAML surface: $(join(sort!(collect(extra)), ", "))",
+            "run_pipeline does not support additional fit keys in the bounded YAML surface: $(join(sort!(collect(extra)), ", "))",
         ),
     )
     _validate_pipeline_fit_backend(fit_cfg)
@@ -356,7 +356,7 @@ function _parse_pipeline_validation_config(config::Dict{String, Any})
     isempty(extra) ||
         throw(
         ArgumentError(
-            "validation supports only enabled and holdout_rows in the bounded Phase 9 surface",
+            "validation supports only enabled and holdout_rows in the bounded pipeline surface",
         ),
     )
 
@@ -491,7 +491,7 @@ function _parse_pipeline_optimization_config(config::Dict{String, Any})
     isempty(extra) ||
         throw(
         ArgumentError(
-            "optimization includes unsupported keys for the bounded Phase 9 surface: $(join(sort!(collect(extra)), ", "))",
+            "optimization includes unsupported keys for the bounded pipeline surface: $(join(sort!(collect(extra)), ", "))",
         ),
     )
 
@@ -518,7 +518,7 @@ function _parse_pipeline_optimization_config(config::Dict{String, Any})
         objective_symbol === :total_response ||
             throw(
             ArgumentError(
-                "optimization.objective currently supports only :total_response in the bounded Phase 9 surface",
+                "optimization.objective currently supports only :total_response in the bounded pipeline surface",
             ),
         )
         block["objective"] = String(objective_symbol)

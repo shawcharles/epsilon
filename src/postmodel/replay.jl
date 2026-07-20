@@ -5,7 +5,7 @@ function _require_postmodel_time_series_results(
     results.spec.model_kind === :time_series_mmm ||
         throw(
         ArgumentError(
-            "$action currently supports only time-series grouped inference artifacts; panel post-modeling is not supported in the current Phase 7 surface",
+            "$action currently supports only time-series grouped inference artifacts; panel post-modeling is not supported in the current surface",
         ),
     )
     _reject_hsgp_media_postmodel_reporting(results.spec, action)

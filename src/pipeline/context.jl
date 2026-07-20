@@ -29,7 +29,7 @@ const _PIPELINE_STAGE_SPECS = (
 """
     PipelineStageRecord(key, directory; status=:pending, started_at_utc=nothing, finished_at_utc=nothing, artifact_paths=Dict(), warnings=String[], error=nothing)
 
-Typed per-stage manifest record for the bounded Phase 9 pipeline runner.
+Typed per-stage manifest record for the pipeline runner.
 """
 struct PipelineStageRecord
     key::String
@@ -81,11 +81,11 @@ end
 """
     PipelineRunResult(run_name, run_dir, manifest_path; status=:pending, config_path, started_at_utc, finished_at_utc=nothing, stage_records=PipelineStageRecord[], warnings=String[], error=nothing)
 
-Typed run-level summary for the bounded Phase 9 pipeline runner.
+Typed run-level summary for the pipeline runner.
 
-`PipelineRunResult` is the canonical Julia-native summary of one bounded Phase
-9 pipeline execution, including stage status, artifact ownership, warnings, and
-failure metadata.
+`PipelineRunResult` is the canonical Julia-native summary of one pipeline
+execution, including stage status, artifact ownership, warnings, and failure
+metadata.
 """
 struct PipelineRunResult
     run_name::String
@@ -149,8 +149,7 @@ end
 """
     PipelineValidationResult(; holdout_rows, train_date_start, train_date_end, holdout_date_start, holdout_date_end, observed, fitted_mean, residuals, metrics)
 
-Typed blocked-holdout artifact surface reserved for Phase 9 validation stage
-outputs.
+Typed blocked-holdout artifact surface for validation stage outputs.
 """
 struct PipelineValidationResult
     holdout_rows::Int

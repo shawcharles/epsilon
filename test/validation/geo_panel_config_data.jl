@@ -1,19 +1,16 @@
 using Dates
 
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "geo_panel", "config_data.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "geo_panel", "config_data.jl"))
 
-const _GEO_PANEL_FIXTURE_DIR = joinpath(@__DIR__, "..", "fixtures", "abacus", "geo_panel")
+const _GEO_PANEL_FIXTURE_DIR = joinpath(@__DIR__, "..", "fixtures", "golden", "geo_panel")
 
-@testset "Abacus geo_panel config/data fixture spine" begin
-    fixture = ABACUS_GEO_PANEL_CONFIG_DATA
+@testset "geo_panel golden fixture config/data spine" begin
+    fixture = GOLDEN_GEO_PANEL_CONFIG_DATA
     config_path = joinpath(_GEO_PANEL_FIXTURE_DIR, "config.yml")
     dataset_path = joinpath(_GEO_PANEL_FIXTURE_DIR, "dataset.csv")
     holidays_path = joinpath(_GEO_PANEL_FIXTURE_DIR, "holidays.csv")
 
-    loaded = load_public_config(
-        config_path;
-        overrides = Dict("holidays" => Dict("path" => holidays_path)),
-    )
+    loaded = _load_validation_fixture_config(config_path; holidays_path)
     config = loaded.model_config
     sampler = loaded.sampler_config
 

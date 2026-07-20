@@ -1,13 +1,12 @@
 """
     run_pipeline(config::PipelineRunConfig)
 
-Execute the bounded Phase 9 pipeline runner across the current supported stage
-surface.
+Execute the pipeline runner across the current supported stage surface.
 
-The closed Phase 9 surface validates the supported pipeline contract, loads the
-combined CSV dataset, executes the bounded time-series MCMC stage sequence,
-persists stage-owned artifacts, and returns a truthful completed
-`PipelineRunResult` when all enabled stages succeed.
+The runner validates the supported pipeline contract, loads the combined CSV
+dataset, executes the configured MCMC stage sequence, persists stage-owned
+artifacts, and returns a completed `PipelineRunResult` when all enabled stages
+succeed.
 """
 function run_pipeline(config::PipelineRunConfig)
     loaded = _load_pipeline_configuration(config)

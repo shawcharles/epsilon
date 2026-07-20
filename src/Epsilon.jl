@@ -41,8 +41,7 @@ fit!
 """
     summary_table(result)
 
-Project a typed Phase 7 post-model result surface into an analyst-ready
-`DataFrame`.
+Project a typed post-model result surface into an analyst-ready `DataFrame`.
 
 Current supported methods are:
 

@@ -50,9 +50,8 @@ include("pipeline/stages.jl")
 include("pipeline/run.jl")
 include("pipeline/cli.jl")
 
-# Existing load order is preserved exactly except that Phase 68 keeps only the
-# plotting API stubs in the core package. CairoMakie-backed methods load through
-# the optional EpsilonCairoMakieExt extension.
+# The core package exposes plotting API stubs only. CairoMakie-backed methods
+# load through the optional EpsilonCairoMakieExt extension.
 include("transforms/convolution.jl")
 include("transforms/adstock.jl")
 include("transforms/saturation.jl")

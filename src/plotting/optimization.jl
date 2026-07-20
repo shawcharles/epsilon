@@ -4,8 +4,8 @@
 Render a bounded current-versus-optimized budget comparison figure from
 `BudgetOptimizationResult` or `PanelBudgetOptimizationResult`.
 
-This Phase 10 surface compares channel-level spend allocations plus the total
-response outcome in one static Makie figure.
+This surface compares channel-level spend allocations plus the total response
+outcome in one static Makie figure.
 """
 function budget_optimization_plot(result::_BudgetOptimizationResultLike)
     channel_names = result.spec.channel_columns

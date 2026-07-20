@@ -3,10 +3,10 @@ using ForwardDiff
 using Statistics
 using Test
 
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "hsgp_fitted_replay_cases.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "hsgp_fitted_replay_cases.jl"))
 
-@testset "HSGP fitted positive multiplier replay parity" begin
-    for case in ABACUS_HSGP_FITTED_REPLAY_FIXTURES.cases
+@testset "HSGP fitted positive multiplier replay fixtures" begin
+    for case in GOLDEN_HSGP_FITTED_REPLAY_FIXTURES.cases
         @testset "$(case.name)" begin
             state = Epsilon._fit_hsgp_positive_multiplier_state(
                 case.training_x,
@@ -52,7 +52,7 @@ include(joinpath(@__DIR__, "..", "fixtures", "abacus", "hsgp_fitted_replay_cases
 end
 
 @testset "HSGP fitted replay retains training geometry" begin
-    case = only(filter(case -> case.name == "asymmetric_vector_outside_boundary", ABACUS_HSGP_FITTED_REPLAY_FIXTURES.cases))
+    case = only(filter(case -> case.name == "asymmetric_vector_outside_boundary", GOLDEN_HSGP_FITTED_REPLAY_FIXTURES.cases))
     state = Epsilon._fit_hsgp_positive_multiplier_state(
         case.training_x,
         case.sqrt_psd,
@@ -74,7 +74,7 @@ end
     @test !(replay ≈ prediction_local_raw ./ Epsilon._hsgp_materialize_training_raw_mean(state))
     @test !(replay ≈ prediction_local_raw ./ mean(prediction_local_raw; dims = 1))
 
-    demeaned_case = only(filter(case -> case.name == "demeaned_basis_replay", ABACUS_HSGP_FITTED_REPLAY_FIXTURES.cases))
+    demeaned_case = only(filter(case -> case.name == "demeaned_basis_replay", GOLDEN_HSGP_FITTED_REPLAY_FIXTURES.cases))
     demeaned_state = Epsilon._fit_hsgp_positive_multiplier_state(
         demeaned_case.training_x,
         demeaned_case.sqrt_psd,

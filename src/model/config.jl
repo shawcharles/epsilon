@@ -16,7 +16,7 @@ function model_config_from_dict(
     merged = _merge_public_config(defaults, config, overrides)
     merged = _resolve_model_relative_paths(merged; base_path)
 
-    merged = _normalize_abacus_config_surface(merged)
+    merged = _normalize_legacy_config_surface(merged)
     _reject_retired_inference_config_keys(merged)
     _reject_time_varying_media_yaml(merged)
     _validate_mcmc_fit_backend(merged)
@@ -104,15 +104,15 @@ function _validate_mcmc_fit_backend(config::AbstractDict; standalone::Bool = fal
     return nothing
 end
 
-function _normalize_abacus_config_surface(config::Dict{String, Any})
+function _normalize_legacy_config_surface(config::Dict{String, Any})
     normalized = _normalize_config_value(config)
-    _hoist_abacus_saturation_beta!(normalized)
-    _normalize_abacus_effects!(normalized)
-    _normalize_abacus_holidays!(normalized)
+    _hoist_legacy_saturation_beta!(normalized)
+    _normalize_legacy_effects!(normalized)
+    _normalize_legacy_holidays!(normalized)
     return normalized
 end
 
-function _hoist_abacus_saturation_beta!(config::Dict{String, Any})
+function _hoist_legacy_saturation_beta!(config::Dict{String, Any})
     media_cfg = get(config, "media", nothing)
     media_cfg isa AbstractDict || return config
     saturation_cfg = get(media_cfg, "saturation", nothing)
@@ -129,7 +129,7 @@ function _hoist_abacus_saturation_beta!(config::Dict{String, Any})
     return config
 end
 
-function _normalize_abacus_effects!(config::Dict{String, Any})
+function _normalize_legacy_effects!(config::Dict{String, Any})
     haskey(config, "seasonality") && return config
     effects = get(config, "effects", nothing)
     effects isa AbstractVector || return config
@@ -152,7 +152,7 @@ function _normalize_abacus_effects!(config::Dict{String, Any})
     return config
 end
 
-function _normalize_abacus_holidays!(config::Dict{String, Any})
+function _normalize_legacy_holidays!(config::Dict{String, Any})
     holidays_cfg = get(config, "holidays", nothing)
     holidays_cfg isa AbstractDict || return config
     mode = get(holidays_cfg, "mode", nothing)

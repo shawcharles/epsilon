@@ -263,7 +263,7 @@ function _validate_holidays_config(config::Dict{String, Any})
     mode in (:none, :auto) ||
         throw(
         ArgumentError(
-            "holidays.mode must be `none` or `auto` in the current Phase 12 surface",
+            "holidays.mode must be `none` or `auto` in the current model surface",
         ),
     )
     mode === :none && return nothing

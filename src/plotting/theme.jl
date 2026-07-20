@@ -18,7 +18,7 @@ const _EPSILON_GRID_COLOR = RGBAf(0.0, 0.0, 0.0, 0.08)
 """
     _epsilon_theme_impl() -> Theme
 
-Return the bounded Phase 10 Makie theme for Epsilon plots.
+Return the bounded Makie theme for Epsilon plots.
 
 `_epsilon_theme_impl()` is a pure helper: it returns a `Makie.Theme` and does not
 mutate Makie's global active theme.

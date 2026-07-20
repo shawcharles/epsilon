@@ -310,7 +310,7 @@ end
 """
     optimize_budget(results::InferenceResults; total_budget, channels=nothing, budget_bounds=nothing, relative_bounds=nothing, objective=:total_response, grid=nothing, panel_allocation_mode=:historical_shares)
 
-Run the bounded Phase 8 fixed-budget optimizer on one supported grouped
+Run the bounded fixed-budget optimizer on one supported grouped
 `InferenceResults` artifact.
 
 For time-series results, spend is allocated directly across channels. For panel

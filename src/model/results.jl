@@ -4,8 +4,7 @@
 Typed flat fitted-results container for the current MMM model path.
 
 `ModelResults` remains the lighter convenience surface. For the richer grouped
-artifact introduced in Phase 6, use `InferenceResults` via
-`inference_results(model; ...)`.
+artifact, use `InferenceResults` via `inference_results(model; ...)`.
 """
 struct ModelResults{C, P, Q}
     metadata::ModelArtifactMetadata

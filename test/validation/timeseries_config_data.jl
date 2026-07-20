@@ -1,19 +1,16 @@
 using Dates
 
-include(joinpath(@__DIR__, "..", "fixtures", "abacus", "timeseries", "config_data.jl"))
+include(joinpath(@__DIR__, "..", "fixtures", "golden", "timeseries", "config_data.jl"))
 
-const _TIMESERIES_FIXTURE_DIR = joinpath(@__DIR__, "..", "fixtures", "abacus", "timeseries")
+const _TIMESERIES_FIXTURE_DIR = joinpath(@__DIR__, "..", "fixtures", "golden", "timeseries")
 
-@testset "Abacus timeseries config/data fixture spine" begin
-    fixture = ABACUS_TIMESERIES_CONFIG_DATA
+@testset "timeseries golden fixture config/data spine" begin
+    fixture = GOLDEN_TIMESERIES_CONFIG_DATA
     config_path = joinpath(_TIMESERIES_FIXTURE_DIR, "config.yml")
     dataset_path = joinpath(_TIMESERIES_FIXTURE_DIR, "dataset.csv")
     holidays_path = joinpath(_TIMESERIES_FIXTURE_DIR, "holidays.csv")
 
-    loaded = load_public_config(
-        config_path;
-        overrides = Dict("holidays" => Dict("path" => holidays_path)),
-    )
+    loaded = _load_validation_fixture_config(config_path; holidays_path)
     config = loaded.model_config
     sampler = loaded.sampler_config
 
