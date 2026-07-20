@@ -45,6 +45,25 @@ Documentation: <https://epsilon.charlesshaw.net>
 - Julia `1.10` or newer.
 - The Epsilon project environment instantiated with Julia's package manager.
 
+## Install From GitHub
+
+Epsilon is not yet registered in Julia's General package registry. To install
+the current public beta directly from GitHub:
+
+```julia
+import Pkg
+Pkg.add(url = "https://github.com/shawcharles/epsilon")
+```
+
+Then load it in Julia:
+
+```julia
+using Epsilon
+```
+
+To use the bundled `runme.jl` runner and demo datasets, clone the repository
+and instantiate the local project environment:
+
 ```bash
 git clone https://github.com/shawcharles/epsilon.git
 cd epsilon
