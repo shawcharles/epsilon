@@ -1,0 +1,21 @@
+name: Format Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  format:
+    name: Runic Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - name: Install Runic
+        run: julia -e 'using Pkg; Pkg.add("Runic")'
+      - name: Run Format Check
+        run: make format-check RUNIC="julia -m Runic"

@@ -1,0 +1,1 @@
+{"metrics":{"rmse":266353.322690035,"bias":-86826.67099649512,"mae":228356.66104082047},"train_date_end":"2024-12-02","holdout_date_start":"2024-12-09","draws":20,"observations":8,"holdout_date_end":"2025-01-27","train_date_start":"2023-02-06","holdout_rows":8}

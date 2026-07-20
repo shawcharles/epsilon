@@ -1,0 +1,1 @@
+{"nobs":104,"backend":"turing","nchannels":6,"nholidays":1,"channel_scale":[2.1680496e6,1.5010848e6,957669.3333,1.426918982e6,394953.5856,294800.0],"objective":"revenue","target_scale":3.659425e6,"model_type":"TimeSeriesMMM","holidays_mode":"auto"}

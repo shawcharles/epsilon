@@ -1,0 +1,10 @@
+feature_group,feature,source,n_rows,n_columns
+target,revenue,input_csv,104,1
+media,channel_1,input_csv,104,1
+media,channel_2,input_csv,104,1
+media,channel_3,input_csv,104,1
+media,channel_4,input_csv,104,1
+media,channel_5,input_csv,104,1
+media,channel_6,input_csv,104,1
+holiday,holiday,holidays,104,1
+seasonality,yearly_fourier,date,104,4

@@ -1,0 +1,12 @@
+metric,value
+max_abs_hamiltonian_energy_error,0.8539804150800308
+max_abs_max_hamiltonian_energy_error,3.2649744328910515
+max_n_steps,127.0
+max_tree_depth,7.0
+mean_abs_hamiltonian_energy_error,0.1132242240904356
+mean_acceptance_rate,0.949021360718223
+mean_n_steps,69.528
+mean_step_size,0.06392413787063338
+mean_tree_depth,5.986
+numerical_error_count,0.0
+numerical_error_rate,0.0

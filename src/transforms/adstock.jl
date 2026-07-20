@@ -41,6 +41,19 @@ Apply geometric adstock along `axis`.
 
 `alpha` may be a scalar or a batch-shaped array that broadcasts against the
 non-convolved dimensions of `x`.
+
+# Examples
+
+```jldoctest
+julia> using Epsilon
+
+julia> geometric_adstock([1.0, 0.0, 0.0, 0.0], 0.5, 4; axis=1)
+4-element Vector{Float64}:
+ 1.0
+ 0.5
+ 0.25
+ 0.125
+```
 """
 function geometric_adstock(
         x::AbstractArray,

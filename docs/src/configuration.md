@@ -301,9 +301,7 @@ supported for panel configs.
 ```yaml
 calibration:
   steps:
-    - method: lift_test
-      params:
-        dist: gamma
+    - method: add_lift_test_measurements
   lift_test:
     channel: [tv]
     x: [10000.0]
@@ -318,7 +316,7 @@ time-series path. Cost-per-target calibration uses:
 ```yaml
 calibration:
   steps:
-    - method: cost_per_target
+    - method: add_cost_per_target_calibration
   cost_per_target:
     gathered_cpt: [20.0]
     targets: [100.0]

@@ -29,7 +29,7 @@ where `y_t^{*}` is the scaled target. The linear predictor is additive:
 
 The terms are:
 
-- `\alpha`: intercept.
+- Intercept ($\alpha$).
 - `m_t`: total media contribution after adstock, saturation, optional media
   multiplier, and media coefficients.
 - `c_t`: optional control contribution.
@@ -45,9 +45,9 @@ m_t = \sum_{j=1}^{J} \beta_j f_j(x_{1:T,j})_t,
 ```
 
 where `x_{1:T,j}` is the scaled spend or exposure series for channel `j`,
-`f_j` is the configured adstock-and-saturation transform, and `\beta_j` is the
+`f_j` is the configured adstock-and-saturation transform, and $\beta_j$ is the
 media coefficient. In the default nonnegative media-coefficient path,
-`\beta_j` has a positive prior.
+$\beta_j$ has a positive prior.
 
 Optional controls enter linearly:
 

@@ -1,0 +1,10 @@
+column,role,dtype,source
+date,date,Dates.Date,input_csv
+geo,panel,String,input_csv
+revenue,target,Float64,input_csv
+channel_1,media,Float64,input_csv
+channel_2,media,Float64,input_csv
+channel_3,media,Float64,input_csv
+channel_4,media,Float64,input_csv
+channel_5,media,Float64,input_csv
+channel_6,media,Float64,input_csv

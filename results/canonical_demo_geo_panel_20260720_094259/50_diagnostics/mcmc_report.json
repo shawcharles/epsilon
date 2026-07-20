@@ -1,0 +1,1 @@
+{"convergence":{"summary":{"rhat_threshold":1.05,"ess_threshold":100.0,"rhat_failures":0,"nissues":0,"ess_tail_failures":0,"ess_bulk_failures":0,"nparameters":61,"flagged_parameters":[]},"issues":[]},"sampler":{"mean_step_size":0.06392413787063338,"numerical_error_count":0,"mean_acceptance_rate":0.949021360718223,"numerical_error_rate":0.0,"max_tree_depth":7}}

@@ -1,0 +1,1 @@
+{"nobs":104,"nchannels":6,"target_column":"revenue","channel_scale":[2.1680496e6,1.5010848e6,957669.3333,1.426918982e6,394953.5856,294800.0],"control_columns":[],"channel_columns":["channel_1","channel_2","channel_3","channel_4","channel_5","channel_6"],"target_scale":3.659425e6,"model_type":"TimeSeriesMMM","ncontrols":0}

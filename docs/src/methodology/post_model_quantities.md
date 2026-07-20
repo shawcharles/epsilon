@@ -105,7 +105,7 @@ model assign to this channel if the historical spend path were rescaled to a
 given spend point?
 
 For time-series models, the grid is in original total-spend units. Let `g` be a
-grid point and `G_j = \sum_t x_{t,j}` be observed total spend. Epsilon rescales
+grid point and $G_j = \sum_t x_{t,j}$ be observed total spend. Epsilon rescales
 the historical path by:
 
 ```math

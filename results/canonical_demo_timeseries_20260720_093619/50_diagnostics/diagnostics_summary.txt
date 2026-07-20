@@ -1,0 +1,5 @@
+Epsilon.jl diagnostics summary
+sampler_warning_count: 2
+convergence_warning_count: 0
+has_sampler_warnings: true
+has_convergence_warnings: false

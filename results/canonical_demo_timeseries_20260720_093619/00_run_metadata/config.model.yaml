@@ -1,0 +1,73 @@
+data:
+  date_column: "date"
+priors:
+  beta_media:
+    sigma: 1
+    distribution: "HalfNormal"
+    dims:
+      - "channel"
+  intercept:
+    sigma: 2
+    distribution: "Normal"
+    mu: 0
+  likelihood:
+    sigma:
+      sigma: 2
+      distribution: "HalfNormal"
+    distribution: "Normal"
+    dims:
+      - "date"
+target:
+  column: "revenue"
+  type: "revenue"
+media:
+  adstock:
+    priors:
+      alpha:
+        alpha: 1
+        distribution: "Beta"
+        dims:
+          - "channel"
+        beta: 3
+    type: "geometric"
+    l_max: 4
+  channels:
+    - "channel_1"
+    - "channel_2"
+    - "channel_3"
+    - "channel_4"
+    - "channel_5"
+    - "channel_6"
+  saturation:
+    priors:
+      lam:
+        alpha: 3
+        distribution: "Gamma"
+        dims:
+          - "channel"
+        beta: 1
+    type: "logistic"
+seasonality:
+  n_order: 2
+  type: "fourier"
+fit:
+  progressbar: false
+  backend: "turing"
+  tune: 250
+  draws: 250
+  random_seed: 42
+  compute_convergence_checks: false
+  cores: 2
+  target_accept: 0.85
+  chains: 2
+holidays:
+  countries: "UK"
+  mode: "auto"
+  priors:
+    beta:
+      sigma: 1
+      distribution: "Normal"
+      dims:
+        - "holiday"
+      mu: 0
+  path: "/home/user/Documents/GITHUB/shawcharles/epsilon/data/demo/timeseries/holidays.csv"

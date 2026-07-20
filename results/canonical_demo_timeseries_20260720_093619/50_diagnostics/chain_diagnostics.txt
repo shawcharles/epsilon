@@ -1,0 +1,7 @@
+Epsilon.jl chain diagnostics
+parameters: 25
+convergence_issues: 0
+numerical_error_count: 2
+numerical_error_rate: 0.004
+max_tree_depth: 7
+mean_acceptance_rate: 0.9330781387474822

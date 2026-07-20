@@ -1,3 +1,9 @@
+"""
+    _apply_adstock(channels, runtime; kwargs...)
+
+Apply the selected adstock transformation across `channels`.
+Delegates to specific unrolled adstock operators from `Epsilon.Transforms`.
+"""
 function _apply_adstock(
         channels::AbstractMatrix,
         runtime;
@@ -52,6 +58,12 @@ function _apply_adstock(
     throw(ArgumentError("unsupported adstock type in media path"))
 end
 
+"""
+    _apply_saturation(transformed_media, runtime; kwargs...)
+
+Apply the selected nonlinear saturation transformation to `transformed_media`.
+Delegates to specific unrolled saturation operators from `Epsilon.Transforms`.
+"""
 function _apply_saturation(
         transformed_media::AbstractMatrix,
         runtime;
@@ -77,6 +89,12 @@ function _apply_saturation(
     throw(ArgumentError("unsupported saturation type in media path"))
 end
 
+"""
+    _media_effect(transformed_media, beta_media)
+
+Compute the additive total media contribution by taking the sum over channels
+of the coefficient-weighted media transforms.
+"""
 function _media_effect(transformed_media::AbstractMatrix, beta_media)
     return vec(sum(transformed_media .* reshape(beta_media, 1, :); dims = 2))
 end
