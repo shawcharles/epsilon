@@ -10,7 +10,7 @@ Support bands:
 - `bounded`: supported for the documented bounded slice only.
 - `compatibility`: retained for migration, legacy naming, or Julia package
   conventions.
-- `scaffolded`: public because implementation exists, but broader support or
+- `provisional`: public because implementation exists, but broader support or
   API stability is still being reviewed.
 
 Support status is the current documented scope, not a v1 API freeze.
@@ -28,184 +28,184 @@ methods are loaded through the optional `EpsilonCairoMakieExt` extension. Use
 <!-- BEGIN PUBLIC API INVENTORY -->
 | Symbol | Domain | Support |
 |---|---|---|
-| `AbstractMMMModel` | Model core | scaffolded |
-| `AbstractModel` | Model core | scaffolded |
-| `AbstractRegressionModel` | Model core | scaffolded |
+| `AbstractMMMModel` | Model core | provisional |
+| `AbstractModel` | Model core | provisional |
+| `AbstractRegressionModel` | Model core | provisional |
 | `AbstractScenarioSpec` | Scenario planning | bounded |
 | `AdstockCurveResults` | Post-model results | core |
-| `After` | Event windows | scaffolded |
-| `Before` | Event windows | scaffolded |
-| `BudgetOptimizationResult` | Budget optimization | scaffolded |
-| `CalibrationStepConfig` | Calibration | scaffolded |
+| `After` | Event windows | provisional |
+| `Before` | Event windows | provisional |
+| `BudgetOptimizationResult` | Budget optimization | provisional |
+| `CalibrationStepConfig` | Calibration | provisional |
 | `ContributionResults` | Post-model results | core |
 | `ConvMode` | Transforms | core |
-| `ConvergenceIssue` | Diagnostics | scaffolded |
-| `ConvergenceReport` | Diagnostics | scaffolded |
-| `ConvergenceWarning` | Diagnostics | scaffolded |
-| `ConvergenceWarnings` | Diagnostics | scaffolded |
-| `CostPerTargetCalibrationPayload` | Calibration | scaffolded |
-| `CostPerTargetCalibrationRows` | Calibration | scaffolded |
+| `ConvergenceIssue` | Diagnostics | provisional |
+| `ConvergenceReport` | Diagnostics | provisional |
+| `ConvergenceWarning` | Diagnostics | provisional |
+| `ConvergenceWarnings` | Diagnostics | provisional |
+| `CostPerTargetCalibrationPayload` | Calibration | provisional |
+| `CostPerTargetCalibrationRows` | Calibration | provisional |
 | `CurrentScenarioSpec` | Scenario planning | bounded |
 | `DecompositionResults` | Post-model results | core |
-| `EpsilonPrior` | Priors and distributions | scaffolded |
-| `FinnishHorseshoePrior` | Priors and distributions | scaffolded |
+| `EpsilonPrior` | Priors and distributions | provisional |
+| `FinnishHorseshoePrior` | Priors and distributions | provisional |
 | `FixedBudgetOptimizedScenarioSpec` | Scenario planning | bounded |
-| `HorseshoePrior` | Priors and distributions | scaffolded |
-| `InferenceResults` | Inference | scaffolded |
-| `InferenceSampleStats` | Inference | scaffolded |
-| `LaplacePrior` | Priors and distributions | scaffolded |
-| `LiftTestCalibrationPayload` | Calibration | scaffolded |
-| `LiftTestCalibrationRows` | Calibration | scaffolded |
-| `LogNormalPrior` | Priors and distributions | scaffolded |
-| `MMMCalibrationSpec` | Calibration | scaffolded |
-| `MMMData` | Model data | scaffolded |
-| `MMMModelSpec` | Model specification | scaffolded |
+| `HorseshoePrior` | Priors and distributions | provisional |
+| `InferenceResults` | Inference | provisional |
+| `InferenceSampleStats` | Inference | provisional |
+| `LaplacePrior` | Priors and distributions | provisional |
+| `LiftTestCalibrationPayload` | Calibration | provisional |
+| `LiftTestCalibrationRows` | Calibration | provisional |
+| `LogNormalPrior` | Priors and distributions | provisional |
+| `MMMCalibrationSpec` | Calibration | provisional |
+| `MMMData` | Model data | provisional |
+| `MMMModelSpec` | Model specification | provisional |
 | `ManualAllocationScenarioSpec` | Scenario planning | bounded |
 | `ManualScenarioEvaluationResult` | Scenario planning | bounded |
-| `MaskedPrior` | Priors and distributions | scaffolded |
+| `MaskedPrior` | Priors and distributions | provisional |
 | `MaxAbsScaleChannels` | Transforms | core |
 | `MaxAbsScaleTarget` | Transforms | core |
 | `MaxAbsScaler` | Transforms | core |
 | `MetricResults` | Post-model results | core |
-| `ModelArtifactMetadata` | Model artifacts | scaffolded |
-| `ModelConfig` | Configuration | scaffolded |
-| `ModelConfigError` | Configuration | scaffolded |
-| `ModelCoordinateMetadata` | Model artifacts | scaffolded |
-| `ModelDiagnostics` | Diagnostics | scaffolded |
-| `ModelFitState` | Model lifecycle | scaffolded |
-| `ModelResults` | Model lifecycle | scaffolded |
-| `NonMonotonicError` | Calibration | scaffolded |
-| `Overlap` | Event windows | scaffolded |
+| `ModelArtifactMetadata` | Model artifacts | provisional |
+| `ModelConfig` | Configuration | provisional |
+| `ModelConfigError` | Configuration | provisional |
+| `ModelCoordinateMetadata` | Model artifacts | provisional |
+| `ModelDiagnostics` | Diagnostics | provisional |
+| `ModelFitState` | Model lifecycle | provisional |
+| `ModelResults` | Model lifecycle | provisional |
+| `NonMonotonicError` | Calibration | provisional |
+| `Overlap` | Event windows | provisional |
 | `PanelAxis` | Panel metadata | bounded |
 | `PanelBudgetOptimizationResult` | Budget optimization | bounded |
 | `PanelCoordinate` | Panel metadata | bounded |
 | `PanelMMM` | Model core | bounded |
 | `PanelMMMData` | Model data | bounded |
-| `ParameterDiagnostics` | Diagnostics | scaffolded |
-| `PipelineRunConfig` | Pipeline | scaffolded |
-| `PipelineRunResult` | Pipeline | scaffolded |
-| `PipelineStageRecord` | Pipeline | scaffolded |
-| `PipelineValidationResult` | Pipeline | scaffolded |
-| `R2D2Prior` | Priors and distributions | scaffolded |
+| `ParameterDiagnostics` | Diagnostics | provisional |
+| `PipelineRunConfig` | Pipeline | provisional |
+| `PipelineRunResult` | Pipeline | provisional |
+| `PipelineStageRecord` | Pipeline | provisional |
+| `PipelineValidationResult` | Pipeline | provisional |
+| `R2D2Prior` | Priors and distributions | provisional |
 | `ResponseCurveResults` | Post-model results | core |
-| `SamplerConfig` | Inference | scaffolded |
-| `SamplerDiagnostics` | Diagnostics | scaffolded |
-| `SamplerWarning` | Diagnostics | scaffolded |
-| `SamplerWarnings` | Diagnostics | scaffolded |
+| `SamplerConfig` | Inference | provisional |
+| `SamplerDiagnostics` | Diagnostics | provisional |
+| `SamplerWarning` | Diagnostics | provisional |
+| `SamplerWarnings` | Diagnostics | provisional |
 | `SaturationCurveResults` | Post-model results | core |
 | `Scaled` | Transforms | core |
 | `ScenarioDataArraySpec` | Scenario planning | bounded |
 | `ScenarioPlanResult` | Scenario planning | bounded |
 | `ScenarioStoreArtifact` | Scenario planning | bounded |
-| `SkewStudentT` | Priors and distributions | scaffolded |
+| `SkewStudentT` | Priors and distributions | provisional |
 | `StandardScaler` | Transforms | core |
 | `StandardizeControls` | Transforms | core |
-| `TimeSeriesCalibrationInput` | Calibration | scaffolded |
+| `TimeSeriesCalibrationInput` | Calibration | provisional |
 | `TimeSeriesMMM` | Model core | bounded |
 | `TimeVaryingMediaConfig` | Configuration | bounded |
-| `UnalignedValuesError` | Calibration | scaffolded |
+| `UnalignedValuesError` | Calibration | provisional |
 | `WeibullType` | Transforms | core |
-| `active_count` | Priors and distributions | scaffolded |
+| `active_count` | Priors and distributions | provisional |
 | `adstock_curve_plot` | Plotting | bounded |
 | `adstock_curve_results` | Post-model results | core |
-| `assert_monotonic_lift` | Calibration | scaffolded |
+| `assert_monotonic_lift` | Calibration | provisional |
 | `assert_scenario_store_compatible` | Scenario planning | bounded |
 | `batched_convolution` | Transforms | core |
 | `binomial_adstock` | Transforms | core |
-| `budget_audit_table` | Budget optimization | scaffolded |
-| `budget_impact_table` | Budget optimization | scaffolded |
+| `budget_audit_table` | Budget optimization | provisional |
+| `budget_impact_table` | Budget optimization | provisional |
 | `budget_optimization_plot` | Plotting | bounded |
-| `build_cost_per_target_calibration_payload` | Calibration | scaffolded |
-| `build_lift_test_calibration_payload` | Calibration | scaffolded |
-| `build_model` | Model builders | scaffolded |
+| `build_cost_per_target_calibration_payload` | Calibration | provisional |
+| `build_lift_test_calibration_payload` | Calibration | provisional |
+| `build_model` | Model builders | provisional |
 | `centered_logistic_saturation` | Transforms | bounded |
 | `contribution_area_plot` | Plotting | bounded |
 | `contribution_plot` | Plotting | bounded |
 | `contribution_results` | Post-model results | core |
-| `convergence_report` | Diagnostics | scaffolded |
-| `convergence_warnings` | Diagnostics | scaffolded |
-| `cost_per_target_penalties` | Calibration | scaffolded |
-| `cost_per_target_total_penalty` | Calibration | scaffolded |
+| `convergence_report` | Diagnostics | provisional |
+| `convergence_warnings` | Diagnostics | provisional |
+| `cost_per_target_penalties` | Calibration | provisional |
+| `cost_per_target_total_penalty` | Calibration | provisional |
 | `decomposition_plot` | Plotting | bounded |
 | `decomposition_results` | Post-model results | core |
 | `delayed_adstock` | Transforms | core |
-| `deserialize_model_config` | Serialization | scaffolded |
-| `deserialize_prior` | Priors and distributions | scaffolded |
+| `deserialize_model_config` | Serialization | provisional |
+| `deserialize_prior` | Priors and distributions | provisional |
 | `epsilon_theme` | Plotting | bounded |
 | `epsilon_version` | Package identity | compatibility |
 | `evaluate_manual_scenario` | Scenario planning | bounded |
-| `exact_row_indices` | Calibration | scaffolded |
-| `expand_masked_values` | Priors and distributions | scaffolded |
-| `finnish_horseshoe_coefficients` | Priors and distributions | scaffolded |
-| `fit!` | Model lifecycle | scaffolded |
+| `exact_row_indices` | Calibration | provisional |
+| `expand_masked_values` | Priors and distributions | provisional |
+| `finnish_horseshoe_coefficients` | Priors and distributions | provisional |
+| `fit!` | Model lifecycle | provisional |
 | `fit_transform!` | Transforms | core |
-| `fourier_features` | Seasonality | scaffolded |
-| `gamma_shape_scale` | Calibration | scaffolded |
+| `fourier_features` | Seasonality | provisional |
+| `gamma_shape_scale` | Calibration | provisional |
 | `geometric_adstock` | Transforms | core |
-| `has_convergence_issues` | Diagnostics | scaffolded |
-| `has_convergence_warnings` | Diagnostics | scaffolded |
-| `has_numerical_errors` | Diagnostics | scaffolded |
-| `has_sampler_warnings` | Diagnostics | scaffolded |
+| `has_convergence_issues` | Diagnostics | provisional |
+| `has_convergence_warnings` | Diagnostics | provisional |
+| `has_numerical_errors` | Diagnostics | provisional |
+| `has_sampler_warnings` | Diagnostics | provisional |
 | `hill_function` | Transforms | core |
-| `horseshoe_coefficients` | Priors and distributions | scaffolded |
-| `inference_results` | Inference | scaffolded |
-| `instantiate_distribution` | Priors and distributions | scaffolded |
+| `horseshoe_coefficients` | Priors and distributions | provisional |
+| `inference_results` | Inference | provisional |
+| `instantiate_distribution` | Priors and distributions | provisional |
 | `inverse_transform` | Transforms | core |
-| `lift_test_estimated_lift` | Calibration | scaffolded |
-| `lift_test_estimated_lift_ad` | Calibration | scaffolded |
-| `lift_test_gamma_distribution` | Calibration | scaffolded |
-| `lift_test_likelihood_terms` | Calibration | scaffolded |
-| `lift_test_log_density` | Calibration | scaffolded |
-| `lift_test_payload_log_density` | Calibration | scaffolded |
-| `load_inference_results` | Serialization | scaffolded |
-| `load_model` | Serialization | scaffolded |
-| `load_model_config` | Configuration | scaffolded |
-| `load_public_config` | Configuration | scaffolded |
-| `load_results` | Serialization | scaffolded |
-| `load_sampler_config` | Inference | scaffolded |
+| `lift_test_estimated_lift` | Calibration | provisional |
+| `lift_test_estimated_lift_ad` | Calibration | provisional |
+| `lift_test_gamma_distribution` | Calibration | provisional |
+| `lift_test_likelihood_terms` | Calibration | provisional |
+| `lift_test_log_density` | Calibration | provisional |
+| `lift_test_payload_log_density` | Calibration | provisional |
+| `load_inference_results` | Serialization | provisional |
+| `load_model` | Serialization | provisional |
+| `load_model_config` | Configuration | provisional |
+| `load_public_config` | Configuration | provisional |
+| `load_results` | Serialization | provisional |
+| `load_sampler_config` | Inference | provisional |
 | `load_scenario_store` | Scenario planning | bounded |
 | `logistic_saturation` | Transforms | compatibility |
 | `max_abs_scale_channel_data` | Transforms | core |
 | `max_abs_scale_target_data` | Transforms | core |
 | `metric_results` | Post-model results | core |
 | `michaelis_menten` | Transforms | core |
-| `model_config_from_dict` | Configuration | scaffolded |
-| `model_diagnostics` | Diagnostics | scaffolded |
-| `model_results` | Model lifecycle | scaffolded |
+| `model_config_from_dict` | Configuration | provisional |
+| `model_diagnostics` | Diagnostics | provisional |
+| `model_results` | Model lifecycle | provisional |
 | `nobs` | Model data | compatibility |
-| `normalize_channel_columns` | Model data | scaffolded |
+| `normalize_channel_columns` | Model data | provisional |
 | `npanel_observations` | Model data | bounded |
 | `npanels` | Model data | bounded |
 | `ntime` | Model data | bounded |
 | `observed_fitted_plot` | Plotting | bounded |
-| `optimize_budget` | Budget optimization | scaffolded |
+| `optimize_budget` | Budget optimization | provisional |
 | `panel_axes` | Panel metadata | bounded |
 | `panel_axis` | Panel metadata | bounded |
 | `panel_coordinate` | Panel metadata | bounded |
 | `panel_coordinates` | Panel metadata | bounded |
-| `pipeline_main` | Pipeline | scaffolded |
+| `pipeline_main` | Pipeline | provisional |
 | `posterior_density_plot` | Plotting | bounded |
-| `predict` | Model lifecycle | scaffolded |
+| `predict` | Model lifecycle | provisional |
 | `prior_posterior_plot` | Plotting | bounded |
-| `prior_predict` | Model lifecycle | scaffolded |
-| `r2d2_coefficients` | Priors and distributions | scaffolded |
-| `r2d2_variance_weights` | Priors and distributions | scaffolded |
-| `regularized_local_scales` | Priors and distributions | scaffolded |
+| `prior_predict` | Model lifecycle | provisional |
+| `r2d2_coefficients` | Priors and distributions | provisional |
+| `r2d2_variance_weights` | Priors and distributions | provisional |
+| `regularized_local_scales` | Priors and distributions | provisional |
 | `residual_diagnostics_plot` | Plotting | bounded |
 | `response_curve_plot` | Plotting | bounded |
 | `response_curve_results` | Post-model results | core |
-| `run_pipeline` | Pipeline | scaffolded |
-| `sampler_config_from_dict` | Inference | scaffolded |
-| `sampler_diagnostics` | Diagnostics | scaffolded |
-| `sampler_warnings` | Diagnostics | scaffolded |
+| `run_pipeline` | Pipeline | provisional |
+| `sampler_config_from_dict` | Inference | provisional |
+| `sampler_diagnostics` | Diagnostics | provisional |
+| `sampler_warnings` | Diagnostics | provisional |
 | `saturation_curve_plot` | Plotting | bounded |
 | `saturation_curve_results` | Post-model results | core |
-| `save_inference_results` | Serialization | scaffolded |
-| `save_model` | Serialization | scaffolded |
-| `save_results` | Serialization | scaffolded |
-| `scale_channel_lift_measurements` | Calibration | scaffolded |
-| `scale_lift_measurements` | Calibration | scaffolded |
-| `scale_target_for_lift_measurements` | Calibration | scaffolded |
+| `save_inference_results` | Serialization | provisional |
+| `save_model` | Serialization | provisional |
+| `save_results` | Serialization | provisional |
+| `scale_channel_lift_measurements` | Calibration | provisional |
+| `scale_lift_measurements` | Calibration | provisional |
+| `scale_target_for_lift_measurements` | Calibration | provisional |
 | `scenario_plan` | Scenario planning | bounded |
 | `scenario_store_plan` | Scenario planning | bounded |
 | `standardize_control_data` | Transforms | core |
@@ -213,17 +213,17 @@ methods are loaded through the optional `EpsilonCairoMakieExt` extension. Use
 | `tanh_saturation` | Transforms | core |
 | `trace_plot` | Plotting | bounded |
 | `transform` | Transforms | core |
-| `validate_calibration_step_config` | Calibration | scaffolded |
+| `validate_calibration_step_config` | Calibration | provisional |
 | `validate_channel_values` | Validation | bounded |
-| `validate_column_indices` | Validation | scaffolded |
-| `validate_cost_per_target_calibration_payload` | Calibration | scaffolded |
-| `validate_lift_test_calibration_payload` | Calibration | scaffolded |
-| `validate_lift_test_columns` | Calibration | scaffolded |
-| `validate_mmm_data` | Model data | scaffolded |
-| `validate_model_config` | Configuration | scaffolded |
+| `validate_column_indices` | Validation | provisional |
+| `validate_cost_per_target_calibration_payload` | Calibration | provisional |
+| `validate_lift_test_calibration_payload` | Calibration | provisional |
+| `validate_lift_test_columns` | Calibration | provisional |
+| `validate_mmm_data` | Model data | provisional |
+| `validate_model_config` | Configuration | provisional |
 | `validate_panel_mmm_data` | Model data | bounded |
-| `validate_sampler_config` | Inference | scaffolded |
-| `validate_target_data` | Model data | scaffolded |
+| `validate_sampler_config` | Inference | provisional |
+| `validate_target_data` | Model data | provisional |
 | `weibull_adstock` | Transforms | core |
 | `write_plot_bundle` | Plotting | bounded |
 | `write_scenario_store` | Scenario planning | bounded |
@@ -231,7 +231,7 @@ methods are loaded through the optional `EpsilonCairoMakieExt` extension. Use
 
 ## Reading The Table
 
-Several domains are intentionally still `scaffolded`. That label means the
+Several domains are intentionally still `provisional`. That label means the
 symbol is exported today and has implementation behind it, but the API may
 still change before a stable release.
 

@@ -6,7 +6,7 @@ export JULIA_PKG_SERVER_REGISTRY_PREFERENCE ?= eager
 
 .PHONY: instantiate smoke smoke-demo-configs run-demo-config test test-full test-file test-model test-optimization test-validation \
 	format format-check format-check-touched docs check check-optimization \
-	check-validation check-full check-release quality parity-check
+	check-validation check-full check-release quality
 
 instantiate:
 	$(JULIA) --project=. -e 'using Pkg; Pkg.instantiate()'
@@ -72,5 +72,3 @@ check-full: format-check-touched test-full docs
 check-release: format-check test-full docs
 
 quality: check-full
-
-parity-check: test-validation

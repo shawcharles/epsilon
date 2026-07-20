@@ -79,5 +79,10 @@ Use the full suite only when a broad local gate is needed:
 
 ```bash
 make test
+```
+
+Build the documentation after public documentation changes:
+
+```bash
 make docs
 ```

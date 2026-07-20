@@ -43,8 +43,7 @@ Documentation: <https://epsilon.charlesshaw.net>
 ## Requirements
 
 - Julia `1.10` or newer.
-- A local checkout of this repository.
-- The project environment instantiated with Julia's package manager.
+- The Epsilon project environment instantiated with Julia's package manager.
 
 ```bash
 git clone https://github.com/shawcharles/epsilon.git
