@@ -18,6 +18,8 @@ optimisation artifacts.
 Epsilon is pre-release software. The supported surface is intentionally
 bounded, but the maintained paths are usable for demo-scale MMM runs.
 
+Documentation: <https://epsilon.charlesshaw.net>
+
 ## What It Supports
 
 - Time-series MMM with Turing/NUTS MCMC.
@@ -155,7 +157,8 @@ println(result.run_dir)
 
 Lower-level model construction, fitting, post-model analysis, and plotting APIs
 are available for Julia users who want to work directly with typed model
-objects. See `docs/src/api.md` and the demo bundles under `data/demo/`.
+objects. See <https://epsilon.charlesshaw.net> and the demo bundles under
+`data/demo/`.
 
 ## Result Layout
 
