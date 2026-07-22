@@ -67,6 +67,9 @@ For the fitted regression structure and media-response equations, see
 [Model Form](methodology/model.md) and
 [Media Transforms](methodology/media_transforms.md).
 
+For a public-facing comparison with other open-source MMM packages, see
+[Comparison With Other Open-Source MMM Tools](comparison.md).
+
 ## Programmatic Entry Point
 
 ```julia

@@ -19,6 +19,7 @@ makedocs(
             "Scaling And Priors" => "methodology/scaling_and_priors.md",
             "Post-Model Quantities" => "methodology/post_model_quantities.md",
         ],
+        "Tool Comparison" => "comparison.md",
         "Public API" => "api.md",
         "Calibration" => "calibration.md",
         "Support Boundaries" => "release.md",

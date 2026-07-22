@@ -20,6 +20,9 @@ bounded, but the maintained paths are usable for demo-scale MMM runs.
 
 Documentation: <https://epsilon.charlesshaw.net>
 
+Open-source MMM tool comparison:
+<https://epsilon.charlesshaw.net/comparison/>
+
 ## What It Supports
 
 - Time-series MMM with Turing/NUTS MCMC.
