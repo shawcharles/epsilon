@@ -162,8 +162,11 @@ export TimeSeriesMMM
 # Post-model result surfaces and summaries.
 export adstock_curve_results
 export AdstockCurveResults
+export BudgetAllocationDecisionSummary
 export BudgetOptimizationDiagnostics
 export budget_audit_table
+export budget_allocation_decision_summary
+export budget_allocation_decision_table
 export budget_impact_table
 export contribution_results
 export ContributionResults

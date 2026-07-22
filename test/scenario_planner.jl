@@ -222,6 +222,28 @@ function _manual_evaluation_with(
     )
 end
 
+function _scenario_allocation_evaluation(
+        result::BudgetOptimizationResult;
+        allocation_kind,
+        allocation,
+        response_draws,
+    )
+    total_budget = sum(values(allocation))
+    expected_response = sum(response_draws) / length(response_draws)
+    return BudgetAllocationEvaluationResult(
+        result.metadata,
+        result.spec,
+        result.coordinate_metadata,
+        result.objective,
+        allocation_kind,
+        copy(allocation),
+        total_budget,
+        Float64.(response_draws),
+        expected_response,
+        expected_response / total_budget,
+    )
+end
+
 @testset "scenario planner specs validate bounded bounded semantics" begin
     current = CurrentScenarioSpec(name = "Status Quo FY24", start_date = "2024-01-01", end_date = Date(2024, 1, 31))
     @test current.scenario_id == "status-quo-fy24"
@@ -255,6 +277,29 @@ end
         "evaluate_budget_allocation",
     )
     @test_throws ArgumentError FixedBudgetOptimizedScenarioSpec(name = "bad", total_budget = 0.0)
+end
+
+@testset "scenario planner shells support posterior allocation decision tables" begin
+    result = _scenario_test_result()
+    current = _scenario_allocation_evaluation(
+        result;
+        allocation_kind = :current,
+        allocation = result.current_spend,
+        response_draws = [80.0, 82.0, 78.0, 80.0],
+    )
+    optimized = _scenario_allocation_evaluation(
+        result;
+        allocation_kind = :optimized,
+        allocation = result.optimized_spend,
+        response_draws = [92.0, 94.0, 88.0, 90.0],
+    )
+
+    table = budget_allocation_decision_table(current, [current, optimized])
+    @test table.allocation_kind == [:current, :optimized]
+    @test table.reference_allocation_kind == [:current, :current]
+    @test table.response_mean == [80.0, 91.0]
+    @test table.uplift_mean == [0.0, 11.0]
+    @test table.probability_beats_reference == [0.0, 1.0]
 end
 
 @testset "scenario_plan projects optimizer results into comparison tables" begin

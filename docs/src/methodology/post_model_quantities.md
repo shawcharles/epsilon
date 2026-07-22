@@ -198,5 +198,32 @@ The allocation must use the fitted model's channel set and original input
 units. Panel evaluation is limited to the same historical-share semantics used
 by bounded panel optimisation.
 
+`budget_allocation_decision_summary` and
+`budget_allocation_decision_table` compare evaluated allocations against a
+reference allocation, usually the current allocation. For candidate response
+draws $y^{(s)}_a$ and reference response draws $y^{(s)}_0$, Epsilon reports
+paired uplift draws:
+
+```math
+\Delta^{(s)}_a = y^{(s)}_a - y^{(s)}_0,
+```
+
+draw-wise percentage uplift where the reference draw is numerically nonzero:
+
+```math
+r^{(s)}_a = \frac{\Delta^{(s)}_a}{y^{(s)}_0},
+```
+
+and the posterior probability of improvement:
+
+```math
+\Pr(y_a > y_0) \approx \frac{1}{S}\sum_{s=1}^{S}
+\mathbb{1}\left[y^{(s)}_a > y^{(s)}_0\right].
+```
+
+These summaries are posterior decision diagnostics for model-conditioned
+allocations. They are not realised business outcomes and they do not introduce
+a refit, future baseline simulation, or a new optimiser objective.
+
 For panel results, optimisation uses historical within-channel panel shares.
 That is a bounded allocation rule, not free channel-by-panel optimisation.

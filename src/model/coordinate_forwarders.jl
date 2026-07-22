@@ -6,6 +6,7 @@ const _PanelCoordinateResult = Union{
     SaturationCurveResults,
     AdstockCurveResults,
     MetricResults,
+    BudgetAllocationDecisionSummary,
     BudgetAllocationEvaluationResult,
     PanelBudgetOptimizationResult,
 }

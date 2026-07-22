@@ -1,6 +1,7 @@
 include("../fixtures/golden/optimization/cases.jl")
 
 using Epsilon
+using Statistics
 using Test
 
 const _OPTIMIZATION_SUCCESS_STATUSES = Set(
@@ -161,6 +162,126 @@ function _expected_marginal_response(problem, spend_mapping; bounded::Bool)
         end
     end
     return values
+end
+
+function _allocation_evaluation_shell(;
+        allocation_kind = :current,
+        objective = :total_response,
+        response_draws = [100.0, 110.0, 90.0, 100.0],
+        allocation = Dict("tv" => 100.0, "search" => 50.0),
+    )
+    case = only(filter(case -> case.name == "all_channel_fixed_budget", GOLDEN_OPTIMIZATION_FIXTURES.cases))
+    metadata, coordinate_metadata, spec = _optimization_fixture_shell(case)
+    total_budget = sum(values(allocation))
+    expected_response = mean(response_draws)
+    return BudgetAllocationEvaluationResult(
+        metadata,
+        spec,
+        coordinate_metadata,
+        objective,
+        allocation_kind,
+        copy(allocation),
+        total_budget,
+        Float64.(response_draws),
+        expected_response,
+        expected_response / total_budget,
+    )
+end
+
+@testset "budget allocation decision summaries compare posterior draws" begin
+    current = _allocation_evaluation_shell()
+    manual = _allocation_evaluation_shell(
+        allocation_kind = :manual,
+        response_draws = [100.0, 120.0, 95.0, 105.0],
+        allocation = Dict("tv" => 90.0, "search" => 60.0),
+    )
+
+    summary = budget_allocation_decision_summary(
+        current,
+        manual;
+        interval_probability = 0.5,
+    )
+    uplift = manual.response_draws .- current.response_draws
+    uplift_pct = uplift ./ current.response_draws
+
+    @test summary isa BudgetAllocationDecisionSummary
+    @test summary.metadata == manual.metadata
+    @test summary.spec == manual.spec
+    @test summary.coordinate_metadata == manual.coordinate_metadata
+    @test summary.objective == :total_response
+    @test summary.reference_allocation_kind == :current
+    @test summary.allocation_kind == :manual
+    @test summary.allocation == manual.allocation
+    @test summary.total_budget ≈ 150.0
+    @test summary.interval_probability ≈ 0.5
+    @test summary.response_mean ≈ mean(manual.response_draws)
+    @test summary.response_median ≈ median(manual.response_draws)
+    @test summary.response_std ≈ std(manual.response_draws)
+    @test summary.response_interval_lower ≈ quantile(manual.response_draws, 0.25)
+    @test summary.response_interval_upper ≈ quantile(manual.response_draws, 0.75)
+    @test summary.uplift_mean ≈ mean(uplift)
+    @test summary.uplift_median ≈ median(uplift)
+    @test summary.uplift_std ≈ std(uplift)
+    @test summary.uplift_interval_lower ≈ quantile(uplift, 0.25)
+    @test summary.uplift_interval_upper ≈ quantile(uplift, 0.75)
+    @test summary.uplift_pct_mean ≈ mean(uplift_pct)
+    @test summary.uplift_pct_median ≈ median(uplift_pct)
+    @test summary.uplift_pct_interval_lower ≈ quantile(uplift_pct, 0.25)
+    @test summary.uplift_pct_interval_upper ≈ quantile(uplift_pct, 0.75)
+    @test summary.probability_beats_reference ≈ 0.75
+
+    current_summary = budget_allocation_decision_summary(current, current)
+    @test current_summary.uplift_mean ≈ 0.0
+    @test current_summary.uplift_median ≈ 0.0
+    @test current_summary.uplift_std ≈ 0.0
+    @test current_summary.probability_beats_reference ≈ 0.0
+
+    table = budget_allocation_decision_table(current, current, manual; interval_probability = 0.5)
+    @test names(table) == [
+        "allocation_kind",
+        "reference_allocation_kind",
+        "objective",
+        "total_budget",
+        "response_mean",
+        "response_median",
+        "response_std",
+        "response_interval_lower",
+        "response_interval_upper",
+        "uplift_mean",
+        "uplift_median",
+        "uplift_std",
+        "uplift_interval_lower",
+        "uplift_interval_upper",
+        "uplift_pct_mean",
+        "uplift_pct_median",
+        "uplift_pct_interval_lower",
+        "uplift_pct_interval_upper",
+        "probability_beats_reference",
+        "interval_probability",
+    ]
+    @test table.allocation_kind == [:current, :manual]
+    @test table.reference_allocation_kind == [:current, :current]
+    @test table.uplift_mean[1] ≈ 0.0
+    @test table.uplift_mean[2] ≈ summary.uplift_mean
+    @test table.probability_beats_reference == [0.0, 0.75]
+
+    vector_table = budget_allocation_decision_table(current, [manual])
+    @test size(vector_table, 1) == 1
+    @test vector_table.allocation_kind == [:manual]
+
+    @test_throws ArgumentError budget_allocation_decision_summary(
+        current,
+        manual;
+        interval_probability = 1.0,
+    )
+    @test_throws ArgumentError budget_allocation_decision_summary(
+        current,
+        _allocation_evaluation_shell(objective = :other),
+    )
+    @test_throws ArgumentError budget_allocation_decision_summary(
+        current,
+        _allocation_evaluation_shell(response_draws = [100.0, 101.0]),
+    )
 end
 
 @testset "budget optimization summary projections follow public schemas" begin

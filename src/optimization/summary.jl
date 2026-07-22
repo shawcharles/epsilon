@@ -1,4 +1,5 @@
 using DataFrames
+using Statistics
 
 function _channel_constraint_lookup(audit::BudgetConstraintAudit)
     return Dict(constraint.channel => constraint for constraint in audit.channel_constraints)
@@ -55,6 +56,195 @@ end
 function _marginal_cpa(result::_BudgetOptimizationResultLike, marginal_response::Real)
     _is_conversion_target(result) || return NaN
     return _safe_metric_ratio(1.0, marginal_response)
+end
+
+function _validate_decision_interval_probability(interval_probability)
+    probability = Float64(interval_probability)
+    isfinite(probability) && 0.0 < probability < 1.0 ||
+        throw(ArgumentError("budget allocation decision summaries require interval_probability in (0, 1)"))
+    return probability
+end
+
+function _validate_budget_allocation_decision_inputs(
+        reference::BudgetAllocationEvaluationResult,
+        candidate::BudgetAllocationEvaluationResult,
+        action::AbstractString,
+    )
+    reference.metadata == candidate.metadata ||
+        throw(ArgumentError("$action requires matching allocation-evaluation metadata"))
+    reference.spec == candidate.spec ||
+        throw(ArgumentError("$action requires matching allocation-evaluation model specs"))
+    reference.coordinate_metadata == candidate.coordinate_metadata ||
+        throw(ArgumentError("$action requires matching allocation-evaluation coordinate metadata"))
+    reference.objective == candidate.objective ||
+        throw(ArgumentError("$action requires matching allocation-evaluation objectives"))
+    isempty(reference.response_draws) &&
+        throw(ArgumentError("$action requires nonempty reference response draws"))
+    isempty(candidate.response_draws) &&
+        throw(ArgumentError("$action requires nonempty candidate response draws"))
+    length(reference.response_draws) == length(candidate.response_draws) ||
+        throw(ArgumentError("$action requires reference and candidate response draws with matching length"))
+    all(isfinite, reference.response_draws) ||
+        throw(ArgumentError("$action requires finite reference response draws"))
+    all(isfinite, candidate.response_draws) ||
+        throw(ArgumentError("$action requires finite candidate response draws"))
+    return nothing
+end
+
+function _decision_interval_bounds(values::AbstractVector{<:Real}, interval_probability::Real)
+    alpha = (1.0 - Float64(interval_probability)) / 2.0
+    return Float64(quantile(values, alpha)),
+        Float64(quantile(values, 1.0 - alpha))
+end
+
+function _decision_std(values::AbstractVector{<:Real})
+    length(values) <= 1 && return 0.0
+    return Float64(std(values))
+end
+
+function _decision_draw_summary(values::AbstractVector{<:Real}, interval_probability::Real)
+    lower, upper = _decision_interval_bounds(values, interval_probability)
+    return (
+        mean = Float64(mean(values)),
+        median = Float64(median(values)),
+        std = _decision_std(values),
+        lower = lower,
+        upper = upper,
+    )
+end
+
+function _uplift_pct_draws(
+        candidate::BudgetAllocationEvaluationResult,
+        reference::BudgetAllocationEvaluationResult,
+    )
+    return Float64[
+        _safe_metric_ratio(
+                candidate.response_draws[index] - reference.response_draws[index],
+                reference.response_draws[index],
+            ) for index in eachindex(reference.response_draws)
+    ]
+end
+
+"""
+    budget_allocation_decision_summary(reference, candidate; interval_probability=0.9)
+
+Summarise one evaluated allocation against a reference allocation using paired
+posterior total-response draws.
+
+The two inputs must come from compatible `evaluate_budget_allocation` calls over
+the same fitted model. Uplift is computed draw-wise as
+`candidate.response_draws - reference.response_draws`; percentage uplift is the
+draw-wise uplift divided by the reference draw where numerically defined.
+"""
+function budget_allocation_decision_summary(
+        reference::BudgetAllocationEvaluationResult,
+        candidate::BudgetAllocationEvaluationResult;
+        interval_probability = 0.9,
+    )
+    action = "budget_allocation_decision_summary"
+    probability = _validate_decision_interval_probability(interval_probability)
+    _validate_budget_allocation_decision_inputs(reference, candidate, action)
+
+    uplift_draws = candidate.response_draws .- reference.response_draws
+    uplift_pct_draws = _uplift_pct_draws(candidate, reference)
+    response = _decision_draw_summary(candidate.response_draws, probability)
+    uplift = _decision_draw_summary(uplift_draws, probability)
+    uplift_pct = _decision_draw_summary(uplift_pct_draws, probability)
+    probability_beats_reference = Float64(mean(uplift_draws .> 0.0))
+
+    return BudgetAllocationDecisionSummary(
+        candidate.metadata,
+        candidate.spec,
+        candidate.coordinate_metadata,
+        candidate.objective,
+        reference.allocation_kind,
+        candidate.allocation_kind,
+        copy(candidate.allocation),
+        candidate.total_budget,
+        probability,
+        response.mean,
+        response.median,
+        response.std,
+        response.lower,
+        response.upper,
+        uplift.mean,
+        uplift.median,
+        uplift.std,
+        uplift.lower,
+        uplift.upper,
+        uplift_pct.mean,
+        uplift_pct.median,
+        uplift_pct.lower,
+        uplift_pct.upper,
+        probability_beats_reference,
+    )
+end
+
+function _budget_allocation_decision_table_row(summary::BudgetAllocationDecisionSummary)
+    return (
+        allocation_kind = summary.allocation_kind,
+        reference_allocation_kind = summary.reference_allocation_kind,
+        objective = summary.objective,
+        total_budget = summary.total_budget,
+        response_mean = summary.response_mean,
+        response_median = summary.response_median,
+        response_std = summary.response_std,
+        response_interval_lower = summary.response_interval_lower,
+        response_interval_upper = summary.response_interval_upper,
+        uplift_mean = summary.uplift_mean,
+        uplift_median = summary.uplift_median,
+        uplift_std = summary.uplift_std,
+        uplift_interval_lower = summary.uplift_interval_lower,
+        uplift_interval_upper = summary.uplift_interval_upper,
+        uplift_pct_mean = summary.uplift_pct_mean,
+        uplift_pct_median = summary.uplift_pct_median,
+        uplift_pct_interval_lower = summary.uplift_pct_interval_lower,
+        uplift_pct_interval_upper = summary.uplift_pct_interval_upper,
+        probability_beats_reference = summary.probability_beats_reference,
+        interval_probability = summary.interval_probability,
+    )
+end
+
+"""
+    budget_allocation_decision_table(reference, candidates...; interval_probability=0.9)
+
+Project posterior decision summaries for evaluated allocations into an
+analyst-facing table. If no candidates are supplied, the reference allocation
+is summarised against itself.
+"""
+function budget_allocation_decision_table(
+        reference::BudgetAllocationEvaluationResult,
+        candidates::BudgetAllocationEvaluationResult...;
+        interval_probability = 0.9,
+    )
+    evaluated = isempty(candidates) ? [reference] : collect(candidates)
+    rows = [
+        _budget_allocation_decision_table_row(
+                budget_allocation_decision_summary(
+                    reference,
+                    candidate;
+                    interval_probability,
+                ),
+            ) for candidate in evaluated
+    ]
+    return DataFrame(rows)
+end
+
+function budget_allocation_decision_table(
+        reference::BudgetAllocationEvaluationResult,
+        candidates::AbstractVector{<:BudgetAllocationEvaluationResult};
+        interval_probability = 0.9,
+    )
+    rows = [
+        _budget_allocation_decision_table_row(
+                budget_allocation_decision_summary(
+                    reference,
+                    candidate;
+                    interval_probability,
+                ),
+            ) for candidate in candidates
+    ]
+    return DataFrame(rows)
 end
 
 """

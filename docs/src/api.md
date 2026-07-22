@@ -33,6 +33,7 @@ functions or `write_plot_bundle(run)`.
 | `AbstractRegressionModel` | Model core | provisional |
 | `AbstractScenarioSpec` | Scenario planning | bounded |
 | `AdstockCurveResults` | Post-model results | core |
+| `BudgetAllocationDecisionSummary` | Budget optimization | provisional |
 | `BudgetAllocationEvaluationResult` | Budget optimization | provisional |
 | `BudgetOptimizationDiagnostics` | Budget optimization | provisional |
 | `BudgetOptimizationResult` | Budget optimization | provisional |
@@ -112,6 +113,8 @@ functions or `write_plot_bundle(run)`.
 | `batched_convolution` | Transforms | core |
 | `binomial_adstock` | Transforms | core |
 | `budget_audit_table` | Budget optimization | provisional |
+| `budget_allocation_decision_summary` | Budget optimization | provisional |
+| `budget_allocation_decision_table` | Budget optimization | provisional |
 | `budget_impact_table` | Budget optimization | provisional |
 | `budget_optimization_plot` | Plotting | bounded |
 | `build_cost_per_target_calibration_payload` | Calibration | provisional |
@@ -249,6 +252,7 @@ Epsilon.AbstractModel
 Epsilon.AbstractRegressionModel
 Epsilon.AbstractScenarioSpec
 Epsilon.AdstockCurveResults
+Epsilon.BudgetAllocationDecisionSummary
 Epsilon.BudgetAllocationEvaluationResult
 Epsilon.BudgetOptimizationDiagnostics
 Epsilon.BudgetOptimizationResult
@@ -328,6 +332,8 @@ Epsilon.assert_scenario_store_compatible
 Epsilon.batched_convolution
 Epsilon.binomial_adstock
 Epsilon.budget_audit_table
+Epsilon.budget_allocation_decision_summary
+Epsilon.budget_allocation_decision_table
 Epsilon.budget_impact_table
 Epsilon.budget_optimization_plot
 Epsilon.build_cost_per_target_calibration_payload

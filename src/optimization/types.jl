@@ -213,6 +213,75 @@ function Base.:(==)(
 end
 
 """
+    BudgetAllocationDecisionSummary
+
+Typed posterior decision summary for one evaluated allocation against a
+reference allocation.
+
+Response fields summarise the evaluated allocation's posterior total-response
+draws. Uplift fields summarise paired draw differences against the reference
+allocation. Percentage uplift is draw-wise uplift divided by the reference draw
+where numerically defined. `probability_beats_reference` is the posterior share
+of paired draws where the evaluated allocation exceeds the reference.
+"""
+struct BudgetAllocationDecisionSummary
+    metadata::ModelArtifactMetadata
+    spec::MMMModelSpec
+    coordinate_metadata::ModelCoordinateMetadata
+    objective::Symbol
+    reference_allocation_kind::Symbol
+    allocation_kind::Symbol
+    allocation::Dict{String, Float64}
+    total_budget::Float64
+    interval_probability::Float64
+    response_mean::Float64
+    response_median::Float64
+    response_std::Float64
+    response_interval_lower::Float64
+    response_interval_upper::Float64
+    uplift_mean::Float64
+    uplift_median::Float64
+    uplift_std::Float64
+    uplift_interval_lower::Float64
+    uplift_interval_upper::Float64
+    uplift_pct_mean::Float64
+    uplift_pct_median::Float64
+    uplift_pct_interval_lower::Float64
+    uplift_pct_interval_upper::Float64
+    probability_beats_reference::Float64
+end
+
+function Base.:(==)(
+        lhs::BudgetAllocationDecisionSummary,
+        rhs::BudgetAllocationDecisionSummary,
+    )
+    return lhs.metadata == rhs.metadata &&
+        lhs.spec == rhs.spec &&
+        lhs.coordinate_metadata == rhs.coordinate_metadata &&
+        lhs.objective == rhs.objective &&
+        lhs.reference_allocation_kind == rhs.reference_allocation_kind &&
+        lhs.allocation_kind == rhs.allocation_kind &&
+        lhs.allocation == rhs.allocation &&
+        lhs.total_budget == rhs.total_budget &&
+        lhs.interval_probability == rhs.interval_probability &&
+        lhs.response_mean == rhs.response_mean &&
+        lhs.response_median == rhs.response_median &&
+        lhs.response_std == rhs.response_std &&
+        lhs.response_interval_lower == rhs.response_interval_lower &&
+        lhs.response_interval_upper == rhs.response_interval_upper &&
+        lhs.uplift_mean == rhs.uplift_mean &&
+        lhs.uplift_median == rhs.uplift_median &&
+        lhs.uplift_std == rhs.uplift_std &&
+        lhs.uplift_interval_lower == rhs.uplift_interval_lower &&
+        lhs.uplift_interval_upper == rhs.uplift_interval_upper &&
+        lhs.uplift_pct_mean == rhs.uplift_pct_mean &&
+        lhs.uplift_pct_median == rhs.uplift_pct_median &&
+        lhs.uplift_pct_interval_lower == rhs.uplift_pct_interval_lower &&
+        lhs.uplift_pct_interval_upper == rhs.uplift_pct_interval_upper &&
+        lhs.probability_beats_reference == rhs.probability_beats_reference
+end
+
+"""
     PanelBudgetOptimizationResult
 
 Typed canonical result surface for panel budget optimization.
