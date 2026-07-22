@@ -266,7 +266,8 @@ Typed local scenario-store artifact for a validated [`ScenarioPlanResult`](@ref)
 
 The serialized store is a local Epsilon/Julia artifact. CSV sidecars written by
 [`write_scenario_store`](@ref) are for inspection only; loads use the typed
-payload as the source of truth.
+payload as the source of truth. Load typed scenario-store payloads only from
+trusted local Epsilon runs.
 """
 struct ScenarioStoreArtifact
     schema_version::Int
@@ -381,6 +382,10 @@ end
     load_scenario_store(path)::ScenarioStoreArtifact
 
 Load and validate the typed scenario-store payload from `path`.
+
+Julia serialization artifacts are trusted-local only: deserialization can
+execute code before Epsilon validates the restored structure. Load only
+`scenario_store.jls` artifacts written by trusted local Epsilon runs.
 """
 function load_scenario_store(path::AbstractString)::ScenarioStoreArtifact
     payload_path = joinpath(path, _SCENARIO_STORE_PAYLOAD)

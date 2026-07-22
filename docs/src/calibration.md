@@ -84,6 +84,21 @@ The following remain outside the current supported surface:
 Unsupported calibration paths fail closed with explicit errors rather than
 silently dropping calibration.
 
+## Failure Boundaries
+
+Calibration row data and resolved payloads are validated before the Turing model
+is constructed. Malformed calibration input, repeated/mismatched step
+definitions, out-of-bounds lift-test channel indices, non-logistic lift-test
+models, non-finite values, and non-positive `sigma` values fail with
+`ArgumentError` at config/model boundaries.
+
+During Turing evaluation, a proposed sampled parameter vector can still place a
+calibration or HSGP media helper outside its mathematical support. Those
+model-domain failures are treated as `-Inf` log density so HMC rejects the
+proposal while preserving Turing's requirement that each model evaluation touch
+the same stochastic statements. This is distinct from malformed user input,
+which is validated eagerly and should not be diagnosed from sampler behaviour.
+
 ## Validation Status
 
 The supported calibration path is the bounded `TimeSeriesMMM` MCMC slice,

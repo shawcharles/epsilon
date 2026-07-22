@@ -206,7 +206,8 @@ results/config_YYYYMMDD_HHMMSS/
 
 The manifest records stage status, artifact paths, warnings, and failures.
 Julia `.jls` files are trusted-local serialisation artifacts, not portable
-interchange files.
+interchange files. Do not load `.jls` artifacts from untrusted sources; Julia
+deserialization can execute code before Epsilon validates the restored payload.
 
 ## Plotting
 

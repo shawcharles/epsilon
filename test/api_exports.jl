@@ -414,6 +414,36 @@ end
     @test active_portable_or_untrusted_artifact_claims == String[]
 end
 
+@testset "bounded correctness and artifact warnings stay documented" begin
+    media_transform_docs = read(
+        joinpath(API_EXPORTS_DOCS_SRC_PATH, "methodology", "media_transforms.md"),
+        String,
+    )
+    calibration_docs = read(joinpath(API_EXPORTS_DOCS_SRC_PATH, "calibration.md"), String)
+    supported_paths_docs = read(joinpath(API_EXPORTS_DOCS_SRC_PATH, "supported_paths.md"), String)
+
+    @test occursin("Weibull-PDF Weight Rescaling", media_transform_docs)
+    @test occursin("shape rescaling, not a probability-mass normalisation", media_transform_docs)
+    @test occursin("Failure Boundaries", calibration_docs)
+    @test occursin("model-domain failures are treated as `-Inf` log density", calibration_docs)
+    @test occursin("load_model", supported_paths_docs)
+    @test occursin("load_results", supported_paths_docs)
+    @test occursin("load_inference_results", supported_paths_docs)
+    @test occursin("load_scenario_store", supported_paths_docs)
+    @test occursin("deserialization can execute code", supported_paths_docs)
+
+    for symbol in (:load_model, :load_results, :load_inference_results, :load_scenario_store)
+        doc = _api_exports_doc_for(symbol)
+
+        @test !isnothing(doc)
+        isnothing(doc) && continue
+        normalized_doc = replace(doc, r"\s+" => " ")
+        @test occursin("trusted-local", lowercase(normalized_doc))
+        @test occursin("deserialization can execute code", normalized_doc)
+        @test occursin(".jls", normalized_doc)
+    end
+end
+
 @testset "public docs avoid dependent-product identity claims" begin
     public_identity_claims = _api_exports_matching_claim_lines(
         API_EXPORTS_PUBLIC_IDENTITY_GUARD_PATHS,

@@ -56,9 +56,11 @@ end
 
 Load a serialized Epsilon model object from `path`.
 
-Julia serialization artifacts are trusted-local only. Epsilon validates model
-payload lifecycle state after deserialization, including retained HSGP media
-state in schema-v2 envelopes.
+Julia serialization artifacts are trusted-local only: deserialization can
+execute code before Epsilon validates the restored structure. Load only `.jls`
+artifacts written by trusted local Epsilon runs. Epsilon validates model payload
+lifecycle state after deserialization, including retained HSGP media state in
+schema-v2 envelopes.
 """
 function load_model(path::AbstractString)
     payload = open(deserialize, path)

@@ -116,7 +116,8 @@ the marker also recorded in `run_manifest.json`.
 
 Julia `.jls` files are trusted-local serialisation artifacts. They are bound to
 the Julia, Epsilon, and dependency versions that wrote them and should not be
-loaded from untrusted sources.
+loaded from untrusted sources; Julia deserialization can execute code before
+Epsilon can validate the restored payload.
 
 ## Supported Surface
 

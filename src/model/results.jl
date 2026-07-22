@@ -151,6 +151,10 @@ end
     load_results(path)
 
 Load a serialized `ModelResults` object from `path`.
+
+Julia serialization artifacts are trusted-local only: deserialization can
+execute code before Epsilon validates the restored structure. Load only `.jls`
+artifacts written by trusted local Epsilon runs.
 """
 function load_results(path::AbstractString)
     payload = open(deserialize, path)

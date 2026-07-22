@@ -113,6 +113,12 @@ artifacts. Treat them as bound to the Julia, Epsilon, and dependency versions
 that wrote them. They are not portable interchange files and must not be loaded
 from untrusted input.
 
+This warning applies to every public serialized-artifact loader, including
+`load_model`, `load_results`, `load_inference_results`, `load_scenario_store`,
+and plotted bundle helpers that read saved model artifacts. Julia
+deserialization can execute code before Epsilon can validate the restored
+payload.
+
 ## Local Smoke Command
 
 For a fast local confidence check of the maintained demo surface:

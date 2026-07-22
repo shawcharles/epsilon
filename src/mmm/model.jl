@@ -122,36 +122,30 @@ end
                 "lift-test calibration is only supported for `logistic` saturation in the current model path",
             ),
         )
-        lift_test_logdensity = try
+        lift_test_logdensity = _model_domain_logdensity_or_negative_infinity() do
             lift_test_payload_log_density(
                 (x_row, lam_row) -> centered_logistic_saturation.(x_row, lam_row),
                 lift_test_payload,
                 lam,
             )
-        catch err
-            err isa ArgumentError || rethrow()
-            -Inf
         end
         Turing.@addlogprob! lift_test_logdensity
     end
 
     if !isnothing(cost_per_target_payload)
-        cost_per_target_logdensity = try
+        cost_per_target_logdensity = _model_domain_logdensity_or_negative_infinity() do
             cost_per_target_total_penalty(
                 cost_per_target_payload.gathered_cpt,
                 cost_per_target_payload.targets,
                 cost_per_target_payload.sigma,
             )
-        catch err
-            err isa ArgumentError || rethrow()
-            -Inf
         end
         Turing.@addlogprob! cost_per_target_logdensity
     end
 
     media_effect = if runtime.hsgp_media_enabled
         baseline_channel = transformed_media .* reshape(beta_media, 1, :)
-        multiplier = try
+        multiplier = _model_domain_value_or_nothing() do
             _hsgp_media_multiplier(
                 runtime.hsgp_media_state,
                 runtime.hsgp_media_current_indices,
@@ -159,9 +153,6 @@ end
                 hsgp_media_lengthscale,
                 hsgp_media_z,
             )
-        catch err
-            err isa ArgumentError || rethrow()
-            nothing
         end
         if isnothing(multiplier)
             Turing.@addlogprob! -Inf
@@ -294,13 +285,9 @@ function _fit_time_series_mmm!(model::TimeSeriesMMM)
             spec.channel_scale,
             spec.target_scale,
         )
-        !isnothing(calibration) && _validate_mmm_calibration_spec(
-            calibration;
-            nchannels = runtime.nchannels,
-            saturation_type = runtime.saturation_type,
-        )
-        lift_test_payload = isnothing(calibration) ? nothing : calibration.lift_test
-        cost_per_target_payload = isnothing(calibration) ? nothing : calibration.cost_per_target
+        calibration_payloads = _validated_time_series_calibration_payloads(calibration, runtime)
+        lift_test_payload = calibration_payloads.lift_test_payload
+        cost_per_target_payload = calibration_payloads.cost_per_target_payload
 
         turing_model = _time_series_mmm_model(
             scaled_target,
@@ -344,6 +331,64 @@ function _fit_time_series_mmm!(model::TimeSeriesMMM)
     catch err
         _mark_failed_turing_fit!(model, err)
         rethrow()
+    end
+end
+
+function _validated_time_series_calibration_payloads(calibration::Nothing, runtime)
+    return (lift_test_payload = nothing, cost_per_target_payload = nothing)
+end
+
+"""
+    _validated_time_series_calibration_payloads(calibration, runtime)
+
+Validate resolved calibration payloads before constructing the Turing model.
+
+Malformed user/config payloads fail here with `ArgumentError`; they should not
+be converted to `-Inf` inside `@model` evaluation.
+"""
+function _validated_time_series_calibration_payloads(calibration::MMMCalibrationSpec, runtime)
+    _validate_mmm_calibration_spec(
+        calibration;
+        nchannels = runtime.nchannels,
+        saturation_type = runtime.saturation_type,
+    )
+    return (
+        lift_test_payload = calibration.lift_test,
+        cost_per_target_payload = calibration.cost_per_target,
+    )
+end
+
+"""
+    _model_domain_logdensity_or_negative_infinity(f)
+
+Convert model-domain `ArgumentError`s raised during Turing evaluation to
+`-Inf`, preserving HMC's usual rejection path for sampled parameter proposals.
+
+This helper is intentionally used only after user-supplied payloads and HSGP
+state have already passed eager validation at model/spec boundaries.
+"""
+function _model_domain_logdensity_or_negative_infinity(f::Function)
+    try
+        return f()
+    catch err
+        err isa ArgumentError || rethrow()
+        return -Inf
+    end
+end
+
+"""
+    _model_domain_value_or_nothing(f)
+
+Variant of `_model_domain_logdensity_or_negative_infinity` for helper calls
+that return an intermediate value. The caller is responsible for adding
+`Turing.@addlogprob! -Inf` while still touching subsequent `~` statements.
+"""
+function _model_domain_value_or_nothing(f::Function)
+    try
+        return f()
+    catch err
+        err isa ArgumentError || rethrow()
+        return nothing
     end
 end
 

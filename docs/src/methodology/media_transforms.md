@@ -41,6 +41,29 @@ When `normalize=true`, Epsilon normalises the constructed lag weights by their
 sum. Normalisation changes the scale of the carryover signal and therefore the
 interpretation of the media coefficient.
 
+### Weibull-PDF Weight Rescaling
+
+For `weibull_pdf`, Epsilon first evaluates a finite Weibull-PDF-shaped lag
+profile and then rescales that profile to the interval `[0, 1]` before the
+optional `normalize=true` sum-normalisation step. In symbols, if
+$u_\ell$ is the raw finite-lag Weibull PDF value, the default PDF-kernel weights
+are:
+
+```math
+w_\ell =
+\begin{cases}
+(u_\ell - \min_m u_m) / (\max_m u_m - \min_m u_m), & \max_m u_m > \min_m u_m, \\
+u_\ell, & \max_m u_m = \min_m u_m.
+\end{cases}
+```
+
+This is a shape rescaling, not a probability-mass normalisation. It preserves a
+bounded finite-lag profile for the model's adstock layer; use `normalize=true`
+when you want the resulting finite kernel to sum to one before convolution.
+Because this changes the scale of the adstocked signal, compare Weibull-PDF
+results against other adstock families through fitted contributions and response
+curves rather than raw lag weights alone.
+
 ## Saturation
 
 Saturation maps the adstocked signal to a nonlinear response scale. It is where
@@ -124,4 +147,3 @@ from the saturation layer, not the carryover layer by itself.
 When interpreting Epsilon's plotted artifacts, treat adstock, saturation,
 response, contribution, and optimisation plots as different projections of the
 same fitted model. They answer related but distinct questions.
-
