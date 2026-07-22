@@ -295,8 +295,24 @@ end
     @test optimized_evaluation.allocation == result.optimized_spend
     @test optimized_evaluation.total_budget ≈ sum(values(result.optimized_spend))
     @test optimized_evaluation.expected_response ≈ mean(optimized_evaluation.response_draws)
+    @test optimized_evaluation.expected_response ≈ result.optimized_response
     @test current_from_result.allocation_kind == :current
     @test current_from_result.allocation == result.current_spend
+    @test current_from_result.expected_response ≈ result.current_response
+
+    decision_table = budget_allocation_decision_table(
+        current_from_result,
+        [current_from_result, optimized_evaluation],
+    )
+    @test decision_table.allocation_kind == [:current, :optimized]
+    @test decision_table.reference_allocation_kind == [:current, :current]
+    @test decision_table.response_mean ≈ [
+        result.current_response,
+        result.optimized_response,
+    ]
+    @test decision_table.uplift_mean[1] ≈ 0.0
+    @test decision_table.uplift_mean[2] ≈ result.optimized_response - result.current_response
+    @test 0.0 <= decision_table.probability_beats_reference[2] <= 1.0
 
     @test_throws ArgumentError evaluate_budget_allocation(
         grouped,
