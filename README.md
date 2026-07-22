@@ -21,7 +21,7 @@ bounded, but the maintained paths are usable for demo-scale MMM runs.
 Documentation: <https://epsilon.charlesshaw.net>
 
 Open-source MMM tool comparison:
-<https://epsilon.charlesshaw.net/comparison/>
+[docs/src/comparison.md](docs/src/comparison.md)
 
 ## What It Supports
 
