@@ -25,6 +25,9 @@ make docs
 Use `make test` for release confirmation or changes that plausibly affect
 multiple subsystems.
 
+See [`VERIFYING.md`](VERIFYING.md) for the full local verification ladder and
+guidance on which checks to run for different kinds of changes.
+
 ## Pull Request Expectations
 
 - Formatting passes with Runic.

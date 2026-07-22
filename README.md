@@ -241,6 +241,8 @@ Run the full test suite only when you need a complete local gate:
 make test
 ```
 
+For the full local verification ladder, see [`VERIFYING.md`](VERIFYING.md).
+
 ## Current Boundaries
 
 Epsilon is designed as a compact statistical library, not a dashboard product.
