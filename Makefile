@@ -4,7 +4,7 @@ DEMO ?= timeseries
 RUNME_FLAGS ?= --quick
 export JULIA_PKG_SERVER_REGISTRY_PREFERENCE ?= eager
 
-.PHONY: instantiate smoke smoke-demo-configs run-demo-config profile-fit test test-full test-file test-model test-optimization test-validation \
+.PHONY: instantiate smoke smoke-demo-configs reviewer-demo run-demo-config profile-fit test test-full test-file test-model test-optimization test-validation \
 	format format-check format-check-touched docs check check-optimization \
 	check-validation check-full check-release quality
 
@@ -16,6 +16,9 @@ smoke:
 
 smoke-demo-configs:
 	JULIA="$(JULIA)" bash scripts/smoke_demo_configs.sh
+
+reviewer-demo:
+	JULIA="$(JULIA)" bash scripts/reviewer_demo.sh
 
 run-demo-config:
 	$(JULIA) --project=. runme.jl demo $(DEMO) $(RUNME_FLAGS)

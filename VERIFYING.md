@@ -39,6 +39,31 @@ The explicit alias is:
 make smoke-demo-configs
 ```
 
+## Reviewer Demo
+
+Run a small reproducible reviewer demo that writes a local result folder and
+checks the resulting manifest:
+
+```bash
+make reviewer-demo
+```
+
+This runs the bundled time-series config through `runme.jl` with quick sampler
+settings, then verifies that `run_manifest.json` reports a completed run with no
+failed stages. It is intended for reviewers who want to exercise the real
+pipeline and inspect concrete outputs without waiting for the heavier panel
+demos. On the maintainer's local machine, this reviewer demo completed in about
+two minutes; runtime will vary by hardware, Julia version, and package
+precompilation state.
+
+By default, outputs are written under `results/reviewer_quick_demo_<timestamp>/`.
+Those local reviewer outputs are ignored by Git. Override the output root or run
+name with environment variables:
+
+```bash
+OUTPUT_DIR=/tmp/epsilon-review RUN_NAME=my_review make reviewer-demo
+```
+
 ## Scoped Development Checks
 
 Use targeted checks while editing.

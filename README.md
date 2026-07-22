@@ -100,6 +100,13 @@ The explicit target is equivalent:
 make smoke-demo-configs
 ```
 
+For a small reviewer-oriented run that writes local outputs and verifies the
+manifest:
+
+```bash
+make reviewer-demo
+```
+
 ## Config-Driven Workflow
 
 Each runnable demo bundle is self-contained:
