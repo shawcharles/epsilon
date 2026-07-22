@@ -1,5 +1,6 @@
 using Test
 using Epsilon
+using TOML
 
 const API_EXPORTS_DOC_PATH = joinpath(@__DIR__, "..", "docs", "src", "api.md")
 const API_EXPORTS_DOCS_SRC_PATH = joinpath(@__DIR__, "..", "docs", "src")
@@ -340,6 +341,17 @@ end
     @test isempty(artifact_paths)
     @test length(warnings) == 1
     @test occursin("optional plotting support is unavailable", only(warnings))
+end
+
+@testset "CairoMakie remains an optional package extension dependency" begin
+    project = TOML.parsefile(joinpath(@__DIR__, "..", "Project.toml"))
+    cairomakie_uuid = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+
+    @test !haskey(project["deps"], "CairoMakie")
+    @test project["weakdeps"]["CairoMakie"] == cairomakie_uuid
+    @test project["extensions"]["EpsilonCairoMakieExt"] == "CairoMakie"
+    @test project["extras"]["CairoMakie"] == cairomakie_uuid
+    @test "CairoMakie" in project["targets"]["test"]
 end
 
 @testset "current docs claim boundaries remain truthful" begin

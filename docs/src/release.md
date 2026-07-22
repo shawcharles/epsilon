@@ -15,7 +15,7 @@ export list.
 | Panel modelling | One or more declared panel dimensions on a deterministic flattened panel-cell axis |
 | Post-model analysis | Contributions, decomposition, response curves, saturation curves, adstock curves, and marketing metrics from grouped MCMC results |
 | Optimisation | Fixed-budget total-response optimisation; panel optimisation uses historical within-channel panel shares |
-| Plotting | Static CairoMakie-backed plots and stage-local PNG artifacts |
+| Plotting | Optional CairoMakie-backed plots and stage-local PNG artifacts |
 | Scenario planning | Non-UI comparison tables over current, manual time-series, and solved optimisation scenarios |
 | Calibration | Time-series MCMC lift-test and cost-per-target calibration on the bounded centered-logistic path |
 

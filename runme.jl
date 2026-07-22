@@ -28,8 +28,9 @@ Examples:
 Notes:
   - With no config path, the runner uses data/demo/timeseries/config.yml and
     quick local settings.
-  - The runner loads CairoMakie by default and writes PNG plot artifacts when
-    available; use --no-plots to suppress plot artifact generation.
+  - The runner attempts to load optional CairoMakie plotting support and writes
+    PNG plot artifacts when that package is available in the active environment;
+    use --no-plots to suppress plot artifact generation.
   - Bundle-local dataset.csv and holidays.csv paths are owned by the config.
   - All pipeline flags are delegated to Epsilon.pipeline_main.
 """

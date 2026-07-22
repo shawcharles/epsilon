@@ -5,7 +5,6 @@ authors = ["Charles Shaw <charles@charlesshaw.net>"]
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
@@ -43,6 +42,7 @@ ReverseDiff = "1"
 Serialization = "1.10"
 Statistics = "1.10"
 Test = "1"
+TOML = "1"
 Turing = "0.43.7"
 YAML = "0.4.16"
 julia = "1.10"
@@ -53,7 +53,8 @@ CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
+TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "Aqua", "CairoMakie", "Documenter", "ForwardDiff", "ReverseDiff"]
+test = ["Test", "Aqua", "CairoMakie", "Documenter", "ForwardDiff", "ReverseDiff", "TOML"]

@@ -57,8 +57,9 @@ julia --project=. runme.jl
 
 The runner prints the Epsilon header, a config/output context block, one-line
 stage progress bars, plotting status, and a structured final success or failure
-summary. It loads CairoMakie by default and writes stage-local PNG plot
-artifacts when active; pass `--no-plots` to suppress plot artifact generation.
+summary. It attempts to load optional CairoMakie support and writes stage-local
+PNG plot artifacts when active; pass `--no-plots` to suppress plot artifact
+generation.
 
 Skipped stages write a small `SKIPPED.json` marker in their stage directory and
 register it as `skipped_marker` in `run_manifest.json`. For example,

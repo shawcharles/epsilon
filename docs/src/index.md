@@ -131,8 +131,9 @@ areas.
 
 ## Plotting
 
-The config runner loads plotting support by default. Direct plotting APIs are
-available after:
+The config runner attempts to load optional plotting support by default. Direct
+plotting APIs are available after adding and loading CairoMakie in the active
+environment:
 
 ```julia
 using Epsilon, CairoMakie

@@ -419,8 +419,8 @@ Variational inference keys such as `vi`, `variational`, and
 ## Plot Output
 
 Plotting is controlled by the runner and plotting backend, not by a maintained
-YAML `plots` block. `runme.jl` loads CairoMakie by default and writes PNG plot
-artifacts when plotting is available.
+YAML `plots` block. `runme.jl` attempts to load optional CairoMakie support and
+writes PNG plot artifacts when plotting is available in the active environment.
 
 Use:
 

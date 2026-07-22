@@ -31,8 +31,8 @@ Documentation: <https://epsilon.charlesshaw.net>
 - Blocked holdout validation for time-series models.
 - Historical-share budget optimisation for supported time-series and panel
   result surfaces.
-- Julia-native plotting through CairoMakie-backed stage artifacts and direct
-  plot functions.
+- Optional Julia-native plotting through CairoMakie-backed stage artifacts and
+  direct plot functions.
 
 > [!NOTE]
 > Variational inference is not supported and is not planned for this library.
@@ -210,15 +210,22 @@ interchange files.
 
 ## Plotting
 
-The config runner loads plotting support by default and writes stage-local PNG
-artifacts when CairoMakie is available. Direct plotting APIs are also available
-after loading:
+The config runner attempts to load optional plotting support by default and
+writes stage-local PNG artifacts when CairoMakie is available in the active
+environment. Core fitting and non-plot artifacts do not require CairoMakie.
+Direct plotting APIs are available after adding and loading CairoMakie:
 
 ```julia
 using Epsilon, CairoMakie
 ```
 
-Core non-plot artifacts remain available without plotting.
+For package use, install CairoMakie separately in the environment where you want
+plotting:
+
+```julia
+using Pkg
+Pkg.add("CairoMakie")
+```
 
 ## Demo Bundles
 
