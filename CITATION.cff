@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use Epsilon.jl, please cite it using the metadata below."
+type: software
+title: "Epsilon.jl: Bayesian marketing mix modelling in Julia"
+authors:
+  - family-names: Shaw
+    given-names: Charles
+    email: charles@charlesshaw.net
+version: "0.1.0-beta.1"
+date-released: 2026-07-20
+license: Apache-2.0
+repository-code: "https://github.com/shawcharles/epsilon"
+url: "https://epsilon.charlesshaw.net"
+abstract: >
+  Epsilon.jl is a Julia-native Bayesian marketing mix modelling library for
+  config-driven time-series and geo-panel workflows, MCMC fitting, diagnostics,
+  decomposition, response curves, and reproducible result artifacts.
+keywords:
+  - Julia
+  - Bayesian statistics
+  - marketing mix modelling
+  - media effectiveness
+  - probabilistic programming
