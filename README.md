@@ -249,13 +249,23 @@ make smoke
 make smoke-demo-configs
 ```
 
-Run the full test suite only when you need a complete local gate:
+Run the official local release gate before public tags or release-facing
+publication:
+
+```bash
+make check-release
+```
+
+That target runs formatting, the full package test suite, and documentation.
+Use the full package test target by itself only when you specifically need the
+test suite without the other release checks:
 
 ```bash
 make test
 ```
 
-For the full local verification ladder, see [`VERIFYING.md`](VERIFYING.md).
+For the full local verification ladder and expected runtimes, see
+[`VERIFYING.md`](VERIFYING.md).
 
 ## Current Boundaries
 

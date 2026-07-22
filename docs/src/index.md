@@ -35,6 +35,12 @@ make smoke
 make smoke-demo-configs
 ```
 
+Before public tags or release-facing publication, use the local release gate:
+
+```bash
+make check-release
+```
+
 ## Supported Workflow
 
 The primary workflow is config driven:

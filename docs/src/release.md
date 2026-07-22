@@ -75,13 +75,22 @@ make smoke
 make smoke-demo-configs
 ```
 
-Use the full suite only when a broad local gate is needed:
+Use the official local release gate before public tags, registry/JOSS
+preparation, or release-facing publication:
+
+```bash
+make check-release
+```
+
+`make check-release` runs formatting, the full package test suite, and
+documentation. The test target alone is available when you specifically need the
+package test suite without the other release checks:
 
 ```bash
 make test
 ```
 
-Build the documentation after public documentation changes:
+Build the documentation after public documentation changes during iteration:
 
 ```bash
 make docs

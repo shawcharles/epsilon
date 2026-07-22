@@ -9,6 +9,11 @@ const API_EXPORTS_CURRENT_DOCS_CLAIM_GUARD_PATHS = Dict(
     "release gate" => joinpath(@__DIR__, "..", "docs", "src", "release.md"),
     "supported paths" => joinpath(@__DIR__, "..", "docs", "src", "supported_paths.md"),
 )
+const API_EXPORTS_LOCAL_RELEASE_GATE_PATHS = Dict(
+    "readme" => joinpath(@__DIR__, "..", "README.md"),
+    "verifying" => joinpath(@__DIR__, "..", "VERIFYING.md"),
+    "release docs" => joinpath(@__DIR__, "..", "docs", "src", "release.md"),
+)
 const API_EXPORTS_PUBLIC_IDENTITY_GUARD_PATHS = Dict(
     "readme" => joinpath(@__DIR__, "..", "README.md"),
     "changelog" => joinpath(@__DIR__, "..", "CHANGELOG.md"),
@@ -352,6 +357,20 @@ end
     @test project["extensions"]["EpsilonCairoMakieExt"] == "CairoMakie"
     @test project["extras"]["CairoMakie"] == cairomakie_uuid
     @test "CairoMakie" in project["targets"]["test"]
+end
+
+@testset "local release gate docs stay aligned" begin
+    makefile = read(joinpath(@__DIR__, "..", "Makefile"), String)
+
+    @test occursin("check-release: format-check test-full docs", makefile)
+
+    for (_, path) in API_EXPORTS_LOCAL_RELEASE_GATE_PATHS
+        text = read(path, String)
+
+        @test occursin("make check-release", text)
+        @test !occursin("Run the full test suite only when you need a complete local gate", text)
+        @test !occursin("Use the full suite only when a broad local gate is needed", text)
+    end
 end
 
 @testset "current docs claim boundaries remain truthful" begin

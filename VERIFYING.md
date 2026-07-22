@@ -1,8 +1,9 @@
 # Verifying Epsilon Locally
 
-Epsilon uses local verification commands rather than hosted CI as the primary
-quality gate. Choose the smallest check that matches the change you are making.
-The full suite is intentionally not the default iteration command.
+Epsilon uses local verification commands rather than hosted CI as the release
+quality gate. The official local release gate is `make check-release`. For
+routine work, choose the smallest check that matches the change you are making;
+the full suite is intentionally not the default iteration command.
 
 ## Environment Setup
 
@@ -103,21 +104,22 @@ make docs
 edits. It checks the exported-symbol inventory and cross-document support
 claims.
 
-## Full Release Gate
+## Official Release Gate
 
-Use the full gate before public release tags, registry/JOSS preparation, or
-changes that plausibly affect multiple subsystems:
+Use the official local release gate before public release tags, registry/JOSS
+preparation, or changes that plausibly affect multiple subsystems:
 
 ```bash
 make check-release
 ```
 
-This runs formatting, the full package test suite, and documentation. On the
-maintainer's local machine, the full test suite has taken roughly 25 minutes;
-runtime will vary with hardware, Julia version, package precompilation state,
-and sampler-heavy tests.
+`make check-release` runs `make format-check`, `make test-full`, and `make docs`.
+On the maintainer's local machine, the full test suite has taken roughly 25
+minutes; runtime will vary with hardware, Julia version, package precompilation
+state, and sampler-heavy tests.
 
-The full test target alone is:
+The full test target alone is not the release gate; it is available when you
+specifically need the package test suite without formatting and documentation:
 
 ```bash
 make test
