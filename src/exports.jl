@@ -181,6 +181,8 @@ export AbstractScenarioSpec
 export assert_scenario_store_compatible
 export BudgetOptimizationResult
 export CurrentScenarioSpec
+export BudgetAllocationEvaluationResult
+export evaluate_budget_allocation
 export evaluate_manual_scenario
 export FixedBudgetOptimizedScenarioSpec
 export load_scenario_store

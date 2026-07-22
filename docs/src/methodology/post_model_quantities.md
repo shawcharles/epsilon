@@ -190,5 +190,13 @@ numerically defined. Channels solved at an active lower or upper bound should be
 read as constrained recommendations; their marginal values are diagnostics, not
 unconstrained first-order optimality conditions.
 
+`evaluate_budget_allocation` scores a supplied channel allocation without
+solving an optimisation problem. It replays posterior response curves at the
+specified channel spends and returns total-response draws, so manual, current,
+and solved optimised allocations can be compared on the same posterior scale.
+The allocation must use the fitted model's channel set and original input
+units. Panel evaluation is limited to the same historical-share semantics used
+by bounded panel optimisation.
+
 For panel results, optimisation uses historical within-channel panel shares.
 That is a bounded allocation rule, not free channel-by-panel optimisation.

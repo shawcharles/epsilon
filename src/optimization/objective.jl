@@ -152,6 +152,332 @@ function _baseline_and_fixed_response(
     return Float64(baseline_response), Float64(fixed_response)
 end
 
+function _component_total_draws(values, indices::AbstractVector{<:Integer})
+    ndraws = size(values, 1)
+    totals = zeros(Float64, ndraws)
+    isempty(indices) && return totals
+    if ndims(values) == 3
+        for draw in 1:ndraws
+            totals[draw] = sum(view(values, draw, :, indices))
+        end
+    elseif ndims(values) == 4
+        for draw in 1:ndraws
+            totals[draw] = sum(view(values, draw, :, :, indices))
+        end
+    else
+        throw(ArgumentError("budget allocation evaluation requires contribution values with observation axes"))
+    end
+    return totals
+end
+
+function _baseline_response_draws(results::InferenceResults, action::AbstractString)
+    contributions = contribution_results(results)
+    baseline_indices = Int[
+        index for (index, kind) in enumerate(contributions.component_kinds) if kind != :media
+    ]
+    return _component_total_draws(contributions.values, baseline_indices)
+end
+
+function _observed_allocation_mapping(results::InferenceResults, action::AbstractString)
+    data = results.spec.model_kind === :panel_mmm ?
+        _require_postmodel_panel_results(results, action) :
+        _require_postmodel_time_series_results(results, action)
+    mapping = Dict{String, Float64}()
+    for channel in results.spec.channel_columns
+        mapping[channel] = _channel_total_spend(data, results.spec.channel_indices[channel])
+    end
+    return mapping
+end
+
+function _normalized_full_allocation_mapping(
+        spec::MMMModelSpec,
+        allocation::AbstractDict,
+        action::AbstractString,
+    )
+    normalized = Dict{String, Any}()
+    seen = Set{String}()
+    for (channel, value) in pairs(allocation)
+        normalized_channel = String(channel)
+        normalized_channel in seen &&
+            throw(
+            ArgumentError(
+                "$action requires allocation mappings to contain each channel at most once; duplicate channel `$normalized_channel` encountered",
+            ),
+        )
+        push!(seen, normalized_channel)
+        normalized[normalized_channel] = value
+    end
+    supplied = collect(keys(normalized))
+    unknown = sort(setdiff(supplied, spec.channel_columns))
+    isempty(unknown) ||
+        throw(
+        ArgumentError(
+            "$action requires allocation channels drawn from `InferenceResults.spec.channel_columns`; unknown channels: $(join(unknown, ", "))",
+        ),
+    )
+    missing = sort(setdiff(spec.channel_columns, supplied))
+    isempty(missing) ||
+        throw(
+        ArgumentError(
+            "$action requires allocations for exactly the fitted channel set; missing channels: $(join(missing, ", "))",
+        ),
+    )
+    return Dict{String, Float64}(
+        channel => _finite_spend_value(
+                normalized[channel],
+                action,
+                "allocation for channel `$channel`",
+            ) for channel in spec.channel_columns
+    )
+end
+
+function _allocation_total_budget(
+        allocation::AbstractDict{String, Float64},
+        total_budget,
+        action::AbstractString,
+    )
+    observed_total = sum(values(allocation))
+    budget = isnothing(total_budget) ? observed_total :
+        _finite_spend_value(total_budget, action, "total_budget")
+    budget > 0.0 ||
+        throw(ArgumentError("$action requires total_budget to be positive"))
+    observed_total ≈ budget ||
+        throw(ArgumentError("$action requires allocation spend to equal the fixed total_budget"))
+    return Float64(budget)
+end
+
+function _allocation_default_efficiency(
+        spec::MMMModelSpec,
+        total_response::Real,
+        total_budget::Real,
+    )
+    if lowercase(spec.target_type) == "conversion"
+        return _safe_metric_ratio(total_budget, total_response)
+    end
+    return _safe_metric_ratio(total_response, total_budget)
+end
+
+function _allocation_kind(kind::Symbol)
+    kind in (:current, :manual, :optimized) ||
+        throw(ArgumentError("evaluate_budget_allocation supports allocation_kind values :current, :manual, and :optimized"))
+    return kind
+end
+
+function _response_curve_draws_at_allocation(
+        results::InferenceResults,
+        channel::AbstractString,
+        spend::Real,
+        action::AbstractString,
+    )
+    spend_value = _finite_spend_value(spend, action, "allocation for channel `$channel`")
+    if results.spec.model_kind === :panel_mmm
+        observed = _channel_total_spend(
+            _require_postmodel_panel_results(results, action),
+            results.spec.channel_indices[channel],
+        )
+        delta = spend_value / _positive_observed_panel_spend(observed, channel, action)
+        curves = response_curve_results(results; channel, delta_grid = [delta])
+        values = curves.values
+        ndims(values) == 3 ||
+            throw(ArgumentError("$action requires panel response-curve draws with draw, panel, and spend axes"))
+        return Float64[sum(view(values, draw, :, 1)) for draw in axes(values, 1)]
+    end
+
+    curves = response_curve_results(results; channel, grid = [spend_value])
+    values = curves.values
+    ndims(values) == 2 ||
+        throw(ArgumentError("$action requires time-series response-curve draws with draw and spend axes"))
+    return Float64.(vec(values[:, 1]))
+end
+
+function _allocation_response_draws(
+        results::InferenceResults,
+        allocation::AbstractDict{String, Float64},
+        action::AbstractString,
+    )
+    draws = _baseline_response_draws(results, action)
+    for channel in results.spec.channel_columns
+        draws .+= _response_curve_draws_at_allocation(
+            results,
+            channel,
+            allocation[channel],
+            action,
+        )
+    end
+    return draws
+end
+
+function _evaluate_budget_allocation(
+        results::InferenceResults,
+        allocation::AbstractDict{String, Float64};
+        allocation_kind::Symbol,
+        total_budget,
+        objective,
+        action::AbstractString,
+    )
+    objective_symbol = objective isa Symbol ? objective : Symbol(lowercase(String(objective)))
+    objective_symbol === :total_response ||
+        throw(
+        ArgumentError(
+            "$action currently supports only `objective = :total_response`",
+        ),
+    )
+    kind = _allocation_kind(allocation_kind)
+    budget = _allocation_total_budget(allocation, total_budget, action)
+    response_draws = _allocation_response_draws(results, allocation, action)
+    expected_response = Float64(mean(response_draws))
+    return BudgetAllocationEvaluationResult(
+        results.metadata,
+        results.spec,
+        results.coordinate_metadata,
+        objective_symbol,
+        kind,
+        copy(allocation),
+        budget,
+        response_draws,
+        expected_response,
+        _allocation_default_efficiency(results.spec, expected_response, budget),
+    )
+end
+
+"""
+    evaluate_budget_allocation(results, allocation=:current; total_budget=nothing, objective=:total_response, panel_allocation_mode=:historical_shares)
+    evaluate_budget_allocation(results, result; allocation=:optimized, total_budget=nothing, objective=:total_response)
+
+Evaluate one supplied channel allocation against posterior response draws.
+
+`allocation` may be `:current`, a full channel-spend dictionary, or an existing
+`BudgetOptimizationResult`/`PanelBudgetOptimizationResult`. Dictionary
+allocations must provide exactly the fitted channel set, use nonnegative finite
+spend in the fitted data's original units, and match `total_budget` when that
+keyword is supplied. Result allocations are hard-checked against the supplied
+`InferenceResults` metadata, model spec, and coordinate metadata.
+
+This function does not solve an optimization problem, refit the model, or
+simulate a future spend path. Panel evaluation is limited to historical-share
+semantics.
+"""
+function evaluate_budget_allocation(
+        results::InferenceResults,
+        allocation = :current;
+        total_budget = nothing,
+        objective = :total_response,
+        panel_allocation_mode = :historical_shares,
+        panel_bounds = nothing,
+        panel_total_bounds = nothing,
+        channel_panel_bounds = nothing,
+    )
+    action = "evaluate_budget_allocation"
+    if results.spec.model_kind === :panel_mmm
+        _normalize_panel_allocation_mode(panel_allocation_mode, action)
+        _reject_deferred_panel_optimization_kwargs(
+            action;
+            panel_bounds,
+            panel_total_bounds,
+            channel_panel_bounds,
+        )
+    else
+        _reject_time_series_panel_optimization_kwargs(
+            action;
+            panel_allocation_mode,
+            panel_bounds,
+            panel_total_bounds,
+            channel_panel_bounds,
+        )
+    end
+
+    if allocation === :current
+        current = _observed_allocation_mapping(results, action)
+        return _evaluate_budget_allocation(
+            results,
+            current;
+            allocation_kind = :current,
+            total_budget,
+            objective,
+            action,
+        )
+    end
+    allocation isa AbstractDict ||
+        throw(ArgumentError("$action allocation must be `:current`, a full channel-spend dictionary, or a solved budget optimization result"))
+    manual = _normalized_full_allocation_mapping(results.spec, allocation, action)
+    return _evaluate_budget_allocation(
+        results,
+        manual;
+        allocation_kind = :manual,
+        total_budget,
+        objective,
+        action,
+    )
+end
+
+function _validate_allocation_result_compatible(
+        results::InferenceResults,
+        result::Union{BudgetOptimizationResult, PanelBudgetOptimizationResult},
+        action::AbstractString,
+    )
+    result.metadata == results.metadata ||
+        throw(ArgumentError("$action requires optimization result metadata to match `results`"))
+    result.spec == results.spec ||
+        throw(ArgumentError("$action requires optimization result model spec to match `results`"))
+    result.coordinate_metadata == results.coordinate_metadata ||
+        throw(ArgumentError("$action requires optimization result coordinate metadata to match `results`"))
+    return nothing
+end
+
+function evaluate_budget_allocation(
+        results::InferenceResults,
+        result::Union{BudgetOptimizationResult, PanelBudgetOptimizationResult};
+        allocation = :optimized,
+        total_budget = nothing,
+        objective = result.objective,
+        panel_allocation_mode = :historical_shares,
+        panel_bounds = nothing,
+        panel_total_bounds = nothing,
+        channel_panel_bounds = nothing,
+    )
+    action = "evaluate_budget_allocation"
+    _validate_allocation_result_compatible(results, result, action)
+    if results.spec.model_kind === :panel_mmm
+        result isa PanelBudgetOptimizationResult ||
+            throw(ArgumentError("$action requires a panel optimization result for panel `InferenceResults`"))
+        _normalize_panel_allocation_mode(panel_allocation_mode, action)
+        _reject_deferred_panel_optimization_kwargs(
+            action;
+            panel_bounds,
+            panel_total_bounds,
+            channel_panel_bounds,
+        )
+    else
+        result isa BudgetOptimizationResult ||
+            throw(ArgumentError("$action requires a time-series optimization result for time-series `InferenceResults`"))
+        _reject_time_series_panel_optimization_kwargs(
+            action;
+            panel_allocation_mode,
+            panel_bounds,
+            panel_total_bounds,
+            channel_panel_bounds,
+        )
+    end
+    kind = allocation isa Symbol ? allocation : Symbol(lowercase(String(allocation)))
+    mapping = if kind === :current
+        result.current_spend
+    elseif kind === :optimized
+        result.optimized_spend
+    else
+        throw(ArgumentError("$action result allocation must be `:current` or `:optimized`"))
+    end
+    normalized = _normalized_full_allocation_mapping(results.spec, mapping, action)
+    budget = isnothing(total_budget) ? sum(values(normalized)) : total_budget
+    return _evaluate_budget_allocation(
+        results,
+        normalized;
+        allocation_kind = kind,
+        total_budget = budget,
+        objective,
+        action,
+    )
+end
+
 function _surface_interpolation(surface::BudgetChannelSurface, action::AbstractString)
     return _monotone_cubic_interpolation(surface.spend_grid, surface.response_grid, action)
 end

@@ -236,6 +236,11 @@ end
     manual = ManualAllocationScenarioSpec(name = "Manual Mix", allocation = data_array)
     @test manual.scenario_id == "manual-mix"
     @test manual.allocation == Dict("tv" => 10.0, "search" => 20.0)
+    @test Epsilon._normalized_full_allocation_mapping(
+        _scenario_test_result().spec,
+        manual.allocation,
+        "evaluate_budget_allocation",
+    ) == manual.allocation
 
     optimized = FixedBudgetOptimizedScenarioSpec(name = "Optimized Mix", total_budget = 30.0)
     @test optimized.scenario_id == "optimized-mix"
@@ -244,6 +249,11 @@ end
     @test_throws ArgumentError CurrentScenarioSpec(name = "bad", start_date = "2024-02-01", end_date = "2024-01-01")
     @test_throws ArgumentError ScenarioDataArraySpec([1.0 2.0]; dims = ["channel"], coords = Dict("channel" => ["tv"]))
     @test_throws ArgumentError ManualAllocationScenarioSpec(name = "bad", allocation = Dict("tv" => -1.0))
+    @test_throws ArgumentError Epsilon._normalized_full_allocation_mapping(
+        _scenario_test_result().spec,
+        Dict("tv" => 10.0),
+        "evaluate_budget_allocation",
+    )
     @test_throws ArgumentError FixedBudgetOptimizedScenarioSpec(name = "bad", total_budget = 0.0)
 end
 

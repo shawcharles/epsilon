@@ -173,6 +173,46 @@ function Base.:(==)(lhs::BudgetOptimizationResult, rhs::BudgetOptimizationResult
 end
 
 """
+    BudgetAllocationEvaluationResult
+
+Typed posterior-draw evaluation for one fixed channel allocation.
+
+This result scores an already supplied allocation without solving an
+optimization problem or refitting the model. `allocation` and `total_budget`
+use the same original channel units and time aggregation level as the fitted
+model data. `response_draws` stores posterior total-response draws for the
+allocation; `expected_response` is their mean.
+"""
+struct BudgetAllocationEvaluationResult
+    metadata::ModelArtifactMetadata
+    spec::MMMModelSpec
+    coordinate_metadata::ModelCoordinateMetadata
+    objective::Symbol
+    allocation_kind::Symbol
+    allocation::Dict{String, Float64}
+    total_budget::Float64
+    response_draws::Vector{Float64}
+    expected_response::Float64
+    default_efficiency::Float64
+end
+
+function Base.:(==)(
+        lhs::BudgetAllocationEvaluationResult,
+        rhs::BudgetAllocationEvaluationResult,
+    )
+    return lhs.metadata == rhs.metadata &&
+        lhs.spec == rhs.spec &&
+        lhs.coordinate_metadata == rhs.coordinate_metadata &&
+        lhs.objective == rhs.objective &&
+        lhs.allocation_kind == rhs.allocation_kind &&
+        lhs.allocation == rhs.allocation &&
+        lhs.total_budget == rhs.total_budget &&
+        lhs.response_draws == rhs.response_draws &&
+        lhs.expected_response == rhs.expected_response &&
+        lhs.default_efficiency == rhs.default_efficiency
+end
+
+"""
     PanelBudgetOptimizationResult
 
 Typed canonical result surface for panel budget optimization.

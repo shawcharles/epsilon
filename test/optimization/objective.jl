@@ -1,4 +1,5 @@
 using Epsilon
+using Statistics
 using Test
 
 include("helpers.jl")
@@ -25,6 +26,33 @@ include("helpers.jl")
     @test isfinite(problem.current_response)
     @test problem.current_response ≈ Epsilon._evaluate_budget_objective(problem, problem.current_spend)
     @test all(isfinite, Epsilon._evaluate_budget_objective_gradient(problem, problem.current_spend))
+
+    current_evaluation = evaluate_budget_allocation(grouped)
+    @test current_evaluation isa BudgetAllocationEvaluationResult
+    @test current_evaluation.allocation_kind == :current
+    @test current_evaluation.allocation == Dict(
+        "tv" => _observed_channel_total(model, "tv"),
+        "search" => _observed_channel_total(model, "search"),
+    )
+    @test length(current_evaluation.response_draws) > 0
+    @test all(isfinite, current_evaluation.response_draws)
+    @test current_evaluation.expected_response ≈ mean(current_evaluation.response_draws)
+    @test current_evaluation.expected_response ≈ problem.current_response
+
+    manual_tv = _observed_channel_total(model, "tv") * 0.9
+    manual_allocation = Dict(
+        "tv" => manual_tv,
+        "search" => total_budget - manual_tv,
+    )
+    manual_evaluation = evaluate_budget_allocation(
+        grouped,
+        manual_allocation;
+        total_budget,
+    )
+    @test manual_evaluation.allocation_kind == :manual
+    @test manual_evaluation.allocation == manual_allocation
+    @test length(manual_evaluation.response_draws) == length(current_evaluation.response_draws)
+    @test manual_evaluation.expected_response ≈ mean(manual_evaluation.response_draws)
 end
 
 @testset "budget optimization problem respects subset-budget semantics" begin
@@ -197,6 +225,10 @@ end
         panel_grouped;
         total_budget = 1.0,
     )
+    @test_throws ArgumentError evaluate_budget_allocation(
+        panel_grouped;
+        panel_allocation_mode = :free_panel,
+    )
 end
 
 @testset "panel budget optimization problem preserves historical-share response semantics" begin
@@ -245,6 +277,53 @@ end
             "tv" => _observed_channel_total(model, "tv"),
             "search" => _observed_channel_total(model, "search"),
         ),
+    )
+end
+
+@testset "budget allocation evaluation validates posterior allocation contracts" begin
+    model = sample_time_series_model()
+    fit!(model)
+    grouped = _grouped_results_for_optimization(model)
+    total_budget = sum(model.data.channels)
+    result = optimize_budget(grouped; total_budget)
+
+    optimized_evaluation = evaluate_budget_allocation(grouped, result)
+    current_from_result = evaluate_budget_allocation(grouped, result; allocation = :current)
+
+    @test optimized_evaluation isa BudgetAllocationEvaluationResult
+    @test optimized_evaluation.allocation_kind == :optimized
+    @test optimized_evaluation.allocation == result.optimized_spend
+    @test optimized_evaluation.total_budget ≈ sum(values(result.optimized_spend))
+    @test optimized_evaluation.expected_response ≈ mean(optimized_evaluation.response_draws)
+    @test current_from_result.allocation_kind == :current
+    @test current_from_result.allocation == result.current_spend
+
+    @test_throws ArgumentError evaluate_budget_allocation(
+        grouped,
+        Dict("tv" => _observed_channel_total(model, "tv"));
+        total_budget,
+    )
+    @test_throws ArgumentError evaluate_budget_allocation(
+        grouped,
+        Dict(
+            "tv" => _observed_channel_total(model, "tv"),
+            "search" => _observed_channel_total(model, "search"),
+            "podcast" => 1.0,
+        );
+        total_budget = total_budget + 1.0,
+    )
+    @test_throws ArgumentError evaluate_budget_allocation(
+        grouped,
+        Dict(
+            "tv" => _observed_channel_total(model, "tv"),
+            "search" => _observed_channel_total(model, "search") + 1.0,
+        );
+        total_budget,
+    )
+    @test_throws ArgumentError evaluate_budget_allocation(
+        grouped,
+        result;
+        allocation = :future,
     )
 end
 

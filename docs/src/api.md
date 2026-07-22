@@ -33,6 +33,7 @@ functions or `write_plot_bundle(run)`.
 | `AbstractRegressionModel` | Model core | provisional |
 | `AbstractScenarioSpec` | Scenario planning | bounded |
 | `AdstockCurveResults` | Post-model results | core |
+| `BudgetAllocationEvaluationResult` | Budget optimization | provisional |
 | `BudgetOptimizationDiagnostics` | Budget optimization | provisional |
 | `BudgetOptimizationResult` | Budget optimization | provisional |
 | `CalibrationStepConfig` | Calibration | provisional |
@@ -131,6 +132,7 @@ functions or `write_plot_bundle(run)`.
 | `deserialize_prior` | Priors and distributions | provisional |
 | `epsilon_theme` | Plotting | bounded |
 | `epsilon_version` | Package identity | compatibility |
+| `evaluate_budget_allocation` | Budget optimization | provisional |
 | `evaluate_manual_scenario` | Scenario planning | bounded |
 | `exact_row_indices` | Calibration | provisional |
 | `expand_masked_values` | Priors and distributions | provisional |
@@ -247,6 +249,7 @@ Epsilon.AbstractModel
 Epsilon.AbstractRegressionModel
 Epsilon.AbstractScenarioSpec
 Epsilon.AdstockCurveResults
+Epsilon.BudgetAllocationEvaluationResult
 Epsilon.BudgetOptimizationDiagnostics
 Epsilon.BudgetOptimizationResult
 Epsilon.CalibrationStepConfig
@@ -345,6 +348,7 @@ Epsilon.deserialize_model_config
 Epsilon.deserialize_prior
 Epsilon.epsilon_theme
 Epsilon.epsilon_version
+Epsilon.evaluate_budget_allocation
 Epsilon.evaluate_manual_scenario
 Epsilon.exact_row_indices
 Epsilon.expand_masked_values
