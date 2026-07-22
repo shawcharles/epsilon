@@ -6,7 +6,7 @@ using Test
 @testset "transform autodiff smoke tests" begin
     @testset "batched_convolution gradients over weights" begin
         x = [1.0, 2.0, 3.0, 4.0]
-        objective(w) = sum(batched_convolution(x, w, 1, After))
+        objective(w) = sum(batched_convolution(x, w, 1, :after))
         params = [0.7, 0.2, 0.1]
 
         forward = ForwardDiff.gradient(objective, params)

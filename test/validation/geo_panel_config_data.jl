@@ -90,7 +90,7 @@ const _GEO_PANEL_FIXTURE_DIR = joinpath(@__DIR__, "..", "fixtures", "golden", "g
         fixture.adstock_l_max;
         normalize = fixture.adstock_normalize,
         axis = 1,
-        mode = After,
+        mode = :after,
     )
     @test adstocked ≈ fixture.adstocked_media
 

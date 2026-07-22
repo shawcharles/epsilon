@@ -76,9 +76,7 @@ export save_model
 export save_results
 
 # Transforms and preprocessing.
-export After
 export batched_convolution
-export Before
 export binomial_adstock
 export centered_logistic_saturation
 export ConvMode
@@ -94,7 +92,6 @@ export MaxAbsScaler
 export max_abs_scale_target_data
 export MaxAbsScaleTarget
 export michaelis_menten
-export Overlap
 export standardize_control_data
 export StandardizeControls
 export StandardScaler

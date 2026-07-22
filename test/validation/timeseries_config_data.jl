@@ -81,7 +81,7 @@ const _TIMESERIES_FIXTURE_DIR = joinpath(@__DIR__, "..", "fixtures", "golden", "
         fixture.adstock_l_max;
         normalize = fixture.adstock_normalize,
         axis = 1,
-        mode = After,
+        mode = :after,
     )
     @test adstocked ≈ fixture.adstocked_media
 

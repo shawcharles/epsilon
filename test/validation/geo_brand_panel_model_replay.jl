@@ -91,7 +91,7 @@ function _expected_geo_brand_panel_component_values(spec, data, fixture, replay)
         fixture.adstock_l_max;
         normalize = fixture.adstock_normalize,
         axis = 1,
-        mode = After,
+        mode = :after,
     )
     saturated = centered_logistic_saturation(adstocked, reshape(replay.lam, 1, :, 1))
     holiday_features = Epsilon._holiday_design_matrix(spec.holidays, data)
@@ -152,7 +152,7 @@ function _expected_geo_brand_panel_curve_values(spec, data, fixture, replay, cha
                 fixture.adstock_l_max;
                 normalize = fixture.adstock_normalize,
                 axis = 1,
-                mode = After,
+                mode = :after,
             )
             centered_logistic_saturation(adstocked, reshape(replay.lam, 1, :, 1))
         elseif family === :saturation
@@ -164,7 +164,7 @@ function _expected_geo_brand_panel_curve_values(spec, data, fixture, replay, cha
                 fixture.adstock_l_max;
                 normalize = fixture.adstock_normalize,
                 axis = 1,
-                mode = After,
+                mode = :after,
             )
         else
             error("unsupported family")

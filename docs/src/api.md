@@ -33,8 +33,6 @@ functions or `write_plot_bundle(run)`.
 | `AbstractRegressionModel` | Model core | provisional |
 | `AbstractScenarioSpec` | Scenario planning | bounded |
 | `AdstockCurveResults` | Post-model results | core |
-| `After` | Event windows | provisional |
-| `Before` | Event windows | provisional |
 | `BudgetOptimizationResult` | Budget optimization | provisional |
 | `CalibrationStepConfig` | Calibration | provisional |
 | `ContributionResults` | Post-model results | core |
@@ -75,7 +73,6 @@ functions or `write_plot_bundle(run)`.
 | `ModelFitState` | Model lifecycle | provisional |
 | `ModelResults` | Model lifecycle | provisional |
 | `NonMonotonicError` | Calibration | provisional |
-| `Overlap` | Event windows | provisional |
 | `PanelAxis` | Panel metadata | bounded |
 | `PanelBudgetOptimizationResult` | Budget optimization | bounded |
 | `PanelCoordinate` | Panel metadata | bounded |
@@ -247,8 +244,6 @@ Epsilon.AbstractModel
 Epsilon.AbstractRegressionModel
 Epsilon.AbstractScenarioSpec
 Epsilon.AdstockCurveResults
-Epsilon.After
-Epsilon.Before
 Epsilon.BudgetOptimizationResult
 Epsilon.CalibrationStepConfig
 Epsilon.ContributionResults
@@ -289,7 +284,6 @@ Epsilon.ModelDiagnostics
 Epsilon.ModelFitState
 Epsilon.ModelResults
 Epsilon.NonMonotonicError
-Epsilon.Overlap
 Epsilon.PanelAxis
 Epsilon.PanelBudgetOptimizationResult
 Epsilon.PanelCoordinate

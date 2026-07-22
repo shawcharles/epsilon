@@ -6,7 +6,7 @@ Kernel variants for [`weibull_adstock`](@ref).
 @enum WeibullType PDF CDF
 
 """
-    binomial_adstock(x, alpha=0.5, l_max=12; normalize=false, axis=1, mode=After)
+    binomial_adstock(x, alpha=0.5, l_max=12; normalize=false, axis=1, mode=:after)
 
 Apply binomial adstock along `axis`.
 
@@ -23,7 +23,7 @@ function binomial_adstock(
         l_max::Integer = 12;
         normalize::Bool = false,
         axis::Integer = 1,
-        mode::Union{ConvMode, AbstractString, Symbol} = After,
+        mode::Union{ConvMode, AbstractString, Symbol} = :after,
     )
     l_max > 0 || throw(ArgumentError("l_max must be positive"))
     _validate_strict_alpha(alpha)
@@ -35,7 +35,7 @@ function binomial_adstock(
 end
 
 """
-    geometric_adstock(x, alpha=0.0, l_max=12; normalize=false, axis=1, mode=After)
+    geometric_adstock(x, alpha=0.0, l_max=12; normalize=false, axis=1, mode=:after)
 
 Apply geometric adstock along `axis`.
 
@@ -61,7 +61,7 @@ function geometric_adstock(
         l_max::Integer = 12;
         normalize::Bool = false,
         axis::Integer = 1,
-        mode::Union{ConvMode, AbstractString, Symbol} = After,
+        mode::Union{ConvMode, AbstractString, Symbol} = :after,
     )
     l_max > 0 || throw(ArgumentError("l_max must be positive"))
     _validate_alpha(alpha)
@@ -73,7 +73,7 @@ function geometric_adstock(
 end
 
 """
-    delayed_adstock(x, alpha=0.0, theta=0, l_max=12; normalize=false, axis=1, mode=After)
+    delayed_adstock(x, alpha=0.0, theta=0, l_max=12; normalize=false, axis=1, mode=:after)
 
 Apply delayed adstock along `axis`.
 
@@ -87,7 +87,7 @@ function delayed_adstock(
         l_max::Integer = 12;
         normalize::Bool = false,
         axis::Integer = 1,
-        mode::Union{ConvMode, AbstractString, Symbol} = After,
+        mode::Union{ConvMode, AbstractString, Symbol} = :after,
     )
     l_max > 0 || throw(ArgumentError("l_max must be positive"))
     _validate_alpha(alpha)
@@ -99,7 +99,7 @@ function delayed_adstock(
 end
 
 """
-    weibull_adstock(x, lam=1, k=1, l_max=12; axis=1, mode=After, type=:pdf, normalize=false)
+    weibull_adstock(x, lam=1, k=1, l_max=12; axis=1, mode=:after, type=:pdf, normalize=false)
 
 Apply Weibull adstock along `axis`.
 
@@ -118,7 +118,7 @@ function weibull_adstock(
         k::Union{Real, AbstractArray} = 1,
         l_max::Integer = 12;
         axis::Integer = 1,
-        mode::Union{ConvMode, AbstractString, Symbol} = After,
+        mode::Union{ConvMode, AbstractString, Symbol} = :after,
         type::Union{WeibullType, AbstractString, Symbol} = PDF,
         normalize::Bool = false,
     )

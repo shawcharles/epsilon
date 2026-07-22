@@ -305,6 +305,23 @@ end
     @test any(row -> row.symbol == :TimeVaryingMediaConfig, inventory_rows)
 end
 
+@testset "generic convolution enum values are not exported" begin
+    exported_symbols = _api_exports_current_symbols()
+    inventory_symbols = Set(_api_exports_inventory_symbols())
+
+    @test :ConvMode in exported_symbols
+    @test :After ∉ exported_symbols
+    @test :Before ∉ exported_symbols
+    @test :Overlap ∉ exported_symbols
+    @test :After ∉ inventory_symbols
+    @test :Before ∉ inventory_symbols
+    @test :Overlap ∉ inventory_symbols
+
+    @test Epsilon.After isa ConvMode
+    @test Epsilon.Before isa ConvMode
+    @test Epsilon.Overlap isa ConvMode
+end
+
 @testset "public API exports appear in Documenter docs blocks" begin
     public_symbols = _api_exports_public_symbols()
     docs_entries = _api_exports_documenter_docs_entries()

@@ -2,6 +2,11 @@
     ConvMode
 
 Boundary handling modes for [`batched_convolution`](@ref).
+
+`ConvMode` is exported for type annotations and dispatch. The enum values are
+available as `Epsilon.After`, `Epsilon.Before`, and `Epsilon.Overlap`; public
+calls should usually pass `:after`, `:before`, `:overlap`, or the equivalent
+strings to avoid importing generic names into user namespaces.
 """
 @enum ConvMode After Before Overlap
 
@@ -10,16 +15,16 @@ Boundary handling modes for [`batched_convolution`](@ref).
 @doc "Centered overlap mode for [`batched_convolution`](@ref)." Overlap
 
 """
-    batched_convolution(x, w, axis=1, mode=After)
+    batched_convolution(x, w, axis=1, mode=:after)
 
 Apply a 1D convolution across `axis` while broadcasting any leading batch
 dimensions in `w` against the non-convolved dimensions of `x`.
 
 `mode` controls boundary handling:
 
-- `After`: trailing carryover
-- `Before`: leading carryover
-- `Overlap`: centered overlap orientation. With source index
+- `:after`: trailing carryover
+- `:before`: leading carryover
+- `:overlap`: centered overlap orientation. With source index
   `t + ((lag_length - 1) ÷ 2) - lag + 1`, an impulse at index 3 with weights
   `[10, 20, 30]` returns `[0, 10, 20, 30, 0]`; with weights
   `[10, 20, 30, 40]` it returns `[0, 10, 20, 30, 40]`. The even-length case
@@ -30,7 +35,7 @@ function batched_convolution(
         x::AbstractArray,
         w::AbstractArray,
         axis::Integer = 1,
-        mode::Union{ConvMode, AbstractString, Symbol} = After,
+        mode::Union{ConvMode, AbstractString, Symbol} = :after,
     )
     parsed_mode = _parse_conv_mode(mode)
     normalized_axis = _normalize_axis(axis, ndims(x))
