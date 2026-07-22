@@ -243,3 +243,60 @@ function Base.:(==)(lhs::PanelBudgetOptimizationResult, rhs::PanelBudgetOptimiza
         lhs.optimized_channel_panel_response == rhs.optimized_channel_panel_response &&
         lhs.channel_delta == rhs.channel_delta
 end
+
+"""
+    BudgetOptimizationDiagnostics
+
+Typed audit surface for one solved bounded budget optimisation result.
+
+This result summarises the total-spend, total-response, default-efficiency,
+solver, and constraint state of an existing `BudgetOptimizationResult` or
+`PanelBudgetOptimizationResult`. It does not change the solved allocation and
+does not imply per-channel response attribution; channel-level diagnostics are
+reported separately through `optimization_diagnostics_table`.
+"""
+struct BudgetOptimizationDiagnostics
+    metadata::ModelArtifactMetadata
+    spec::MMMModelSpec
+    coordinate_metadata::ModelCoordinateMetadata
+    objective::Symbol
+    solver_status::Symbol
+    optimized_channels::Vector{String}
+    fixed_channels::Vector{String}
+    current_total_spend::Float64
+    optimized_total_spend::Float64
+    spend_delta::Float64
+    current_response::Float64
+    optimized_response::Float64
+    response_delta::Float64
+    response_lift_pct::Float64
+    current_default_efficiency::Float64
+    optimized_default_efficiency::Float64
+    default_efficiency_delta::Float64
+    default_efficiency_lift_pct::Float64
+    convergence_metadata::Dict{String, Any}
+    constraint_audit::BudgetConstraintAudit
+end
+
+function Base.:(==)(lhs::BudgetOptimizationDiagnostics, rhs::BudgetOptimizationDiagnostics)
+    return lhs.metadata == rhs.metadata &&
+        lhs.spec == rhs.spec &&
+        lhs.coordinate_metadata == rhs.coordinate_metadata &&
+        lhs.objective == rhs.objective &&
+        lhs.solver_status == rhs.solver_status &&
+        lhs.optimized_channels == rhs.optimized_channels &&
+        lhs.fixed_channels == rhs.fixed_channels &&
+        lhs.current_total_spend == rhs.current_total_spend &&
+        lhs.optimized_total_spend == rhs.optimized_total_spend &&
+        lhs.spend_delta == rhs.spend_delta &&
+        lhs.current_response == rhs.current_response &&
+        lhs.optimized_response == rhs.optimized_response &&
+        lhs.response_delta == rhs.response_delta &&
+        lhs.response_lift_pct == rhs.response_lift_pct &&
+        lhs.current_default_efficiency == rhs.current_default_efficiency &&
+        lhs.optimized_default_efficiency == rhs.optimized_default_efficiency &&
+        lhs.default_efficiency_delta == rhs.default_efficiency_delta &&
+        lhs.default_efficiency_lift_pct == rhs.default_efficiency_lift_pct &&
+        lhs.convergence_metadata == rhs.convergence_metadata &&
+        lhs.constraint_audit == rhs.constraint_audit
+end

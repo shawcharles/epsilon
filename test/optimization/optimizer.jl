@@ -1,6 +1,8 @@
 using Epsilon
 using Test
 
+include("helpers.jl")
+
 const _SUCCESS_SOLVER_STATUSES = Set(
     [
         :optimal,

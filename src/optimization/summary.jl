@@ -11,6 +11,118 @@ function _optimized_subset_total_spend(result::_BudgetOptimizationResultLike)
         sum(result.optimized_spend[channel] for channel in result.optimized_channels)
 end
 
+function _optimization_bound_flags(
+        constraint::Union{Nothing, BudgetChannelConstraint},
+        optimized_spend::Real,
+    )
+    isnothing(constraint) && return (false, false)
+    tolerance = _bound_projection_tolerance()
+    lower_active = abs(Float64(optimized_spend) - constraint.effective_lower) <= tolerance
+    upper_active = !isnothing(constraint.effective_upper) &&
+        abs(Float64(optimized_spend) - Float64(constraint.effective_upper)) <= tolerance
+    return lower_active, upper_active
+end
+
+"""
+    optimization_diagnostics(result)
+
+Summarise one solved bounded budget optimisation result as typed total-level
+diagnostics.
+
+The returned `BudgetOptimizationDiagnostics` records spend, response, default
+efficiency, solver, and constraint metadata. It is an audit of an existing
+solved allocation; it does not re-run the optimiser or add posterior
+uncertainty.
+"""
+function optimization_diagnostics(result::_BudgetOptimizationResultLike)
+    current_total_spend = sum(values(result.current_spend))
+    optimized_total_spend = sum(values(result.optimized_spend))
+    response_delta = result.optimized_response - result.current_response
+    default_efficiency_delta = result.optimized_default_efficiency -
+        result.current_default_efficiency
+
+    return BudgetOptimizationDiagnostics(
+        result.metadata,
+        result.spec,
+        result.coordinate_metadata,
+        result.objective,
+        result.solver_status,
+        copy(result.optimized_channels),
+        copy(result.fixed_channels),
+        current_total_spend,
+        optimized_total_spend,
+        optimized_total_spend - current_total_spend,
+        result.current_response,
+        result.optimized_response,
+        response_delta,
+        _safe_metric_ratio(response_delta, result.current_response),
+        result.current_default_efficiency,
+        result.optimized_default_efficiency,
+        default_efficiency_delta,
+        _safe_metric_ratio(default_efficiency_delta, result.current_default_efficiency),
+        copy(result.convergence_metadata),
+        result.constraint_audit,
+    )
+end
+
+"""
+    optimization_diagnostics_table(result)
+
+Project one solved bounded budget optimisation result into an analyst-facing
+channel spend and total-response diagnostics table.
+
+Rows follow canonical model channel order. Spend and bound columns are
+channel-level. Response and efficiency columns are total-result diagnostics
+repeated on each row so that CSV exports remain self-contained; per-channel
+marginal-response diagnostics are a separate optimisation surface.
+"""
+function optimization_diagnostics_table(result::_BudgetOptimizationResultLike)
+    diagnostics = optimization_diagnostics(result)
+    current_total_spend = diagnostics.current_total_spend
+    optimized_total_spend = diagnostics.optimized_total_spend
+    optimized_set = Set(result.optimized_channels)
+    constraint_lookup = _channel_constraint_lookup(result.constraint_audit)
+
+    rows = NamedTuple[]
+    for channel in result.spec.channel_columns
+        current_spend = result.current_spend[channel]
+        optimized_spend = result.optimized_spend[channel]
+        constraint = get(constraint_lookup, channel, nothing)
+        lower_bound_active, upper_bound_active = _optimization_bound_flags(
+            constraint,
+            optimized_spend,
+        )
+        push!(
+            rows,
+            (
+                channel = channel,
+                optimized = channel in optimized_set,
+                fixed = !(channel in optimized_set),
+                solver_status = diagnostics.solver_status,
+                objective = diagnostics.objective,
+                current_spend = current_spend,
+                optimized_spend = optimized_spend,
+                spend_delta = optimized_spend - current_spend,
+                spend_delta_pct = _safe_metric_ratio(optimized_spend, current_spend) - 1.0,
+                current_spend_share = _safe_metric_ratio(current_spend, current_total_spend),
+                optimized_spend_share = _safe_metric_ratio(optimized_spend, optimized_total_spend),
+                lower_bound_active = lower_bound_active,
+                upper_bound_active = upper_bound_active,
+                current_total_response = diagnostics.current_response,
+                optimized_total_response = diagnostics.optimized_response,
+                total_response_delta = diagnostics.response_delta,
+                total_response_lift_pct = diagnostics.response_lift_pct,
+                current_default_efficiency = diagnostics.current_default_efficiency,
+                optimized_default_efficiency = diagnostics.optimized_default_efficiency,
+                default_efficiency_delta = diagnostics.default_efficiency_delta,
+                default_efficiency_lift_pct = diagnostics.default_efficiency_lift_pct,
+            ),
+        )
+    end
+
+    return DataFrame(rows)
+end
+
 """
     budget_impact_table(result::BudgetOptimizationResult)
 

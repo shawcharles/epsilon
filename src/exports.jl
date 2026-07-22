@@ -162,6 +162,7 @@ export TimeSeriesMMM
 # Post-model result surfaces and summaries.
 export adstock_curve_results
 export AdstockCurveResults
+export BudgetOptimizationDiagnostics
 export budget_audit_table
 export budget_impact_table
 export contribution_results
@@ -186,6 +187,8 @@ export load_scenario_store
 export ManualAllocationScenarioSpec
 export ManualScenarioEvaluationResult
 export optimize_budget
+export optimization_diagnostics
+export optimization_diagnostics_table
 export PanelBudgetOptimizationResult
 export scenario_plan
 export scenario_store_plan

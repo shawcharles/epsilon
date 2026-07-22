@@ -33,6 +33,7 @@ functions or `write_plot_bundle(run)`.
 | `AbstractRegressionModel` | Model core | provisional |
 | `AbstractScenarioSpec` | Scenario planning | bounded |
 | `AdstockCurveResults` | Post-model results | core |
+| `BudgetOptimizationDiagnostics` | Budget optimization | provisional |
 | `BudgetOptimizationResult` | Budget optimization | provisional |
 | `CalibrationStepConfig` | Calibration | provisional |
 | `ContributionResults` | Post-model results | core |
@@ -176,6 +177,8 @@ functions or `write_plot_bundle(run)`.
 | `ntime` | Model data | bounded |
 | `observed_fitted_plot` | Plotting | bounded |
 | `optimize_budget` | Budget optimization | provisional |
+| `optimization_diagnostics` | Budget optimization | provisional |
+| `optimization_diagnostics_table` | Budget optimization | provisional |
 | `panel_axes` | Panel metadata | bounded |
 | `panel_axis` | Panel metadata | bounded |
 | `panel_coordinate` | Panel metadata | bounded |
@@ -244,6 +247,7 @@ Epsilon.AbstractModel
 Epsilon.AbstractRegressionModel
 Epsilon.AbstractScenarioSpec
 Epsilon.AdstockCurveResults
+Epsilon.BudgetOptimizationDiagnostics
 Epsilon.BudgetOptimizationResult
 Epsilon.CalibrationStepConfig
 Epsilon.ContributionResults
@@ -387,6 +391,8 @@ Epsilon.npanels
 Epsilon.ntime
 Epsilon.observed_fitted_plot
 Epsilon.optimize_budget
+Epsilon.optimization_diagnostics
+Epsilon.optimization_diagnostics_table
 Epsilon.panel_axes
 Epsilon.panel_axis
 Epsilon.panel_coordinate

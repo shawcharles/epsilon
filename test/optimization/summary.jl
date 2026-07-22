@@ -146,17 +146,8 @@ function _scaled_reference_spend(case)
 end
 
 @testset "budget optimization summary projections follow public schemas" begin
-    model = sample_time_series_model()
-    fit!(model)
-    grouped = _grouped_results_for_optimization(model)
-
-    result = optimize_budget(
-        grouped;
-        total_budget = _observed_channel_total(model, "search"),
-        channels = ["search"],
-        budget_bounds = Dict("search" => (lower = 0.0, upper = _observed_channel_total(model, "search") * 1.2)),
-        relative_bounds = Dict("search" => (lower = 0.8, upper = 1.1)),
-    )
+    case = only(filter(case -> case.name == "mixed_bounds_subset_optimization", GOLDEN_OPTIMIZATION_FIXTURES.cases))
+    result = Epsilon._solve_budget_optimization_problem(_fixture_problem(case))
 
     impact = budget_impact_table(result)
     @test names(impact) == [
@@ -169,9 +160,9 @@ end
         "optimized_share",
         "optimized_vs_current_pct",
     ]
-    @test impact.channel == ["tv", "search"]
-    @test impact.optimized == [false, true]
-    @test impact.current_spend[1] ≈ impact.optimized_spend[1]
+    @test impact.channel == ["tv", "search", "social"]
+    @test impact.optimized == [true, false, true]
+    @test impact.current_spend[2] ≈ impact.optimized_spend[2]
     @test sum(impact.current_share) ≈ 1.0
     @test sum(impact.optimized_share) ≈ 1.0
 
@@ -196,9 +187,71 @@ end
         "scaled_reference_share",
         "optimized_share",
     ]
-    @test audit.channel == ["search"]
-    @test only(audit.optimized_within_bounds)
+    @test audit.channel == ["tv", "social"]
+    @test all(audit.optimized_within_bounds)
     @test sum(audit.optimized_share) ≈ 1.0
+
+    diagnostics = optimization_diagnostics(result)
+    @test diagnostics isa BudgetOptimizationDiagnostics
+    @test diagnostics.objective == :total_response
+    @test diagnostics.solver_status in _OPTIMIZATION_SUCCESS_STATUSES
+    @test diagnostics.optimized_channels == ["tv", "social"]
+    @test diagnostics.fixed_channels == ["search"]
+    @test diagnostics.current_total_spend ≈ sum(values(result.current_spend))
+    @test diagnostics.optimized_total_spend ≈ sum(values(result.optimized_spend))
+    @test diagnostics.spend_delta ≈ diagnostics.optimized_total_spend - diagnostics.current_total_spend
+    @test diagnostics.current_response ≈ result.current_response
+    @test diagnostics.optimized_response ≈ result.optimized_response
+    @test diagnostics.response_delta ≈ result.optimized_response - result.current_response
+    @test diagnostics.response_lift_pct ≈ diagnostics.response_delta / result.current_response
+    @test diagnostics.default_efficiency_delta ≈
+        result.optimized_default_efficiency - result.current_default_efficiency
+    @test diagnostics.convergence_metadata == result.convergence_metadata
+    @test diagnostics.constraint_audit == result.constraint_audit
+
+    diagnostics_table = optimization_diagnostics_table(result)
+    @test names(diagnostics_table) == [
+        "channel",
+        "optimized",
+        "fixed",
+        "solver_status",
+        "objective",
+        "current_spend",
+        "optimized_spend",
+        "spend_delta",
+        "spend_delta_pct",
+        "current_spend_share",
+        "optimized_spend_share",
+        "lower_bound_active",
+        "upper_bound_active",
+        "current_total_response",
+        "optimized_total_response",
+        "total_response_delta",
+        "total_response_lift_pct",
+        "current_default_efficiency",
+        "optimized_default_efficiency",
+        "default_efficiency_delta",
+        "default_efficiency_lift_pct",
+    ]
+    @test diagnostics_table.channel == ["tv", "search", "social"]
+    @test diagnostics_table.optimized == [true, false, true]
+    @test diagnostics_table.fixed == [false, true, false]
+    @test all(diagnostics_table.solver_status .== result.solver_status)
+    @test all(diagnostics_table.objective .== result.objective)
+    @test diagnostics_table.current_spend ≈ [
+        result.current_spend[channel] for channel in diagnostics_table.channel
+    ]
+    @test diagnostics_table.optimized_spend ≈ [
+        result.optimized_spend[channel] for channel in diagnostics_table.channel
+    ]
+    @test diagnostics_table.spend_delta ≈ diagnostics_table.optimized_spend .- diagnostics_table.current_spend
+    @test sum(diagnostics_table.current_spend_share) ≈ 1.0
+    @test sum(diagnostics_table.optimized_spend_share) ≈ 1.0
+    @test diagnostics_table.lower_bound_active == [false, false, false]
+    @test diagnostics_table.upper_bound_active == [true, false, false]
+    @test all(diagnostics_table.current_total_response .≈ result.current_response)
+    @test all(diagnostics_table.optimized_total_response .≈ result.optimized_response)
+    @test all(diagnostics_table.total_response_delta .≈ result.optimized_response - result.current_response)
 end
 
 @testset "optimization matches retained golden fixtures" begin
@@ -303,6 +356,45 @@ end
                 atol,
                 rtol,
             )
+
+            diagnostics = optimization_diagnostics(result)
+            @test diagnostics.current_total_spend ≈ expected_current_total atol = atol rtol = rtol
+            @test diagnostics.optimized_total_spend ≈ expected_optimized_total atol = atol rtol = rtol
+            @test diagnostics.spend_delta ≈ expected_optimized_total - expected_current_total atol = atol rtol = rtol
+            @test diagnostics.response_delta ≈
+                case.expected_optimized_response - case.expected_current_response atol = atol rtol = rtol
+
+            diagnostics_table = optimization_diagnostics_table(result)
+            @test diagnostics_table.channel == case.all_channels
+            @test diagnostics_table.optimized == [channel in Set(case.optimized_channels) for channel in case.all_channels]
+            @test diagnostics_table.fixed == [!(channel in Set(case.optimized_channels)) for channel in case.all_channels]
+            @test diagnostics_table.current_spend ≈ case.current_spend_all atol = atol rtol = rtol
+            @test diagnostics_table.optimized_spend ≈ case.expected_optimized_spend_all atol = atol rtol = rtol
+            @test diagnostics_table.spend_delta ≈
+                case.expected_optimized_spend_all .- case.current_spend_all atol = atol rtol = rtol
+            @test all(diagnostics_table.current_total_response .≈ case.expected_current_response)
+            @test all(diagnostics_table.optimized_total_response .≈ case.expected_optimized_response)
+            @test all(diagnostics_table.total_response_delta .≈ diagnostics.response_delta)
+            for channel in case.fixed_channels
+                row = only(filter(:channel => ==(channel), diagnostics_table))
+                @test !row.lower_bound_active
+                @test !row.upper_bound_active
+            end
         end
     end
+end
+
+@testset "optimization diagnostics mark active solved bounds" begin
+    case = only(filter(case -> case.name == "absolute_bound_constrained", GOLDEN_OPTIMIZATION_FIXTURES.cases))
+    problem = _fixture_problem(case)
+    result = Epsilon._solve_budget_optimization_problem(problem)
+
+    table = optimization_diagnostics_table(result)
+    tv_row = only(filter(:channel => ==("tv"), table))
+    search_row = only(filter(:channel => ==("search"), table))
+
+    @test tv_row.optimized
+    @test tv_row.upper_bound_active
+    @test !tv_row.lower_bound_active
+    @test !search_row.upper_bound_active
 end
