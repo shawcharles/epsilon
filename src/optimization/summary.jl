@@ -113,6 +113,124 @@ function _decision_draw_summary(values::AbstractVector{<:Real}, interval_probabi
     )
 end
 
+function _validated_utility_draws(draws::AbstractVector, action::AbstractString, label::AbstractString)
+    isempty(draws) && throw(ArgumentError("$action requires nonempty $label"))
+    values = try
+        Float64.(collect(draws))
+    catch
+        throw(ArgumentError("$action requires numeric $label"))
+    end
+    all(isfinite, values) || throw(ArgumentError("$action requires finite $label"))
+    return values
+end
+
+function _validated_reference_draws(
+        response_draws::AbstractVector{Float64},
+        reference_draws,
+        action::AbstractString,
+    )
+    isnothing(reference_draws) &&
+        throw(ArgumentError("$action utility :probability_of_improvement requires reference_draws"))
+    reference_values = _validated_utility_draws(
+        reference_draws,
+        action,
+        "reference response draws",
+    )
+    length(reference_values) == length(response_draws) ||
+        throw(ArgumentError("$action requires response_draws and reference_draws with matching length"))
+    return reference_values
+end
+
+function _lower_interval_probability(spec::BudgetUtilitySpec)
+    return (1.0 - spec.interval_probability) / 2.0
+end
+
+"""
+    budget_utility_value(response_draws; utility=:mean_response, reference_draws=nothing, interval_probability=0.9, risk_aversion=1.0)
+    budget_utility_value(response_draws, spec::BudgetUtilitySpec; reference_draws=nothing)
+    budget_utility_value(candidate::BudgetAllocationEvaluationResult, spec=BudgetUtilitySpec(); reference=nothing)
+
+Evaluate a supported budget utility over posterior total-response draws.
+
+This is a pure decision helper. It does not solve an optimisation problem and
+does not refit the model. `:probability_of_improvement` requires paired
+reference draws.
+"""
+function budget_utility_value(
+        response_draws::AbstractVector;
+        utility = :mean_response,
+        reference_draws = nothing,
+        interval_probability = 0.9,
+        risk_aversion = 1.0,
+    )
+    return budget_utility_value(
+        response_draws,
+        BudgetUtilitySpec(
+            utility;
+            interval_probability,
+            risk_aversion,
+        );
+        reference_draws,
+    )
+end
+
+function budget_utility_value(
+        response_draws::AbstractVector,
+        spec::BudgetUtilitySpec;
+        reference_draws = nothing,
+    )
+    action = "budget_utility_value"
+    values = _validated_utility_draws(response_draws, action, "response draws")
+    if spec.utility === :mean_response
+        return Float64(mean(values))
+    elseif spec.utility === :lower_interval_response
+        return Float64(quantile(values, _lower_interval_probability(spec)))
+    elseif spec.utility === :probability_of_improvement
+        reference_values = _validated_reference_draws(values, reference_draws, action)
+        return Float64(mean(values .> reference_values))
+    elseif spec.utility === :risk_adjusted_response
+        return Float64(mean(values) - (spec.risk_aversion * _decision_std(values)))
+    end
+    throw(ArgumentError("unsupported budget utility `$(spec.utility)`"))
+end
+
+function budget_utility_value(
+        candidate::BudgetAllocationEvaluationResult,
+        spec::BudgetUtilitySpec;
+        reference = nothing,
+    )
+    reference_draws = nothing
+    if !isnothing(reference)
+        reference isa BudgetAllocationEvaluationResult ||
+            throw(ArgumentError("budget_utility_value reference must be a BudgetAllocationEvaluationResult"))
+        _validate_budget_allocation_decision_inputs(reference, candidate, "budget_utility_value")
+        reference_draws = reference.response_draws
+    end
+    return budget_utility_value(
+        candidate.response_draws,
+        spec;
+        reference_draws,
+    )
+end
+
+function budget_utility_value(
+        candidate::BudgetAllocationEvaluationResult;
+        utility = :mean_response,
+        reference = nothing,
+        interval_probability = 0.9,
+        risk_aversion = 1.0,
+    )
+    return budget_utility_value(
+        candidate,
+        BudgetUtilitySpec(
+            utility;
+            interval_probability,
+            risk_aversion,
+        );
+        reference,
+    )
+end
+
 function _uplift_pct_draws(
         candidate::BudgetAllocationEvaluationResult,
         reference::BudgetAllocationEvaluationResult,

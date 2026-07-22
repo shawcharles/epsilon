@@ -37,6 +37,7 @@ functions or `write_plot_bundle(run)`.
 | `BudgetAllocationEvaluationResult` | Budget optimization | provisional |
 | `BudgetOptimizationDiagnostics` | Budget optimization | provisional |
 | `BudgetOptimizationResult` | Budget optimization | provisional |
+| `BudgetUtilitySpec` | Budget optimization | provisional |
 | `CalibrationStepConfig` | Calibration | provisional |
 | `ContributionResults` | Post-model results | core |
 | `ConvMode` | Transforms | core |
@@ -117,6 +118,7 @@ functions or `write_plot_bundle(run)`.
 | `budget_allocation_decision_table` | Budget optimization | provisional |
 | `budget_impact_table` | Budget optimization | provisional |
 | `budget_optimization_plot` | Plotting | bounded |
+| `budget_utility_value` | Budget optimization | provisional |
 | `build_cost_per_target_calibration_payload` | Calibration | provisional |
 | `build_lift_test_calibration_payload` | Calibration | provisional |
 | `build_model` | Model builders | provisional |
@@ -256,6 +258,7 @@ Epsilon.BudgetAllocationDecisionSummary
 Epsilon.BudgetAllocationEvaluationResult
 Epsilon.BudgetOptimizationDiagnostics
 Epsilon.BudgetOptimizationResult
+Epsilon.BudgetUtilitySpec
 Epsilon.CalibrationStepConfig
 Epsilon.ContributionResults
 Epsilon.ConvMode
@@ -336,6 +339,7 @@ Epsilon.budget_allocation_decision_summary
 Epsilon.budget_allocation_decision_table
 Epsilon.budget_impact_table
 Epsilon.budget_optimization_plot
+Epsilon.budget_utility_value
 Epsilon.build_cost_per_target_calibration_payload
 Epsilon.build_lift_test_calibration_payload
 Epsilon.build_model

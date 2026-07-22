@@ -225,5 +225,33 @@ These summaries are posterior decision diagnostics for model-conditioned
 allocations. They are not realised business outcomes and they do not introduce
 a refit, future baseline simulation, or a new optimiser objective.
 
+`budget_utility_value` scores posterior response draws with a small set of
+documented utility functions. The default preserves the current mean-response
+decision criterion:
+
+```math
+U_{\mathrm{mean}}(a) = \frac{1}{S}\sum_{s=1}^{S} y^{(s)}_a.
+```
+
+The lower-interval utility uses the lower tail of the posterior response
+distribution. For interval probability $p$ and $\alpha = 1 - p$:
+
+```math
+U_{\mathrm{lower}}(a) = Q_{\alpha / 2}(y_a).
+```
+
+The probability-of-improvement utility is the paired posterior probability
+shown above, so it requires reference draws from a compatible allocation. The
+risk-adjusted utility subtracts a standard-deviation penalty:
+
+```math
+U_{\mathrm{risk}}(a) =
+\bar{y}_a - \lambda\,\operatorname{sd}(y_a),
+\qquad \lambda \ge 0.
+```
+
+These utility functions are pure scoring helpers for evaluated allocations.
+They do not yet change the maintained optimiser objective.
+
 For panel results, optimisation uses historical within-channel panel shares.
 That is a bounded allocation rule, not free channel-by-panel optimisation.

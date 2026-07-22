@@ -281,6 +281,79 @@ function Base.:(==)(
         lhs.probability_beats_reference == rhs.probability_beats_reference
 end
 
+const _SUPPORTED_BUDGET_UTILITIES = (
+    :mean_response,
+    :lower_interval_response,
+    :probability_of_improvement,
+    :risk_adjusted_response,
+)
+
+function _budget_utility_symbol(utility)
+    symbol = if utility isa Symbol
+        utility
+    elseif utility isa AbstractString
+        Symbol(lowercase(String(utility)))
+    else
+        throw(ArgumentError("budget utility must be a Symbol or string"))
+    end
+    symbol in _SUPPORTED_BUDGET_UTILITIES ||
+        throw(
+        ArgumentError(
+            "unsupported budget utility `$symbol`; supported utilities are $(join(_SUPPORTED_BUDGET_UTILITIES, ", "))",
+        ),
+    )
+    return symbol
+end
+
+function _budget_utility_interval_probability(interval_probability)
+    probability = Float64(interval_probability)
+    isfinite(probability) && 0.0 < probability < 1.0 ||
+        throw(ArgumentError("budget utility interval_probability must be in (0, 1)"))
+    return probability
+end
+
+function _budget_utility_risk_aversion(risk_aversion)
+    value = Float64(risk_aversion)
+    isfinite(value) && value >= 0.0 ||
+        throw(ArgumentError("budget utility risk_aversion must be finite and nonnegative"))
+    return value
+end
+
+"""
+    BudgetUtilitySpec(utility=:mean_response; interval_probability=0.9, risk_aversion=1.0)
+
+Typed utility-function contract for posterior budget-allocation decisions.
+
+Supported utilities are:
+
+- `:mean_response`
+- `:lower_interval_response`
+- `:probability_of_improvement`
+- `:risk_adjusted_response`
+
+The default utility is posterior mean response, matching the existing bounded
+optimiser's maintained objective. `interval_probability` controls the lower
+credible-bound utility. `risk_aversion` controls the standard-deviation penalty
+for risk-adjusted response.
+"""
+struct BudgetUtilitySpec
+    utility::Symbol
+    interval_probability::Float64
+    risk_aversion::Float64
+end
+
+function BudgetUtilitySpec(
+        utility = :mean_response;
+        interval_probability = 0.9,
+        risk_aversion = 1.0,
+    )
+    return BudgetUtilitySpec(
+        _budget_utility_symbol(utility),
+        _budget_utility_interval_probability(interval_probability),
+        _budget_utility_risk_aversion(risk_aversion),
+    )
+end
+
 """
     PanelBudgetOptimizationResult
 

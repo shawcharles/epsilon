@@ -188,6 +188,74 @@ function _allocation_evaluation_shell(;
     )
 end
 
+@testset "budget utility functions score posterior draws" begin
+    response_draws = [100.0, 120.0, 95.0, 105.0]
+    reference_draws = [100.0, 110.0, 90.0, 100.0]
+
+    default_spec = BudgetUtilitySpec()
+    @test default_spec.utility == :mean_response
+    @test default_spec.interval_probability ≈ 0.9
+    @test default_spec.risk_aversion ≈ 1.0
+    @test budget_utility_value(response_draws) ≈ mean(response_draws)
+    @test budget_utility_value(response_draws, default_spec) ≈ mean(response_draws)
+
+    lower_spec = BudgetUtilitySpec(:lower_interval_response; interval_probability = 0.5)
+    @test budget_utility_value(response_draws, lower_spec) ≈ quantile(response_draws, 0.25)
+    @test budget_utility_value(
+        response_draws;
+        utility = :lower_interval_response,
+        interval_probability = 0.5,
+    ) ≈ quantile(response_draws, 0.25)
+
+    improvement_spec = BudgetUtilitySpec(:probability_of_improvement)
+    @test budget_utility_value(
+        response_draws,
+        improvement_spec;
+        reference_draws,
+    ) ≈ 0.75
+
+    risk_spec = BudgetUtilitySpec(:risk_adjusted_response; risk_aversion = 0.5)
+    @test budget_utility_value(response_draws, risk_spec) ≈ mean(response_draws) - (0.5 * std(response_draws))
+    @test budget_utility_value(
+        [42.0],
+        BudgetUtilitySpec(:risk_adjusted_response; risk_aversion = 3.0),
+    ) ≈ 42.0
+
+    current = _allocation_evaluation_shell(response_draws = reference_draws)
+    manual = _allocation_evaluation_shell(
+        allocation_kind = :manual,
+        response_draws = response_draws,
+        allocation = Dict("tv" => 90.0, "search" => 60.0),
+    )
+    @test budget_utility_value(manual) ≈ mean(response_draws)
+    @test budget_utility_value(manual, risk_spec) ≈ mean(response_draws) - (0.5 * std(response_draws))
+    @test budget_utility_value(manual, improvement_spec; reference = current) ≈ 0.75
+    @test budget_utility_value(
+        manual;
+        utility = :probability_of_improvement,
+        reference = current,
+    ) ≈ 0.75
+
+    @test_throws ArgumentError BudgetUtilitySpec(:unsupported)
+    @test_throws ArgumentError BudgetUtilitySpec(:lower_interval_response; interval_probability = 1.0)
+    @test_throws ArgumentError BudgetUtilitySpec(:risk_adjusted_response; risk_aversion = -1.0)
+    @test_throws ArgumentError budget_utility_value(Float64[])
+    @test_throws ArgumentError budget_utility_value([1.0, Inf])
+    @test_throws ArgumentError BudgetUtilitySpec(1)
+    @test_throws ArgumentError budget_utility_value(["not numeric"])
+    @test_throws ArgumentError budget_utility_value(response_draws, improvement_spec)
+    @test_throws ArgumentError budget_utility_value(
+        response_draws,
+        improvement_spec;
+        reference_draws = [1.0, 2.0],
+    )
+    @test_throws ArgumentError budget_utility_value(
+        manual,
+        improvement_spec;
+        reference = _allocation_evaluation_shell(objective = :other),
+    )
+end
+
 @testset "budget allocation decision summaries compare posterior draws" begin
     current = _allocation_evaluation_shell()
     manual = _allocation_evaluation_shell(
