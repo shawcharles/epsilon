@@ -191,6 +191,15 @@ function _evaluate_channel_surface_derivative(
     return _evaluate_derivative(_surface_interpolation(surface, action), spend)
 end
 
+function _evaluate_channel_surface_derivative_unbounded(
+        surface::BudgetChannelSurface,
+        spend::Real;
+        action::AbstractString = "optimize_budget",
+    )
+    spend_value = _finite_spend_value(spend, action, "channel spend")
+    return _evaluate_derivative(_surface_interpolation(surface, action), spend_value)
+end
+
 function _evaluate_channel_surface_second_derivative(
         surface::BudgetChannelSurface,
         spend::Real;

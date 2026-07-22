@@ -113,6 +113,20 @@ end
     @test_throws ArgumentError Epsilon._evaluate_budget_objective(problem, [observed_tv])
 end
 
+@testset "budget optimization marginal current response can be audited outside feasible bounds" begin
+    surface = Epsilon.BudgetChannelSurface(
+        "tv",
+        2.0,
+        [0.0, 2.0, 5.0, 10.0],
+        [0.0, 1.0, 2.0, 3.0],
+        5.0,
+        10.0,
+    )
+
+    @test isfinite(Epsilon._evaluate_channel_surface_derivative_unbounded(surface, 2.0))
+    @test_throws ArgumentError Epsilon._evaluate_channel_surface_derivative(surface, 2.0)
+end
+
 @testset "budget optimization problem rejects malformed contract inputs" begin
     model = sample_time_series_model()
     fit!(model)

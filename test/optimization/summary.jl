@@ -145,9 +145,38 @@ function _scaled_reference_spend(case)
     return (optimized_current ./ current_total) .* Float64(case.total_budget)
 end
 
+function _surface_lookup(problem)
+    return Dict(surface.channel => surface for surface in problem.channel_surfaces)
+end
+
+function _expected_marginal_response(problem, spend_mapping; bounded::Bool)
+    surfaces = _surface_lookup(problem)
+    values = Dict{String, Float64}()
+    for channel in problem.optimized_channels
+        surface = surfaces[channel]
+        values[channel] = if bounded
+            Epsilon._evaluate_channel_surface_derivative(surface, spend_mapping[channel])
+        else
+            Epsilon._evaluate_channel_surface_derivative_unbounded(surface, spend_mapping[channel])
+        end
+    end
+    return values
+end
+
 @testset "budget optimization summary projections follow public schemas" begin
     case = only(filter(case -> case.name == "mixed_bounds_subset_optimization", GOLDEN_OPTIMIZATION_FIXTURES.cases))
-    result = Epsilon._solve_budget_optimization_problem(_fixture_problem(case))
+    problem = _fixture_problem(case)
+    result = Epsilon._solve_budget_optimization_problem(problem)
+    expected_current_marginal_response = _expected_marginal_response(
+        problem,
+        result.current_spend;
+        bounded = false,
+    )
+    expected_optimized_marginal_response = _expected_marginal_response(
+        problem,
+        result.optimized_spend;
+        bounded = true,
+    )
 
     impact = budget_impact_table(result)
     @test names(impact) == [
@@ -206,6 +235,8 @@ end
     @test diagnostics.response_lift_pct ≈ diagnostics.response_delta / result.current_response
     @test diagnostics.default_efficiency_delta ≈
         result.optimized_default_efficiency - result.current_default_efficiency
+    @test diagnostics.current_marginal_response == expected_current_marginal_response
+    @test diagnostics.optimized_marginal_response == expected_optimized_marginal_response
     @test diagnostics.convergence_metadata == result.convergence_metadata
     @test diagnostics.constraint_audit == result.constraint_audit
 
@@ -224,6 +255,12 @@ end
         "optimized_spend_share",
         "lower_bound_active",
         "upper_bound_active",
+        "current_marginal_response",
+        "optimized_marginal_response",
+        "current_marginal_roas",
+        "optimized_marginal_roas",
+        "current_marginal_cpa",
+        "optimized_marginal_cpa",
         "current_total_response",
         "optimized_total_response",
         "total_response_delta",
@@ -249,6 +286,14 @@ end
     @test sum(diagnostics_table.optimized_spend_share) ≈ 1.0
     @test diagnostics_table.lower_bound_active == [false, false, false]
     @test diagnostics_table.upper_bound_active == [true, false, false]
+    @test diagnostics_table.current_marginal_response[1] ≈ expected_current_marginal_response["tv"]
+    @test diagnostics_table.optimized_marginal_response[1] ≈ expected_optimized_marginal_response["tv"]
+    @test isnan(diagnostics_table.current_marginal_response[2])
+    @test isnan(diagnostics_table.optimized_marginal_response[2])
+    @test diagnostics_table.current_marginal_roas[1] ≈ diagnostics_table.current_marginal_response[1]
+    @test diagnostics_table.optimized_marginal_roas[1] ≈ diagnostics_table.optimized_marginal_response[1]
+    @test all(isnan, diagnostics_table.current_marginal_cpa)
+    @test all(isnan, diagnostics_table.optimized_marginal_cpa)
     @test all(diagnostics_table.current_total_response .≈ result.current_response)
     @test all(diagnostics_table.optimized_total_response .≈ result.optimized_response)
     @test all(diagnostics_table.total_response_delta .≈ result.optimized_response - result.current_response)
@@ -363,6 +408,16 @@ end
             @test diagnostics.spend_delta ≈ expected_optimized_total - expected_current_total atol = atol rtol = rtol
             @test diagnostics.response_delta ≈
                 case.expected_optimized_response - case.expected_current_response atol = atol rtol = rtol
+            @test diagnostics.current_marginal_response == _expected_marginal_response(
+                problem,
+                result.current_spend;
+                bounded = false,
+            )
+            @test diagnostics.optimized_marginal_response == _expected_marginal_response(
+                problem,
+                result.optimized_spend;
+                bounded = true,
+            )
 
             diagnostics_table = optimization_diagnostics_table(result)
             @test diagnostics_table.channel == case.all_channels
@@ -375,13 +430,39 @@ end
             @test all(diagnostics_table.current_total_response .≈ case.expected_current_response)
             @test all(diagnostics_table.optimized_total_response .≈ case.expected_optimized_response)
             @test all(diagnostics_table.total_response_delta .≈ diagnostics.response_delta)
+            for channel in case.optimized_channels
+                row = only(filter(:channel => ==(channel), diagnostics_table))
+                @test isfinite(row.current_marginal_response)
+                @test isfinite(row.optimized_marginal_response)
+                @test row.current_marginal_roas ≈ row.current_marginal_response
+                @test row.optimized_marginal_roas ≈ row.optimized_marginal_response
+                @test isnan(row.current_marginal_cpa)
+                @test isnan(row.optimized_marginal_cpa)
+            end
             for channel in case.fixed_channels
                 row = only(filter(:channel => ==(channel), diagnostics_table))
                 @test !row.lower_bound_active
                 @test !row.upper_bound_active
+                @test isnan(row.current_marginal_response)
+                @test isnan(row.optimized_marginal_response)
             end
         end
     end
+end
+
+@testset "optimization diagnostics report marginal CPA for conversion targets" begin
+    case = merge(
+        only(filter(case -> case.name == "all_channel_fixed_budget", GOLDEN_OPTIMIZATION_FIXTURES.cases)),
+        (target_type = "conversion",),
+    )
+    problem = _fixture_problem(case)
+    result = Epsilon._solve_budget_optimization_problem(problem)
+    table = optimization_diagnostics_table(result)
+
+    @test all(isnan, table.current_marginal_roas)
+    @test all(isnan, table.optimized_marginal_roas)
+    @test all(table.current_marginal_cpa .≈ 1.0 ./ table.current_marginal_response)
+    @test all(table.optimized_marginal_cpa .≈ 1.0 ./ table.optimized_marginal_response)
 end
 
 @testset "optimization diagnostics mark active solved bounds" begin

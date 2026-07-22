@@ -23,6 +23,40 @@ function _optimization_bound_flags(
     return lower_active, upper_active
 end
 
+function _marginal_response_lookup(
+        result::_BudgetOptimizationResultLike,
+        metadata_key::AbstractString,
+    )
+    raw = get(result.convergence_metadata, String(metadata_key), nothing)
+    values = Dict{String, Float64}()
+    raw isa AbstractDict || return values
+    for (channel, value) in pairs(raw)
+        values[String(channel)] = Float64(value)
+    end
+    return values
+end
+
+function _channel_marginal_response(
+        lookup::AbstractDict{String, Float64},
+        channel::AbstractString,
+    )
+    return get(lookup, String(channel), NaN)
+end
+
+function _is_conversion_target(result::_BudgetOptimizationResultLike)
+    return lowercase(result.spec.target_type) == "conversion"
+end
+
+function _marginal_roas(result::_BudgetOptimizationResultLike, marginal_response::Real)
+    _is_conversion_target(result) && return NaN
+    return Float64(marginal_response)
+end
+
+function _marginal_cpa(result::_BudgetOptimizationResultLike, marginal_response::Real)
+    _is_conversion_target(result) || return NaN
+    return _safe_metric_ratio(1.0, marginal_response)
+end
+
 """
     optimization_diagnostics(result)
 
@@ -40,6 +74,14 @@ function optimization_diagnostics(result::_BudgetOptimizationResultLike)
     response_delta = result.optimized_response - result.current_response
     default_efficiency_delta = result.optimized_default_efficiency -
         result.current_default_efficiency
+    current_marginal_response = _marginal_response_lookup(
+        result,
+        "current_marginal_response",
+    )
+    optimized_marginal_response = _marginal_response_lookup(
+        result,
+        "optimized_marginal_response",
+    )
 
     return BudgetOptimizationDiagnostics(
         result.metadata,
@@ -60,6 +102,8 @@ function optimization_diagnostics(result::_BudgetOptimizationResultLike)
         result.optimized_default_efficiency,
         default_efficiency_delta,
         _safe_metric_ratio(default_efficiency_delta, result.current_default_efficiency),
+        current_marginal_response,
+        optimized_marginal_response,
         copy(result.convergence_metadata),
         result.constraint_audit,
     )
@@ -72,9 +116,10 @@ Project one solved bounded budget optimisation result into an analyst-facing
 channel spend and total-response diagnostics table.
 
 Rows follow canonical model channel order. Spend and bound columns are
-channel-level. Response and efficiency columns are total-result diagnostics
-repeated on each row so that CSV exports remain self-contained; per-channel
-marginal-response diagnostics are a separate optimisation surface.
+channel-level. Marginal-response columns are available for optimized channels
+when the result was produced by the current solver. Total-response and
+efficiency columns are total-result diagnostics repeated on each row so that
+CSV exports remain self-contained.
 """
 function optimization_diagnostics_table(result::_BudgetOptimizationResultLike)
     diagnostics = optimization_diagnostics(result)
@@ -92,6 +137,14 @@ function optimization_diagnostics_table(result::_BudgetOptimizationResultLike)
             constraint,
             optimized_spend,
         )
+        current_marginal_response = _channel_marginal_response(
+            diagnostics.current_marginal_response,
+            channel,
+        )
+        optimized_marginal_response = _channel_marginal_response(
+            diagnostics.optimized_marginal_response,
+            channel,
+        )
         push!(
             rows,
             (
@@ -108,6 +161,12 @@ function optimization_diagnostics_table(result::_BudgetOptimizationResultLike)
                 optimized_spend_share = _safe_metric_ratio(optimized_spend, optimized_total_spend),
                 lower_bound_active = lower_bound_active,
                 upper_bound_active = upper_bound_active,
+                current_marginal_response = current_marginal_response,
+                optimized_marginal_response = optimized_marginal_response,
+                current_marginal_roas = _marginal_roas(result, current_marginal_response),
+                optimized_marginal_roas = _marginal_roas(result, optimized_marginal_response),
+                current_marginal_cpa = _marginal_cpa(result, current_marginal_response),
+                optimized_marginal_cpa = _marginal_cpa(result, optimized_marginal_response),
                 current_total_response = diagnostics.current_response,
                 optimized_total_response = diagnostics.optimized_response,
                 total_response_delta = diagnostics.response_delta,

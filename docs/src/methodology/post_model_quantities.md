@@ -182,6 +182,13 @@ constraints. It does not refit the model. The current maintained optimisation
 path optimises over supported channel-level surfaces and holds unsupported or
 unselected channels fixed according to the optimisation contract.
 
+Optimisation diagnostics report marginal response at the observed/current spend
+and at the solved optimised spend for channels in the optimised set. For revenue
+targets this marginal response is reported as a marginal ROAS-style quantity.
+For conversion targets Epsilon also reports marginal CPA where the reciprocal is
+numerically defined. Channels solved at an active lower or upper bound should be
+read as constrained recommendations; their marginal values are diagnostics, not
+unconstrained first-order optimality conditions.
+
 For panel results, optimisation uses historical within-channel panel shares.
 That is a bounded allocation rule, not free channel-by-panel optimisation.
-

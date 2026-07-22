@@ -267,6 +267,44 @@ function _convergence_metadata(model::JuMP.Model)
     return metadata
 end
 
+function _marginal_response_mapping(
+        problem::BudgetOptimizationProblem,
+        spend_allocation::AbstractVector{<:Real};
+        bounded::Bool,
+    )
+    response = Dict{String, Float64}()
+    for (channel, surface, spend) in zip(
+            problem.optimized_channels,
+            problem.channel_surfaces,
+            spend_allocation,
+        )
+        response[channel] = if bounded
+            _evaluate_channel_surface_derivative(surface, spend)
+        else
+            _evaluate_channel_surface_derivative_unbounded(surface, spend)
+        end
+    end
+    return response
+end
+
+function _optimization_marginal_response_metadata(
+        problem::BudgetOptimizationProblem,
+        optimized_allocation::AbstractVector{<:Real},
+    )
+    return Dict{String, Any}(
+        "current_marginal_response" => _marginal_response_mapping(
+            problem,
+            problem.current_spend;
+            bounded = false,
+        ),
+        "optimized_marginal_response" => _marginal_response_mapping(
+            problem,
+            optimized_allocation;
+            bounded = true,
+        ),
+    )
+end
+
 function _solve_budget_optimization_problem(problem::BudgetOptimizationProblem)
     model, allocation = _build_optimizer_model(problem)
     JuMP.optimize!(model)
@@ -286,6 +324,11 @@ function _solve_budget_optimization_problem(problem::BudgetOptimizationProblem)
     current_spend = _spend_mapping(problem, problem.current_spend)
     optimized_spend = _spend_mapping(problem, optimized_allocation)
     optimized_response = _evaluate_budget_objective(problem, optimized_allocation)
+    convergence_metadata = _convergence_metadata(model)
+    merge!(
+        convergence_metadata,
+        _optimization_marginal_response_metadata(problem, optimized_allocation),
+    )
 
     return BudgetOptimizationResult(
         problem.metadata,
@@ -302,7 +345,7 @@ function _solve_budget_optimization_problem(problem::BudgetOptimizationProblem)
         _default_efficiency(problem, optimized_response, optimized_spend),
         _solver_status_symbol(JuMP.termination_status(model)),
         optimized_response,
-        _convergence_metadata(model),
+        convergence_metadata,
         problem.constraint_audit,
     )
 end
