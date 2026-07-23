@@ -188,6 +188,9 @@ are available for Julia users who want to work directly with typed model
 objects. See <https://epsilon.charlesshaw.net> and the demo bundles under
 `data/demo/`.
 
+For contributor-facing implementation structure, see
+[`ARCHITECTURE.md`](ARCHITECTURE.md).
+
 ## Result Layout
 
 A completed pipeline run writes a structured directory similar to:
