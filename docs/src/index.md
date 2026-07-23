@@ -168,9 +168,19 @@ The statistical model is documented in [Model Form](methodology/model.md).
 The adstock, saturation, contribution, and response-curve mechanics are
 documented in [Media Transforms](methodology/media_transforms.md).
 Scaling and prior interpretation are documented in
-[Scaling And Priors](methodology/scaling_and_priors.md). Post-fit summaries,
-curves, decomposition, and efficiency metrics are documented in
-[Post-Model Quantities](methodology/post_model_quantities.md).
+[Scaling And Priors](methodology/scaling_and_priors.md). The Bayesian
+estimation workflow, sampler settings, convergence diagnostics, posterior
+predictive checks, and holdout validation are documented in
+[Estimation, Diagnostics, And Validation](methodology/estimation.md).
+Post-fit summaries, curves, decomposition, and efficiency metrics are
+documented in [Post-Model Quantities](methodology/post_model_quantities.md).
+The objective, constraints, solver, and interpretation limits of budget
+optimisation are documented in
+[Budget Optimisation](methodology/optimization.md).
+
+For modelling judgement, runtime expectations, and the causal limits of
+observational MMM, see
+[Modelling Judgement, Runtime, And Limitations](best_practices.md).
 
 ## API Reference
 
