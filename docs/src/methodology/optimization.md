@@ -145,6 +145,34 @@ with a high marginal response is telling you the constraint, not the model, is
 doing the deciding; treat that as a prompt to question the bound, not as a
 finding about the channel.
 
+## When Not To Optimise
+
+Budget optimisation is optional. Do not treat it as the natural final step for
+every MMM fit.
+
+It is usually better to skip optimisation, or label it explicitly as
+exploratory, when:
+
+- response curves are unstable across posterior draws, prior choices, or
+  reasonable model specifications;
+- convergence diagnostics are poor, effective sample sizes are low, or the
+  fitted model has obvious posterior predictive misfit;
+- channels are strongly collinear and the decomposition between them is not
+  decision-grade;
+- the proposed allocation relies on spend ranges far outside the observed
+  data, even if the solver can technically evaluate the curve there;
+- the KPI is a fragile proxy, such as web visits, clicks, sessions, or another
+  upper-funnel metric with weak commercial interpretation;
+- channel response is dominated by active bounds, so the allocation mostly
+  reflects constraints rather than model evidence;
+- external business constraints, such as availability, margin, fulfilment,
+  price, or sales capacity, are missing from the decision problem.
+
+For fragile KPIs, prefer descriptive scenario evaluation over prescriptive
+allocation. A model may explain movement in web visits well while still saying
+little about profit, acquisition quality, or retained revenue. Optimising that
+proxy can produce a precise answer to the wrong question.
+
 ## Uncertainty Summaries And Utility Scoring
 
 Because the solve uses posterior-mean surfaces, Epsilon provides a separate

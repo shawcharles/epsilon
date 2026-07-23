@@ -5,6 +5,9 @@ using Serialization
 using Statistics
 
 const _PIPELINE_SERIALIZED_ARTIFACT_SCHEMA_VERSION = 1
+const _PIPELINE_OPTIMIZATION_DECISION_WARNING = "Budget optimisation is conditional on stable response curves and a decision-relevant KPI; treat fragile proxy KPIs such as web visits, unstable curves, or extrapolated spend ranges as exploratory."
+
+_pipeline_optimization_decision_warning() = _PIPELINE_OPTIMIZATION_DECISION_WARNING
 
 function _alias_pipeline_artifact_path!(
         artifact_paths::Dict{String, String},
@@ -1512,6 +1515,8 @@ end
 
 function _run_optimisation_stage!(context::PipelineContext)
     grouped = _require_pipeline_grouped_results(context, "optimisation")
+    decision_warning = _pipeline_optimization_decision_warning()
+    _pipeline_pretty_stage_warning(context, "optimisation", decision_warning)
     config = context.optimization_config
     kwargs = Dict{Symbol, Any}(:total_budget => config["total_budget"])
     for key in ("channels", "budget_bounds", "relative_bounds", "grid", "panel_allocation_mode")
@@ -1599,7 +1604,7 @@ function _run_optimisation_stage!(context::PipelineContext)
         "optimized_allocation_csv" => _pipeline_relative_stage_artifact("optimisation", "optimized_allocation.csv"),
         "response_distribution" => _pipeline_relative_stage_artifact("optimisation", "response_distribution.jls"),
     )
-    warnings = String[]
+    warnings = String[decision_warning]
     for (artifact_key, absolute_path, filename) in (
             ("budget_optimization_plot", plot_path, "budget_optimization.png"),
             ("budget_bounds_audit_plot", bounds_audit_plot_path, "budget_bounds_audit.png"),

@@ -276,6 +276,26 @@ function _pipeline_pretty_stage_completed(context::PipelineContext, key::Abstrac
     return nothing
 end
 
+function _pipeline_pretty_stage_warning(
+        context::PipelineContext,
+        key::AbstractString,
+        warning::AbstractString,
+    )
+    _pipeline_pretty_output_enabled() || return nothing
+    try
+        index = _stage_index(context, key)
+        total = length(context.stage_records)
+        position = _pipeline_stage_position(index, total)
+        println(
+            stdout,
+            "$(_pipeline_progress_bar(index - 1, total)) $position WARNING  $(rpad(String(key), 18)) $(String(warning))",
+        )
+    catch
+        return nothing
+    end
+    return nothing
+end
+
 function _pipeline_pretty_stage_failed(context::PipelineContext, key::AbstractString, err)
     _pipeline_pretty_output_enabled() || return nothing
     try

@@ -1557,6 +1557,9 @@ end
         @test manifest["stages"]["optimisation"]["status"] == "completed"
         golden_contract = GOLDEN_TIMESERIES_CONFIG_DATA.pipeline_contract
         optimisation_record = _stage_record(result, "optimisation")
+        @test Epsilon._pipeline_optimization_decision_warning() in optimisation_record.warnings
+        @test Epsilon._pipeline_optimization_decision_warning() in
+            String.(manifest["stages"]["optimisation"]["warnings"])
         @test Set(golden_contract.manifest_stage_artifact_keys["optimisation"]) ⊆
             Set(keys(optimisation_record.artifact_paths))
 

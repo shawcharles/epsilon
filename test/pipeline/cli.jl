@@ -1,4 +1,5 @@
 using CSV
+using CairoMakie
 using DataFrames
 using Epsilon
 using JSON3
@@ -91,39 +92,49 @@ end
             ),
         )
 
-        status = pipeline_main(
-            [
-                "run",
-                config_path,
-                "--output-dir",
-                joinpath(tmpdir, "results"),
-                "--run-name",
-                "cli_optimization",
-                "--dataset-path",
-                dataset_fixture,
-                "--prior-samples",
-                "6",
-                "--curve-points",
-                "8",
-                "--draws",
-                "6",
-                "--tune",
-                "6",
-                "--chains",
-                "1",
-                "--cores",
-                "1",
-                "--random-seed",
-                "19",
-            ]
-        )
+        stdout_path = joinpath(tmpdir, "stdout.txt")
+        status = open(stdout_path, "w") do stdout_io
+            redirect_stdout(stdout_io) do
+                Epsilon._with_pipeline_pretty_output() do
+                    pipeline_main(
+                        [
+                            "run",
+                            config_path,
+                            "--output-dir",
+                            joinpath(tmpdir, "results"),
+                            "--run-name",
+                            "cli_optimization",
+                            "--dataset-path",
+                            dataset_fixture,
+                            "--prior-samples",
+                            "6",
+                            "--curve-points",
+                            "8",
+                            "--draws",
+                            "6",
+                            "--tune",
+                            "6",
+                            "--chains",
+                            "1",
+                            "--cores",
+                            "1",
+                            "--random-seed",
+                            "19",
+                        ]
+                    )
+                end
+            end
+        end
 
         @test status == 0
+        @test occursin(Epsilon._pipeline_optimization_decision_warning(), read(stdout_path, String))
 
         run_dir = only(readdir(joinpath(tmpdir, "results"); join = true))
         manifest = JSON3.read(read(joinpath(run_dir, "run_manifest.json"), String))
         @test manifest["stages"]["validation"]["status"] == "skipped"
         @test manifest["stages"]["optimisation"]["status"] == "completed"
+        @test Epsilon._pipeline_optimization_decision_warning() in
+            String.(manifest["stages"]["optimisation"]["warnings"])
         @test isfile(joinpath(run_dir, "70_optimisation", "budget_optimization_result.jls"))
         @test isfile(joinpath(run_dir, "70_optimisation", "budget_optimization.png"))
     end
