@@ -12,6 +12,7 @@ makedocs(
     pages = [
         "Home" => "index.md",
         "Supported Local Workflows" => "supported_paths.md",
+        "Current Scope And Limitations" => "scope.md",
         "Configuration" => "configuration.md",
         "Methodology" => [
             "Model Form" => "methodology/model.md",

@@ -4,6 +4,9 @@ This page defines the current public support boundaries for Epsilon. The
 `0.1.0-beta.1` support surface is intentionally narrower than the full public
 export list.
 
+For a shorter reader-facing summary, see
+[Current Scope And Limitations](scope.md).
+
 ## Supported
 
 | Area | Current Support |

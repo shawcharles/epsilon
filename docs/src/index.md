@@ -61,6 +61,10 @@ See [Supported Local Workflows](supported_paths.md) for the full runbook,
 compact output inspection, trusted-local artifact roundtrips, and smoke
 commands.
 
+See [Current Scope And Limitations](scope.md) for what is supported today, what
+is deliberately out of scope, and how to interpret beta-stage runtime
+expectations.
+
 See [Configuration](configuration.md) for the supported YAML structure.
 
 For the fitted regression structure and media-response equations, see
@@ -136,8 +140,8 @@ Currently supported:
 - config-driven pipeline runs,
 - CairoMakie-backed plots when `CairoMakie` is loaded.
 
-See [Support Boundaries](release.md) for explicit unsupported and deferred
-areas.
+See [Current Scope And Limitations](scope.md) and
+[Support Boundaries](release.md) for explicit unsupported and deferred areas.
 
 ## Plotting
 
